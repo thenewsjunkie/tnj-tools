@@ -3,8 +3,10 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/components/ui/use-toast";
 
 const SocialGraph = () => {
+  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: followerHistory = [] } = useQuery({
@@ -13,13 +15,12 @@ const SocialGraph = () => {
       const { data, error } = await supabase
         .from('follower_history')
         .select('*')
-        .order('recorded_at', { ascending: true })
-        .limit(6);
+        .order('recorded_at', { ascending: true });
       
       if (error) throw error;
       
       return data.map(entry => ({
-        name: new Date(entry.recorded_at).toLocaleString('default', { month: 'short' }),
+        name: new Date(entry.recorded_at).toLocaleString('default', { month: 'short', day: 'numeric' }),
         followers: entry.total_followers,
         date: entry.recorded_at,
       }));
@@ -36,25 +37,44 @@ const SocialGraph = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['follower-history'] });
+      toast({
+        title: "History Updated",
+        description: "Follower history has been updated successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
   useEffect(() => {
-    const updateTotalFollowers = () => {
+    const calculateTotalFollowers = () => {
       const elements = document.querySelectorAll('.digital');
       let total = 0;
       
       elements.forEach(el => {
         const followers = el.textContent?.trim() || '';
-        const number = parseInt(followers.replace(/[K,M]/g, '')) * (followers.includes('K') ? 1000 : (followers.includes('M') ? 1000000 : 1));
-        total += number;
+        if (followers) {
+          const multiplier = followers.includes('K') ? 1000 : followers.includes('M') ? 1000000 : 1;
+          const number = parseFloat(followers.replace(/[K,M]/g, '')) * multiplier;
+          if (!isNaN(number)) {
+            total += number;
+          }
+        }
       });
 
-      addHistoryEntryMutation.mutate(total);
+      return total;
     };
 
     const observer = new MutationObserver(() => {
-      updateTotalFollowers();
+      const total = calculateTotalFollowers();
+      if (total > 0) {
+        addHistoryEntryMutation.mutate(total);
+      }
     });
 
     const digitalElements = document.querySelectorAll('.digital');
@@ -62,8 +82,29 @@ const SocialGraph = () => {
       observer.observe(element, { childList: true, characterData: true, subtree: true });
     });
 
+    // Initial calculation
+    const initialTotal = calculateTotalFollowers();
+    if (initialTotal > 0) {
+      addHistoryEntryMutation.mutate(initialTotal);
+    }
+
     return () => observer.disconnect();
   }, []);
+
+  if (!followerHistory.length) {
+    return (
+      <Card className="bg-black/50 border-white/10">
+        <CardHeader>
+          <CardTitle className="text-white text-lg sm:text-xl">Total Followers Growth</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px] sm:h-[350px] md:h-[400px] w-full flex items-center justify-center text-white/60">
+            No data available
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="bg-black/50 border-white/10">
