@@ -5,7 +5,7 @@ import { debounce } from "lodash";
 
 interface SessionValidatorProps {
   code: string;
-  onValidSession: (data: any, isHost: boolean) => void;
+  onValidSession: (data: SessionData, isHost: boolean) => void;
 }
 
 interface SessionData {
@@ -15,6 +15,8 @@ interface SessionData {
   host_connected: boolean;
   viewer_connected: boolean;
   is_active: boolean;
+  share_code: string;
+  expires_at: string;
 }
 
 const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
@@ -88,7 +90,11 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
         }
 
         // Try to claim host role with a transaction
-        const { data: updatedSession, error: updateError } = await supabase.rpc<SessionData>(
+        const { data: updatedSession, error: updateError } = await supabase.rpc<SessionData, { 
+          p_session_id: string;
+          p_device_id: string;
+          p_share_code: string;
+        }>(
           'claim_screen_share_role',
           { 
             p_session_id: sessionData.id,
