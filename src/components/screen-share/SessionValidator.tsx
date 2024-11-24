@@ -81,12 +81,12 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
         // Determine if this device should be host or viewer
         let isHost = false;
         
-        // If this device was previously the host, it can reconnect as host
-        if (sessionData.host_device_id === deviceId) {
+        // First priority: If no host is connected, this device can be the host
+        if (!sessionData.host_connected) {
           isHost = true;
         }
-        // If no host is connected, this device can be the host
-        else if (!sessionData.host_connected) {
+        // Second priority: If this device was previously the host, it can reconnect as host
+        else if (sessionData.host_device_id === deviceId) {
           isHost = true;
         }
         // Otherwise, this device will be a viewer
