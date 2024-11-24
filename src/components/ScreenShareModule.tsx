@@ -14,8 +14,11 @@ const ScreenShareModule = () => {
   const { toast } = useToast();
 
   const checkDeviceCompatibility = () => {
-    // Check if it's iOS
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    // Check if it's iOS using a more reliable and TypeScript-friendly approach
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && 
+      !/CriOS/.test(navigator.userAgent) && // Not Chrome on iOS
+      !/FxiOS/.test(navigator.userAgent) && // Not Firefox on iOS
+      !/OPiOS/.test(navigator.userAgent);   // Not Opera on iOS
     
     if (isIOS) {
       toast({
