@@ -11,34 +11,35 @@ export const useWebRTCChannel = (
 
   useEffect(() => {
     const channelName = `webrtc:${roomId}`;
-    console.log('Creating channel:', channelName);
+    console.log('[useWebRTCChannel] Creating channel:', channelName);
     
     channelRef.current = supabase.channel(channelName)
-      .on("broadcast", { event: "offer" }, async ({ payload }: any) => {
-        console.log('Received offer:', payload);
+      .on("broadcast", { event: "offer" }, ({ payload }: any) => {
+        console.log('[useWebRTCChannel] Received offer:', payload);
         onOffer(new RTCSessionDescription(payload));
       })
-      .on("broadcast", { event: "answer" }, async ({ payload }: any) => {
-        console.log('Received answer:', payload);
+      .on("broadcast", { event: "answer" }, ({ payload }: any) => {
+        console.log('[useWebRTCChannel] Received answer:', payload);
         onAnswer(new RTCSessionDescription(payload));
       })
-      .on("broadcast", { event: "ice-candidate" }, async ({ payload }: any) => {
-        console.log('Received ICE candidate:', payload);
+      .on("broadcast", { event: "ice-candidate" }, ({ payload }: any) => {
+        console.log('[useWebRTCChannel] Received ICE candidate:', payload);
         onIceCandidate(new RTCIceCandidate(payload));
       })
       .subscribe((status: string) => {
-        console.log('Channel subscription status:', status);
+        console.log('[useWebRTCChannel] Channel subscription status:', status);
       });
 
     return () => {
       if (channelRef.current) {
+        console.log('[useWebRTCChannel] Unsubscribing from channel');
         channelRef.current.unsubscribe();
       }
     };
   }, [roomId, onOffer, onAnswer, onIceCandidate]);
 
   const sendOffer = (offer: RTCSessionDescriptionInit) => {
-    console.log('Sending offer:', offer);
+    console.log('[useWebRTCChannel] Sending offer:', offer);
     channelRef.current?.send({
       type: "broadcast",
       event: "offer",
@@ -47,7 +48,7 @@ export const useWebRTCChannel = (
   };
 
   const sendAnswer = (answer: RTCSessionDescriptionInit) => {
-    console.log('Sending answer:', answer);
+    console.log('[useWebRTCChannel] Sending answer:', answer);
     channelRef.current?.send({
       type: "broadcast",
       event: "answer",
@@ -56,7 +57,7 @@ export const useWebRTCChannel = (
   };
 
   const sendIceCandidate = (candidate: RTCIceCandidate) => {
-    console.log('Sending ICE candidate:', candidate);
+    console.log('[useWebRTCChannel] Sending ICE candidate:', candidate);
     channelRef.current?.send({
       type: "broadcast",
       event: "ice-candidate",
