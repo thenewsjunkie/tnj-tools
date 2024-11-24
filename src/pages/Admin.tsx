@@ -1,9 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import Stopwatch from "@/components/Stopwatch";
 import SocialStats from "@/components/SocialStats";
-import SocialGraph from "@/components/SocialGraph";
 import ShowNotes from "@/components/ShowNotes";
-import MediaPool from "@/components/MediaPool";
 import Reminders from "@/components/Reminders";
 import InterviewRequestsModule from "@/components/InterviewRequestsModule";
 import ScreenShareModule from "@/components/ScreenShareModule";
@@ -57,15 +55,11 @@ const Admin = () => {
         <SocialStats />
         <ShowNotes />
         <div className="md:col-span-2">
-          <SocialGraph />
-        </div>
-        <div className="md:col-span-2">
           <InterviewRequestsModule />
         </div>
         <div className="md:col-span-2">
           <ScreenShareModule />
         </div>
-        <MediaPool />
       </div>
     </div>
   );

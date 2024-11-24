@@ -9,24 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      follower_history: {
-        Row: {
-          id: string
-          recorded_at: string | null
-          total_followers: number
-        }
-        Insert: {
-          id?: string
-          recorded_at?: string | null
-          total_followers: number
-        }
-        Update: {
-          id?: string
-          recorded_at?: string | null
-          total_followers?: number
-        }
-        Relationships: []
-      }
       interview_requests: {
         Row: {
           conversation_history: Json | null
@@ -54,33 +36,6 @@ export type Database = {
           id?: string
           scheduled_date?: string | null
           status?: string
-        }
-        Relationships: []
-      }
-      media_pool: {
-        Row: {
-          created_at: string | null
-          id: string
-          thumbnail: string
-          title: string
-          type: string
-          url: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          thumbnail: string
-          title: string
-          type: string
-          url: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          thumbnail?: string
-          title?: string
-          type?: string
-          url?: string
         }
         Relationships: []
       }
