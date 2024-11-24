@@ -1,26 +1,16 @@
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { debounce } from "lodash";
-
-interface SessionValidatorProps {
-  code: string;
-  onValidSession: (data: SessionData, isHost: boolean) => void;
-}
-
-interface SessionData {
-  id: string;
-  host_device_id: string | null;
-  viewer_device_id: string | null;
-  host_connected: boolean;
-  viewer_connected: boolean;
-  is_active: boolean;
-  share_code: string;
-  expires_at: string;
-}
+import { useDeviceId } from "./hooks/useDeviceId";
+import { useSessionSubscription } from "./hooks/useSessionSubscription";
+import { SessionData, SessionValidatorProps } from "./types";
 
 const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
   const [validating, setValidating] = useState(true);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [isCurrentHost, setIsCurrentHost] = useState(false);
+  const deviceId = useDeviceId();
   const { toast } = useToast();
   const [hasShownError, setHasShownError] = useState(false);
 
@@ -38,27 +28,28 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
     [hasShownError, toast]
   );
 
+  const handleDisconnect = useCallback(() => {
+    showError(
+      "Session disconnected",
+      "Your connection was terminated."
+    );
+    setValidating(false);
+  }, [showError]);
+
+  useSessionSubscription(sessionId, deviceId, isCurrentHost, handleDisconnect);
+
   useEffect(() => {
     let isMounted = true;
-    let subscription: any = null;
 
     const validateSession = async () => {
       try {
-        if (!code) {
+        if (!code || !deviceId) {
           setValidating(false);
           return;
         }
 
         setHasShownError(false);
-        
-        // Get or create a persistent device ID
-        let deviceId = localStorage.getItem('screen_share_device_id');
-        if (!deviceId) {
-          deviceId = crypto.randomUUID();
-          localStorage.setItem('screen_share_device_id', deviceId);
-        }
 
-        // First, check if the session exists and is valid
         const { data: sessionData, error: fetchError } = await supabase
           .from('screen_share_sessions')
           .select('*')
@@ -81,7 +72,6 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
         const expiresAt = new Date(sessionData.expires_at);
         
         if (expiresAt < now) {
-          // Update session to inactive if expired
           await supabase
             .from('screen_share_sessions')
             .update({ 
@@ -106,7 +96,6 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
         const isExistingViewer = sessionData.viewer_device_id === deviceId;
 
         if (isExistingHost || isExistingViewer) {
-          // Device is already connected, update its connection status
           const updateData = isExistingHost 
             ? { host_connected: true }
             : { viewer_connected: true };
@@ -119,13 +108,14 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
             .single();
 
           if (reconnectedSession) {
+            setSessionId(reconnectedSession.id);
+            setIsCurrentHost(isExistingHost);
             onValidSession(reconnectedSession as SessionData, isExistingHost);
             setValidating(false);
             return;
           }
         }
 
-        // Try to claim host or viewer role if not already connected
         const { data: updatedSession, error: updateError } = await supabase.rpc(
           'claim_screen_share_role',
           { 
@@ -149,36 +139,10 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
 
         const typedSession = updatedSession as SessionData;
         const isHost = typedSession.host_device_id === deviceId;
-
-        // Subscribe to session changes
-        subscription = supabase
-          .channel(`session_${sessionData.id}`)
-          .on('postgres_changes', {
-            event: '*',
-            schema: 'public',
-            table: 'screen_share_sessions',
-            filter: `id=eq.${sessionData.id}`
-          }, (payload) => {
-            const newData = payload.new as SessionData;
-            // Check if this device is still connected
-            const isStillConnected = isHost 
-              ? newData.host_device_id === deviceId 
-              : newData.viewer_device_id === deviceId;
-            
-            if (!isStillConnected || !newData.is_active) {
-              showError(
-                "Session disconnected",
-                "Your connection was terminated."
-              );
-              setValidating(false);
-              return;
-            }
-          })
-          .subscribe();
-
-        if (isMounted) {
-          onValidSession(typedSession, isHost);
-        }
+        
+        setSessionId(typedSession.id);
+        setIsCurrentHost(isHost);
+        onValidSession(typedSession, isHost);
       } catch (error) {
         if (!isMounted) return;
         console.error('Session validation error:', error);
@@ -197,12 +161,9 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
 
     return () => {
       isMounted = false;
-      if (subscription) {
-        subscription.unsubscribe();
-      }
       setValidating(false);
     };
-  }, [code, onValidSession, toast, showError, hasShownError]);
+  }, [code, deviceId, onValidSession, showError, hasShownError]);
 
   if (validating) {
     return (
