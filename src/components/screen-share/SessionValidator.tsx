@@ -36,6 +36,7 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
   );
 
   const handleDisconnect = useCallback(() => {
+    console.log('Session disconnected');
     showError(
       "Session disconnected",
       "Your connection was terminated."
@@ -50,22 +51,24 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
 
     const validateSession = async () => {
       if (!code || !deviceId) {
+        console.log('Missing code or deviceId:', { code, deviceId });
         resetSessionState();
         return;
       }
 
       try {
-        console.log('Validating session for code:', code);
+        console.log('Starting session validation for code:', code);
         const sessionData = await validateShareSession(code);
         
         if (!isMounted) return;
 
-        console.log('Session data:', sessionData);
+        console.log('Session validation successful:', sessionData);
         
         const now = new Date();
         const expiresAt = new Date(sessionData.expires_at);
         
         if (expiresAt < now) {
+          console.log('Session expired:', { expiresAt, now });
           await handleExpiredSession(sessionData.id);
           showError(
             "Session expired",
@@ -80,7 +83,7 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
         const isExistingViewer = sessionData.viewer_device_id === deviceId;
 
         if (isExistingHost || isExistingViewer) {
-          console.log('Reconnecting as:', isExistingHost ? 'host' : 'viewer');
+          console.log('Reconnecting existing device:', { isExistingHost, deviceId });
           const reconnectedSession = await reconnectToSession(sessionData.id, isExistingHost);
           updateSessionState(reconnectedSession, isExistingHost);
           onValidSession(reconnectedSession, isExistingHost);
@@ -91,7 +94,7 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
         const updatedSession = await claimSessionRole(sessionData.id, deviceId, code);
         const isHost = updatedSession.host_device_id === deviceId;
         
-        console.log('Role claimed:', isHost ? 'host' : 'viewer');
+        console.log('Role claimed:', { isHost, session: updatedSession });
         updateSessionState(updatedSession, isHost);
         onValidSession(updatedSession, isHost);
       } catch (error) {

@@ -2,28 +2,31 @@ import { supabase } from "@/integrations/supabase/client";
 import { SessionData } from "../types";
 
 export const validateShareSession = async (code: string): Promise<SessionData> => {
+  console.log('Validating share session with code:', code);
+  
   const { data: sessions, error } = await supabase
     .from('screen_share_sessions')
     .select('*')
     .eq('share_code', code.toUpperCase())
-    .eq('is_active', true);
+    .eq('is_active', true)
+    .single();
 
   if (error) {
+    console.error('Database error during session validation:', error);
     throw new Error(`Failed to validate session: ${error.message}`);
   }
 
-  if (!sessions || sessions.length === 0) {
+  if (!sessions) {
+    console.error('No session found for code:', code);
     throw new Error('Session does not exist or is no longer active');
   }
 
-  if (sessions.length > 1) {
-    throw new Error('Multiple active sessions found with the same code');
-  }
-
-  return sessions[0];
+  console.log('Found session:', sessions);
+  return sessions;
 };
 
 export const handleExpiredSession = async (sessionId: string) => {
+  console.log('Handling expired session:', sessionId);
   const { error } = await supabase
     .from('screen_share_sessions')
     .update({
@@ -44,21 +47,22 @@ export const reconnectToSession = async (
   sessionId: string,
   isHost: boolean
 ): Promise<SessionData> => {
-  const updateData = isHost
-    ? { host_connected: true }
-    : { viewer_connected: true };
-
+  console.log('Attempting to reconnect to session:', sessionId, 'as host:', isHost);
+  
   const { data, error } = await supabase
     .from('screen_share_sessions')
-    .update(updateData)
+    .update(isHost ? { host_connected: true } : { viewer_connected: true })
     .eq('id', sessionId)
+    .eq('is_active', true)  // Only reconnect to active sessions
     .select()
     .single();
 
   if (error || !data) {
+    console.error('Failed to reconnect to session:', error);
     throw new Error('Failed to reconnect to session');
   }
 
+  console.log('Successfully reconnected to session:', data);
   return data;
 };
 
@@ -67,6 +71,8 @@ export const claimSessionRole = async (
   deviceId: string,
   shareCode: string
 ): Promise<SessionData> => {
+  console.log('Claiming role for session:', sessionId, 'device:', deviceId);
+  
   const { data, error } = await supabase
     .rpc('claim_screen_share_role', {
       p_session_id: sessionId,
@@ -75,8 +81,10 @@ export const claimSessionRole = async (
     });
 
   if (error || !data) {
+    console.error('Failed to claim role:', error);
     throw new Error('Failed to claim role in session');
   }
 
+  console.log('Successfully claimed role:', data);
   return data;
 };

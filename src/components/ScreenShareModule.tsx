@@ -23,6 +23,7 @@ const ScreenShareModule = () => {
       
       const now = new Date().toISOString();
       
+      console.log('Cleaning up expired or inactive sessions...');
       // First, clean up any expired or inactive sessions
       await supabase
         .from("screen_share_sessions")
@@ -37,6 +38,7 @@ const ScreenShareModule = () => {
 
       // Generate a new unique code
       const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+      console.log('Generated new share code:', code);
       
       // Insert new session with all required fields
       const { data, error } = await supabase
@@ -64,6 +66,7 @@ const ScreenShareModule = () => {
         return;
       }
 
+      console.log('Successfully created new session:', data);
       setShareCode(code);
       toast({
         title: "Success",
