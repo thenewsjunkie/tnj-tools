@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import VideoDisplay from "@/components/screen-share/VideoDisplay";
@@ -10,6 +10,8 @@ const ScreenShare = () => {
   const { code } = useParams();
   const [sessionData, setSessionData] = useState<any>(null);
   const [isHost, setIsHost] = useState(false);
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement>(null);
 
   if (!code) {
     return (
@@ -55,29 +57,31 @@ const ScreenShare = () => {
                 roomId={sessionData.id}
                 isHost={isHost}
                 onTrackAdded={(stream) => {
-                  const video = document.querySelector(
-                    isHost ? "#remoteVideo" : "#localVideo"
-                  ) as HTMLVideoElement;
-                  if (video) video.srcObject = stream;
+                  if (isHost && remoteVideoRef.current) {
+                    remoteVideoRef.current.srcObject = stream;
+                  } else if (!isHost && localVideoRef.current) {
+                    localVideoRef.current.srcObject = stream;
+                  }
                 }}
-                onConnectionEstablished={isHost ? () => {
-                  navigator.mediaDevices
-                    .getDisplayMedia({ video: true })
-                    .then((stream) => {
-                      const video = document.querySelector(
-                        "#localVideo"
-                      ) as HTMLVideoElement;
-                      if (video) video.srcObject = stream;
-                    })
-                    .catch(console.error);
-                } : () => {}}
+                onConnectionEstablished={() => {
+                  if (isHost) {
+                    navigator.mediaDevices
+                      .getDisplayMedia({ video: true })
+                      .then((stream) => {
+                        if (localVideoRef.current) {
+                          localVideoRef.current.srcObject = stream;
+                        }
+                      })
+                      .catch(console.error);
+                  }
+                }}
               />
             )}
             
             <VideoDisplay
               isHost={isHost}
-              localVideoRef={{ current: document.querySelector("#localVideo") }}
-              remoteVideoRef={{ current: document.querySelector("#remoteVideo") }}
+              localVideoRef={localVideoRef}
+              remoteVideoRef={remoteVideoRef}
             />
           </div>
         </div>

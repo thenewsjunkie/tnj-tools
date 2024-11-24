@@ -12,6 +12,7 @@ const VideoDisplay = ({ isHost, localVideoRef, remoteVideoRef }: VideoDisplayPro
       {isHost && (
         <div className="relative aspect-video bg-black/50 rounded-lg overflow-hidden">
           <video
+            id="localVideo"
             ref={localVideoRef}
             autoPlay
             playsInline
@@ -26,6 +27,7 @@ const VideoDisplay = ({ isHost, localVideoRef, remoteVideoRef }: VideoDisplayPro
       
       <div className="relative aspect-video bg-black/50 rounded-lg overflow-hidden">
         <video
+          id="remoteVideo"
           ref={remoteVideoRef}
           autoPlay
           playsInline
