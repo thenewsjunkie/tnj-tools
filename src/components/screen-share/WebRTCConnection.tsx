@@ -92,16 +92,21 @@ const WebRTCConnection = ({
       
       // If we're the host and we have a peer connection, we need to update the tracks
       if (isHost && peerConnectionRef.current && stream) {
-        const senders = peerConnectionRef.current.getSenders();
-        senders.forEach(sender => {
-          peerConnectionRef.current?.removeTrack(sender);
-        });
+        // Check if the connection is still open before manipulating tracks
+        if (peerConnectionRef.current.signalingState !== 'closed') {
+          const senders = peerConnectionRef.current.getSenders();
+          senders.forEach(sender => {
+            if (peerConnectionRef.current && peerConnectionRef.current.signalingState !== 'closed') {
+              peerConnectionRef.current.removeTrack(sender);
+            }
+          });
 
-        stream.getTracks().forEach(track => {
-          if (peerConnectionRef.current) {
-            peerConnectionRef.current.addTrack(track, stream);
-          }
-        });
+          stream.getTracks().forEach(track => {
+            if (peerConnectionRef.current && peerConnectionRef.current.signalingState !== 'closed') {
+              peerConnectionRef.current.addTrack(track, stream);
+            }
+          });
+        }
       }
     }
   }, [stream, isHost]);
@@ -125,7 +130,7 @@ const WebRTCConnection = ({
         console.log('Number of tracks to add:', tracks.length);
         
         tracks.forEach(track => {
-          if (streamRef.current) {
+          if (streamRef.current && peerConnection.signalingState !== 'closed') {
             console.log('Adding track:', track.kind, track.enabled, track.readyState);
             peerConnection.addTrack(track, streamRef.current);
           }
