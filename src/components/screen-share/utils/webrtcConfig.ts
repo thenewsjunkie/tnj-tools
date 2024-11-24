@@ -22,6 +22,6 @@ export const getRTCConfiguration = (): RTCConfiguration => ({
   ],
   iceCandidatePoolSize: 10,
   bundlePolicy: 'max-bundle' as RTCBundlePolicy,
-  rtcpMuxPolicy: 'require' as RTCMuxPolicy,
+  rtcpMuxPolicy: 'require' as RTCRtcpMuxPolicy,
   iceTransportPolicy: 'all' as RTCIceTransportPolicy,
 });
