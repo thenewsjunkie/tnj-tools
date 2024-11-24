@@ -41,10 +41,12 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
         setHasShownError(false);
         const deviceId = crypto.randomUUID();
 
+        // First, check if the session exists and is valid
         const { data: sessionData, error: fetchError } = await supabase
           .from('screen_share_sessions')
           .select('*')
           .eq('share_code', code.toUpperCase())
+          .eq('is_active', true)
           .single();
 
         if (!isMounted) return;
@@ -52,7 +54,7 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
         if (fetchError || !sessionData) {
           showError(
             "Invalid session",
-            "This screen share session does not exist."
+            "This screen share session does not exist or is no longer active."
           );
           setValidating(false);
           return;
@@ -65,15 +67,6 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
           showError(
             "Session expired",
             "This screen share session has expired."
-          );
-          setValidating(false);
-          return;
-        }
-
-        if (!sessionData.is_active) {
-          showError(
-            "Session inactive",
-            "This screen share session is no longer active."
           );
           setValidating(false);
           return;
@@ -110,12 +103,12 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
           .from('screen_share_sessions')
           .update({
             [isHost ? 'host_connected' : 'viewer_connected']: true,
-            [isHost ? 'host_device_id' : 'viewer_device_id']: deviceId
+            [isHost ? 'host_device_id' : 'viewer_device_id']: deviceId,
+            is_active: true // Ensure session remains active
           })
           .eq('id', sessionData.id)
           .eq('is_active', true)
           .eq('share_code', code.toUpperCase())
-          .gt('expires_at', now.toISOString())
           .select()
           .single();
 
@@ -146,10 +139,10 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
               ? newData.host_device_id === deviceId 
               : newData.viewer_device_id === deviceId;
             
-            if (!isStillConnected) {
+            if (!isStillConnected || !newData.is_active) {
               showError(
                 "Session disconnected",
-                "Your connection was taken over by another device."
+                "Your connection was terminated."
               );
               setValidating(false);
               return;
