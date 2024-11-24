@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import ReminderForm from "./reminders/ReminderForm";
 import ReminderItem from "./reminders/ReminderItem";
 import { format, parseISO } from "date-fns";
-import { zonedTimeToUtc, utcToZonedTime } from "date-fns-tz";
+import { fromZonedTime, toZonedTime } from "date-fns-tz";
 
 const Reminders = () => {
   const [newReminder, setNewReminder] = useState("");
@@ -30,7 +30,7 @@ const Reminders = () => {
       return data.map(reminder => ({
         ...reminder,
         datetime: format(
-          utcToZonedTime(parseISO(reminder.datetime), timeZone),
+          toZonedTime(parseISO(reminder.datetime), timeZone),
           "yyyy-MM-dd'T'HH:mm"
         )
       }));
@@ -40,7 +40,7 @@ const Reminders = () => {
   const addReminderMutation = useMutation({
     mutationFn: async (reminder: { text: string; datetime: string; recurringWeekly: boolean }) => {
       // Convert local time to UTC before saving
-      const utcDateTime = zonedTimeToUtc(parseISO(reminder.datetime), timeZone).toISOString();
+      const utcDateTime = fromZonedTime(parseISO(reminder.datetime), timeZone).toISOString();
       
       const { error } = await supabase
         .from('reminders')
@@ -79,7 +79,7 @@ const Reminders = () => {
       recurringWeekly: boolean;
     }) => {
       // Convert local time to UTC before saving
-      const utcDateTime = zonedTimeToUtc(parseISO(datetime), timeZone).toISOString();
+      const utcDateTime = fromZonedTime(parseISO(datetime), timeZone).toISOString();
       
       const { error } = await supabase
         .from('reminders')
@@ -160,7 +160,7 @@ const Reminders = () => {
 
   const isUpcoming = (datetime: string) => {
     const now = new Date();
-    const reminderDate = utcToZonedTime(parseISO(datetime), timeZone);
+    const reminderDate = toZonedTime(parseISO(datetime), timeZone);
     const hoursDifference = (reminderDate.getTime() - now.getTime()) / (1000 * 60 * 60);
     return hoursDifference >= 0 && hoursDifference <= 24;
   };

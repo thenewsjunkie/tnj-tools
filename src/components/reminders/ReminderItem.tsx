@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { format, parseISO } from "date-fns";
-import { utcToZonedTime } from "date-fns-tz";
+import { toZonedTime } from "date-fns-tz";
 
 interface ReminderItemProps {
   reminder: {
@@ -58,7 +58,7 @@ const ReminderItem = ({ reminder, onDelete, onEdit, isUpcoming }: ReminderItemPr
 
   const formatDateTime = (datetime: string) => {
     const date = parseISO(datetime);
-    const zonedDate = utcToZonedTime(date, timeZone);
+    const zonedDate = toZonedTime(date, timeZone);
     return format(zonedDate, 'MMM d, yyyy h:mm a');
   };
 
