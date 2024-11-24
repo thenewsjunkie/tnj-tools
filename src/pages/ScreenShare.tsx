@@ -17,61 +17,86 @@ const ScreenShare = () => {
 
   useEffect(() => {
     const checkCode = async () => {
+      console.log("Starting share code validation...");
+      
       if (!code) {
-        console.log("No code provided");
+        console.log("Error: No code provided in URL");
         setIsValid(false);
         return;
       }
 
-      console.log("Checking code:", code);
+      const normalizedCode = code.toUpperCase().trim();
+      console.log("Normalized share code:", normalizedCode);
 
-      const { data, error } = await supabase
-        .from("screen_share_sessions")
-        .select()
-        .eq("share_code", code.toUpperCase())
-        .eq("is_active", true)
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from("screen_share_sessions")
+          .select("*")
+          .eq("share_code", normalizedCode)
+          .eq("is_active", true)
+          .single();
 
-      console.log("Query result:", { data, error });
+        console.log("Database query completed:", { data, error });
 
-      if (error || !data) {
-        console.log("Error or no data:", error);
+        if (error) {
+          console.log("Database error:", error.message);
+          throw error;
+        }
+
+        if (!data) {
+          console.log("No active session found for code:", normalizedCode);
+          throw new Error("No active session found");
+        }
+
+        // Check if the session has expired
+        const now = new Date();
+        const expiresAt = new Date(data.expires_at);
+        console.log("Checking expiration:", { 
+          now: now.toISOString(), 
+          expiresAt: expiresAt.toISOString(),
+          isExpired: expiresAt < now
+        });
+
+        if (expiresAt < now) {
+          console.log("Session has expired");
+          setIsValid(false);
+          toast({
+            title: "Expired Share Code",
+            description: "This share session has expired.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        console.log("Session is valid, initializing connection...");
+        console.log("Session data:", {
+          id: data.id,
+          hostConnected: data.host_connected,
+          viewerConnected: data.viewer_connected
+        });
+
+        setIsValid(true);
+        setIsHost(!data.host_connected);
+        setRoomId(data.id);
+
+        // Update connection status
+        const column = !data.host_connected ? "host_connected" : "viewer_connected";
+        await supabase
+          .from("screen_share_sessions")
+          .update({ [column]: true })
+          .eq("id", data.id);
+
+        console.log("Connection status updated successfully");
+
+      } catch (error) {
+        console.log("Error in validation:", error);
         setIsValid(false);
         toast({
           title: "Invalid Share Code",
           description: "This share code is invalid. Please check the code and try again.",
           variant: "destructive",
         });
-        return;
       }
-
-      // Check if the session has expired
-      const now = new Date();
-      const expiresAt = new Date(data.expires_at);
-      console.log("Time check:", { now, expiresAt });
-
-      if (expiresAt < now) {
-        console.log("Session expired");
-        setIsValid(false);
-        toast({
-          title: "Expired Share Code",
-          description: "This share session has expired.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      console.log("Session valid, setting up connection");
-      setIsValid(true);
-      setIsHost(!data.host_connected);
-      setRoomId(data.id);
-
-      // Update connection status
-      const column = !data.host_connected ? "host_connected" : "viewer_connected";
-      await supabase
-        .from("screen_share_sessions")
-        .update({ [column]: true })
-        .eq("id", data.id);
     };
 
     checkCode();
@@ -85,10 +110,14 @@ const ScreenShare = () => {
 
   const startScreenShare = async () => {
     try {
+      console.log("Requesting screen share access...");
       const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+      
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
       }
+      
+      console.log("Screen sharing started successfully");
       toast({
         title: "Screen sharing started",
         description: "Your screen is now being shared",
@@ -104,11 +133,14 @@ const ScreenShare = () => {
   };
 
   const stopScreenShare = async () => {
+    console.log("Stopping screen share...");
+    
     if (localVideoRef.current?.srcObject) {
       (localVideoRef.current.srcObject as MediaStream)
         .getTracks()
         .forEach((track) => track.stop());
     }
+    
     if (code && roomId) {
       await supabase
         .from("screen_share_sessions")
@@ -118,6 +150,8 @@ const ScreenShare = () => {
           viewer_connected: false 
         })
         .eq("id", roomId);
+      
+      console.log("Screen share session ended");
     }
     window.close();
   };
