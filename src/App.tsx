@@ -44,37 +44,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return children;
 };
 
-// Non-Protected Route component - ensures user is NOT logged in
-const NonAuthRoute = ({ children }: { children: React.ReactNode }) => {
-  const [session, setSession] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    // Check if user is logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(!!session);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      setSession(!!session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  if (session === null) {
-    return null; // Loading state
-  }
-
-  // If user is logged in, redirect them away from this route
-  if (session) {
-    return <Navigate to="/admin" replace />;
-  }
-
-  return children;
-};
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -100,14 +69,7 @@ const App = () => (
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/screen-share/:code"
-            element={
-              <NonAuthRoute>
-                <ScreenShare />
-              </NonAuthRoute>
-            }
-          />
+          <Route path="/screen-share/:code" element={<ScreenShare />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
