@@ -15,7 +15,7 @@ const ScreenShareModule = () => {
     const code = Math.random().toString(36).substring(2, 8).toUpperCase();
     const { error } = await supabase.from("screen_share_sessions").insert({
       share_code: code,
-      expires_at: addDays(new Date(), 1),
+      expires_at: addDays(new Date(), 1).toISOString(),
     });
 
     if (error) {
