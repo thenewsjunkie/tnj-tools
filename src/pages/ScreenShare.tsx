@@ -5,13 +5,16 @@ import VideoDisplay from "@/components/screen-share/VideoDisplay";
 import WebRTCConnection from "@/components/screen-share/WebRTCConnection";
 import SessionValidator from "@/components/screen-share/SessionValidator";
 import { updateSessionStatus } from "@/utils/supabaseSession";
+import { useToast } from "@/components/ui/use-toast";
 
 const ScreenShare = () => {
   const { code } = useParams();
   const [sessionData, setSessionData] = useState<any>(null);
   const [isHost, setIsHost] = useState(false);
+  const [stream, setStream] = useState<MediaStream | null>(null);
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const { toast } = useToast();
 
   if (!code) {
     return (
@@ -24,10 +27,35 @@ const ScreenShare = () => {
   const handleValidSession = async (data: any, host: boolean) => {
     setSessionData(data);
     setIsHost(host);
+    
+    if (host) {
+      try {
+        const displayStream = await navigator.mediaDevices.getDisplayMedia({ 
+          video: true,
+          audio: true 
+        });
+        setStream(displayStream);
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = displayStream;
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to access screen sharing. Please make sure you've granted the necessary permissions.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
     await updateSessionStatus(data.id, host, true);
   };
 
   const handleStopSharing = async () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+    }
     if (sessionData) {
       await updateSessionStatus(sessionData.id, isHost, false);
     }
@@ -56,24 +84,14 @@ const ScreenShare = () => {
               <WebRTCConnection
                 roomId={sessionData.id}
                 isHost={isHost}
-                onTrackAdded={(stream) => {
-                  if (isHost && remoteVideoRef.current) {
-                    remoteVideoRef.current.srcObject = stream;
-                  } else if (!isHost && localVideoRef.current) {
-                    localVideoRef.current.srcObject = stream;
+                stream={stream}
+                onTrackAdded={(remoteStream) => {
+                  if (remoteVideoRef.current) {
+                    remoteVideoRef.current.srcObject = remoteStream;
                   }
                 }}
                 onConnectionEstablished={() => {
-                  if (isHost) {
-                    navigator.mediaDevices
-                      .getDisplayMedia({ video: true })
-                      .then((stream) => {
-                        if (localVideoRef.current) {
-                          localVideoRef.current.srcObject = stream;
-                        }
-                      })
-                      .catch(console.error);
-                  }
+                  // Connection is established, stream is already set up in handleValidSession
                 }}
               />
             )}

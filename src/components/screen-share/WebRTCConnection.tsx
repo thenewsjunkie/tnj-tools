@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface WebRTCConnectionProps {
   roomId: string;
   isHost: boolean;
+  stream?: MediaStream | null;
   onTrackAdded: (stream: MediaStream) => void;
   onConnectionEstablished: () => void;
 }
@@ -11,6 +12,7 @@ interface WebRTCConnectionProps {
 const WebRTCConnection = ({
   roomId,
   isHost,
+  stream,
   onTrackAdded,
   onConnectionEstablished,
 }: WebRTCConnectionProps) => {
@@ -32,7 +34,13 @@ const WebRTCConnection = ({
       
       peerConnectionRef.current = new RTCPeerConnection(configuration);
 
-      // Use a unique channel name for each room
+      // Add stream tracks to peer connection if host
+      if (isHost && stream) {
+        stream.getTracks().forEach(track => {
+          peerConnectionRef.current?.addTrack(track, stream);
+        });
+      }
+
       const channelName = `room:${roomId}`;
       channelRef.current = supabase.channel(channelName, {
         config: {
@@ -53,6 +61,21 @@ const WebRTCConnection = ({
       peerConnectionRef.current.ontrack = (event) => {
         onTrackAdded(event.streams[0]);
       };
+
+      // If host, create and send offer
+      if (isHost) {
+        try {
+          const offer = await peerConnectionRef.current.createOffer();
+          await peerConnectionRef.current.setLocalDescription(offer);
+          channelRef.current.send({
+            type: "broadcast",
+            event: "offer",
+            payload: offer,
+          });
+        } catch (error) {
+          console.error("Error creating offer:", error);
+        }
+      }
 
       channelRef.current
         .on("broadcast", { event: "offer" }, async ({ payload }: any) => {
@@ -109,7 +132,7 @@ const WebRTCConnection = ({
         channelRef.current.unsubscribe();
       }
     };
-  }, [roomId, isHost, onTrackAdded, onConnectionEstablished]);
+  }, [roomId, isHost, stream, onTrackAdded, onConnectionEstablished]);
 
   return null;
 };
