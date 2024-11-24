@@ -67,6 +67,7 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+          {/* Remove ProtectedRoute wrapper for screen share */}
           <Route path="/screen-share/:code" element={<ScreenShare />} />
         </Routes>
       </BrowserRouter>
