@@ -15,7 +15,7 @@ const Admin = () => {
           to="/" 
           className="text-white hover:text-neon-red transition-colors"
         >
-          ← Back to Clock
+          ← Home
         </Link>
         <h1 className="text-white text-xl sm:text-2xl digital">555am.io Admin</h1>
       </nav>
