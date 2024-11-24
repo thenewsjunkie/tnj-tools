@@ -5,23 +5,37 @@ export const setupPeerConnection = (
   onTrack: (stream: MediaStream) => void,
   onConnectionEstablished: () => void
 ) => {
+  console.log('[webrtcHelpers] Setting up peer connection');
   const peerConnection = new RTCPeerConnection(getRTCConfiguration());
   const remoteStream = new MediaStream();
 
   peerConnection.oniceconnectionstatechange = () => {
-    console.log('ICE connection state:', peerConnection.iceConnectionState);
+    console.log('[webrtcHelpers] ICE connection state:', peerConnection.iceConnectionState);
     if (peerConnection.iceConnectionState === 'connected' || 
         peerConnection.iceConnectionState === 'completed') {
-      console.log('Connection established');
+      console.log('[webrtcHelpers] Connection established');
       onConnectionEstablished();
     }
   };
 
   peerConnection.ontrack = (event) => {
-    console.log('Received remote track:', event.track.kind);
+    console.log('[webrtcHelpers] Received track:', {
+      kind: event.track.kind,
+      enabled: event.track.enabled,
+      muted: event.track.muted,
+      streams: event.streams.length
+    });
+    
     if (!isHost) {
-      remoteStream.addTrack(event.track);
-      console.log('Added track to remote stream:', event.track.kind);
+      event.streams[0].getTracks().forEach(track => {
+        console.log('[webrtcHelpers] Adding track to remote stream:', {
+          kind: track.kind,
+          enabled: track.enabled,
+          muted: track.muted
+        });
+        remoteStream.addTrack(track);
+      });
+      console.log('[webrtcHelpers] Calling onTrack with remote stream');
       onTrack(remoteStream);
     }
   };
@@ -34,12 +48,19 @@ export const addTracksToConnection = (
   stream: MediaStream
 ) => {
   if (peerConnection.signalingState === 'closed') {
-    console.warn('Cannot add tracks: connection is closed');
+    console.warn('[webrtcHelpers] Cannot add tracks: connection is closed');
     return;
   }
 
+  const senders = peerConnection.getSenders();
+  console.log('[webrtcHelpers] Current senders:', senders.length);
+
   stream.getTracks().forEach(track => {
-    console.log('Adding track to connection:', track.kind);
+    console.log('[webrtcHelpers] Adding track to connection:', {
+      kind: track.kind,
+      enabled: track.enabled,
+      muted: track.muted
+    });
     peerConnection.addTrack(track, stream);
   });
 };
@@ -48,10 +69,16 @@ export const cleanupWebRTC = (
   peerConnection: RTCPeerConnection | null,
   remoteStream: MediaStream | null
 ) => {
+  console.log('[webrtcHelpers] Cleaning up WebRTC');
   if (remoteStream) {
-    remoteStream.getTracks().forEach(track => track.stop());
+    console.log('[webrtcHelpers] Stopping remote stream tracks');
+    remoteStream.getTracks().forEach(track => {
+      console.log('[webrtcHelpers] Stopping track:', track.kind);
+      track.stop();
+    });
   }
   if (peerConnection) {
+    console.log('[webrtcHelpers] Closing peer connection');
     peerConnection.close();
   }
 };

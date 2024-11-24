@@ -11,18 +11,23 @@ export const useWebRTCSignaling = (
 
   const handleIceCandidate = useCallback(async (candidate: RTCIceCandidate) => {
     if (!hasRemoteDescRef.current) {
-      console.log('Queueing ICE candidate:', candidate);
+      console.log('[useWebRTCSignaling] Queueing ICE candidate:', {
+        type: candidate.type,
+        protocol: candidate.protocol,
+        address: candidate.address
+      });
       pendingCandidatesRef.current.push(candidate);
       return;
     }
 
     try {
       if (peerConnection?.remoteDescription) {
+        console.log('[useWebRTCSignaling] Adding ICE candidate');
         await peerConnection.addIceCandidate(candidate);
-        console.log('Added ICE candidate:', candidate);
+        console.log('[useWebRTCSignaling] ICE candidate added successfully');
       }
     } catch (error) {
-      console.error('Error adding ICE candidate:', error);
+      console.error('[useWebRTCSignaling] Error adding ICE candidate:', error);
     }
   }, [peerConnection]);
 
@@ -31,39 +36,43 @@ export const useWebRTCSignaling = (
     async (offer) => {
       if (!isHost && peerConnection) {
         try {
-          console.log('Viewer received offer:', offer);
+          console.log('[useWebRTCSignaling] Viewer received offer');
           await peerConnection.setRemoteDescription(offer);
           hasRemoteDescRef.current = true;
           
-          console.log('Creating answer');
+          console.log('[useWebRTCSignaling] Creating answer');
           const answer = await peerConnection.createAnswer();
+          console.log('[useWebRTCSignaling] Setting local description');
           await peerConnection.setLocalDescription(answer);
+          console.log('[useWebRTCSignaling] Sending answer');
           sendAnswer(answer);
 
           // Process pending candidates
+          console.log('[useWebRTCSignaling] Processing pending candidates:', pendingCandidatesRef.current.length);
           for (const candidate of pendingCandidatesRef.current) {
             await handleIceCandidate(candidate);
           }
           pendingCandidatesRef.current = [];
         } catch (error) {
-          console.error('Error handling offer:', error);
+          console.error('[useWebRTCSignaling] Error handling offer:', error);
         }
       }
     },
     async (answer) => {
       if (isHost && peerConnection) {
         try {
-          console.log('Host received answer:', answer);
+          console.log('[useWebRTCSignaling] Host received answer');
           await peerConnection.setRemoteDescription(answer);
           hasRemoteDescRef.current = true;
 
           // Process pending candidates
+          console.log('[useWebRTCSignaling] Processing pending candidates:', pendingCandidatesRef.current.length);
           for (const candidate of pendingCandidatesRef.current) {
             await handleIceCandidate(candidate);
           }
           pendingCandidatesRef.current = [];
         } catch (error) {
-          console.error('Error handling answer:', error);
+          console.error('[useWebRTCSignaling] Error handling answer:', error);
         }
       }
     },
