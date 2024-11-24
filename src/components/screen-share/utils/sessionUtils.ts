@@ -15,20 +15,20 @@ export const validateShareSession = async (code: string): Promise<SessionData> =
     .select('*')
     .eq('share_code', normalizedCode)
     .eq('is_active', true)
-    .single();
+    .limit(1);  // Add limit to ensure we only get one result
 
   if (error) {
     console.error('Database error during session validation:', error);
     throw new Error(`Failed to validate session: ${error.message}`);
   }
 
-  if (!sessions) {
+  if (!sessions || sessions.length === 0) {
     console.error('No active session found for code:', normalizedCode);
     throw new Error('No active session found with this code');
   }
 
-  console.log('Found session:', sessions);
-  return sessions;
+  console.log('Found session:', sessions[0]);
+  return sessions[0];
 };
 
 export const handleExpiredSession = async (sessionId: string) => {
