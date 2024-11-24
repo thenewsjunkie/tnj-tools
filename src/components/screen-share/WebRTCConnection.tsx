@@ -21,7 +21,7 @@ const WebRTCConnection = ({
   const remoteStreamRef = useRef<MediaStream | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  const { sendOffer, sendIceCandidate } = useWebRTCSignaling(
+  const { sendOffer, sendAnswer, sendIceCandidate } = useWebRTCSignaling(
     roomId,
     peerConnectionRef.current,
     isHost
@@ -88,24 +88,20 @@ const WebRTCConnection = ({
       }
     };
 
-    // Add initial stream for host
+    // Add initial stream for host and create offer
     if (isHost && streamRef.current) {
       console.log('[WebRTCConnection] Host adding initial stream tracks');
       addTracksToConnection(peerConnection, streamRef.current);
       
-      // Create and send offer
-      peerConnection.createOffer({
-        offerToReceiveAudio: true,
-        offerToReceiveVideo: true,
-      })
-      .then(offer => {
-        console.log('[WebRTCConnection] Created offer:', offer.type);
-        return peerConnection.setLocalDescription(offer)
-          .then(() => sendOffer(offer));
-      })
-      .catch(error => {
-        console.error('[WebRTCConnection] Error creating offer:', error);
-      });
+      peerConnection.createOffer()
+        .then(offer => {
+          console.log('[WebRTCConnection] Created offer:', offer.type);
+          return peerConnection.setLocalDescription(offer)
+            .then(() => sendOffer(offer));
+        })
+        .catch(error => {
+          console.error('[WebRTCConnection] Error creating offer:', error);
+        });
     }
 
     return () => {
