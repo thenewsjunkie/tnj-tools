@@ -7,6 +7,7 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
+  "Content-Type": "application/json",
 };
 
 interface EmailRequest {
@@ -54,13 +55,13 @@ const handler = async (req: Request): Promise<Response> => {
 
     return new Response(JSON.stringify(data), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: corsHeaders,
     });
   } catch (error: any) {
     console.error("Error in send-interview-request function:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: corsHeaders,
     });
   }
 };
