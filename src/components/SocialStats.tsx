@@ -1,60 +1,21 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Facebook, Youtube, Twitter, Instagram, Settings2, GripVertical, Zap } from "lucide-react";
+import { Settings2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
-
-const platformIcons = {
-  Facebook,
-  YouTube: Youtube,
-  Twitter,
-  Instagram,
-  TikTok: Zap,
-};
-
-const SortableItem = ({ platform }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-  } = useSortable({ id: platform.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  const Icon = platformIcons[platform.platform_name] || Zap;
-
-  return (
-    <div ref={setNodeRef} style={style} className="flex items-center gap-4">
-      <GripVertical className="w-4 h-4 cursor-move" {...attributes} {...listeners} />
-      <Icon className="w-4 h-4" />
-      <div className="flex-1">
-        <Input
-          value={platform.followers}
-          onChange={(e) => platform.onChange(platform.id, e.target.value)}
-          placeholder={`Enter ${platform.platform_name} followers`}
-        />
-      </div>
-    </div>
-  );
-};
+import { platformIcons } from "./social/platform-icons";
+import SortableStatItem from "./social/SortableStatItem";
+import type { SocialMediaPlatform, SocialMediaUpdate } from "@/types/social-media";
 
 const SocialStats = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState<Record<string, string>>({});
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -72,12 +33,12 @@ const SocialStats = () => {
         .order('display_order');
       
       if (error) throw error;
-      return data;
+      return data as SocialMediaPlatform[];
     },
   });
 
   useEffect(() => {
-    const newFormData = {};
+    const newFormData: Record<string, string> = {};
     platforms.forEach(platform => {
       newFormData[platform.id] = platform.followers;
     });
@@ -85,13 +46,14 @@ const SocialStats = () => {
   }, [platforms]);
 
   const updatePlatformMutation = useMutation({
-    mutationFn: async ({ id, followers }) => {
+    mutationFn: async ({ id, followers }: SocialMediaUpdate) => {
       const { error } = await supabase
         .from('social_media_stats')
         .update({ followers })
         .eq('id', id);
       
       if (error) throw error;
+      return { id, followers };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['social-stats'] });
@@ -110,7 +72,7 @@ const SocialStats = () => {
   });
 
   const updateOrderMutation = useMutation({
-    mutationFn: async (updatedPlatforms) => {
+    mutationFn: async (updatedPlatforms: SocialMediaPlatform[]) => {
       const updates = updatedPlatforms.map((platform, index) => ({
         id: platform.id,
         display_order: index + 1,
@@ -121,6 +83,7 @@ const SocialStats = () => {
         .upsert(updates);
       
       if (error) throw error;
+      return updatedPlatforms;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['social-stats'] });
@@ -134,7 +97,7 @@ const SocialStats = () => {
     },
   });
 
-  const handleDragEnd = (event) => {
+  const handleDragEnd = (event: any) => {
     const { active, over } = event;
     
     if (active.id !== over.id) {
@@ -154,7 +117,7 @@ const SocialStats = () => {
 
   const handleSubmit = () => {
     Object.entries(formData).forEach(([id, followers]) => {
-      updatePlatformMutation.mutate({ id, followers: followers as string });
+      updatePlatformMutation.mutate({ id, followers });
     });
   };
 
@@ -187,7 +150,7 @@ const SocialStats = () => {
                   strategy={verticalListSortingStrategy}
                 >
                   {platforms.map((platform) => (
-                    <SortableItem 
+                    <SortableStatItem 
                       key={platform.id} 
                       platform={{
                         ...platform,
@@ -212,7 +175,7 @@ const SocialStats = () => {
       <CardContent>
         <div className="space-y-2 sm:space-y-4">
           {platforms.map((platform) => {
-            const Icon = platformIcons[platform.platform_name] || Zap;
+            const Icon = platformIcons[platform.platform_name] || platformIcons.default;
             return (
               <div 
                 key={platform.id}
