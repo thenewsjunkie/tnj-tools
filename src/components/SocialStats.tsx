@@ -12,20 +12,20 @@ const SocialStats = () => {
   return (
     <Card className="bg-black/50 border-white/10">
       <CardHeader>
-        <CardTitle className="text-white">Social Media Stats</CardTitle>
+        <CardTitle className="text-white text-lg sm:text-xl">Social Media Stats</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className="space-y-2 sm:space-y-4">
           {platforms.map((platform) => (
             <div 
               key={platform.name}
-              className="flex items-center justify-between p-3 bg-white/5 rounded-lg"
+              className="flex items-center justify-between p-2 sm:p-3 bg-white/5 rounded-lg"
             >
-              <div className="flex items-center gap-3">
-                <platform.icon className="w-5 h-5 text-neon-red" />
-                <span className="text-white">{platform.name}</span>
+              <div className="flex items-center gap-2 sm:gap-3">
+                <platform.icon className="w-4 h-4 sm:w-5 sm:h-5 text-neon-red" />
+                <span className="text-white text-sm sm:text-base">{platform.name}</span>
               </div>
-              <div className="digital text-neon-red text-xl">
+              <div className="digital text-neon-red text-lg sm:text-xl">
                 {platform.followers}
               </div>
             </div>

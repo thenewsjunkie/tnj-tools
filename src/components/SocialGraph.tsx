@@ -14,21 +14,23 @@ const SocialGraph = () => {
   return (
     <Card className="bg-black/50 border-white/10">
       <CardHeader>
-        <CardTitle className="text-white">Total Followers Growth</CardTitle>
+        <CardTitle className="text-white text-lg sm:text-xl">Total Followers Growth</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-[400px] w-full">
+        <div className="h-[300px] sm:h-[350px] md:h-[400px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data}>
+            <LineChart data={data} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#333" />
               <XAxis 
                 dataKey="name" 
                 stroke="#fff"
                 tick={{ fill: '#fff' }}
+                fontSize={12}
               />
               <YAxis 
                 stroke="#fff"
                 tick={{ fill: '#fff' }}
+                fontSize={12}
               />
               <Tooltip 
                 contentStyle={{ 
