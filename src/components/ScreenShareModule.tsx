@@ -18,13 +18,11 @@ const ScreenShareModule = () => {
     
     try {
       setIsGenerating(true);
-      // Clear the previous share code first
-      setShareCode("");
+      setShareCode(""); // Clear previous code
       
       const now = new Date().toISOString();
       
-      console.log('Cleaning up expired or inactive sessions...');
-      // First, clean up any expired or inactive sessions
+      // First, clean up expired or inactive sessions
       await supabase
         .from("screen_share_sessions")
         .update({ 
@@ -36,11 +34,11 @@ const ScreenShareModule = () => {
         })
         .or(`expires_at.lt.${now},and(host_connected.eq.false,viewer_connected.eq.false)`);
 
-      // Generate a new unique code
+      // Generate new code
       const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-      console.log('Generated new share code:', code);
+      console.log('Generated new code:', code);
       
-      // Insert new session with all required fields
+      // Create new session
       const { data, error } = await supabase
         .from("screen_share_sessions")
         .insert([{
@@ -53,11 +51,11 @@ const ScreenShareModule = () => {
           host_device_id: null,
           viewer_device_id: null
         }])
-        .select()
-        .maybeSingle(); // Using maybeSingle() instead of single()
+        .select('*')
+        .maybeSingle();
 
       if (error || !data) {
-        console.error('Error generating share code:', error);
+        console.error('Failed to create session:', error);
         toast({
           title: "Error",
           description: `Failed to generate share code: ${error?.message || 'Unknown error'}`,
@@ -66,7 +64,25 @@ const ScreenShareModule = () => {
         return;
       }
 
-      console.log('Successfully created new session:', data);
+      // Verify session was created
+      const { data: verifyData, error: verifyError } = await supabase
+        .from("screen_share_sessions")
+        .select('*')
+        .eq('share_code', code)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (verifyError || !verifyData) {
+        console.error('Failed to verify session:', verifyError);
+        toast({
+          title: "Error",
+          description: "Failed to verify session creation",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('Session created and verified:', verifyData);
       setShareCode(code);
       toast({
         title: "Success",
