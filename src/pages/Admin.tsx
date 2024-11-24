@@ -24,10 +24,10 @@ const Admin = () => {
         <Reminders />
         <Stopwatch />
         <SocialStats />
+        <ShowNotes />
         <div className="md:col-span-2">
           <SocialGraph />
         </div>
-        <ShowNotes />
         <InterviewRequestsModule />
         <MediaPool />
       </div>
