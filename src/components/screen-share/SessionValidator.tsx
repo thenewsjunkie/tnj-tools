@@ -90,11 +90,7 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
         }
 
         // Try to claim host role with a transaction
-        const { data: updatedSession, error: updateError } = await supabase.rpc<SessionData, {
-          p_session_id: string;
-          p_device_id: string;
-          p_share_code: string;
-        }>(
+        const { data: updatedSession, error: updateError } = await supabase.rpc(
           'claim_screen_share_role',
           { 
             p_session_id: sessionData.id,
@@ -115,10 +111,11 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
           return;
         }
 
-        const isHost = updatedSession.host_device_id === deviceId;
+        const typedSession = updatedSession as SessionData;
+        const isHost = typedSession.host_device_id === deviceId;
         
         // If not host and viewer is already connected
-        if (!isHost && updatedSession.viewer_connected && updatedSession.viewer_device_id !== deviceId) {
+        if (!isHost && typedSession.viewer_connected && typedSession.viewer_device_id !== deviceId) {
           showError(
             "Session in use",
             "Another viewer is already connected to this session."
@@ -154,7 +151,7 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
           .subscribe();
 
         if (isMounted) {
-          onValidSession(updatedSession, isHost);
+          onValidSession(typedSession, isHost);
         }
       } catch (error) {
         if (!isMounted) return;
