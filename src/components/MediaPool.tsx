@@ -35,9 +35,10 @@ const MediaPool = () => {
   };
 
   const getTwitterVideoId = (url: string) => {
-    const regex = /twitter\.com\/\w+\/status\/(\d+)/;
+    // Support both x.com and twitter.com URLs with various formats
+    const regex = /(?:twitter\.com|x\.com)\/(?:#!\/)?(\w+)\/status(?:es)?\/(\d+)/;
     const match = url.match(regex);
-    return match ? match[1] : null;
+    return match ? match[2] : null;
   };
 
   const handleAddMedia = async () => {
@@ -52,14 +53,14 @@ const MediaPool = () => {
         type = 'youtube';
         thumbnail = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
         id = videoId;
-      } else if (newUrl.includes('twitter.com')) {
+      } else if (newUrl.includes('twitter.com') || newUrl.includes('x.com')) {
         const tweetId = getTwitterVideoId(newUrl);
         if (!tweetId) throw new Error("Invalid Twitter URL");
         type = 'twitter';
         thumbnail = '/placeholder.svg'; // Twitter requires API for thumbnails
         id = tweetId;
       } else {
-        throw new Error("Unsupported URL format");
+        throw new Error("Please enter a valid YouTube or Twitter video URL");
       }
 
       const newItem: MediaItem = {
