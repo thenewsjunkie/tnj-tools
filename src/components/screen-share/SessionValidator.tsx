@@ -29,6 +29,7 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
 
   useEffect(() => {
     let isMounted = true;
+    let subscription: any = null;
 
     const validateSession = async () => {
       try {
@@ -39,6 +40,9 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
 
         // Reset error state when trying with a new code
         setHasShownError(false);
+
+        // Generate a unique device identifier
+        const deviceId = crypto.randomUUID();
 
         const { data: sessionData, error: fetchError } = await supabase
           .from('screen_share_sessions')
@@ -78,6 +82,7 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
           return;
         }
 
+        // Determine if this device should be host or viewer
         const isHost = !sessionData.host_connected;
         
         if (isHost && sessionData.viewer_connected) {
@@ -98,11 +103,12 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
           return;
         }
 
-        // Use a transaction to ensure atomic updates
+        // Update connection status with device ID
         const { error: updateError } = await supabase
           .from('screen_share_sessions')
           .update({
-            [isHost ? 'host_connected' : 'viewer_connected']: true
+            [isHost ? 'host_connected' : 'viewer_connected']: true,
+            [isHost ? 'host_device_id' : 'viewer_device_id']: deviceId
           })
           .eq('id', sessionData.id)
           .eq('is_active', true)
@@ -122,6 +128,32 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
           setValidating(false);
           return;
         }
+
+        // Subscribe to session changes
+        subscription = supabase
+          .channel(`session_${sessionData.id}`)
+          .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'screen_share_sessions',
+            filter: `id=eq.${sessionData.id}`
+          }, (payload) => {
+            const newData = payload.new as any;
+            // Check if this device is still connected
+            const isStillConnected = isHost 
+              ? newData.host_device_id === deviceId 
+              : newData.viewer_device_id === deviceId;
+            
+            if (!isStillConnected) {
+              showError(
+                "Session disconnected",
+                "Your connection was taken over by another device."
+              );
+              setValidating(false);
+              return;
+            }
+          })
+          .subscribe();
 
         if (isMounted) {
           onValidSession(sessionData, isHost);
@@ -144,6 +176,9 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
 
     return () => {
       isMounted = false;
+      if (subscription) {
+        subscription.unsubscribe();
+      }
       setValidating(false);
     };
   }, [code, onValidSession, toast, showError, hasShownError]);
