@@ -4,7 +4,7 @@ import { debounce } from "lodash";
 import { useDeviceId } from "./hooks/useDeviceId";
 import { useSessionSubscription } from "./hooks/useSessionSubscription";
 import { useSessionState } from "./hooks/useSessionState";
-import { SessionValidatorProps, SessionData } from "./types";
+import { SessionValidatorProps } from "./types";
 import { 
   validateShareSession, 
   handleExpiredSession, 
@@ -55,10 +55,13 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
       }
 
       try {
+        console.log('Validating session for code:', code);
         const sessionData = await validateShareSession(code);
         
         if (!isMounted) return;
 
+        console.log('Session data:', sessionData);
+        
         const now = new Date();
         const expiresAt = new Date(sessionData.expires_at);
         
@@ -77,17 +80,20 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
         const isExistingViewer = sessionData.viewer_device_id === deviceId;
 
         if (isExistingHost || isExistingViewer) {
+          console.log('Reconnecting as:', isExistingHost ? 'host' : 'viewer');
           const reconnectedSession = await reconnectToSession(sessionData.id, isExistingHost);
           updateSessionState(reconnectedSession, isExistingHost);
           onValidSession(reconnectedSession, isExistingHost);
           return;
         }
 
+        console.log('Claiming new role for device:', deviceId);
         const updatedSession = await claimSessionRole(sessionData.id, deviceId, code);
         const isHost = updatedSession.host_device_id === deviceId;
         
-        updateSessionState(updatedSession as SessionData, isHost);
-        onValidSession(updatedSession as SessionData, isHost);
+        console.log('Role claimed:', isHost ? 'host' : 'viewer');
+        updateSessionState(updatedSession, isHost);
+        onValidSession(updatedSession, isHost);
       } catch (error) {
         if (!isMounted) return;
         console.error('Session validation error:', error);
@@ -96,6 +102,10 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
           error instanceof Error ? error.message : "Failed to validate screen share session"
         );
         resetSessionState();
+      } finally {
+        if (isMounted) {
+          setValidating(false);
+        }
       }
     };
 

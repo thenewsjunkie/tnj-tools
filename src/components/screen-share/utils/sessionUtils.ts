@@ -2,14 +2,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { SessionData } from "../types";
 
 export const validateShareSession = async (code: string): Promise<SessionData> => {
-  const { data: sessions, error: queryError } = await supabase
+  const { data: sessions, error } = await supabase
     .from('screen_share_sessions')
     .select('*')
     .eq('share_code', code.toUpperCase())
     .eq('is_active', true);
 
-  if (queryError) {
-    throw new Error(`Failed to validate session: ${queryError.message}`);
+  if (error) {
+    throw new Error(`Failed to validate session: ${error.message}`);
   }
 
   if (!sessions || sessions.length === 0) {
@@ -17,16 +17,16 @@ export const validateShareSession = async (code: string): Promise<SessionData> =
   }
 
   if (sessions.length > 1) {
-    throw new Error('Invalid session state detected');
+    throw new Error('Multiple active sessions found with the same code');
   }
 
   return sessions[0];
 };
 
 export const handleExpiredSession = async (sessionId: string) => {
-  await supabase
+  const { error } = await supabase
     .from('screen_share_sessions')
-    .update({ 
+    .update({
       is_active: false,
       host_connected: false,
       viewer_connected: false,
@@ -34,14 +34,20 @@ export const handleExpiredSession = async (sessionId: string) => {
       viewer_device_id: null
     })
     .eq('id', sessionId);
+
+  if (error) {
+    console.error('Error handling expired session:', error);
+  }
 };
 
 export const reconnectToSession = async (
-  sessionId: string, 
+  sessionId: string,
   isHost: boolean
 ): Promise<SessionData> => {
-  const updateData = isHost ? { host_connected: true } : { viewer_connected: true };
-  
+  const updateData = isHost
+    ? { host_connected: true }
+    : { viewer_connected: true };
+
   const { data, error } = await supabase
     .from('screen_share_sessions')
     .update(updateData)
@@ -61,18 +67,16 @@ export const claimSessionRole = async (
   deviceId: string,
   shareCode: string
 ): Promise<SessionData> => {
-  const { data, error } = await supabase.rpc(
-    'claim_screen_share_role',
-    { 
+  const { data, error } = await supabase
+    .rpc('claim_screen_share_role', {
       p_session_id: sessionId,
       p_device_id: deviceId,
-      p_share_code: shareCode.toUpperCase()
-    }
-  );
+      p_share_code: shareCode
+    });
 
   if (error || !data) {
     throw new Error('Failed to claim role in session');
   }
 
-  return data as SessionData;
+  return data;
 };

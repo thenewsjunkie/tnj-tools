@@ -64,16 +64,6 @@ const ScreenShareModule = () => {
         return;
       }
 
-      if (!data) {
-        console.error('No data returned from insert operation');
-        toast({
-          title: "Error",
-          description: "Failed to generate share code: No data returned",
-          variant: "destructive",
-        });
-        return;
-      }
-
       setShareCode(code);
       toast({
         title: "Success",
