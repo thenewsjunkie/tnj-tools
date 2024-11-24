@@ -23,12 +23,11 @@ const YouTubeToMp3 = () => {
       });
 
       if (error) {
-        console.error('Supabase function error:', error);
         throw new Error(error.message);
       }
 
       if (!data?.downloadUrl) {
-        throw new Error('No download URL received');
+        throw new Error(data?.error || 'No download URL received');
       }
 
       setDownloadUrl(data.downloadUrl);
@@ -50,11 +49,11 @@ const YouTubeToMp3 = () => {
     }
   };
 
-  const handleDownload = async () => {
+  const handleDownload = () => {
     if (!downloadUrl) return;
     
     try {
-      window.location.href = downloadUrl;
+      window.open(downloadUrl, '_blank');
     } catch (error) {
       console.error('Download error:', error);
       toast({
