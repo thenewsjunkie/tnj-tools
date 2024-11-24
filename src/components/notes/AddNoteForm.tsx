@@ -20,7 +20,12 @@ interface AddNoteFormProps {
     title: string;
     url: string;
   }>>;
-  handleAddNote: () => void;
+  handleAddNote: (note: {
+    type: NoteType;
+    content: string;
+    title: string;
+    url: string;
+  }) => void;
 }
 
 const AddNoteForm = ({ newNote, setNewNote, handleAddNote }: AddNoteFormProps) => {
@@ -148,7 +153,7 @@ const AddNoteForm = ({ newNote, setNewNote, handleAddNote }: AddNoteFormProps) =
         />
       )}
 
-      <Button onClick={handleAddNote} className="w-full" disabled={isUploading}>
+      <Button onClick={() => handleAddNote(newNote)} className="w-full" disabled={isUploading}>
         Add Note
       </Button>
     </div>

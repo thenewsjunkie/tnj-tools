@@ -114,7 +114,7 @@ const ShowNotes = () => {
               <AddNoteForm
                 newNote={newNote}
                 setNewNote={setNewNote}
-                handleAddNote={addNoteMutation.mutate}
+                handleAddNote={(note) => addNoteMutation.mutate(note)}
               />
             </DialogContent>
           </Dialog>
