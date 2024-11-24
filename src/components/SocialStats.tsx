@@ -47,13 +47,31 @@ const SortableItem = ({ platform }) => {
 };
 
 const SocialStats = () => {
-  const [platforms, setPlatforms] = useState(initialPlatforms);
-  const [formData, setFormData] = useState({
-    Facebook: '125K',
-    YouTube: '45K',
-    Twitter: '67K',
-    Instagram: '89K',
-    TikTok: '200K'
+  const [platforms, setPlatforms] = useState(() => {
+    const savedPlatforms = localStorage.getItem('socialPlatforms');
+    if (savedPlatforms) {
+      const parsed = JSON.parse(savedPlatforms);
+      // Reattach icon components which can't be serialized
+      return parsed.map(platform => ({
+        ...platform,
+        icon: initialPlatforms.find(p => p.name === platform.name)?.icon
+      }));
+    }
+    return initialPlatforms;
+  });
+
+  const [formData, setFormData] = useState(() => {
+    const savedFormData = localStorage.getItem('socialFormData');
+    if (savedFormData) {
+      return JSON.parse(savedFormData);
+    }
+    return {
+      Facebook: '125K',
+      YouTube: '45K',
+      Twitter: '67K',
+      Instagram: '89K',
+      TikTok: '200K'
+    };
   });
 
   const sensors = useSensors(
@@ -70,17 +88,28 @@ const SocialStats = () => {
       setPlatforms((items) => {
         const oldIndex = items.findIndex((item) => item.name === active.id);
         const newIndex = items.findIndex((item) => item.name === over.id);
+        const newItems = arrayMove(items, oldIndex, newIndex);
         
-        return arrayMove(items, oldIndex, newIndex);
+        // Save the new order to localStorage
+        const serializedPlatforms = newItems.map(({ name, handle, followers }) => ({
+          name, handle, followers
+        }));
+        localStorage.setItem('socialPlatforms', JSON.stringify(serializedPlatforms));
+        
+        return newItems;
       });
     }
   };
 
   const handleInputChange = (platform: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [platform]: value
-    }));
+    setFormData(prev => {
+      const newFormData = {
+        ...prev,
+        [platform]: value
+      };
+      localStorage.setItem('socialFormData', JSON.stringify(newFormData));
+      return newFormData;
+    });
   };
 
   const handleSubmit = () => {
@@ -89,6 +118,12 @@ const SocialStats = () => {
       followers: formData[platform.name as keyof typeof formData]
     }));
     setPlatforms(updatedPlatforms);
+    
+    // Save the updated platforms to localStorage
+    const serializedPlatforms = updatedPlatforms.map(({ name, handle, followers }) => ({
+      name, handle, followers
+    }));
+    localStorage.setItem('socialPlatforms', JSON.stringify(serializedPlatforms));
   };
 
   return (
