@@ -22,19 +22,27 @@ const YouTubeToMp3 = () => {
         body: { url }
       });
 
-      if (error) throw error;
-
-      if (data?.downloadUrl) {
-        setDownloadUrl(data.downloadUrl);
-        toast({
-          title: "Success",
-          description: "Your MP3 is ready for download!",
-        });
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(error.message);
       }
+
+      if (!data?.downloadUrl) {
+        throw new Error('No download URL received');
+      }
+
+      setDownloadUrl(data.downloadUrl);
+      toast({
+        title: "Success",
+        description: "Your MP3 is ready for download!",
+      });
     } catch (error) {
+      console.error('Conversion error:', error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to convert video",
+        description: error instanceof Error 
+          ? error.message 
+          : "Failed to convert video. Please check the URL and try again.",
         variant: "destructive",
       });
     } finally {
