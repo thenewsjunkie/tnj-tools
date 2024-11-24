@@ -31,10 +31,19 @@ const ShowNotes = () => {
       return;
     }
 
-    if ((newNote.type === 'link' || newNote.type === 'image' || newNote.type === 'video') && !newNote.url.trim()) {
+    if ((newNote.type === 'link' || newNote.type === 'video') && !newNote.url.trim()) {
       toast({
         title: "Error",
         description: "URL cannot be empty",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newNote.type === 'image' && !newNote.url) {
+      toast({
+        title: "Error",
+        description: "Please upload an image",
         variant: "destructive",
       });
       return;

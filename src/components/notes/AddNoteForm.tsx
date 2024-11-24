@@ -1,9 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, Image, Video } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/components/ui/use-toast";
 import { NoteType } from "./types";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AddNoteFormProps {
   newNote: {
@@ -22,6 +24,40 @@ interface AddNoteFormProps {
 }
 
 const AddNoteForm = ({ newNote, setNewNote, handleAddNote }: AddNoteFormProps) => {
+  const [isUploading, setIsUploading] = useState(false);
+  const { toast } = useToast();
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload-show-note-image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload image');
+      }
+
+      const { url } = await response.json();
+      setNewNote(prev => ({ ...prev, url, title: file.name }));
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to upload image",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
@@ -53,7 +89,8 @@ const AddNoteForm = ({ newNote, setNewNote, handleAddNote }: AddNoteFormProps) =
           Video
         </Button>
       </div>
-      {(newNote.type === 'link' || newNote.type === 'image' || newNote.type === 'video') && (
+
+      {newNote.type === 'link' && (
         <>
           <Input
             placeholder="Title (optional)"
@@ -67,6 +104,43 @@ const AddNoteForm = ({ newNote, setNewNote, handleAddNote }: AddNoteFormProps) =
           />
         </>
       )}
+
+      {newNote.type === 'image' && (
+        <div className="space-y-4">
+          <Input
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            disabled={isUploading}
+          />
+          {isUploading && <p className="text-sm text-muted-foreground">Uploading...</p>}
+          {newNote.url && (
+            <div className="relative aspect-video">
+              <img 
+                src={newNote.url} 
+                alt={newNote.title} 
+                className="rounded-md object-cover w-full h-full"
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {newNote.type === 'video' && (
+        <>
+          <Input
+            placeholder="Title (optional)"
+            value={newNote.title}
+            onChange={(e) => setNewNote(prev => ({ ...prev, title: e.target.value }))}
+          />
+          <Input
+            placeholder="URL"
+            value={newNote.url}
+            onChange={(e) => setNewNote(prev => ({ ...prev, url: e.target.value }))}
+          />
+        </>
+      )}
+
       {newNote.type === 'text' && (
         <Textarea
           placeholder="Note content..."
@@ -74,7 +148,8 @@ const AddNoteForm = ({ newNote, setNewNote, handleAddNote }: AddNoteFormProps) =
           onChange={(e) => setNewNote(prev => ({ ...prev, content: e.target.value }))}
         />
       )}
-      <Button onClick={handleAddNote} className="w-full">
+
+      <Button onClick={handleAddNote} className="w-full" disabled={isUploading}>
         Add Note
       </Button>
     </div>
