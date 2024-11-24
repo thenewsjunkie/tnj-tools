@@ -27,6 +27,7 @@ const ScreenShare = () => {
         .select()
         .eq("share_code", code)
         .eq("is_active", true)
+        .gte("expires_at", new Date().toISOString())
         .single();
 
       if (error || !data) {
@@ -35,17 +36,8 @@ const ScreenShare = () => {
         return;
       }
 
-      const isValidSession = data && new Date(data.expires_at) > new Date();
-      if (!isValidSession) {
-        await supabase
-          .from("screen_share_sessions")
-          .update({ is_active: false })
-          .eq("id", data.id);
-        setIsValid(false);
-        return;
-      }
-
       setIsValid(true);
+      // If host isn't connected yet, this user becomes the host
       setIsHost(!data.host_connected);
       setRoomId(data.id);
 
