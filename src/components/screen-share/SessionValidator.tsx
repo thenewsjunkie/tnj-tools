@@ -39,7 +39,13 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
         }
 
         setHasShownError(false);
-        const deviceId = crypto.randomUUID();
+        
+        // Get or create a persistent device ID
+        let deviceId = localStorage.getItem('screen_share_device_id');
+        if (!deviceId) {
+          deviceId = crypto.randomUUID();
+          localStorage.setItem('screen_share_device_id', deviceId);
+        }
 
         // First, check if the session exists and is valid
         const { data: sessionData, error: fetchError } = await supabase
@@ -75,12 +81,12 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
         // Determine if this device should be host or viewer
         let isHost = false;
         
-        // If no host is connected, this device can be the host
-        if (!sessionData.host_connected) {
-          isHost = true;
-        } 
         // If this device was previously the host, it can reconnect as host
-        else if (sessionData.host_device_id === deviceId) {
+        if (sessionData.host_device_id === deviceId) {
+          isHost = true;
+        }
+        // If no host is connected, this device can be the host
+        else if (!sessionData.host_connected) {
           isHost = true;
         }
         // Otherwise, this device will be a viewer
