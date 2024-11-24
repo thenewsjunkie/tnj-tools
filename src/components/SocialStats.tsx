@@ -8,14 +8,17 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/components/ui/use-toast";
 
-const initialPlatforms = [
-  { name: 'Facebook', icon: Facebook, handle: 'thenewsjunkie', followers: '125K' },
-  { name: 'YouTube', icon: Youtube, handle: 'thenewsjunkie', followers: '45K' },
-  { name: 'Twitter', icon: Twitter, handle: 'thenewsjunkie', followers: '67K' },
-  { name: 'Instagram', icon: Instagram, handle: 'thenewsjunkie', followers: '89K' },
-  { name: 'TikTok', icon: Zap, handle: 'thenewsjunkie', followers: '200K' },
-];
+const platformIcons = {
+  Facebook,
+  YouTube: Youtube,
+  Twitter,
+  Instagram,
+  TikTok: Zap,
+};
 
 const SortableItem = ({ platform }) => {
   const {
@@ -24,22 +27,24 @@ const SortableItem = ({ platform }) => {
     setNodeRef,
     transform,
     transition,
-  } = useSortable({ id: platform.name });
+  } = useSortable({ id: platform.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
   };
 
+  const Icon = platformIcons[platform.platform_name] || Zap;
+
   return (
     <div ref={setNodeRef} style={style} className="flex items-center gap-4">
       <GripVertical className="w-4 h-4 cursor-move" {...attributes} {...listeners} />
-      <platform.icon className="w-4 h-4" />
+      <Icon className="w-4 h-4" />
       <div className="flex-1">
         <Input
           value={platform.followers}
-          onChange={(e) => platform.onChange(platform.name, e.target.value)}
-          placeholder={`Enter ${platform.name} followers`}
+          onChange={(e) => platform.onChange(platform.id, e.target.value)}
+          placeholder={`Enter ${platform.platform_name} followers`}
         />
       </div>
     </div>
@@ -47,32 +52,9 @@ const SortableItem = ({ platform }) => {
 };
 
 const SocialStats = () => {
-  const [platforms, setPlatforms] = useState(() => {
-    const savedPlatforms = localStorage.getItem('socialPlatforms');
-    if (savedPlatforms) {
-      const parsed = JSON.parse(savedPlatforms);
-      // Reattach icon components which can't be serialized and preserve existing data
-      return parsed.map(platform => ({
-        ...platform,
-        icon: initialPlatforms.find(p => p.name === platform.name)?.icon || platform.icon
-      }));
-    }
-    return initialPlatforms;
-  });
-
-  const [formData, setFormData] = useState(() => {
-    const savedFormData = localStorage.getItem('socialFormData');
-    if (savedFormData) {
-      return JSON.parse(savedFormData);
-    }
-    return {
-      Facebook: '125K',
-      YouTube: '45K',
-      Twitter: '67K',
-      Instagram: '89K',
-      TikTok: '200K'
-    };
-  });
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [formData, setFormData] = useState({});
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -81,50 +63,104 @@ const SocialStats = () => {
     })
   );
 
+  const { data: platforms = [], isLoading } = useQuery({
+    queryKey: ['social-stats'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('social_media_stats')
+        .select('*')
+        .order('display_order');
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  useEffect(() => {
+    const newFormData = {};
+    platforms.forEach(platform => {
+      newFormData[platform.id] = platform.followers;
+    });
+    setFormData(newFormData);
+  }, [platforms]);
+
+  const updatePlatformMutation = useMutation({
+    mutationFn: async ({ id, followers }) => {
+      const { error } = await supabase
+        .from('social_media_stats')
+        .update({ followers })
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['social-stats'] });
+      toast({
+        title: "Updated successfully",
+        description: "Social media stats have been updated",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateOrderMutation = useMutation({
+    mutationFn: async (updatedPlatforms) => {
+      const updates = updatedPlatforms.map((platform, index) => ({
+        id: platform.id,
+        display_order: index + 1,
+      }));
+
+      const { error } = await supabase
+        .from('social_media_stats')
+        .upsert(updates);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['social-stats'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleDragEnd = (event) => {
     const { active, over } = event;
     
     if (active.id !== over.id) {
-      setPlatforms((items) => {
-        const oldIndex = items.findIndex((item) => item.name === active.id);
-        const newIndex = items.findIndex((item) => item.name === over.id);
-        const newItems = arrayMove(items, oldIndex, newIndex);
-        
-        // Save the new order to localStorage
-        const serializedPlatforms = newItems.map(({ name, handle, followers }) => ({
-          name, handle, followers
-        }));
-        localStorage.setItem('socialPlatforms', JSON.stringify(serializedPlatforms));
-        
-        return newItems;
-      });
+      const oldIndex = platforms.findIndex((item) => item.id === active.id);
+      const newIndex = platforms.findIndex((item) => item.id === over.id);
+      const newPlatforms = arrayMove(platforms, oldIndex, newIndex);
+      updateOrderMutation.mutate(newPlatforms);
     }
   };
 
-  const handleInputChange = (platform: string, value: string) => {
-    setFormData(prev => {
-      const newFormData = {
-        ...prev,
-        [platform]: value
-      };
-      localStorage.setItem('socialFormData', JSON.stringify(newFormData));
-      return newFormData;
-    });
+  const handleInputChange = (id: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [id]: value
+    }));
   };
 
   const handleSubmit = () => {
-    const updatedPlatforms = platforms.map(platform => ({
-      ...platform,
-      followers: formData[platform.name as keyof typeof formData]
-    }));
-    setPlatforms(updatedPlatforms);
-    
-    // Save the updated platforms to localStorage
-    const serializedPlatforms = updatedPlatforms.map(({ name, handle, followers }) => ({
-      name, handle, followers
-    }));
-    localStorage.setItem('socialPlatforms', JSON.stringify(serializedPlatforms));
+    Object.entries(formData).forEach(([id, followers]) => {
+      updatePlatformMutation.mutate({ id, followers: followers as string });
+    });
   };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <Card className="bg-black/50 border-white/10 relative">
@@ -147,42 +183,51 @@ const SocialStats = () => {
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext 
-                  items={platforms.map(p => p.name)}
+                  items={platforms.map(p => p.id)}
                   strategy={verticalListSortingStrategy}
                 >
                   {platforms.map((platform) => (
                     <SortableItem 
-                      key={platform.name} 
+                      key={platform.id} 
                       platform={{
                         ...platform,
                         onChange: handleInputChange,
-                        followers: formData[platform.name as keyof typeof formData]
+                        followers: formData[platform.id] || platform.followers
                       }}
                     />
                   ))}
                 </SortableContext>
               </DndContext>
-              <Button onClick={handleSubmit} className="w-full">Update Counts</Button>
+              <Button 
+                onClick={handleSubmit} 
+                className="w-full"
+                disabled={updatePlatformMutation.isPending}
+              >
+                Update Counts
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
       </CardHeader>
       <CardContent>
         <div className="space-y-2 sm:space-y-4">
-          {platforms.map((platform) => (
-            <div 
-              key={platform.name}
-              className="flex items-center justify-between p-2 sm:p-3 bg-white/5 rounded-lg"
-            >
-              <div className="flex items-center gap-2 sm:gap-3">
-                <platform.icon className="w-4 h-4 sm:w-5 sm:h-5 text-neon-red" />
-                <span className="text-white text-sm sm:text-base">{platform.name}</span>
+          {platforms.map((platform) => {
+            const Icon = platformIcons[platform.platform_name] || Zap;
+            return (
+              <div 
+                key={platform.id}
+                className="flex items-center justify-between p-2 sm:p-3 bg-white/5 rounded-lg"
+              >
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-neon-red" />
+                  <span className="text-white text-sm sm:text-base">{platform.platform_name}</span>
+                </div>
+                <div className="digital text-neon-red text-lg sm:text-xl">
+                  {platform.followers}
+                </div>
               </div>
-              <div className="digital text-neon-red text-lg sm:text-xl">
-                {platform.followers}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </CardContent>
     </Card>

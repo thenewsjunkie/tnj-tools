@@ -1,29 +1,43 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const SocialGraph = () => {
-  const [data, setData] = useState(() => {
-    const today = new Date();
-    const initialData = [];
-    for (let i = 0; i < 6; i++) {
-      const date = new Date();
-      date.setMonth(today.getMonth() - i);
-      initialData.unshift({
-        name: date.toLocaleString('default', { month: 'short' }),
-        followers: 0,
-        date: date.getTime(),
-      });
-    }
-    return initialData;
+  const queryClient = useQueryClient();
+
+  const { data: followerHistory = [] } = useQuery({
+    queryKey: ['follower-history'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('follower_history')
+        .select('*')
+        .order('recorded_at', { ascending: true })
+        .limit(6);
+      
+      if (error) throw error;
+      
+      return data.map(entry => ({
+        name: new Date(entry.recorded_at).toLocaleString('default', { month: 'short' }),
+        followers: entry.total_followers,
+        date: entry.recorded_at,
+      }));
+    },
   });
 
-  useEffect(() => {
-    const storedData = localStorage.getItem('followerHistory');
-    if (storedData) {
-      setData(JSON.parse(storedData));
-    }
-  }, []);
+  const addHistoryEntryMutation = useMutation({
+    mutationFn: async (totalFollowers: number) => {
+      const { error } = await supabase
+        .from('follower_history')
+        .insert([{ total_followers: totalFollowers }]);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['follower-history'] });
+    },
+  });
 
   useEffect(() => {
     const updateTotalFollowers = () => {
@@ -36,28 +50,7 @@ const SocialGraph = () => {
         total += number;
       });
 
-      const today = new Date();
-      const newData = [...data];
-      const lastEntry = newData[newData.length - 1];
-      
-      if (lastEntry && new Date(lastEntry.date).toDateString() === today.toDateString()) {
-        newData[newData.length - 1] = {
-          ...lastEntry,
-          followers: total
-        };
-      } else {
-        newData.push({
-          name: today.toLocaleString('default', { month: 'short' }),
-          followers: total,
-          date: today.getTime()
-        });
-        if (newData.length > 6) {
-          newData.shift();
-        }
-      }
-      
-      setData(newData);
-      localStorage.setItem('followerHistory', JSON.stringify(newData));
+      addHistoryEntryMutation.mutate(total);
     };
 
     const observer = new MutationObserver(() => {
@@ -70,7 +63,7 @@ const SocialGraph = () => {
     });
 
     return () => observer.disconnect();
-  }, [data]);
+  }, []);
 
   return (
     <Card className="bg-black/50 border-white/10">
@@ -80,7 +73,7 @@ const SocialGraph = () => {
       <CardContent>
         <div className="h-[300px] sm:h-[350px] md:h-[400px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+            <LineChart data={followerHistory} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#333" />
               <XAxis 
                 dataKey="name" 
