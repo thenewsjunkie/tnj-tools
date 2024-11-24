@@ -57,6 +57,33 @@ export type Database = {
         }
         Relationships: []
       }
+      reminders: {
+        Row: {
+          created_at: string | null
+          datetime: string
+          id: string
+          is_active: boolean | null
+          recurring_weekly: boolean | null
+          text: string
+        }
+        Insert: {
+          created_at?: string | null
+          datetime: string
+          id?: string
+          is_active?: boolean | null
+          recurring_weekly?: boolean | null
+          text: string
+        }
+        Update: {
+          created_at?: string | null
+          datetime?: string
+          id?: string
+          is_active?: boolean | null
+          recurring_weekly?: boolean | null
+          text?: string
+        }
+        Relationships: []
+      }
       social_media_stats: {
         Row: {
           created_at: string | null

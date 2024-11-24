@@ -4,12 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Reminder {
   id: string;
   text: string;
   datetime: string;
   isActive: boolean;
+  recurringWeekly: boolean;
 }
 
 const Reminders = () => {
@@ -19,6 +23,7 @@ const Reminders = () => {
   });
   const [newReminder, setNewReminder] = useState("");
   const [newDateTime, setNewDateTime] = useState("");
+  const [recurringWeekly, setRecurringWeekly] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -27,12 +32,32 @@ const Reminders = () => {
 
   useEffect(() => {
     const interval = setInterval(() => {
+      const now = new Date();
       setReminders(prevReminders => 
-        prevReminders.map(reminder => ({
-          ...reminder,
-          isActive: new Date(reminder.datetime) <= new Date() && 
-                    new Date(reminder.datetime).getTime() + 3600000 > new Date().getTime() // Active for 1 hour after start time
-        }))
+        prevReminders.map(reminder => {
+          const reminderDate = new Date(reminder.datetime);
+          const isActive = reminderDate <= now && 
+                          reminderDate.getTime() + 3600000 > now.getTime();
+
+          // If it's a weekly reminder and the time has passed, schedule it for next week
+          if (reminder.recurringWeekly && reminderDate < now) {
+            // Find next occurrence
+            const nextDate = new Date(reminder.datetime);
+            while (nextDate <= now) {
+              nextDate.setDate(nextDate.getDate() + 7);
+            }
+            return {
+              ...reminder,
+              datetime: nextDate.toISOString(),
+              isActive
+            };
+          }
+
+          return {
+            ...reminder,
+            isActive
+          };
+        })
       );
     }, 1000);
 
@@ -53,12 +78,14 @@ const Reminders = () => {
       id: crypto.randomUUID(),
       text: newReminder.trim(),
       datetime: newDateTime,
-      isActive: false
+      isActive: false,
+      recurringWeekly: recurringWeekly
     };
 
     setReminders(prev => [...prev, newItem]);
     setNewReminder("");
     setNewDateTime("");
+    setRecurringWeekly(false);
     toast({
       title: "Reminder added",
       description: "Your reminder has been set successfully",
@@ -79,22 +106,35 @@ const Reminders = () => {
         <CardTitle className="text-white text-lg sm:text-xl">Reminders</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex gap-2">
-          <Input
-            placeholder="Add a reminder..."
-            value={newReminder}
-            onChange={(e) => setNewReminder(e.target.value)}
-            className="flex-1"
-          />
-          <Input
-            type="datetime-local"
-            value={newDateTime}
-            onChange={(e) => setNewDateTime(e.target.value)}
-            className="w-auto"
-          />
-          <Button onClick={handleAddReminder} size="icon">
-            <Plus className="h-4 w-4" />
-          </Button>
+        <div className="space-y-4">
+          <div className="flex gap-2">
+            <Input
+              placeholder="Add a reminder..."
+              value={newReminder}
+              onChange={(e) => setNewReminder(e.target.value)}
+              className="flex-1"
+            />
+            <Input
+              type="datetime-local"
+              value={newDateTime}
+              onChange={(e) => setNewDateTime(e.target.value)}
+              className="w-auto"
+            />
+            <Button onClick={handleAddReminder} size="icon">
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="recurring"
+              checked={recurringWeekly}
+              onCheckedChange={(checked) => setRecurringWeekly(checked as boolean)}
+            />
+            <Label htmlFor="recurring" className="text-white">
+              Repeat weekly
+            </Label>
+          </div>
         </div>
         
         <div className="space-y-2">
@@ -112,7 +152,14 @@ const Reminders = () => {
                   <AlertCircle className="h-5 w-5 text-neon-red shrink-0 mt-0.5" />
                 )}
                 <div>
-                  <p className="text-white">{reminder.text}</p>
+                  <p className="text-white">
+                    {reminder.text}
+                    {reminder.recurringWeekly && (
+                      <span className="ml-2 text-xs bg-blue-500/20 px-2 py-0.5 rounded">
+                        Weekly
+                      </span>
+                    )}
+                  </p>
                   <p className="text-sm text-gray-400">
                     {new Date(reminder.datetime).toLocaleString()}
                   </p>
