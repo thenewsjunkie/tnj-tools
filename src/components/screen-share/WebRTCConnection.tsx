@@ -21,23 +21,17 @@ const WebRTCConnection = ({
   const pendingCandidatesRef = useRef<RTCIceCandidate[]>([]);
   const isConnectedRef = useRef<boolean>(false);
   const hasRemoteDescRef = useRef<boolean>(false);
-  const streamRef = useRef<MediaStream | null>(null);
-
-  // Update streamRef when stream changes
-  useEffect(() => {
-    streamRef.current = stream || null;
-  }, [stream]);
 
   const handleIceCandidate = useCallback(async (candidate: RTCIceCandidate) => {
     if (!hasRemoteDescRef.current) {
-      console.log('Queuing ICE candidate as remote description is not set yet');
+      console.log('Queueing ICE candidate:', candidate);
       pendingCandidatesRef.current.push(candidate);
       return;
     }
 
     try {
       await peerConnectionRef.current?.addIceCandidate(candidate);
-      console.log('Added ICE candidate successfully');
+      console.log('Added ICE candidate:', candidate);
     } catch (error) {
       console.error('Error adding ICE candidate:', error);
     }
@@ -48,7 +42,7 @@ const WebRTCConnection = ({
     async (offer) => {
       if (!isHost && peerConnectionRef.current) {
         try {
-          console.log('Setting remote description (offer)');
+          console.log('Viewer received offer:', offer);
           await peerConnectionRef.current.setRemoteDescription(offer);
           hasRemoteDescRef.current = true;
           
@@ -57,7 +51,7 @@ const WebRTCConnection = ({
           await peerConnectionRef.current.setLocalDescription(answer);
           sendAnswer(answer);
 
-          // Add any pending candidates
+          // Process any pending ICE candidates
           for (const candidate of pendingCandidatesRef.current) {
             await peerConnectionRef.current.addIceCandidate(candidate);
           }
@@ -70,11 +64,11 @@ const WebRTCConnection = ({
     async (answer) => {
       if (isHost && peerConnectionRef.current) {
         try {
-          console.log('Setting remote description (answer)');
+          console.log('Host received answer:', answer);
           await peerConnectionRef.current.setRemoteDescription(answer);
           hasRemoteDescRef.current = true;
 
-          // Add any pending candidates
+          // Process any pending ICE candidates
           for (const candidate of pendingCandidatesRef.current) {
             await peerConnectionRef.current.addIceCandidate(candidate);
           }
@@ -92,37 +86,35 @@ const WebRTCConnection = ({
       console.log('Initializing WebRTC connection as:', isHost ? 'host' : 'viewer');
       
       if (peerConnectionRef.current) {
+        console.log('Closing existing peer connection');
         peerConnectionRef.current.close();
       }
 
-      const configuration = getRTCConfiguration();
-      const peerConnection = new RTCPeerConnection(configuration);
+      const peerConnection = new RTCPeerConnection(getRTCConfiguration());
       peerConnectionRef.current = peerConnection;
 
       // Add stream tracks for host
-      if (isHost && streamRef.current) {
+      if (isHost && stream) {
         console.log('Host adding stream tracks');
-        streamRef.current.getTracks().forEach(track => {
-          if (peerConnection && streamRef.current) {
-            console.log('Adding track:', track.kind);
-            peerConnection.addTrack(track, streamRef.current);
-          }
+        stream.getTracks().forEach(track => {
+          console.log('Adding track:', track.kind, track.enabled, track.readyState);
+          peerConnection.addTrack(track, stream);
         });
       }
 
       peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
-          console.log('New ICE candidate:', event.candidate.type);
+          console.log('New ICE candidate:', event.candidate);
           sendIceCandidate(event.candidate);
         }
       };
 
       peerConnection.oniceconnectionstatechange = () => {
-        const state = peerConnection.iceConnectionState;
-        console.log('ICE connection state changed:', state);
-        
-        if (state === 'connected' || state === 'completed') {
+        console.log('ICE connection state:', peerConnection.iceConnectionState);
+        if (peerConnection.iceConnectionState === 'connected' || 
+            peerConnection.iceConnectionState === 'completed') {
           if (!isConnectedRef.current) {
+            console.log('Connection established');
             isConnectedRef.current = true;
             onConnectionEstablished();
           }
@@ -132,6 +124,7 @@ const WebRTCConnection = ({
       peerConnection.ontrack = (event) => {
         console.log('Received remote track:', event.track.kind);
         if (event.streams && event.streams[0]) {
+          console.log('Setting remote stream');
           onTrackAdded(event.streams[0]);
         }
       };
@@ -146,7 +139,7 @@ const WebRTCConnection = ({
           await peerConnection.setLocalDescription(offer);
           sendOffer(offer);
         } catch (error) {
-          console.error("Error creating offer:", error);
+          console.error('Error creating offer:', error);
         }
       }
     };
@@ -162,7 +155,7 @@ const WebRTCConnection = ({
       hasRemoteDescRef.current = false;
       pendingCandidatesRef.current = [];
     };
-  }, [roomId, isHost, onTrackAdded, onConnectionEstablished, sendOffer, sendIceCandidate]);
+  }, [roomId, isHost, stream, onTrackAdded, onConnectionEstablished, sendOffer, sendIceCandidate]);
 
   return null;
 };
