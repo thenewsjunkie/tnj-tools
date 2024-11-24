@@ -20,7 +20,7 @@ const Login = () => {
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <h2 className="digital text-4xl text-neon-red">555am.io</h2>
+          <h2 className="digital text-4xl text-neon-red">TNJ Tools</h2>
           <p className="mt-2 text-white/60">Sign in to access admin panel</p>
         </div>
         <div className="bg-white/5 p-6 rounded-lg border border-white/10">
