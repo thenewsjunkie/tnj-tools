@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,11 +12,19 @@ const ScreenShareModule = () => {
   const { toast } = useToast();
 
   const generateShareCode = async () => {
+    // First, deactivate any existing active sessions
+    await supabase
+      .from("screen_share_sessions")
+      .update({ is_active: false })
+      .eq("is_active", true);
+
     const code = Math.random().toString(36).substring(2, 8).toUpperCase();
     const { error } = await supabase.from("screen_share_sessions").insert({
       share_code: code,
       expires_at: addDays(new Date(), 1).toISOString(),
       is_active: true,
+      host_connected: false,
+      viewer_connected: false,
     });
 
     if (error) {
