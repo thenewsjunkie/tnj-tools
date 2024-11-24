@@ -188,7 +188,7 @@ const SocialStats = () => {
                   <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-neon-red" />
                   <span className="text-white text-sm sm:text-base">{platform.platform_name}</span>
                 </div>
-                <div className="digital text-neon-red text-lg sm:text-xl">
+                <div className="digital social-follower-count text-neon-red text-lg sm:text-xl">
                   {platform.followers}
                 </div>
               </div>

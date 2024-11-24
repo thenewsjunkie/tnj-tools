@@ -53,7 +53,8 @@ const SocialGraph = () => {
 
   useEffect(() => {
     const calculateTotalFollowers = () => {
-      const elements = document.querySelectorAll('.digital');
+      // Update selector to only target social media follower elements
+      const elements = document.querySelectorAll('.social-follower-count');
       let total = 0;
       
       elements.forEach(el => {
@@ -77,8 +78,9 @@ const SocialGraph = () => {
       }
     });
 
-    const digitalElements = document.querySelectorAll('.digital');
-    digitalElements.forEach(element => {
+    // Update selector to only target social media follower elements
+    const followerElements = document.querySelectorAll('.social-follower-count');
+    followerElements.forEach(element => {
       observer.observe(element, { childList: true, characterData: true, subtree: true });
     });
 
