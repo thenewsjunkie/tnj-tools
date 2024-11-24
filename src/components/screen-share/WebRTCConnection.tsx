@@ -18,16 +18,18 @@ const WebRTCConnection = ({
 }: WebRTCConnectionProps) => {
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const channelRef = useRef<any>(null);
+  const isConnectedRef = useRef<boolean>(false);
 
   useEffect(() => {
     const initializeConnection = async () => {
       const configuration = {
         iceServers: [
           {
-            urls: "stun:stun.l.google.com:19302",
-          },
-          {
-            urls: "stun:stun1.l.google.com:19302",
+            urls: [
+              "stun:stun.l.google.com:19302",
+              "stun:stun1.l.google.com:19302",
+              "stun:stun2.l.google.com:19302",
+            ],
           },
         ],
       };
@@ -63,7 +65,19 @@ const WebRTCConnection = ({
 
       peerConnectionRef.current.ontrack = (event) => {
         console.log('Received remote track:', event.track.kind);
-        onTrackAdded(event.streams[0]);
+        if (!isConnectedRef.current) {
+          isConnectedRef.current = true;
+          onTrackAdded(event.streams[0]);
+          onConnectionEstablished();
+        }
+      };
+
+      peerConnectionRef.current.onconnectionstatechange = () => {
+        console.log('Connection state changed:', peerConnectionRef.current?.connectionState);
+        if (peerConnectionRef.current?.connectionState === 'connected' && !isConnectedRef.current) {
+          isConnectedRef.current = true;
+          onConnectionEstablished();
+        }
       };
 
       // If host, create and send offer
@@ -110,7 +124,10 @@ const WebRTCConnection = ({
               await peerConnectionRef.current.setRemoteDescription(
                 new RTCSessionDescription(payload)
               );
-              onConnectionEstablished();
+              if (!isConnectedRef.current) {
+                isConnectedRef.current = true;
+                onConnectionEstablished();
+              }
             } catch (error) {
               console.error("Error handling answer:", error);
             }
@@ -142,6 +159,7 @@ const WebRTCConnection = ({
       if (channelRef.current) {
         channelRef.current.unsubscribe();
       }
+      isConnectedRef.current = false;
     };
   }, [roomId, isHost, stream, onTrackAdded, onConnectionEstablished]);
 

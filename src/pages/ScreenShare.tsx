@@ -12,6 +12,7 @@ const ScreenShare = () => {
   const [sessionData, setSessionData] = useState<any>(null);
   const [isHost, setIsHost] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
@@ -36,7 +37,6 @@ const ScreenShare = () => {
         });
         setStream(displayStream);
         
-        // Immediately set the stream to the local video element
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = displayStream;
         }
@@ -93,13 +93,14 @@ const ScreenShare = () => {
                   }
                 }}
                 onConnectionEstablished={() => {
-                  // Connection is established, stream is already set up in handleValidSession
+                  setIsConnected(true);
                 }}
               />
             )}
             
             <VideoDisplay
               isHost={isHost}
+              isConnected={isConnected}
               localVideoRef={localVideoRef}
               remoteVideoRef={remoteVideoRef}
             />
