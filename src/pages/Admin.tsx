@@ -28,7 +28,9 @@ const Admin = () => {
         <div className="md:col-span-2">
           <SocialGraph />
         </div>
-        <InterviewRequestsModule />
+        <div className="md:col-span-2">
+          <InterviewRequestsModule />
+        </div>
         <MediaPool />
       </div>
     </div>
