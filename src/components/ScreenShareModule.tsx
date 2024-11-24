@@ -13,7 +13,23 @@ const ScreenShareModule = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
+  const checkDeviceCompatibility = () => {
+    // Check if it's iOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    
+    if (isIOS) {
+      toast({
+        title: "Device Not Supported",
+        description: "Screen sharing is not supported on iOS devices. Please use a desktop browser.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    return true;
+  };
+
   const generateShareCode = debounce(async () => {
+    if (!checkDeviceCompatibility()) return;
     if (isGenerating) return;
     
     try {
@@ -74,6 +90,7 @@ const ScreenShareModule = () => {
   }, 1000, { leading: true, trailing: false });
 
   const copyToClipboard = () => {
+    if (!checkDeviceCompatibility()) return;
     const shareUrl = `${window.location.origin}/screen-share/${shareCode}`;
     navigator.clipboard.writeText(shareUrl);
     toast({
@@ -83,6 +100,7 @@ const ScreenShareModule = () => {
   };
 
   const openFullScreen = () => {
+    if (!checkDeviceCompatibility()) return;
     window.open(`/screen-share/${shareCode}`, "_blank");
   };
 
