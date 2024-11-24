@@ -24,6 +24,7 @@ const WebRTCConnection = ({
     const initializeConnection = async () => {
       console.log('Initializing WebRTC connection as:', isHost ? 'host' : 'viewer');
       
+      // Create peer connection with more STUN servers
       const configuration = {
         iceServers: [
           {
@@ -35,9 +36,19 @@ const WebRTCConnection = ({
               "stun:stun4.l.google.com:19302",
             ],
           },
+          {
+            urls: ['turn:numb.viagenie.ca'],
+            username: 'webrtc@live.com',
+            credential: 'muazkh'
+          }
         ],
         iceCandidatePoolSize: 10,
       };
+
+      // Close any existing connections
+      if (peerConnectionRef.current) {
+        peerConnectionRef.current.close();
+      }
       
       peerConnectionRef.current = new RTCPeerConnection(configuration);
       console.log('Created peer connection with config:', configuration);
@@ -46,18 +57,22 @@ const WebRTCConnection = ({
       if (isHost && stream) {
         console.log('Host adding stream tracks');
         stream.getTracks().forEach(track => {
-          console.log('Adding track:', track.kind);
-          peerConnectionRef.current?.addTrack(track, stream);
+          if (peerConnectionRef.current) {
+            console.log('Adding track:', track.kind);
+            peerConnectionRef.current.addTrack(track, stream);
+          }
         });
       }
 
+      // Create and configure channel
       const channelName = `webrtc:${roomId}`;
       console.log('Creating channel:', channelName);
       channelRef.current = supabase.channel(channelName);
 
+      // Handle ICE candidates
       peerConnectionRef.current.onicecandidate = (event) => {
         if (event.candidate) {
-          console.log('Sending ICE candidate');
+          console.log('Sending ICE candidate:', event.candidate);
           channelRef.current.send({
             type: "broadcast",
             event: "ice-candidate",
@@ -66,28 +81,42 @@ const WebRTCConnection = ({
         }
       };
 
+      // Monitor ICE connection state
       peerConnectionRef.current.oniceconnectionstatechange = () => {
-        console.log('ICE connection state:', peerConnectionRef.current?.iceConnectionState);
-      };
-
-      peerConnectionRef.current.ontrack = (event) => {
-        console.log('Received remote track:', event.track.kind);
-        if (event.streams && event.streams[0]) {
-          console.log('Setting remote stream');
-          onTrackAdded(event.streams[0]);
+        const state = peerConnectionRef.current?.iceConnectionState;
+        console.log('ICE connection state changed:', state);
+        
+        if (state === 'connected' || state === 'completed') {
           if (!isConnectedRef.current) {
-            console.log('Marking connection as established from ontrack');
+            console.log('Connection established via ICE state');
             isConnectedRef.current = true;
             onConnectionEstablished();
           }
         }
       };
 
-      peerConnectionRef.current.onconnectionstatechange = () => {
-        console.log('Connection state changed:', peerConnectionRef.current?.connectionState);
-        if (peerConnectionRef.current?.connectionState === 'connected') {
+      // Handle incoming tracks
+      peerConnectionRef.current.ontrack = (event) => {
+        console.log('Received remote track:', event.track.kind);
+        if (event.streams && event.streams[0]) {
+          console.log('Setting remote stream');
+          onTrackAdded(event.streams[0]);
           if (!isConnectedRef.current) {
-            console.log('Marking connection as established from connection state');
+            console.log('Connection established via track');
+            isConnectedRef.current = true;
+            onConnectionEstablished();
+          }
+        }
+      };
+
+      // Monitor connection state
+      peerConnectionRef.current.onconnectionstatechange = () => {
+        const state = peerConnectionRef.current?.connectionState;
+        console.log('Connection state changed:', state);
+        
+        if (state === 'connected') {
+          if (!isConnectedRef.current) {
+            console.log('Connection established via connection state');
             isConnectedRef.current = true;
             onConnectionEstablished();
           }
@@ -103,7 +132,7 @@ const WebRTCConnection = ({
             offerToReceiveVideo: true,
           });
           await peerConnectionRef.current.setLocalDescription(offer);
-          console.log('Host sending offer');
+          console.log('Host sending offer:', offer);
           channelRef.current.send({
             type: "broadcast",
             event: "offer",
@@ -114,17 +143,18 @@ const WebRTCConnection = ({
         }
       }
 
+      // Handle incoming offers (viewer)
       channelRef.current
         .on("broadcast", { event: "offer" }, async ({ payload }: any) => {
           if (!isHost && peerConnectionRef.current) {
-            console.log('Viewer received offer');
+            console.log('Viewer received offer:', payload);
             try {
               await peerConnectionRef.current.setRemoteDescription(
                 new RTCSessionDescription(payload)
               );
               const answer = await peerConnectionRef.current.createAnswer();
               await peerConnectionRef.current.setLocalDescription(answer);
-              console.log('Viewer sending answer');
+              console.log('Viewer sending answer:', answer);
               channelRef.current.send({
                 type: "broadcast",
                 event: "answer",
@@ -137,7 +167,7 @@ const WebRTCConnection = ({
         })
         .on("broadcast", { event: "answer" }, async ({ payload }: any) => {
           if (isHost && peerConnectionRef.current) {
-            console.log('Host received answer');
+            console.log('Host received answer:', payload);
             try {
               await peerConnectionRef.current.setRemoteDescription(
                 new RTCSessionDescription(payload)
@@ -149,7 +179,7 @@ const WebRTCConnection = ({
         })
         .on("broadcast", { event: "ice-candidate" }, async ({ payload }: any) => {
           if (peerConnectionRef.current) {
-            console.log('Received ICE candidate');
+            console.log('Received ICE candidate:', payload);
             try {
               await peerConnectionRef.current.addIceCandidate(
                 new RTCIceCandidate(payload)
