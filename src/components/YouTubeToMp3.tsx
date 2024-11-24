@@ -6,19 +6,24 @@ import { useToast } from "@/components/ui/use-toast";
 import { Download, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
+interface ConversionResponse {
+  downloadUrl: string;
+  title?: string;
+}
+
 const YouTubeToMp3 = () => {
   const [url, setUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [downloadInfo, setDownloadInfo] = useState<ConversionResponse | null>(null);
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setDownloadUrl(null);
+    setDownloadInfo(null);
 
     try {
-      const { data, error } = await supabase.functions.invoke('youtube-to-mp3', {
+      const { data, error } = await supabase.functions.invoke<ConversionResponse>('youtube-to-mp3', {
         body: { url }
       });
 
@@ -27,10 +32,10 @@ const YouTubeToMp3 = () => {
       }
 
       if (!data?.downloadUrl) {
-        throw new Error(data?.error || 'No download URL received');
+        throw new Error('No download URL received');
       }
 
-      setDownloadUrl(data.downloadUrl);
+      setDownloadInfo(data);
       toast({
         title: "Success",
         description: "Your MP3 is ready for download!",
@@ -49,19 +54,25 @@ const YouTubeToMp3 = () => {
     }
   };
 
-  const handleDownload = () => {
-    if (!downloadUrl) return;
+  const handleDownload = async () => {
+    if (!downloadInfo?.downloadUrl) return;
     
     try {
-      window.open(downloadUrl, '_blank');
+      // Create a temporary anchor element
+      const link = document.createElement('a');
+      link.href = downloadInfo.downloadUrl;
+      link.target = '_blank';
+      link.download = `${downloadInfo.title || 'youtube-audio'}.mp3`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (error) {
       console.error('Download error:', error);
       toast({
         title: "Download Failed",
-        description: "Failed to start download. Please try again.",
+        description: "Failed to start download. Please try again or copy the link manually.",
         variant: "destructive",
       });
-      setDownloadUrl(null);
     }
   };
 
@@ -89,7 +100,7 @@ const YouTubeToMp3 = () => {
             </Button>
           </div>
           
-          {downloadUrl && (
+          {downloadInfo?.downloadUrl && (
             <Button 
               variant="secondary" 
               className="w-full"

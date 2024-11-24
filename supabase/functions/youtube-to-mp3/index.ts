@@ -48,7 +48,11 @@ serve(async (req) => {
     console.log('Extracted video ID:', videoId)
     console.log('Making request to RapidAPI endpoint')
 
-    const response = await fetch(`https://${RAPID_API_HOST}/dl?id=${videoId}`, {
+    const apiUrl = `https://${RAPID_API_HOST}/dl?id=${videoId}`
+    console.log('API URL:', apiUrl)
+
+    const response = await fetch(apiUrl, {
+      method: 'GET',
       headers: {
         'X-RapidAPI-Key': RAPID_API_KEY,
         'X-RapidAPI-Host': RAPID_API_HOST,
@@ -77,9 +81,12 @@ serve(async (req) => {
     }
 
     if (data.status === 'ok' && data.link) {
-      console.log('Successfully got download link')
+      console.log('Successfully got download link:', data.link)
       return new Response(
-        JSON.stringify({ downloadUrl: data.link }),
+        JSON.stringify({ 
+          downloadUrl: data.link,
+          title: data.title || 'YouTube Audio'
+        }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     } else {
