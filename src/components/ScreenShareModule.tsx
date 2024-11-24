@@ -38,7 +38,7 @@ const ScreenShareModule = () => {
       const code = Math.random().toString(36).substring(2, 8).toUpperCase();
       console.log('Generated code:', code);
 
-      // Create new session using the database function
+      // Create new session
       const { data: newSession, error: insertError } = await supabase
         .rpc('create_screen_share_session', {
           p_share_code: code,

@@ -4,12 +4,18 @@ import { SessionData } from "../types";
 export const validateShareSession = async (code: string): Promise<SessionData> => {
   console.log('Validating share session with code:', code);
   
+  if (!code) {
+    throw new Error('Share code is required');
+  }
+
+  const normalizedCode = code.toUpperCase().trim();
+  
   const { data: sessions, error } = await supabase
     .from('screen_share_sessions')
     .select('*')
-    .eq('share_code', code.toUpperCase())
+    .eq('share_code', normalizedCode)
     .eq('is_active', true)
-    .maybeSingle(); // Using maybeSingle() instead of single() to handle no results case
+    .single();
 
   if (error) {
     console.error('Database error during session validation:', error);
@@ -17,7 +23,7 @@ export const validateShareSession = async (code: string): Promise<SessionData> =
   }
 
   if (!sessions) {
-    console.error('No active session found for code:', code);
+    console.error('No active session found for code:', normalizedCode);
     throw new Error('No active session found with this code');
   }
 
@@ -40,6 +46,7 @@ export const handleExpiredSession = async (sessionId: string) => {
 
   if (error) {
     console.error('Error handling expired session:', error);
+    throw new Error(`Failed to handle expired session: ${error.message}`);
   }
 };
 
@@ -55,7 +62,7 @@ export const reconnectToSession = async (
     .eq('id', sessionId)
     .eq('is_active', true)
     .select()
-    .maybeSingle(); // Using maybeSingle() instead of single()
+    .single();
 
   if (error || !data) {
     console.error('Failed to reconnect to session:', error);
