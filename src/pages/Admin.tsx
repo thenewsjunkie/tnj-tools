@@ -7,6 +7,7 @@ import MediaPool from "@/components/MediaPool";
 import Reminders from "@/components/Reminders";
 import InterviewRequestsModule from "@/components/InterviewRequestsModule";
 import ScreenShareModule from "@/components/ScreenShareModule";
+import YouTubeToMp3 from "@/components/YouTubeToMp3";
 import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -65,6 +66,7 @@ const Admin = () => {
         <div className="md:col-span-2">
           <ScreenShareModule />
         </div>
+        <YouTubeToMp3 />
         <MediaPool />
       </div>
     </div>
