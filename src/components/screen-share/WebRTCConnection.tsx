@@ -22,6 +22,8 @@ const WebRTCConnection = ({
 
   useEffect(() => {
     const initializeConnection = async () => {
+      console.log('Initializing WebRTC connection as:', isHost ? 'host' : 'viewer');
+      
       const configuration = {
         iceServers: [
           {
@@ -29,12 +31,16 @@ const WebRTCConnection = ({
               "stun:stun.l.google.com:19302",
               "stun:stun1.l.google.com:19302",
               "stun:stun2.l.google.com:19302",
+              "stun:stun3.l.google.com:19302",
+              "stun:stun4.l.google.com:19302",
             ],
           },
         ],
+        iceCandidatePoolSize: 10,
       };
       
       peerConnectionRef.current = new RTCPeerConnection(configuration);
+      console.log('Created peer connection with config:', configuration);
 
       // Add stream tracks to peer connection if host
       if (isHost && stream) {
@@ -45,12 +51,9 @@ const WebRTCConnection = ({
         });
       }
 
-      const channelName = `room:${roomId}`;
-      channelRef.current = supabase.channel(channelName, {
-        config: {
-          broadcast: { self: true },
-        },
-      });
+      const channelName = `webrtc:${roomId}`;
+      console.log('Creating channel:', channelName);
+      channelRef.current = supabase.channel(channelName);
 
       peerConnectionRef.current.onicecandidate = (event) => {
         if (event.candidate) {
@@ -63,12 +66,20 @@ const WebRTCConnection = ({
         }
       };
 
+      peerConnectionRef.current.oniceconnectionstatechange = () => {
+        console.log('ICE connection state:', peerConnectionRef.current?.iceConnectionState);
+      };
+
       peerConnectionRef.current.ontrack = (event) => {
         console.log('Received remote track:', event.track.kind);
-        onTrackAdded(event.streams[0]);
-        if (!isConnectedRef.current) {
-          isConnectedRef.current = true;
-          onConnectionEstablished();
+        if (event.streams && event.streams[0]) {
+          console.log('Setting remote stream');
+          onTrackAdded(event.streams[0]);
+          if (!isConnectedRef.current) {
+            console.log('Marking connection as established from ontrack');
+            isConnectedRef.current = true;
+            onConnectionEstablished();
+          }
         }
       };
 
@@ -76,6 +87,7 @@ const WebRTCConnection = ({
         console.log('Connection state changed:', peerConnectionRef.current?.connectionState);
         if (peerConnectionRef.current?.connectionState === 'connected') {
           if (!isConnectedRef.current) {
+            console.log('Marking connection as established from connection state');
             isConnectedRef.current = true;
             onConnectionEstablished();
           }
@@ -86,8 +98,12 @@ const WebRTCConnection = ({
       if (isHost) {
         try {
           console.log('Host creating offer');
-          const offer = await peerConnectionRef.current.createOffer();
+          const offer = await peerConnectionRef.current.createOffer({
+            offerToReceiveAudio: true,
+            offerToReceiveVideo: true,
+          });
           await peerConnectionRef.current.setLocalDescription(offer);
+          console.log('Host sending offer');
           channelRef.current.send({
             type: "broadcast",
             event: "offer",
@@ -143,7 +159,9 @@ const WebRTCConnection = ({
             }
           }
         })
-        .subscribe();
+        .subscribe((status: string) => {
+          console.log('Channel subscription status:', status);
+        });
 
       console.log(`${isHost ? 'Host' : 'Viewer'} WebRTC connection initialized`);
     };
@@ -151,6 +169,7 @@ const WebRTCConnection = ({
     initializeConnection();
 
     return () => {
+      console.log('Cleaning up WebRTC connection');
       if (peerConnectionRef.current) {
         peerConnectionRef.current.close();
       }
