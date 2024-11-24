@@ -8,7 +8,8 @@ interface MediaDisplayProps {
 
 export const MediaDisplay = ({ media, onClose }: MediaDisplayProps) => {
   const getYouTubeEmbedUrl = (videoId: string) => {
-    return `https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1&origin=${window.location.origin}`;
+    // Add additional parameters for better compatibility
+    return `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&enablejsapi=1&origin=${window.location.origin}&rel=0`;
   };
 
   return (

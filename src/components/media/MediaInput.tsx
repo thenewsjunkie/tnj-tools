@@ -35,7 +35,8 @@ export const MediaInput = ({ newUrl, setNewUrl, onAdd }: MediaInputProps) => {
         const videoId = getYouTubeVideoId(newUrl);
         if (!videoId) throw new Error("Invalid YouTube URL");
         type = 'youtube';
-        thumbnail = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+        // Use mqdefault instead of maxresdefault as it's more reliable
+        thumbnail = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
         id = videoId;
         title = 'YouTube Video';
       } else if (newUrl.includes('twitter.com') || newUrl.includes('x.com')) {
