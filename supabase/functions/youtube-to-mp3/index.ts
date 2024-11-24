@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const RAPID_API_KEY = Deno.env.get('RAPID_API-KEY')
-const RAPID_API_HOST = 'youtube-mp36.p.rapidapi.com'
+const RAPID_API_HOST = 'youtube-mp3-downloader-highest-quality1.p.rapidapi.com'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -47,7 +47,7 @@ serve(async (req) => {
 
     console.log('Extracted video ID:', videoId)
 
-    const response = await fetch(`https://${RAPID_API_HOST}/dl?id=${videoId}`, {
+    const response = await fetch(`https://${RAPID_API_HOST}/youtube?url=${encodeURIComponent(url)}`, {
       headers: {
         'X-RapidAPI-Key': RAPID_API_KEY,
         'X-RapidAPI-Host': RAPID_API_HOST,
@@ -59,23 +59,23 @@ serve(async (req) => {
     console.log('RapidAPI response data:', JSON.stringify(data))
 
     if (!response.ok) {
-      throw new Error(`RapidAPI error: ${data.msg || 'Unknown error'}`)
+      throw new Error(`RapidAPI error: ${data.message || 'Unknown error'}`)
     }
 
-    if (data.status === 'ok' && data.link) {
+    if (data.success && data.url) {
       // Validate and encode the download URL
       try {
-        const downloadUrl = new URL(data.link);
+        const downloadUrl = new URL(data.url);
         return new Response(
           JSON.stringify({ downloadUrl: downloadUrl.toString() }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       } catch (error) {
-        console.error('Invalid download URL received:', data.link);
+        console.error('Invalid download URL received:', data.url);
         throw new Error('Invalid download URL received from API');
       }
     } else {
-      throw new Error(data.msg || 'Failed to convert video')
+      throw new Error(data.message || 'Failed to convert video')
     }
   } catch (error) {
     console.error('Error in youtube-to-mp3 function:', error)

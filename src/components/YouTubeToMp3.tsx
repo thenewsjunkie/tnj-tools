@@ -31,28 +31,11 @@ const YouTubeToMp3 = () => {
         throw new Error('No download URL received');
       }
 
-      // Test the URL before setting it
-      const testResponse = await fetch(data.downloadUrl, { method: 'HEAD' });
-      if (!testResponse.ok) {
-        throw new Error('Download link is not accessible');
-      }
-
       setDownloadUrl(data.downloadUrl);
       toast({
         title: "Success",
-        description: "Your MP3 is ready! Click download now - the link expires in 10 minutes.",
-        duration: 10000,
+        description: "Your MP3 is ready for download!",
       });
-
-      // Clear the download URL after 10 minutes
-      setTimeout(() => {
-        setDownloadUrl(null);
-        toast({
-          title: "Download link expired",
-          description: "Please generate a new download link.",
-          variant: "destructive",
-        });
-      }, 10 * 60 * 1000);
     } catch (error) {
       console.error('Conversion error:', error);
       toast({
@@ -71,23 +54,12 @@ const YouTubeToMp3 = () => {
     if (!downloadUrl) return;
     
     try {
-      const response = await fetch(downloadUrl);
-      if (!response.ok) throw new Error('Download failed');
-      
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'youtube-audio.mp3';
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      window.location.href = downloadUrl;
     } catch (error) {
       console.error('Download error:', error);
       toast({
         title: "Download Failed",
-        description: "The download link has expired. Please generate a new one.",
+        description: "Failed to start download. Please try again.",
         variant: "destructive",
       });
       setDownloadUrl(null);
@@ -119,19 +91,14 @@ const YouTubeToMp3 = () => {
           </div>
           
           {downloadUrl && (
-            <div className="space-y-2">
-              <Button 
-                variant="secondary" 
-                className="w-full"
-                onClick={handleDownload}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Download MP3
-              </Button>
-              <p className="text-xs text-yellow-400">
-                ⚠️ Download link expires in 10 minutes. Click download now!
-              </p>
-            </div>
+            <Button 
+              variant="secondary" 
+              className="w-full"
+              onClick={handleDownload}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Download MP3
+            </Button>
           )}
         </form>
       </CardContent>
