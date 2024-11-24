@@ -21,6 +21,7 @@ const WebRTCConnection = ({
   const pendingCandidatesRef = useRef<RTCIceCandidate[]>([]);
   const isConnectedRef = useRef<boolean>(false);
   const hasRemoteDescRef = useRef<boolean>(false);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const handleIceCandidate = useCallback(async (candidate: RTCIceCandidate) => {
     if (!hasRemoteDescRef.current) {
@@ -81,6 +82,12 @@ const WebRTCConnection = ({
     handleIceCandidate
   );
 
+  // Update stream reference when stream prop changes
+  useEffect(() => {
+    streamRef.current = stream || null;
+    console.log('Stream updated:', stream ? 'Stream present' : 'No stream');
+  }, [stream]);
+
   useEffect(() => {
     const initializeConnection = async () => {
       console.log('Initializing WebRTC connection as:', isHost ? 'host' : 'viewer');
@@ -94,11 +101,16 @@ const WebRTCConnection = ({
       peerConnectionRef.current = peerConnection;
 
       // Add stream tracks for host
-      if (isHost && stream) {
+      if (isHost && streamRef.current) {
         console.log('Host adding stream tracks');
-        stream.getTracks().forEach(track => {
-          console.log('Adding track:', track.kind, track.enabled, track.readyState);
-          peerConnection.addTrack(track, stream);
+        const tracks = streamRef.current.getTracks();
+        console.log('Number of tracks to add:', tracks.length);
+        
+        tracks.forEach(track => {
+          if (streamRef.current) {
+            console.log('Adding track:', track.kind, track.enabled, track.readyState);
+            peerConnection.addTrack(track, streamRef.current);
+          }
         });
       }
 
@@ -155,7 +167,7 @@ const WebRTCConnection = ({
       hasRemoteDescRef.current = false;
       pendingCandidatesRef.current = [];
     };
-  }, [roomId, isHost, stream, onTrackAdded, onConnectionEstablished, sendOffer, sendIceCandidate]);
+  }, [roomId, isHost, onTrackAdded, onConnectionEstablished, sendOffer, sendIceCandidate]);
 
   return null;
 };
