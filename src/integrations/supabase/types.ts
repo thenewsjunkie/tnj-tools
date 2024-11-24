@@ -84,6 +84,30 @@ export type Database = {
         }
         Relationships: []
       }
+      screen_share_sessions: {
+        Row: {
+          created_at: string | null
+          expires_at: string
+          id: string
+          is_active: boolean | null
+          share_code: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          is_active?: boolean | null
+          share_code: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          is_active?: boolean | null
+          share_code?: string
+        }
+        Relationships: []
+      }
       social_media_stats: {
         Row: {
           created_at: string | null

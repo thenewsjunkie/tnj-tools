@@ -6,6 +6,7 @@ import ShowNotes from "@/components/ShowNotes";
 import MediaPool from "@/components/MediaPool";
 import Reminders from "@/components/Reminders";
 import InterviewRequestsModule from "@/components/InterviewRequestsModule";
+import ScreenShareModule from "@/components/ScreenShareModule";
 
 const Admin = () => {
   return (
@@ -30,6 +31,9 @@ const Admin = () => {
         </div>
         <div className="md:col-span-2">
           <InterviewRequestsModule />
+        </div>
+        <div className="md:col-span-2">
+          <ScreenShareModule />
         </div>
         <MediaPool />
       </div>
