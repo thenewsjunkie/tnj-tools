@@ -22,6 +22,7 @@ const WebRTCConnection = ({
   const isConnectedRef = useRef<boolean>(false);
   const hasRemoteDescRef = useRef<boolean>(false);
   const streamRef = useRef<MediaStream | null>(null);
+  const remoteStreamRef = useRef<MediaStream | null>(null);
 
   const handleIceCandidate = useCallback(async (candidate: RTCIceCandidate) => {
     if (!hasRemoteDescRef.current) {
@@ -103,6 +104,7 @@ const WebRTCConnection = ({
 
           stream.getTracks().forEach(track => {
             if (peerConnectionRef.current && peerConnectionRef.current.signalingState !== 'closed') {
+              console.log('Host adding track to connection:', track.kind);
               peerConnectionRef.current.addTrack(track, stream);
             }
           });
@@ -122,6 +124,12 @@ const WebRTCConnection = ({
 
       const peerConnection = new RTCPeerConnection(getRTCConfiguration());
       peerConnectionRef.current = peerConnection;
+
+      // Initialize remote stream for viewer
+      if (!isHost) {
+        remoteStreamRef.current = new MediaStream();
+        console.log('Viewer: Created new MediaStream for remote content');
+      }
 
       // Add stream tracks for host
       if (isHost && streamRef.current) {
@@ -158,9 +166,13 @@ const WebRTCConnection = ({
 
       peerConnection.ontrack = (event) => {
         console.log('Received remote track:', event.track.kind);
-        if (event.streams && event.streams[0]) {
-          console.log('Setting remote stream');
-          onTrackAdded(event.streams[0]);
+        if (!isHost) {
+          if (!remoteStreamRef.current) {
+            remoteStreamRef.current = new MediaStream();
+          }
+          remoteStreamRef.current.addTrack(event.track);
+          console.log('Added track to remote stream:', event.track.kind);
+          onTrackAdded(remoteStreamRef.current);
         }
       };
 
@@ -183,6 +195,9 @@ const WebRTCConnection = ({
 
     return () => {
       console.log('Cleaning up WebRTC connection');
+      if (remoteStreamRef.current) {
+        remoteStreamRef.current.getTracks().forEach(track => track.stop());
+      }
       if (peerConnectionRef.current) {
         peerConnectionRef.current.close();
       }
