@@ -6,7 +6,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type Database = {
+export interface Database {
   public: {
     Tables: {
       follower_history: {
@@ -57,60 +57,6 @@ export type Database = {
         }
         Relationships: []
       }
-      media_pool: {
-        Row: {
-          created_at: string | null
-          id: string
-          thumbnail: string
-          title: string
-          type: string
-          url: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          thumbnail: string
-          title: string
-          type: string
-          url: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          thumbnail?: string
-          title?: string
-          type?: string
-          url?: string
-        }
-        Relationships: []
-      }
-      reminders: {
-        Row: {
-          created_at: string | null
-          datetime: string
-          id: string
-          is_active: boolean | null
-          recurring_weekly: boolean | null
-          text: string
-        }
-        Insert: {
-          created_at?: string | null
-          datetime: string
-          id?: string
-          is_active?: boolean | null
-          recurring_weekly?: boolean | null
-          text: string
-        }
-        Update: {
-          created_at?: string | null
-          datetime?: string
-          id?: string
-          is_active?: boolean | null
-          recurring_weekly?: boolean | null
-          text?: string
-        }
-        Relationships: []
-      }
       screen_share_sessions: {
         Row: {
           created_at: string | null
@@ -150,66 +96,6 @@ export type Database = {
         }
         Relationships: []
       }
-      show_notes: {
-        Row: {
-          content: string | null
-          created_at: string | null
-          id: string
-          title: string | null
-          type: string
-          url: string | null
-        }
-        Insert: {
-          content?: string | null
-          created_at?: string | null
-          id?: string
-          title?: string | null
-          type: string
-          url?: string | null
-        }
-        Update: {
-          content?: string | null
-          created_at?: string | null
-          id?: string
-          title?: string | null
-          type?: string
-          url?: string | null
-        }
-        Relationships: []
-      }
-      social_media_stats: {
-        Row: {
-          created_at: string | null
-          display_order: number
-          followers: string
-          handle: string
-          id: string
-          platform_name: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          display_order: number
-          followers: string
-          handle: string
-          id?: string
-          platform_name: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          display_order?: number
-          followers?: string
-          handle?: string
-          id?: string
-          platform_name?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-    }
-    Views: {
-      [_ in never]: never
     }
     Functions: {
       claim_screen_share_role: {
@@ -218,18 +104,14 @@ export type Database = {
           p_device_id: string
           p_share_code: string
         }
-        Returns: {
-          created_at: string | null
-          expires_at: string
-          host_connected: boolean | null
-          host_device_id: string | null
-          id: string
-          is_active: boolean | null
-          room_id: string | null
-          share_code: string
-          viewer_connected: boolean | null
-          viewer_device_id: string | null
+        Returns: Database['public']['Tables']['screen_share_sessions']['Row']
+      }
+      create_screen_share_session: {
+        Args: {
+          p_share_code: string
+          p_expires_at: string
         }
+        Returns: Database['public']['Tables']['screen_share_sessions']['Row']
       }
     }
     Enums: {
@@ -241,32 +123,30 @@ export type Database = {
   }
 }
 
-type PublicSchema = Database[Extract<keyof Database, "public">]
-
 export type Tables<
   PublicTableNameOrOptions extends
-    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
+    | keyof (Database['public']['Tables'] & Database['public']['Views'])
     | { schema: keyof Database },
   TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-        Database[PublicTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    ? keyof (Database[PublicTableNameOrOptions['schema']]['Tables'] &
+        Database[PublicTableNameOrOptions['schema']]['Views'])
+    : never = never
 > = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+  ? (Database[PublicTableNameOrOptions['schema']]['Tables'] &
+      Database[PublicTableNameOrOptions['schema']]['Views'])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
-        PublicSchema["Views"])
-    ? (PublicSchema["Tables"] &
-        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
+  : PublicTableNameOrOptions extends keyof (Database['public']['Tables'] &
+      Database['public']['Views'])
+  ? (Database['public']['Tables'] &
+      Database['public']['Views'])[PublicTableNameOrOptions] extends {
+      Row: infer R
+    }
+    ? R
     : never
+  : never
 
 export type TablesInsert<
   PublicTableNameOrOptions extends

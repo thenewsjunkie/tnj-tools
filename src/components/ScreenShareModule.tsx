@@ -38,11 +38,12 @@ const ScreenShareModule = () => {
       const code = Math.random().toString(36).substring(2, 8).toUpperCase();
       console.log('Generated code:', code);
 
-      // Begin transaction
-      const { data: newSession, error: insertError } = await supabase.rpc('create_screen_share_session', {
-        p_share_code: code,
-        p_expires_at: addDays(new Date(), 1).toISOString()
-      });
+      // Create new session using the database function
+      const { data: newSession, error: insertError } = await supabase
+        .rpc('create_screen_share_session', {
+          p_share_code: code,
+          p_expires_at: addDays(new Date(), 1).toISOString()
+        });
 
       if (insertError || !newSession) {
         console.error('Failed to create session:', insertError);
