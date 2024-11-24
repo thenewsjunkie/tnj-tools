@@ -4,6 +4,7 @@ import SocialStats from "@/components/SocialStats";
 import SocialGraph from "@/components/SocialGraph";
 import ShowNotes from "@/components/ShowNotes";
 import MediaPool from "@/components/MediaPool";
+import Reminders from "@/components/Reminders";
 
 const Admin = () => {
   return (
@@ -19,6 +20,7 @@ const Admin = () => {
       </nav>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 max-w-7xl mx-auto">
+        <Reminders />
         <Stopwatch />
         <SocialStats />
         <div className="md:col-span-2">
