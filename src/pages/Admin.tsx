@@ -20,10 +20,10 @@ const Admin = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 max-w-7xl mx-auto">
         <Stopwatch />
         <SocialStats />
-        <ShowNotes />
         <div className="md:col-span-2">
           <SocialGraph />
         </div>
+        <ShowNotes />
       </div>
     </div>
   );

@@ -51,10 +51,10 @@ const SocialStats = () => {
     const savedPlatforms = localStorage.getItem('socialPlatforms');
     if (savedPlatforms) {
       const parsed = JSON.parse(savedPlatforms);
-      // Reattach icon components which can't be serialized
+      // Reattach icon components which can't be serialized and preserve existing data
       return parsed.map(platform => ({
         ...platform,
-        icon: initialPlatforms.find(p => p.name === platform.name)?.icon
+        icon: initialPlatforms.find(p => p.name === platform.name)?.icon || platform.icon
       }));
     }
     return initialPlatforms;
