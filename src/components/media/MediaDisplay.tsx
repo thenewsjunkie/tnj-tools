@@ -7,6 +7,10 @@ interface MediaDisplayProps {
 }
 
 export const MediaDisplay = ({ media, onClose }: MediaDisplayProps) => {
+  const getYouTubeEmbedUrl = (videoId: string) => {
+    return `https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1&origin=${window.location.origin}`;
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
       <button
@@ -18,16 +22,18 @@ export const MediaDisplay = ({ media, onClose }: MediaDisplayProps) => {
       <div className="w-full h-full max-w-7xl max-h-screen p-4">
         {media.type === 'youtube' ? (
           <iframe
-            src={`https://www.youtube.com/embed/${media.id}?autoplay=1`}
+            src={getYouTubeEmbedUrl(media.id)}
             className="w-full h-full"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
+            title={media.title}
           />
         ) : (
           <iframe
             src={`https://platform.twitter.com/embed/Tweet.html?id=${media.id}`}
             className="w-full h-full"
             allowFullScreen
+            title={media.title}
           />
         )}
       </div>
