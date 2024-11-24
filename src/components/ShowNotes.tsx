@@ -1,25 +1,82 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AddNoteForm from "./notes/AddNoteForm";
 import NoteItem from "./notes/NoteItem";
 import type { Note, NoteType } from "./notes/types";
 
 const ShowNotes = () => {
-  const [notes, setNotes] = useState<Note[]>(() => {
-    const saved = localStorage.getItem('showNotes');
-    return saved ? JSON.parse(saved) : [];
-  });
-  
   const [newNote, setNewNote] = useState({ type: 'text' as NoteType, content: '', title: '', url: '' });
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    localStorage.setItem('showNotes', JSON.stringify(notes));
-  }, [notes]);
+  const { data: notes = [], isLoading } = useQuery({
+    queryKey: ['show-notes'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('show_notes')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const addNoteMutation = useMutation({
+    mutationFn: async (note: Omit<Note, 'id'>) => {
+      const { error } = await supabase
+        .from('show_notes')
+        .insert([note]);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['show-notes'] });
+      setNewNote({ type: 'text', content: '', title: '', url: '' });
+      toast({
+        title: "Success",
+        description: "Note added successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to add note",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteNoteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('show_notes')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['show-notes'] });
+      toast({
+        title: "Success",
+        description: "Note deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete note",
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleAddNote = () => {
     if (newNote.type === 'text' && !newNote.content.trim()) {
@@ -49,30 +106,12 @@ const ShowNotes = () => {
       return;
     }
 
-    const note: Note = {
-      id: Date.now().toString(),
-      type: newNote.type,
-      content: newNote.content,
-      ...(newNote.title && { title: newNote.title }),
-      ...(newNote.url && { url: newNote.url }),
-    };
-
-    setNotes(prev => [note, ...prev]);
-    setNewNote({ type: 'text', content: '', title: '', url: '' });
-    
-    toast({
-      title: "Success",
-      description: "Note added successfully",
-    });
+    addNoteMutation.mutate(newNote);
   };
 
-  const handleDeleteNote = (id: string) => {
-    setNotes(prev => prev.filter(note => note.id !== id));
-    toast({
-      title: "Success",
-      description: "Note deleted successfully",
-    });
-  };
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <Card className="w-full">
@@ -105,7 +144,7 @@ const ShowNotes = () => {
             <NoteItem
               key={note.id}
               note={note}
-              onDelete={handleDeleteNote}
+              onDelete={() => deleteNoteMutation.mutate(note.id)}
             />
           ))}
         </div>

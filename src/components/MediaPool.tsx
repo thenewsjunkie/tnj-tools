@@ -3,6 +3,8 @@ import { X, Play, Trash2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useToast } from "./ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface MediaItem {
   id: string;
@@ -13,21 +15,73 @@ interface MediaItem {
 }
 
 const MediaPool = () => {
-  const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [newUrl, setNewUrl] = useState("");
   const [fullscreenMedia, setFullscreenMedia] = useState<MediaItem | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const saved = localStorage.getItem('mediaPool');
-    if (saved) {
-      setMediaItems(JSON.parse(saved));
-    }
-  }, []);
+  const { data: mediaItems = [], isLoading } = useQuery({
+    queryKey: ['media-pool'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('media_pool')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+  });
 
-  const saveToLocalStorage = (items: MediaItem[]) => {
-    localStorage.setItem('mediaPool', JSON.stringify(items));
-  };
+  const addMediaMutation = useMutation({
+    mutationFn: async (newItem: Omit<MediaItem, 'id'>) => {
+      const { error } = await supabase
+        .from('media_pool')
+        .insert([newItem]);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['media-pool'] });
+      setNewUrl("");
+      toast({
+        title: "Media added",
+        description: "Your media has been added to the pool",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to add media",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteMediaMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('media_pool')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['media-pool'] });
+      toast({
+        title: "Media removed",
+        description: "The media has been removed from your pool",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete media",
+        variant: "destructive",
+      });
+    },
+  });
 
   const getYouTubeVideoId = (url: string) => {
     const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
@@ -54,7 +108,7 @@ const MediaPool = () => {
         type = 'youtube';
         thumbnail = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
         id = videoId;
-        title = 'YouTube Video'; // You could fetch the actual title using YouTube API
+        title = 'YouTube Video';
       } else if (newUrl.includes('twitter.com') || newUrl.includes('x.com')) {
         const tweetData = getTwitterVideoId(newUrl);
         if (!tweetData) throw new Error("Invalid Twitter URL");
@@ -66,21 +120,11 @@ const MediaPool = () => {
         throw new Error("Please enter a valid YouTube or Twitter video URL");
       }
 
-      const newItem: MediaItem = {
-        id,
+      await addMediaMutation.mutateAsync({
         url: newUrl,
         thumbnail,
         type,
         title
-      };
-
-      const updatedItems = [...mediaItems, newItem];
-      setMediaItems(updatedItems);
-      saveToLocalStorage(updatedItems);
-      setNewUrl("");
-      toast({
-        title: "Media added",
-        description: "Your media has been added to the pool",
       });
     } catch (error) {
       toast({
@@ -91,15 +135,9 @@ const MediaPool = () => {
     }
   };
 
-  const handleDelete = (id: string) => {
-    const updatedItems = mediaItems.filter(item => item.id !== id);
-    setMediaItems(updatedItems);
-    saveToLocalStorage(updatedItems);
-    toast({
-      title: "Media removed",
-      description: "The media has been removed from your pool",
-    });
-  };
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="w-full md:col-span-2 space-y-4">
@@ -135,7 +173,7 @@ const MediaPool = () => {
                 <Play className="w-12 h-12 text-white" />
               </button>
               <button
-                onClick={() => handleDelete(item.id)}
+                onClick={() => deleteMediaMutation.mutate(item.id)}
                 className="absolute top-2 right-2 p-1 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <Trash2 className="w-4 h-4 text-white" />

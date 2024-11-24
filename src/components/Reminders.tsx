@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface Reminder {
   id: string;
@@ -17,50 +18,88 @@ interface Reminder {
 }
 
 const Reminders = () => {
-  const [reminders, setReminders] = useState<Reminder[]>(() => {
-    const saved = localStorage.getItem('reminders');
-    return saved ? JSON.parse(saved) : [];
-  });
   const [newReminder, setNewReminder] = useState("");
   const [newDateTime, setNewDateTime] = useState("");
   const [recurringWeekly, setRecurringWeekly] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    localStorage.setItem('reminders', JSON.stringify(reminders));
-  }, [reminders]);
+  const { data: reminders = [], isLoading } = useQuery({
+    queryKey: ['reminders'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('reminders')
+        .select('*')
+        .order('datetime', { ascending: true });
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const addReminderMutation = useMutation({
+    mutationFn: async (reminder: Omit<Reminder, 'id' | 'isActive'>) => {
+      const { error } = await supabase
+        .from('reminders')
+        .insert([{
+          text: reminder.text,
+          datetime: reminder.datetime,
+          recurring_weekly: reminder.recurringWeekly,
+        }]);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reminders'] });
+      setNewReminder("");
+      setNewDateTime("");
+      setRecurringWeekly(false);
+      toast({
+        title: "Reminder added",
+        description: "Your reminder has been set successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to add reminder",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteReminderMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('reminders')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reminders'] });
+      toast({
+        title: "Reminder deleted",
+        description: "The reminder has been removed",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete reminder",
+        variant: "destructive",
+      });
+    },
+  });
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const now = new Date();
-      setReminders(prevReminders => 
-        prevReminders.map(reminder => {
-          const reminderDate = new Date(reminder.datetime);
-          const isActive = reminderDate <= now && 
-                          reminderDate.getTime() + 3600000 > now.getTime();
-
-          if (reminder.recurringWeekly && reminderDate < now) {
-            const nextDate = new Date(reminder.datetime);
-            while (nextDate <= now) {
-              nextDate.setDate(nextDate.getDate() + 7);
-            }
-            return {
-              ...reminder,
-              datetime: nextDate.toISOString(),
-              isActive
-            };
-          }
-
-          return {
-            ...reminder,
-            isActive
-          };
-        })
-      );
+      queryClient.invalidateQueries({ queryKey: ['reminders'] });
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [queryClient]);
 
   const handleAddReminder = () => {
     if (!newReminder.trim() || !newDateTime) {
@@ -72,29 +111,10 @@ const Reminders = () => {
       return;
     }
 
-    const newItem: Reminder = {
-      id: crypto.randomUUID(),
+    addReminderMutation.mutate({
       text: newReminder.trim(),
       datetime: newDateTime,
-      isActive: false,
-      recurringWeekly: recurringWeekly
-    };
-
-    setReminders(prev => [...prev, newItem]);
-    setNewReminder("");
-    setNewDateTime("");
-    setRecurringWeekly(false);
-    toast({
-      title: "Reminder added",
-      description: "Your reminder has been set successfully",
-    });
-  };
-
-  const handleDelete = (id: string) => {
-    setReminders(prev => prev.filter(reminder => reminder.id !== id));
-    toast({
-      title: "Reminder deleted",
-      description: "The reminder has been removed",
+      recurringWeekly
     });
   };
 
@@ -105,9 +125,9 @@ const Reminders = () => {
     return hoursDifference >= 0 && hoursDifference <= 24;
   };
 
-  const sortedReminders = [...reminders].sort((a, b) => 
-    new Date(a.datetime).getTime() - new Date(b.datetime).getTime()
-  );
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <Card className="bg-black/50 border-white/10">
@@ -147,13 +167,13 @@ const Reminders = () => {
         </div>
         
         <div className="space-y-2">
-          {sortedReminders.map((reminder) => {
+          {reminders.map((reminder) => {
             const upcoming = isUpcoming(reminder.datetime);
             return (
               <div
                 key={reminder.id}
                 className={`relative p-3 rounded-lg flex items-start justify-between gap-2 transition-all ${
-                  reminder.isActive
+                  reminder.is_active
                     ? "bg-red-500/20 border-2 border-neon-red animate-pulse"
                     : upcoming
                     ? "bg-blue-500/20 border border-blue-400"
@@ -161,15 +181,15 @@ const Reminders = () => {
                 } ${upcoming ? "scale-[1.02]" : ""}`}
               >
                 <div className="flex items-start gap-2">
-                  {(reminder.isActive || upcoming) && (
+                  {(reminder.is_active || upcoming) && (
                     <AlertCircle className={`h-5 w-5 shrink-0 mt-0.5 ${
-                      reminder.isActive ? "text-neon-red" : "text-blue-400"
+                      reminder.is_active ? "text-neon-red" : "text-blue-400"
                     }`} />
                   )}
                   <div>
                     <p className="text-white">
                       {reminder.text}
-                      {reminder.recurringWeekly && (
+                      {reminder.recurring_weekly && (
                         <span className="ml-2 text-xs bg-blue-500/20 px-2 py-0.5 rounded">
                           Weekly
                         </span>
@@ -184,7 +204,7 @@ const Reminders = () => {
                   variant="ghost"
                   size="icon"
                   className="h-6 w-6 shrink-0 text-white/50 hover:text-white"
-                  onClick={() => handleDelete(reminder.id)}
+                  onClick={() => deleteReminderMutation.mutate(reminder.id)}
                 >
                   <X className="h-4 w-4" />
                 </Button>

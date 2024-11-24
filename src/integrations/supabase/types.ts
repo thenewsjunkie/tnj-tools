@@ -57,6 +57,33 @@ export type Database = {
         }
         Relationships: []
       }
+      media_pool: {
+        Row: {
+          created_at: string | null
+          id: string
+          thumbnail: string
+          title: string
+          type: string
+          url: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          thumbnail: string
+          title: string
+          type: string
+          url: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          thumbnail?: string
+          title?: string
+          type?: string
+          url?: string
+        }
+        Relationships: []
+      }
       reminders: {
         Row: {
           created_at: string | null
@@ -114,6 +141,33 @@ export type Database = {
           room_id?: string | null
           share_code?: string
           viewer_connected?: boolean | null
+        }
+        Relationships: []
+      }
+      show_notes: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          id: string
+          title: string | null
+          type: string
+          url: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          title?: string | null
+          type: string
+          url?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          title?: string | null
+          type?: string
+          url?: string | null
         }
         Relationships: []
       }
