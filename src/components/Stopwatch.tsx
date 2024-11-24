@@ -7,11 +7,13 @@ const Stopwatch = () => {
   const [isRunning, setIsRunning] = useState(false);
 
   useEffect(() => {
-    let intervalId: number;
+    let intervalId: NodeJS.Timeout | undefined;
     if (isRunning) {
       intervalId = setInterval(() => setTime(time + 1), 10);
     }
-    return () => clearInterval(intervalId);
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [isRunning, time]);
 
   const hours = Math.floor(time / 360000);
