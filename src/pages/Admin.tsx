@@ -5,6 +5,7 @@ import SocialGraph from "@/components/SocialGraph";
 import ShowNotes from "@/components/ShowNotes";
 import MediaPool from "@/components/MediaPool";
 import Reminders from "@/components/Reminders";
+import InterviewRequestsModule from "@/components/InterviewRequestsModule";
 
 const Admin = () => {
   return (
@@ -27,6 +28,7 @@ const Admin = () => {
           <SocialGraph />
         </div>
         <ShowNotes />
+        <InterviewRequestsModule />
         <MediaPool />
       </div>
     </div>
