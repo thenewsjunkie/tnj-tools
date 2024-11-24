@@ -18,7 +18,7 @@ const Admin = () => {
         >
           ← Home
         </Link>
-        <h1 className="text-white text-xl sm:text-2xl digital">555am.io Admin</h1>
+        <h1 className="text-white text-xl sm:text-2xl digital">TNJ Tools Admin</h1>
       </nav>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 max-w-7xl mx-auto">
