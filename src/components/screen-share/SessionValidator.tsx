@@ -8,6 +8,15 @@ interface SessionValidatorProps {
   onValidSession: (data: any, isHost: boolean) => void;
 }
 
+interface SessionData {
+  id: string;
+  host_device_id: string | null;
+  viewer_device_id: string | null;
+  host_connected: boolean;
+  viewer_connected: boolean;
+  is_active: boolean;
+}
+
 const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
   const [validating, setValidating] = useState(true);
   const { toast } = useToast();
@@ -79,7 +88,7 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
         }
 
         // Try to claim host role with a transaction
-        const { data: updatedSession, error: updateError } = await supabase.rpc(
+        const { data: updatedSession, error: updateError } = await supabase.rpc<SessionData>(
           'claim_screen_share_role',
           { 
             p_session_id: sessionData.id,
@@ -90,7 +99,7 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
 
         if (!isMounted) return;
 
-        if (updateError) {
+        if (updateError || !updatedSession) {
           console.error('Failed to update connection status:', updateError);
           showError(
             "Connection error",
@@ -121,7 +130,7 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
             table: 'screen_share_sessions',
             filter: `id=eq.${sessionData.id}`
           }, (payload) => {
-            const newData = payload.new as any;
+            const newData = payload.new as SessionData;
             // Check if this device is still connected
             const isStillConnected = isHost 
               ? newData.host_device_id === deviceId 

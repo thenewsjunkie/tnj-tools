@@ -212,7 +212,25 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      claim_screen_share_role: {
+        Args: {
+          p_session_id: string
+          p_device_id: string
+          p_share_code: string
+        }
+        Returns: {
+          created_at: string | null
+          expires_at: string
+          host_connected: boolean | null
+          host_device_id: string | null
+          id: string
+          is_active: boolean | null
+          room_id: string | null
+          share_code: string
+          viewer_connected: boolean | null
+          viewer_device_id: string | null
+        }
+      }
     }
     Enums: {
       [_ in never]: never
