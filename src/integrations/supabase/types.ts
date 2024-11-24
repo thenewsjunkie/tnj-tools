@@ -88,23 +88,32 @@ export type Database = {
         Row: {
           created_at: string | null
           expires_at: string
+          host_connected: boolean | null
           id: string
           is_active: boolean | null
+          room_id: string | null
           share_code: string
+          viewer_connected: boolean | null
         }
         Insert: {
           created_at?: string | null
           expires_at: string
+          host_connected?: boolean | null
           id?: string
           is_active?: boolean | null
+          room_id?: string | null
           share_code: string
+          viewer_connected?: boolean | null
         }
         Update: {
           created_at?: string | null
           expires_at?: string
+          host_connected?: boolean | null
           id?: string
           is_active?: boolean | null
+          room_id?: string | null
           share_code?: string
+          viewer_connected?: boolean | null
         }
         Relationships: []
       }

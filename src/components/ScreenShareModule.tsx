@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ const ScreenShareModule = () => {
     const { error } = await supabase.from("screen_share_sessions").insert({
       share_code: code,
       expires_at: addDays(new Date(), 1).toISOString(),
+      is_active: true,
     });
 
     if (error) {
