@@ -1,18 +1,13 @@
 import { useState } from "react";
-import { X, Play, Trash2 } from "lucide-react";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
 import { useToast } from "./ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { MediaDisplay } from "./media/MediaDisplay";
 import { MediaGrid } from "./media/MediaGrid";
 import { MediaInput } from "./media/MediaInput";
 import type { MediaItem } from "./media/types";
 
 const MediaPool = () => {
   const [newUrl, setNewUrl] = useState("");
-  const [fullscreenMedia, setFullscreenMedia] = useState<MediaItem | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -105,15 +100,9 @@ const MediaPool = () => {
       />
       <MediaGrid 
         items={mediaItems}
-        onPlay={setFullscreenMedia}
+        onPlay={() => {}}
         onDelete={deleteMediaMutation.mutate}
       />
-      {fullscreenMedia && (
-        <MediaDisplay
-          media={fullscreenMedia}
-          onClose={() => setFullscreenMedia(null)}
-        />
-      )}
     </div>
   );
 };

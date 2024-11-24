@@ -24,6 +24,17 @@ export const MediaInput = ({ newUrl, setNewUrl, onAdd }: MediaInputProps) => {
     return match ? { id: match[2], handle: match[1] } : null;
   };
 
+  const fetchYouTubeTitle = async (videoId: string) => {
+    try {
+      const response = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoId}`);
+      const data = await response.json();
+      return data.title || 'YouTube Video';
+    } catch (error) {
+      console.error('Failed to fetch video title:', error);
+      return 'YouTube Video';
+    }
+  };
+
   const handleAddMedia = async () => {
     try {
       let type: 'youtube' | 'twitter';
@@ -35,10 +46,9 @@ export const MediaInput = ({ newUrl, setNewUrl, onAdd }: MediaInputProps) => {
         const videoId = getYouTubeVideoId(newUrl);
         if (!videoId) throw new Error("Invalid YouTube URL");
         type = 'youtube';
-        // Use mqdefault instead of maxresdefault as it's more reliable
         thumbnail = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
         id = videoId;
-        title = 'YouTube Video';
+        title = await fetchYouTubeTitle(videoId);
       } else if (newUrl.includes('twitter.com') || newUrl.includes('x.com')) {
         const tweetData = getTwitterVideoId(newUrl);
         if (!tweetData) throw new Error("Invalid Twitter URL");

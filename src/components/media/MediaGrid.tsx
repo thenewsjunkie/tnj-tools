@@ -1,4 +1,4 @@
-import { Play, Trash2 } from "lucide-react";
+import { ExternalLink, Trash2 } from "lucide-react";
 import type { MediaItem } from "./types";
 
 interface MediaGridProps {
@@ -7,7 +7,15 @@ interface MediaGridProps {
   onDelete: (id: string) => void;
 }
 
-export const MediaGrid = ({ items, onPlay, onDelete }: MediaGridProps) => {
+export const MediaGrid = ({ items, onDelete }: MediaGridProps) => {
+  const handlePlay = (item: MediaItem) => {
+    if (item.type === 'youtube') {
+      window.open(`https://www.youtube.com/watch?v=${item.id}`, '_blank');
+    } else if (item.type === 'twitter') {
+      window.open(item.url, '_blank');
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
       {items.map((item) => (
@@ -22,10 +30,10 @@ export const MediaGrid = ({ items, onPlay, onDelete }: MediaGridProps) => {
               <p className="text-white text-sm truncate">{item.title}</p>
             </div>
             <button
-              onClick={() => onPlay(item)}
+              onClick={() => handlePlay(item)}
               className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity"
             >
-              <Play className="w-12 h-12 text-white" />
+              <ExternalLink className="w-12 h-12 text-white" />
             </button>
             <button
               onClick={() => onDelete(item.id)}
