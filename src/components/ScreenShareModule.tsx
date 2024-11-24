@@ -13,27 +13,43 @@ const ScreenShareModule = () => {
 
   const generateShareCode = async () => {
     try {
-      // First, deactivate any existing active sessions
+      // First, deactivate any existing active sessions for cleanup
       await supabase
         .from("screen_share_sessions")
         .update({ is_active: false })
         .eq("is_active", true);
 
+      // Generate a new unique code
       const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-      const { error } = await supabase.from("screen_share_sessions").insert({
-        share_code: code,
-        expires_at: addDays(new Date(), 1).toISOString(),
-        is_active: true,
-        host_connected: false,
-        viewer_connected: false,
-        room_id: code, // Add room_id to match share_code
-      });
+      
+      // Insert new session with all required fields
+      const { data, error } = await supabase
+        .from("screen_share_sessions")
+        .insert({
+          share_code: code,
+          expires_at: addDays(new Date(), 1).toISOString(),
+          is_active: true,
+          host_connected: false,
+          viewer_connected: false,
+          room_id: code,
+        })
+        .select()
+        .single();
 
       if (error) {
         console.error('Error generating share code:', error);
         toast({
           title: "Error",
-          description: "Failed to generate share code",
+          description: "Failed to generate share code: " + error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!data) {
+        toast({
+          title: "Error",
+          description: "Failed to generate share code: No data returned",
           variant: "destructive",
         });
         return;
@@ -48,7 +64,7 @@ const ScreenShareModule = () => {
       console.error('Error in generateShareCode:', error);
       toast({
         title: "Error",
-        description: "Failed to generate share code",
+        description: "Failed to generate share code: Unexpected error",
         variant: "destructive",
       });
     }
