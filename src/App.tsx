@@ -18,6 +18,38 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<boolean | null>(null);
 
   useEffect(() => {
+    // Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(!!session);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (session === null) {
+    return null; // Loading state
+  }
+
+  if (!session) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
+
+// Non-Protected Route component - ensures user is NOT logged in
+const NonAuthRoute = ({ children }: { children: React.ReactNode }) => {
+  const [session, setSession] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    // Check if user is logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(!!session);
     });
@@ -35,8 +67,9 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return null; // Loading state
   }
 
-  if (!session) {
-    return <Navigate to="/login" replace />;
+  // If user is logged in, redirect them away from this route
+  if (session) {
+    return <Navigate to="/admin" replace />;
   }
 
   return children;
@@ -67,8 +100,14 @@ const App = () => (
               </ProtectedRoute>
             }
           />
-          {/* Remove ProtectedRoute wrapper for screen share */}
-          <Route path="/screen-share/:code" element={<ScreenShare />} />
+          <Route
+            path="/screen-share/:code"
+            element={
+              <NonAuthRoute>
+                <ScreenShare />
+              </NonAuthRoute>
+            }
+          />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
