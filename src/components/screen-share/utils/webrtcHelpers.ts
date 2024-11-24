@@ -26,15 +26,16 @@ export const setupPeerConnection = (
       streams: event.streams.length
     });
     
-    if (!isHost) {
-      event.streams[0].getTracks().forEach(track => {
-        console.log('[webrtcHelpers] Adding track to remote stream:', {
-          kind: track.kind,
-          enabled: track.enabled,
-          muted: track.muted
-        });
-        remoteStream.addTrack(track);
+    event.streams[0].getTracks().forEach(track => {
+      console.log('[webrtcHelpers] Adding track to remote stream:', {
+        kind: track.kind,
+        enabled: track.enabled,
+        muted: track.muted
       });
+      remoteStream.addTrack(track);
+    });
+    
+    if (!isHost) {
       console.log('[webrtcHelpers] Calling onTrack with remote stream');
       onTrack(remoteStream);
     }

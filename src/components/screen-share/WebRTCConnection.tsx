@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { setupPeerConnection, addTracksToConnection, cleanupWebRTC } from "./utils/webrtcHelpers";
 import { useWebRTCSignaling } from "./hooks/useWebRTCSignaling";
 
@@ -20,6 +20,19 @@ const WebRTCConnection = ({
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const remoteStreamRef = useRef<MediaStream | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const iceCandidatesQueueRef = useRef<RTCIceCandidate[]>([]);
+
+  const handleIceCandidate = useCallback((candidate: RTCIceCandidate) => {
+    if (peerConnectionRef.current?.remoteDescription) {
+      console.log('[WebRTCConnection] Adding ICE candidate immediately:', candidate);
+      peerConnectionRef.current.addIceCandidate(candidate).catch(error => {
+        console.error('[WebRTCConnection] Error adding ICE candidate:', error);
+      });
+    } else {
+      console.log('[WebRTCConnection] Queueing ICE candidate:', candidate);
+      iceCandidatesQueueRef.current.push(candidate);
+    }
+  }, []);
 
   const { sendOffer, sendAnswer, sendIceCandidate } = useWebRTCSignaling(roomId, isHost, {
     onOffer: async (offer) => {
@@ -34,6 +47,15 @@ const WebRTCConnection = ({
           await peerConnectionRef.current.setLocalDescription(answer);
           console.log('[WebRTCConnection] Sending answer');
           sendAnswer(answer);
+
+          // Process queued ICE candidates
+          while (iceCandidatesQueueRef.current.length > 0) {
+            const candidate = iceCandidatesQueueRef.current.shift();
+            if (candidate) {
+              console.log('[WebRTCConnection] Processing queued ICE candidate:', candidate);
+              await peerConnectionRef.current.addIceCandidate(candidate);
+            }
+          }
         } catch (error) {
           console.error('[WebRTCConnection] Error handling offer:', error);
         }
@@ -44,21 +66,21 @@ const WebRTCConnection = ({
         try {
           console.log('[WebRTCConnection] Host received answer, setting remote description');
           await peerConnectionRef.current.setRemoteDescription(answer);
+
+          // Process queued ICE candidates
+          while (iceCandidatesQueueRef.current.length > 0) {
+            const candidate = iceCandidatesQueueRef.current.shift();
+            if (candidate) {
+              console.log('[WebRTCConnection] Processing queued ICE candidate:', candidate);
+              await peerConnectionRef.current.addIceCandidate(candidate);
+            }
+          }
         } catch (error) {
           console.error('[WebRTCConnection] Error handling answer:', error);
         }
       }
     },
-    onIceCandidate: async (candidate) => {
-      if (peerConnectionRef.current?.remoteDescription) {
-        try {
-          console.log('[WebRTCConnection] Adding ICE candidate');
-          await peerConnectionRef.current.addIceCandidate(candidate);
-        } catch (error) {
-          console.error('[WebRTCConnection] Error adding ICE candidate:', error);
-        }
-      }
-    }
+    onIceCandidate: handleIceCandidate
   });
 
   useEffect(() => {
@@ -103,6 +125,14 @@ const WebRTCConnection = ({
         });
         sendIceCandidate(event.candidate);
       }
+    };
+
+    peerConnection.onsignalingstatechange = () => {
+      console.log('[WebRTCConnection] Signaling state:', peerConnection.signalingState);
+    };
+
+    peerConnection.oniceconnectionstatechange = () => {
+      console.log('[WebRTCConnection] ICE connection state:', peerConnection.iceConnectionState);
     };
 
     if (isHost && streamRef.current) {
