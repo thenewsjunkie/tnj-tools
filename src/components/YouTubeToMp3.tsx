@@ -34,8 +34,19 @@ const YouTubeToMp3 = () => {
       setDownloadUrl(data.downloadUrl);
       toast({
         title: "Success",
-        description: "Your MP3 is ready for download!",
+        description: "Your MP3 is ready! Click download now - the link expires in 10 minutes.",
+        duration: 10000,
       });
+
+      // Clear the download URL after 10 minutes
+      setTimeout(() => {
+        setDownloadUrl(null);
+        toast({
+          title: "Download link expired",
+          description: "Please generate a new download link.",
+          variant: "destructive",
+        });
+      }, 10 * 60 * 1000);
     } catch (error) {
       console.error('Conversion error:', error);
       toast({
@@ -75,14 +86,19 @@ const YouTubeToMp3 = () => {
           </div>
           
           {downloadUrl && (
-            <Button 
-              variant="secondary" 
-              className="w-full"
-              onClick={() => window.open(downloadUrl, '_blank')}
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Download MP3
-            </Button>
+            <div className="space-y-2">
+              <Button 
+                variant="secondary" 
+                className="w-full"
+                onClick={() => window.open(downloadUrl, '_blank')}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Download MP3
+              </Button>
+              <p className="text-xs text-yellow-400">
+                ⚠️ Download link expires in 10 minutes. Click download now!
+              </p>
+            </div>
           )}
         </form>
       </CardContent>
