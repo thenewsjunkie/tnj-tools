@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
-const RAPID_API_KEY = Deno.env.get('RAPID_API-KEY') // Note: Changed from RAPID_API_KEY to match the actual secret name
+const RAPID_API_KEY = Deno.env.get('RAPID_API-KEY')
 const RAPID_API_HOST = 'youtube-mp36.p.rapidapi.com'
 
 const corsHeaders = {
@@ -46,7 +46,6 @@ serve(async (req) => {
     }
 
     console.log('Extracted video ID:', videoId)
-    console.log('Making request to RapidAPI with key:', RAPID_API_KEY ? 'Present' : 'Missing')
 
     const response = await fetch(`https://${RAPID_API_HOST}/dl?id=${videoId}`, {
       headers: {
@@ -64,10 +63,17 @@ serve(async (req) => {
     }
 
     if (data.status === 'ok' && data.link) {
-      return new Response(
-        JSON.stringify({ downloadUrl: data.link }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      // Validate and encode the download URL
+      try {
+        const downloadUrl = new URL(data.link);
+        return new Response(
+          JSON.stringify({ downloadUrl: downloadUrl.toString() }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      } catch (error) {
+        console.error('Invalid download URL received:', data.link);
+        throw new Error('Invalid download URL received from API');
+      }
     } else {
       throw new Error(data.msg || 'Failed to convert video')
     }

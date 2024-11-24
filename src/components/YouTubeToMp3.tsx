@@ -31,6 +31,12 @@ const YouTubeToMp3 = () => {
         throw new Error('No download URL received');
       }
 
+      // Test the URL before setting it
+      const testResponse = await fetch(data.downloadUrl, { method: 'HEAD' });
+      if (!testResponse.ok) {
+        throw new Error('Download link is not accessible');
+      }
+
       setDownloadUrl(data.downloadUrl);
       toast({
         title: "Success",
@@ -58,6 +64,33 @@ const YouTubeToMp3 = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDownload = async () => {
+    if (!downloadUrl) return;
+    
+    try {
+      const response = await fetch(downloadUrl);
+      if (!response.ok) throw new Error('Download failed');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'youtube-audio.mp3';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Download error:', error);
+      toast({
+        title: "Download Failed",
+        description: "The download link has expired. Please generate a new one.",
+        variant: "destructive",
+      });
+      setDownloadUrl(null);
     }
   };
 
@@ -90,7 +123,7 @@ const YouTubeToMp3 = () => {
               <Button 
                 variant="secondary" 
                 className="w-full"
-                onClick={() => window.open(downloadUrl, '_blank')}
+                onClick={handleDownload}
               >
                 <Download className="mr-2 h-4 w-4" />
                 Download MP3
