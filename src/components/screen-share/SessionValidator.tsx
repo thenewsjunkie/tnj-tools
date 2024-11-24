@@ -55,7 +55,8 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
           .select('*')
           .eq('share_code', code.toUpperCase())
           .eq('is_active', true)
-          .single();
+          .single()
+          .throwOnError(); // This ensures proper error handling
 
         if (!isMounted) return;
 
@@ -81,7 +82,8 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
               host_device_id: null,
               viewer_device_id: null
             })
-            .eq('id', sessionData.id);
+            .eq('id', sessionData.id)
+            .throwOnError(); // This ensures proper error handling
             
           showError(
             "Session expired",
@@ -100,12 +102,13 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
             ? { host_connected: true }
             : { viewer_connected: true };
             
-          const { data: reconnectedSession } = await supabase
+          const { data: reconnectedSession, error: reconnectError } = await supabase
             .from('screen_share_sessions')
             .update(updateData)
             .eq('id', sessionData.id)
             .select()
-            .single();
+            .single()
+            .throwOnError(); // This ensures proper error handling
 
           if (reconnectedSession) {
             setSessionId(reconnectedSession.id);
@@ -123,7 +126,7 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
             p_device_id: deviceId,
             p_share_code: code.toUpperCase()
           }
-        );
+        ).throwOnError(); // This ensures proper error handling
 
         if (!isMounted) return;
 
