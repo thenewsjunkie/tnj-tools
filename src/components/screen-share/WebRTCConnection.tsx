@@ -65,18 +65,20 @@ const WebRTCConnection = ({
 
       peerConnectionRef.current.ontrack = (event) => {
         console.log('Received remote track:', event.track.kind);
+        onTrackAdded(event.streams[0]);
         if (!isConnectedRef.current) {
           isConnectedRef.current = true;
-          onTrackAdded(event.streams[0]);
           onConnectionEstablished();
         }
       };
 
       peerConnectionRef.current.onconnectionstatechange = () => {
         console.log('Connection state changed:', peerConnectionRef.current?.connectionState);
-        if (peerConnectionRef.current?.connectionState === 'connected' && !isConnectedRef.current) {
-          isConnectedRef.current = true;
-          onConnectionEstablished();
+        if (peerConnectionRef.current?.connectionState === 'connected') {
+          if (!isConnectedRef.current) {
+            isConnectedRef.current = true;
+            onConnectionEstablished();
+          }
         }
       };
 
@@ -124,10 +126,6 @@ const WebRTCConnection = ({
               await peerConnectionRef.current.setRemoteDescription(
                 new RTCSessionDescription(payload)
               );
-              if (!isConnectedRef.current) {
-                isConnectedRef.current = true;
-                onConnectionEstablished();
-              }
             } catch (error) {
               console.error("Error handling answer:", error);
             }

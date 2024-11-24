@@ -84,15 +84,17 @@ const ScreenShare = () => {
             
             {sessionData && (
               <WebRTCConnection
-                roomId={sessionData.room_id}
+                roomId={sessionData.room_id || sessionData.share_code}
                 isHost={isHost}
                 stream={stream}
                 onTrackAdded={(remoteStream) => {
+                  console.log('Track added, setting remote stream');
                   if (remoteVideoRef.current) {
                     remoteVideoRef.current.srcObject = remoteStream;
                   }
                 }}
                 onConnectionEstablished={() => {
+                  console.log('Connection established, setting connected state');
                   setIsConnected(true);
                 }}
               />
