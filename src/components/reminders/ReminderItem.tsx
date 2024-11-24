@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { format, parseISO } from "date-fns";
+import { utcToZonedTime } from "date-fns-tz";
 
 interface ReminderItemProps {
   reminder: {
@@ -24,6 +26,7 @@ const ReminderItem = ({ reminder, onDelete, onEdit, isUpcoming }: ReminderItemPr
   const [editedDateTime, setEditedDateTime] = useState(reminder.datetime);
   const [editedRecurringWeekly, setEditedRecurringWeekly] = useState(reminder.recurring_weekly);
   const upcoming = isUpcoming(reminder.datetime);
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const handleSave = () => {
     if (!editedText.trim() || !editedDateTime) {
@@ -52,6 +55,12 @@ const ReminderItem = ({ reminder, onDelete, onEdit, isUpcoming }: ReminderItemPr
     setEditedDateTime(reminder.datetime);
     setEditedRecurringWeekly(reminder.recurring_weekly);
   }
+
+  const formatDateTime = (datetime: string) => {
+    const date = parseISO(datetime);
+    const zonedDate = utcToZonedTime(date, timeZone);
+    return format(zonedDate, 'MMM d, yyyy h:mm a');
+  };
 
   return (
     <div
@@ -104,7 +113,7 @@ const ReminderItem = ({ reminder, onDelete, onEdit, isUpcoming }: ReminderItemPr
                 )}
               </p>
               <p className="text-sm text-gray-400">
-                {new Date(reminder.datetime).toLocaleString()}
+                {formatDateTime(reminder.datetime)}
               </p>
             </>
           )}
