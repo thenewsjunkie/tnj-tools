@@ -14,25 +14,31 @@ const ScreenShareModule = () => {
   const generateShareCode = async () => {
     try {
       // First, deactivate any existing active sessions for cleanup
-      await supabase
+      const { error: deactivateError } = await supabase
         .from("screen_share_sessions")
         .update({ is_active: false })
         .eq("is_active", true);
 
+      if (deactivateError) {
+        console.error('Error deactivating existing sessions:', deactivateError);
+      }
+
       // Generate a new unique code
       const code = Math.random().toString(36).substring(2, 8).toUpperCase();
       
+      console.log('Attempting to create session with code:', code);
+
       // Insert new session with all required fields
       const { data, error } = await supabase
         .from("screen_share_sessions")
-        .insert({
+        .insert([{
           share_code: code,
           expires_at: addDays(new Date(), 1).toISOString(),
           is_active: true,
           host_connected: false,
           viewer_connected: false,
           room_id: code,
-        })
+        }])
         .select()
         .single();
 
@@ -40,13 +46,14 @@ const ScreenShareModule = () => {
         console.error('Error generating share code:', error);
         toast({
           title: "Error",
-          description: "Failed to generate share code: " + error.message,
+          description: `Failed to generate share code: ${error.message}`,
           variant: "destructive",
         });
         return;
       }
 
       if (!data) {
+        console.error('No data returned from insert operation');
         toast({
           title: "Error",
           description: "Failed to generate share code: No data returned",
@@ -55,6 +62,7 @@ const ScreenShareModule = () => {
         return;
       }
 
+      console.log('Successfully created session:', data);
       setShareCode(code);
       toast({
         title: "Success",
