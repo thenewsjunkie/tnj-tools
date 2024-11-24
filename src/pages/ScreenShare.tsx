@@ -18,30 +18,40 @@ const ScreenShare = () => {
   useEffect(() => {
     const checkCode = async () => {
       if (!code) {
+        console.log("No code provided");
         setIsValid(false);
         return;
       }
 
+      console.log("Checking code:", code);
+
       const { data, error } = await supabase
         .from("screen_share_sessions")
         .select()
-        .eq("share_code", code)
+        .eq("share_code", code.toUpperCase())
         .eq("is_active", true)
         .single();
 
+      console.log("Query result:", { data, error });
+
       if (error || !data) {
-        console.error("Error checking share code:", error);
+        console.log("Error or no data:", error);
         setIsValid(false);
         toast({
           title: "Invalid Share Code",
-          description: "This share code is invalid or has expired.",
+          description: "This share code is invalid. Please check the code and try again.",
           variant: "destructive",
         });
         return;
       }
 
       // Check if the session has expired
-      if (new Date(data.expires_at) < new Date()) {
+      const now = new Date();
+      const expiresAt = new Date(data.expires_at);
+      console.log("Time check:", { now, expiresAt });
+
+      if (expiresAt < now) {
+        console.log("Session expired");
         setIsValid(false);
         toast({
           title: "Expired Share Code",
@@ -51,6 +61,7 @@ const ScreenShare = () => {
         return;
       }
 
+      console.log("Session valid, setting up connection");
       setIsValid(true);
       setIsHost(!data.host_connected);
       setRoomId(data.id);
