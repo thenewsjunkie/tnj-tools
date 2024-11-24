@@ -8,7 +8,7 @@ export const getRTCConfiguration = () => ({
       ],
     },
     {
-      urls: ['turn:numb.viagenie.ca'],
+      urls: 'turn:numb.viagenie.ca',
       username: 'webrtc@live.com',
       credential: 'muazkh'
     }
