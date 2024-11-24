@@ -1,1 +1,3 @@
 project_id = "gpmandlkcdompmdvethh"
+[functions.send-interview-request]
+verify_jwt = false
