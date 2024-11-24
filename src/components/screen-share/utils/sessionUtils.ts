@@ -9,7 +9,7 @@ export const validateShareSession = async (code: string): Promise<SessionData> =
     .select('*')
     .eq('share_code', code.toUpperCase())
     .eq('is_active', true)
-    .single();
+    .maybeSingle(); // Using maybeSingle() instead of single() to handle no results case
 
   if (error) {
     console.error('Database error during session validation:', error);
@@ -17,8 +17,8 @@ export const validateShareSession = async (code: string): Promise<SessionData> =
   }
 
   if (!sessions) {
-    console.error('No session found for code:', code);
-    throw new Error('Session does not exist or is no longer active');
+    console.error('No active session found for code:', code);
+    throw new Error('No active session found with this code');
   }
 
   console.log('Found session:', sessions);
@@ -53,9 +53,9 @@ export const reconnectToSession = async (
     .from('screen_share_sessions')
     .update(isHost ? { host_connected: true } : { viewer_connected: true })
     .eq('id', sessionId)
-    .eq('is_active', true)  // Only reconnect to active sessions
+    .eq('is_active', true)
     .select()
-    .single();
+    .maybeSingle(); // Using maybeSingle() instead of single()
 
   if (error || !data) {
     console.error('Failed to reconnect to session:', error);

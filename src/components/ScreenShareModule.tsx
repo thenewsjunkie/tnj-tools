@@ -54,13 +54,13 @@ const ScreenShareModule = () => {
           viewer_device_id: null
         }])
         .select()
-        .single();
+        .maybeSingle(); // Using maybeSingle() instead of single()
 
-      if (error) {
+      if (error || !data) {
         console.error('Error generating share code:', error);
         toast({
           title: "Error",
-          description: `Failed to generate share code: ${error.message}`,
+          description: `Failed to generate share code: ${error?.message || 'Unknown error'}`,
           variant: "destructive",
         });
         return;
