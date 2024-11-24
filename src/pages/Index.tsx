@@ -12,10 +12,10 @@ const Index = () => {
         </Link>
       </nav>
       
-      <div className="digital text-[clamp(100px,30vw,200px)] text-neon-red animate-led-flicker">
+      <div className="digital text-[clamp(4rem,20vw,12rem)] leading-none text-neon-red animate-led-flicker tracking-tight">
         5:55
       </div>
-      <div className="digital text-[clamp(20px,8vw,40px)] text-neon-red/80 -mt-2 sm:-mt-4 md:-mt-8">
+      <div className="digital text-[clamp(1rem,5vw,2.5rem)] text-neon-red/80 mt-2">
         AM
       </div>
       <div className="absolute bottom-8 text-white/50 text-sm">

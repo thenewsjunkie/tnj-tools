@@ -31,25 +31,25 @@ const Stopwatch = () => {
       <CardHeader>
         <CardTitle className="text-white text-lg sm:text-xl">Stopwatch</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="digital text-neon-red text-4xl sm:text-5xl md:text-6xl mb-4 animate-led-flicker">
+      <CardContent className="px-2 sm:px-6">
+        <div className="digital text-neon-red text-[clamp(1.5rem,5vw,2.5rem)] mb-4 animate-led-flicker tracking-wider">
           {hours.toString().padStart(2, '0')}:
           {minutes.toString().padStart(2, '0')}:
           {seconds.toString().padStart(2, '0')}.
           {milliseconds.toString().padStart(2, '0')}
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 px-2">
           <Button 
             onClick={() => setIsRunning(!isRunning)}
             variant="outline"
-            className="flex-1 text-sm sm:text-base"
+            className="flex-1 text-sm"
           >
             {isRunning ? 'Stop' : 'Start'}
           </Button>
           <Button 
             onClick={reset}
             variant="outline"
-            className="flex-1 text-sm sm:text-base"
+            className="flex-1 text-sm"
           >
             Reset
           </Button>
