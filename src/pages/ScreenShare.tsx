@@ -35,6 +35,8 @@ const ScreenShare = () => {
           audio: true 
         });
         setStream(displayStream);
+        
+        // Immediately set the stream to the local video element
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = displayStream;
         }
@@ -82,7 +84,7 @@ const ScreenShare = () => {
             
             {sessionData && (
               <WebRTCConnection
-                roomId={sessionData.id}
+                roomId={sessionData.room_id}
                 isHost={isHost}
                 stream={stream}
                 onTrackAdded={(remoteStream) => {
