@@ -9,6 +9,7 @@ interface MediaItem {
   url: string;
   thumbnail: string;
   type: 'youtube' | 'twitter';
+  title: string;
 }
 
 const MediaPool = () => {
@@ -37,7 +38,7 @@ const MediaPool = () => {
   const getTwitterVideoId = (url: string) => {
     const regex = /(?:twitter\.com|x\.com)\/(?:#!\/)?(\w+)\/status(?:es)?\/(\d+)/;
     const match = url.match(regex);
-    return match ? match[2] : null;
+    return match ? { id: match[2], handle: match[1] } : null;
   };
 
   const handleAddMedia = async () => {
@@ -45,6 +46,7 @@ const MediaPool = () => {
       let type: 'youtube' | 'twitter';
       let thumbnail: string;
       let id: string;
+      let title: string;
 
       if (newUrl.includes('youtube.com') || newUrl.includes('youtu.be')) {
         const videoId = getYouTubeVideoId(newUrl);
@@ -52,13 +54,14 @@ const MediaPool = () => {
         type = 'youtube';
         thumbnail = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
         id = videoId;
+        title = 'YouTube Video'; // You could fetch the actual title using YouTube API
       } else if (newUrl.includes('twitter.com') || newUrl.includes('x.com')) {
-        const tweetId = getTwitterVideoId(newUrl);
-        if (!tweetId) throw new Error("Invalid Twitter URL");
+        const tweetData = getTwitterVideoId(newUrl);
+        if (!tweetData) throw new Error("Invalid Twitter URL");
         type = 'twitter';
-        // Use a better placeholder for Twitter videos
         thumbnail = 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&w=800&q=80';
-        id = tweetId;
+        id = tweetData.id;
+        title = `@${tweetData.handle}'s Tweet`;
       } else {
         throw new Error("Please enter a valid YouTube or Twitter video URL");
       }
@@ -67,7 +70,8 @@ const MediaPool = () => {
         id,
         url: newUrl,
         thumbnail,
-        type
+        type,
+        title
       };
 
       const updatedItems = [...mediaItems, newItem];
@@ -118,9 +122,12 @@ const MediaPool = () => {
             <div className="relative aspect-video bg-gray-900 rounded-lg overflow-hidden">
               <img
                 src={item.thumbnail}
-                alt="Media thumbnail"
+                alt={item.title}
                 className="w-full h-full object-cover"
               />
+              <div className="absolute inset-x-0 bottom-0 bg-black/60 p-2">
+                <p className="text-white text-sm truncate">{item.title}</p>
+              </div>
               <button
                 onClick={() => setFullscreenMedia(item)}
                 className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity"
