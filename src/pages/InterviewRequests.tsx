@@ -49,9 +49,12 @@ const InterviewRequests = () => {
 
       if (error) throw error;
 
-      // Send email using Supabase Edge Function
+      // Send email using Supabase Edge Function with proper content type
       const { error: emailError } = await supabase.functions.invoke('send-interview-request', {
         body: { email, script },
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
 
       if (emailError) throw emailError;
