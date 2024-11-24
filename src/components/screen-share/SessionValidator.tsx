@@ -14,14 +14,31 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
   useEffect(() => {
     const validateSession = async () => {
       try {
+        // First, clean up any expired sessions
+        const now = new Date().toISOString();
+        await supabase
+          .from('screen_share_sessions')
+          .update({ is_active: false })
+          .lt('expires_at', now);
+
+        // Then fetch the active session
         const { data, error } = await supabase
           .from('screen_share_sessions')
           .select('*')
-          .eq('share_code', code)
+          .eq('share_code', code.toUpperCase())
           .eq('is_active', true)
-          .maybeSingle();
+          .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Session fetch error:', error);
+          toast({
+            title: "Invalid session",
+            description: "This screen share session does not exist or has expired.",
+            variant: "destructive",
+          });
+          return;
+        }
+
         if (!data) {
           toast({
             title: "Invalid session",
@@ -31,10 +48,16 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
           return;
         }
 
-        const now = new Date();
         const expiresAt = new Date(data.expires_at);
+        const currentTime = new Date();
         
-        if (expiresAt < now) {
+        if (expiresAt < currentTime) {
+          // Update the session to inactive if expired
+          await supabase
+            .from('screen_share_sessions')
+            .update({ is_active: false })
+            .eq('id', data.id);
+
           toast({
             title: "Session expired",
             description: "This screen share session has expired.",
@@ -77,7 +100,9 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
       }
     };
 
-    validateSession();
+    if (code) {
+      validateSession();
+    }
   }, [code, onValidSession, toast]);
 
   if (validating) {

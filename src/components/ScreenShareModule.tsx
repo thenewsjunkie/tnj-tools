@@ -12,35 +12,45 @@ const ScreenShareModule = () => {
   const { toast } = useToast();
 
   const generateShareCode = async () => {
-    // First, deactivate any existing active sessions
-    await supabase
-      .from("screen_share_sessions")
-      .update({ is_active: false })
-      .eq("is_active", true);
+    try {
+      // First, deactivate any existing active sessions
+      await supabase
+        .from("screen_share_sessions")
+        .update({ is_active: false })
+        .eq("is_active", true);
 
-    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-    const { error } = await supabase.from("screen_share_sessions").insert({
-      share_code: code,
-      expires_at: addDays(new Date(), 1).toISOString(),
-      is_active: true,
-      host_connected: false,
-      viewer_connected: false,
-    });
+      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const { error } = await supabase.from("screen_share_sessions").insert({
+        share_code: code,
+        expires_at: addDays(new Date(), 1).toISOString(),
+        is_active: true,
+        host_connected: false,
+        viewer_connected: false,
+      });
 
-    if (error) {
+      if (error) {
+        console.error('Error generating share code:', error);
+        toast({
+          title: "Error",
+          description: "Failed to generate share code",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setShareCode(code);
+      toast({
+        title: "Success",
+        description: "Share code generated successfully",
+      });
+    } catch (error) {
+      console.error('Error in generateShareCode:', error);
       toast({
         title: "Error",
         description: "Failed to generate share code",
         variant: "destructive",
       });
-      return;
     }
-
-    setShareCode(code);
-    toast({
-      title: "Success",
-      description: "Share code generated successfully",
-    });
   };
 
   const copyToClipboard = () => {
