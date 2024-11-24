@@ -50,17 +50,27 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
 
         setHasShownError(false);
 
-        const { data: sessionData, error: fetchError } = await supabase
+        // First, query to check if the session exists and is active
+        const { data: sessions, error: queryError } = await supabase
           .from('screen_share_sessions')
           .select('*')
           .eq('share_code', code.toUpperCase())
-          .eq('is_active', true)
-          .single()
-          .throwOnError(); // This ensures proper error handling
+          .eq('is_active', true);
 
         if (!isMounted) return;
 
-        if (fetchError || !sessionData) {
+        if (queryError) {
+          console.error('Error querying session:', queryError);
+          showError(
+            "Error",
+            "Failed to validate screen share session."
+          );
+          setValidating(false);
+          return;
+        }
+
+        // Check if we got exactly one session
+        if (!sessions || sessions.length === 0) {
           showError(
             "Invalid session",
             "This screen share session does not exist or is no longer active."
@@ -69,6 +79,17 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
           return;
         }
 
+        if (sessions.length > 1) {
+          console.error('Multiple active sessions found with the same code');
+          showError(
+            "Error",
+            "Invalid session state detected. Please try again."
+          );
+          setValidating(false);
+          return;
+        }
+
+        const sessionData = sessions[0];
         const now = new Date();
         const expiresAt = new Date(sessionData.expires_at);
         
@@ -82,8 +103,7 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
               host_device_id: null,
               viewer_device_id: null
             })
-            .eq('id', sessionData.id)
-            .throwOnError(); // This ensures proper error handling
+            .eq('id', sessionData.id);
             
           showError(
             "Session expired",
@@ -107,8 +127,17 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
             .update(updateData)
             .eq('id', sessionData.id)
             .select()
-            .single()
-            .throwOnError(); // This ensures proper error handling
+            .single();
+
+          if (reconnectError) {
+            console.error('Error reconnecting to session:', reconnectError);
+            showError(
+              "Connection error",
+              "Failed to reconnect to the session."
+            );
+            setValidating(false);
+            return;
+          }
 
           if (reconnectedSession) {
             setSessionId(reconnectedSession.id);
@@ -119,19 +148,20 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
           }
         }
 
-        const { data: updatedSession, error: updateError } = await supabase.rpc(
+        // Try to claim a role in the session
+        const { data: updatedSession, error: claimError } = await supabase.rpc(
           'claim_screen_share_role',
           { 
             p_session_id: sessionData.id,
             p_device_id: deviceId,
             p_share_code: code.toUpperCase()
           }
-        ).throwOnError(); // This ensures proper error handling
+        );
 
         if (!isMounted) return;
 
-        if (updateError || !updatedSession) {
-          console.error('Failed to update connection status:', updateError);
+        if (claimError || !updatedSession) {
+          console.error('Failed to update connection status:', claimError);
           showError(
             "Connection error",
             "Failed to establish connection to the session."
