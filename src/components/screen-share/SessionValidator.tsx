@@ -90,7 +90,7 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
         }
 
         // Try to claim host role with a transaction
-        const { data: updatedSession, error: updateError } = await supabase.rpc<SessionData, { 
+        const { data: updatedSession, error: updateError } = await supabase.rpc<SessionData, {
           p_session_id: string;
           p_device_id: string;
           p_share_code: string;
