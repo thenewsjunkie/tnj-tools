@@ -26,6 +26,7 @@ const ScreenShareModule = () => {
         is_active: true,
         host_connected: false,
         viewer_connected: false,
+        room_id: code, // Add room_id to match share_code
       });
 
       if (error) {

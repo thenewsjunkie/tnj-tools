@@ -14,14 +14,16 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
   useEffect(() => {
     const validateSession = async () => {
       try {
-        // First, clean up any expired sessions
+        if (!code) return;
+
+        // Clean up expired sessions
         const now = new Date().toISOString();
         await supabase
           .from('screen_share_sessions')
           .update({ is_active: false })
           .lt('expires_at', now);
 
-        // Then fetch the active session
+        // Fetch the active session
         const { data, error } = await supabase
           .from('screen_share_sessions')
           .select('*')
@@ -29,22 +31,14 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
           .eq('is_active', true)
           .single();
 
-        if (error) {
+        if (error || !data) {
           console.error('Session fetch error:', error);
           toast({
             title: "Invalid session",
             description: "This screen share session does not exist or has expired.",
             variant: "destructive",
           });
-          return;
-        }
-
-        if (!data) {
-          toast({
-            title: "Invalid session",
-            description: "This screen share session does not exist or has expired.",
-            variant: "destructive",
-          });
+          setValidating(false);
           return;
         }
 
@@ -52,7 +46,6 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
         const currentTime = new Date();
         
         if (expiresAt < currentTime) {
-          // Update the session to inactive if expired
           await supabase
             .from('screen_share_sessions')
             .update({ is_active: false })
@@ -63,6 +56,7 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
             description: "This screen share session has expired.",
             variant: "destructive",
           });
+          setValidating(false);
           return;
         }
 
@@ -75,6 +69,7 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
             description: "A viewer is already connected to this session.",
             variant: "destructive",
           });
+          setValidating(false);
           return;
         }
 
@@ -84,8 +79,17 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
             description: "Another viewer is already connected to this session.",
             variant: "destructive",
           });
+          setValidating(false);
           return;
         }
+
+        // Update connection status
+        await supabase
+          .from('screen_share_sessions')
+          .update({
+            [isHost ? 'host_connected' : 'viewer_connected']: true
+          })
+          .eq('id', data.id);
 
         onValidSession(data, isHost);
       } catch (error) {
@@ -100,9 +104,7 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
       }
     };
 
-    if (code) {
-      validateSession();
-    }
+    validateSession();
   }, [code, onValidSession, toast]);
 
   if (validating) {
