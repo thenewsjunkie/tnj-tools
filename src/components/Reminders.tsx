@@ -1,21 +1,10 @@
 import { useState, useEffect } from "react";
-import { AlertCircle, Plus, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-
-interface Reminder {
-  id: string;
-  text: string;
-  datetime: string;
-  isActive: boolean;
-  recurringWeekly: boolean;
-}
+import ReminderForm from "./reminders/ReminderForm";
+import ReminderItem from "./reminders/ReminderItem";
 
 const Reminders = () => {
   const [newReminder, setNewReminder] = useState("");
@@ -38,7 +27,7 @@ const Reminders = () => {
   });
 
   const addReminderMutation = useMutation({
-    mutationFn: async (reminder: Omit<Reminder, 'id' | 'isActive'>) => {
+    mutationFn: async (reminder: { text: string; datetime: string; recurringWeekly: boolean }) => {
       const { error } = await supabase
         .from('reminders')
         .insert([{
@@ -63,6 +52,40 @@ const Reminders = () => {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to add reminder",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const editReminderMutation = useMutation({
+    mutationFn: async ({ id, text, datetime, recurringWeekly }: { 
+      id: string; 
+      text: string; 
+      datetime: string;
+      recurringWeekly: boolean;
+    }) => {
+      const { error } = await supabase
+        .from('reminders')
+        .update({ 
+          text, 
+          datetime,
+          recurring_weekly: recurringWeekly,
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reminders'] });
+      toast({
+        title: "Reminder updated",
+        description: "Your reminder has been updated successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update reminder",
         variant: "destructive",
       });
     },
@@ -135,82 +158,28 @@ const Reminders = () => {
         <CardTitle className="text-white text-lg sm:text-xl">Reminders</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-4">
-          <div className="flex gap-2">
-            <Input
-              placeholder="Add a reminder..."
-              value={newReminder}
-              onChange={(e) => setNewReminder(e.target.value)}
-              className="flex-1"
-            />
-            <Input
-              type="datetime-local"
-              value={newDateTime}
-              onChange={(e) => setNewDateTime(e.target.value)}
-              className="w-auto"
-            />
-            <Button onClick={handleAddReminder} size="icon">
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="recurring"
-              checked={recurringWeekly}
-              onCheckedChange={(checked) => setRecurringWeekly(checked as boolean)}
-            />
-            <Label htmlFor="recurring" className="text-white">
-              Repeat weekly
-            </Label>
-          </div>
-        </div>
+        <ReminderForm
+          newReminder={newReminder}
+          setNewReminder={setNewReminder}
+          newDateTime={newDateTime}
+          setNewDateTime={setNewDateTime}
+          recurringWeekly={recurringWeekly}
+          setRecurringWeekly={setRecurringWeekly}
+          onAdd={handleAddReminder}
+        />
         
         <div className="space-y-2">
-          {reminders.map((reminder) => {
-            const upcoming = isUpcoming(reminder.datetime);
-            return (
-              <div
-                key={reminder.id}
-                className={`relative p-3 rounded-lg flex items-start justify-between gap-2 transition-all ${
-                  reminder.is_active
-                    ? "bg-red-500/20 border-2 border-neon-red animate-pulse"
-                    : upcoming
-                    ? "bg-blue-500/20 border border-blue-400"
-                    : "bg-white/5"
-                } ${upcoming ? "scale-[1.02]" : ""}`}
-              >
-                <div className="flex items-start gap-2">
-                  {(reminder.is_active || upcoming) && (
-                    <AlertCircle className={`h-5 w-5 shrink-0 mt-0.5 ${
-                      reminder.is_active ? "text-neon-red" : "text-blue-400"
-                    }`} />
-                  )}
-                  <div>
-                    <p className="text-white">
-                      {reminder.text}
-                      {reminder.recurring_weekly && (
-                        <span className="ml-2 text-xs bg-blue-500/20 px-2 py-0.5 rounded">
-                          Weekly
-                        </span>
-                      )}
-                    </p>
-                    <p className="text-sm text-gray-400">
-                      {new Date(reminder.datetime).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 shrink-0 text-white/50 hover:text-white"
-                  onClick={() => deleteReminderMutation.mutate(reminder.id)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            );
-          })}
+          {reminders.map((reminder) => (
+            <ReminderItem
+              key={reminder.id}
+              reminder={reminder}
+              onDelete={(id) => deleteReminderMutation.mutate(id)}
+              onEdit={(id, text, datetime, recurringWeekly) => 
+                editReminderMutation.mutate({ id, text, datetime, recurringWeekly })
+              }
+              isUpcoming={isUpcoming}
+            />
+          ))}
         </div>
       </CardContent>
     </Card>
