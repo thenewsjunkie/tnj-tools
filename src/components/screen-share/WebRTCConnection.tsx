@@ -1,6 +1,6 @@
-import { useEffect, useRef, useCallback } from "react";
-import { getRTCConfiguration } from "./utils/webrtcConfig";
-import { useWebRTCChannel } from "./hooks/useWebRTCChannel";
+import { useEffect, useRef } from "react";
+import { setupPeerConnection, addTracksToConnection, cleanupWebRTC } from "./utils/webrtcHelpers";
+import { useWebRTCSignaling } from "./hooks/useWebRTCSignaling";
 
 interface WebRTCConnectionProps {
   roomId: string;
@@ -18,71 +18,13 @@ const WebRTCConnection = ({
   onConnectionEstablished,
 }: WebRTCConnectionProps) => {
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
-  const pendingCandidatesRef = useRef<RTCIceCandidate[]>([]);
-  const isConnectedRef = useRef<boolean>(false);
-  const hasRemoteDescRef = useRef<boolean>(false);
-  const streamRef = useRef<MediaStream | null>(null);
   const remoteStreamRef = useRef<MediaStream | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
-  const handleIceCandidate = useCallback(async (candidate: RTCIceCandidate) => {
-    if (!hasRemoteDescRef.current) {
-      console.log('Queueing ICE candidate:', candidate);
-      pendingCandidatesRef.current.push(candidate);
-      return;
-    }
-
-    try {
-      if (peerConnectionRef.current?.remoteDescription) {
-        await peerConnectionRef.current.addIceCandidate(candidate);
-        console.log('Added ICE candidate:', candidate);
-      }
-    } catch (error) {
-      console.error('Error adding ICE candidate:', error);
-    }
-  }, []);
-
-  const { sendOffer, sendAnswer, sendIceCandidate } = useWebRTCChannel(
+  const { sendOffer, sendIceCandidate } = useWebRTCSignaling(
     roomId,
-    async (offer) => {
-      if (!isHost && peerConnectionRef.current) {
-        try {
-          console.log('Viewer received offer:', offer);
-          await peerConnectionRef.current.setRemoteDescription(offer);
-          hasRemoteDescRef.current = true;
-          
-          console.log('Creating answer');
-          const answer = await peerConnectionRef.current.createAnswer();
-          await peerConnectionRef.current.setLocalDescription(answer);
-          sendAnswer(answer);
-
-          // Process any pending ICE candidates
-          for (const candidate of pendingCandidatesRef.current) {
-            await handleIceCandidate(candidate);
-          }
-          pendingCandidatesRef.current = [];
-        } catch (error) {
-          console.error('Error handling offer:', error);
-        }
-      }
-    },
-    async (answer) => {
-      if (isHost && peerConnectionRef.current) {
-        try {
-          console.log('Host received answer:', answer);
-          await peerConnectionRef.current.setRemoteDescription(answer);
-          hasRemoteDescRef.current = true;
-
-          // Process any pending ICE candidates
-          for (const candidate of pendingCandidatesRef.current) {
-            await handleIceCandidate(candidate);
-          }
-          pendingCandidatesRef.current = [];
-        } catch (error) {
-          console.error('Error handling answer:', error);
-        }
-      }
-    },
-    handleIceCandidate
+    peerConnectionRef.current,
+    isHost
   );
 
   // Update stream reference when stream prop changes
@@ -91,119 +33,56 @@ const WebRTCConnection = ({
       streamRef.current = stream || null;
       console.log('Stream updated:', stream ? 'Stream present' : 'No stream');
       
-      // If we're the host and we have a peer connection, we need to update the tracks
       if (isHost && peerConnectionRef.current && stream) {
-        // Check if the connection is still open before manipulating tracks
-        if (peerConnectionRef.current.signalingState !== 'closed') {
-          const senders = peerConnectionRef.current.getSenders();
-          senders.forEach(sender => {
-            if (peerConnectionRef.current && peerConnectionRef.current.signalingState !== 'closed') {
-              peerConnectionRef.current.removeTrack(sender);
-            }
-          });
-
-          stream.getTracks().forEach(track => {
-            if (peerConnectionRef.current && peerConnectionRef.current.signalingState !== 'closed') {
-              console.log('Host adding track to connection:', track.kind);
-              peerConnectionRef.current.addTrack(track, stream);
-            }
-          });
-        }
+        addTracksToConnection(peerConnectionRef.current, stream);
       }
     }
   }, [stream, isHost]);
 
+  // Initialize WebRTC connection
   useEffect(() => {
-    const initializeConnection = async () => {
-      console.log('Initializing WebRTC connection as:', isHost ? 'host' : 'viewer');
-      
-      if (peerConnectionRef.current) {
-        console.log('Closing existing peer connection');
-        peerConnectionRef.current.close();
-      }
+    console.log('Initializing WebRTC connection as:', isHost ? 'host' : 'viewer');
+    
+    const { peerConnection, remoteStream } = setupPeerConnection(
+      isHost,
+      onTrackAdded,
+      onConnectionEstablished
+    );
 
-      const peerConnection = new RTCPeerConnection(getRTCConfiguration());
-      peerConnectionRef.current = peerConnection;
+    peerConnectionRef.current = peerConnection;
+    remoteStreamRef.current = remoteStream;
 
-      // Initialize remote stream for viewer
-      if (!isHost) {
-        remoteStreamRef.current = new MediaStream();
-        console.log('Viewer: Created new MediaStream for remote content');
-      }
-
-      // Add stream tracks for host
-      if (isHost && streamRef.current) {
-        console.log('Host adding initial stream tracks');
-        const tracks = streamRef.current.getTracks();
-        console.log('Number of tracks to add:', tracks.length);
-        
-        tracks.forEach(track => {
-          if (streamRef.current && peerConnection.signalingState !== 'closed') {
-            console.log('Adding track:', track.kind, track.enabled, track.readyState);
-            peerConnection.addTrack(track, streamRef.current);
-          }
-        });
-      }
-
-      peerConnection.onicecandidate = (event) => {
-        if (event.candidate) {
-          console.log('New ICE candidate:', event.candidate);
-          sendIceCandidate(event.candidate);
-        }
-      };
-
-      peerConnection.oniceconnectionstatechange = () => {
-        console.log('ICE connection state:', peerConnection.iceConnectionState);
-        if (peerConnection.iceConnectionState === 'connected' || 
-            peerConnection.iceConnectionState === 'completed') {
-          if (!isConnectedRef.current) {
-            console.log('Connection established');
-            isConnectedRef.current = true;
-            onConnectionEstablished();
-          }
-        }
-      };
-
-      peerConnection.ontrack = (event) => {
-        console.log('Received remote track:', event.track.kind);
-        if (!isHost) {
-          if (!remoteStreamRef.current) {
-            remoteStreamRef.current = new MediaStream();
-          }
-          remoteStreamRef.current.addTrack(event.track);
-          console.log('Added track to remote stream:', event.track.kind);
-          onTrackAdded(remoteStreamRef.current);
-        }
-      };
-
-      if (isHost) {
-        try {
-          console.log('Host creating offer');
-          const offer = await peerConnection.createOffer({
-            offerToReceiveAudio: true,
-            offerToReceiveVideo: true,
-          });
-          await peerConnection.setLocalDescription(offer);
-          sendOffer(offer);
-        } catch (error) {
-          console.error('Error creating offer:', error);
-        }
+    peerConnection.onicecandidate = (event) => {
+      if (event.candidate) {
+        console.log('New ICE candidate:', event.candidate);
+        sendIceCandidate(event.candidate);
       }
     };
 
-    initializeConnection();
+    // Add initial stream for host
+    if (isHost && streamRef.current) {
+      console.log('Host adding initial stream tracks');
+      addTracksToConnection(peerConnection, streamRef.current);
+      
+      // Create and send offer
+      peerConnection.createOffer({
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: true,
+      })
+      .then(offer => {
+        return peerConnection.setLocalDescription(offer)
+          .then(() => sendOffer(offer));
+      })
+      .catch(error => {
+        console.error('Error creating offer:', error);
+      });
+    }
 
     return () => {
       console.log('Cleaning up WebRTC connection');
-      if (remoteStreamRef.current) {
-        remoteStreamRef.current.getTracks().forEach(track => track.stop());
-      }
-      if (peerConnectionRef.current) {
-        peerConnectionRef.current.close();
-      }
-      isConnectedRef.current = false;
-      hasRemoteDescRef.current = false;
-      pendingCandidatesRef.current = [];
+      cleanupWebRTC(peerConnectionRef.current, remoteStreamRef.current);
+      peerConnectionRef.current = null;
+      remoteStreamRef.current = null;
     };
   }, [roomId, isHost, onTrackAdded, onConnectionEstablished, sendOffer, sendIceCandidate]);
 
