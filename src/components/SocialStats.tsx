@@ -1,5 +1,5 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Facebook, Youtube, Twitter, Instagram, Settings2, GripVertical, Tiktok } from "lucide-react";
+import { Facebook, Youtube, Twitter, Instagram, Settings2, GripVertical, TiktokIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ const initialPlatforms = [
   { name: 'YouTube', icon: Youtube, handle: 'thenewsjunkie', followers: '45K' },
   { name: 'Twitter', icon: Twitter, handle: 'thenewsjunkie', followers: '67K' },
   { name: 'Instagram', icon: Instagram, handle: 'thenewsjunkie', followers: '89K' },
-  { name: 'TikTok', icon: Tiktok, handle: 'thenewsjunkie', followers: '200K' },
+  { name: 'TikTok', icon: TiktokIcon, handle: 'thenewsjunkie', followers: '200K' },
 ];
 
 const SortableItem = ({ platform }) => {
