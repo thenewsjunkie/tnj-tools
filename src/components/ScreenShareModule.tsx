@@ -29,7 +29,9 @@ const ScreenShareModule = () => {
         .update({ 
           is_active: false,
           host_connected: false,
-          viewer_connected: false 
+          viewer_connected: false,
+          host_device_id: null,
+          viewer_device_id: null
         })
         .or(`expires_at.lt.${now},and(host_connected.eq.false,viewer_connected.eq.false)`);
 
@@ -46,6 +48,8 @@ const ScreenShareModule = () => {
           host_connected: false,
           viewer_connected: false,
           room_id: code,
+          host_device_id: null,
+          viewer_device_id: null
         }])
         .select()
         .single();

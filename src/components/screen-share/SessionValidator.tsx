@@ -81,6 +81,12 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
         const expiresAt = new Date(sessionData.expires_at);
         
         if (expiresAt < now) {
+          // Update session to inactive if expired
+          await supabase
+            .from('screen_share_sessions')
+            .update({ is_active: false })
+            .eq('id', sessionData.id);
+            
           showError(
             "Session expired",
             "This screen share session has expired."
