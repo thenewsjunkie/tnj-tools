@@ -12,11 +12,11 @@ const Index = () => {
         </Link>
       </nav>
       
-      <div className="digital text-[clamp(4rem,20vw,12rem)] leading-none text-neon-red animate-led-flicker tracking-tight">
+      <div className="digital text-[clamp(2rem,10vw,6rem)] leading-none text-neon-red animate-led-flicker tracking-tight">
         TNJ Tools
       </div>
       <div className="absolute bottom-8 text-white/50 text-sm">
-        555am.io
+        tnjtools.com
       </div>
     </div>
   );
