@@ -3,6 +3,7 @@ import Stopwatch from "@/components/Stopwatch";
 import SocialStats from "@/components/SocialStats";
 import SocialGraph from "@/components/SocialGraph";
 import ShowNotes from "@/components/ShowNotes";
+import MediaPool from "@/components/MediaPool";
 
 const Admin = () => {
   return (
@@ -24,6 +25,7 @@ const Admin = () => {
           <SocialGraph />
         </div>
         <ShowNotes />
+        <MediaPool />
       </div>
     </div>
   );
