@@ -9,11 +9,7 @@ interface MediaGridProps {
 
 export const MediaGrid = ({ items, onDelete }: MediaGridProps) => {
   const handlePlay = (item: MediaItem) => {
-    if (item.type === 'youtube') {
-      window.open(`https://www.youtube.com/watch?v=${item.id}`, '_blank');
-    } else if (item.type === 'twitter') {
-      window.open(item.url, '_blank');
-    }
+    window.open(item.url, '_blank');
   };
 
   return (
