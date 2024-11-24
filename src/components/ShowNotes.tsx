@@ -37,13 +37,13 @@ const ShowNotes = () => {
     mutationFn: async (note: Omit<Note, 'id' | 'created_at'>) => {
       const { data: insertedData, error: insertError } = await supabase
         .from('show_notes')
-        .insert([{
+        .insert({
           type: note.type,
           content: note.content,
           title: note.title,
           url: note.url
-        }])
-        .select()
+        })
+        .select('*')
         .single();
       
       if (insertError) throw insertError;
@@ -91,37 +91,6 @@ const ShowNotes = () => {
     },
   });
 
-  const handleAddNote = () => {
-    if (newNote.type === 'text' && !newNote.content.trim()) {
-      toast({
-        title: "Error",
-        description: "Note content cannot be empty",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if ((newNote.type === 'link' || newNote.type === 'video') && !newNote.url.trim()) {
-      toast({
-        title: "Error",
-        description: "URL cannot be empty",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (newNote.type === 'image' && !newNote.url) {
-      toast({
-        title: "Error",
-        description: "Please upload an image",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    addNoteMutation.mutate(newNote);
-  };
-
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -145,7 +114,7 @@ const ShowNotes = () => {
               <AddNoteForm
                 newNote={newNote}
                 setNewNote={setNewNote}
-                handleAddNote={handleAddNote}
+                handleAddNote={addNoteMutation.mutate}
               />
             </DialogContent>
           </Dialog>

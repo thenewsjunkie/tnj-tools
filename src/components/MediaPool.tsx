@@ -38,13 +38,13 @@ const MediaPool = () => {
     mutationFn: async (newItem: Omit<MediaItem, 'id' | 'created_at'>) => {
       const { data: insertedData, error: insertError } = await supabase
         .from('media_pool')
-        .insert([{
+        .insert({
           url: newItem.url,
           thumbnail: newItem.thumbnail,
           type: newItem.type,
           title: newItem.title
-        }])
-        .select()
+        })
+        .select('*')
         .single();
       
       if (insertError) throw insertError;
@@ -54,8 +54,8 @@ const MediaPool = () => {
       queryClient.invalidateQueries({ queryKey: ['media-pool'] });
       setNewUrl("");
       toast({
-        title: "Media added",
-        description: "Your media has been added to the pool",
+        title: "Success",
+        description: "Media added successfully",
       });
     },
     onError: (error) => {
@@ -79,8 +79,8 @@ const MediaPool = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['media-pool'] });
       toast({
-        title: "Media removed",
-        description: "The media has been removed from your pool",
+        title: "Success",
+        description: "Media removed successfully",
       });
     },
     onError: (error) => {
