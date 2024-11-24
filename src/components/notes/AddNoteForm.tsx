@@ -36,23 +36,22 @@ const AddNoteForm = ({ newNote, setNewNote, handleAddNote }: AddNoteFormProps) =
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('/api/upload-show-note-image', {
-        method: 'POST',
+      const { data, error } = await supabase.functions.invoke('upload-show-note-image', {
         body: formData,
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to upload image');
+      if (error) {
+        throw error;
       }
 
-      const { url } = await response.json();
-      setNewNote(prev => ({ ...prev, url, title: file.name }));
+      setNewNote(prev => ({ ...prev, url: data.url, title: file.name }));
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to upload image",
         variant: "destructive",
       });
+      console.error('Upload error:', error);
     } finally {
       setIsUploading(false);
     }
