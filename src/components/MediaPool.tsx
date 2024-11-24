@@ -29,18 +29,22 @@ const MediaPool = () => {
       // Ensure the type is correctly converted from the database
       return data.map(item => ({
         ...item,
-        type: item.type as 'youtube' | 'twitter'
-      }));
+        type: item.type as 'youtube' | 'twitter',
+        id: item.id
+      })) as MediaItem[];
     },
   });
 
   const addMediaMutation = useMutation({
-    mutationFn: async (newItem: Omit<MediaItem, 'id'>) => {
-      const { error } = await supabase
+    mutationFn: async (newItem: Omit<MediaItem, 'id' | 'created_at'>) => {
+      const { data, error } = await supabase
         .from('media_pool')
-        .insert([newItem]);
+        .insert([newItem])
+        .select()
+        .single();
       
       if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['media-pool'] });
@@ -64,7 +68,8 @@ const MediaPool = () => {
       const { error } = await supabase
         .from('media_pool')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .single();
       
       if (error) throw error;
     },

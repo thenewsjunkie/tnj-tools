@@ -28,18 +28,22 @@ const ShowNotes = () => {
       // Ensure the type is correctly converted from the database
       return data.map(note => ({
         ...note,
-        type: note.type as NoteType
-      }));
+        type: note.type as NoteType,
+        id: note.id
+      })) as Note[];
     },
   });
 
   const addNoteMutation = useMutation({
-    mutationFn: async (note: Omit<Note, 'id'>) => {
-      const { error } = await supabase
+    mutationFn: async (note: Omit<Note, 'id' | 'created_at'>) => {
+      const { data, error } = await supabase
         .from('show_notes')
-        .insert([note]);
+        .insert([note])
+        .select()
+        .single();
       
       if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['show-notes'] });
@@ -63,7 +67,8 @@ const ShowNotes = () => {
       const { error } = await supabase
         .from('show_notes')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .single();
       
       if (error) throw error;
     },
