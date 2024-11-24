@@ -75,6 +75,9 @@ const SocialStats = () => {
     mutationFn: async (updatedPlatforms: SocialMediaPlatform[]) => {
       const updates = updatedPlatforms.map((platform, index) => ({
         id: platform.id,
+        platform_name: platform.platform_name,
+        handle: platform.handle,
+        followers: platform.followers,
         display_order: index + 1,
       }));
 
