@@ -35,7 +35,6 @@ const MediaPool = () => {
   };
 
   const getTwitterVideoId = (url: string) => {
-    // Support both x.com and twitter.com URLs with various formats
     const regex = /(?:twitter\.com|x\.com)\/(?:#!\/)?(\w+)\/status(?:es)?\/(\d+)/;
     const match = url.match(regex);
     return match ? match[2] : null;
@@ -57,7 +56,8 @@ const MediaPool = () => {
         const tweetId = getTwitterVideoId(newUrl);
         if (!tweetId) throw new Error("Invalid Twitter URL");
         type = 'twitter';
-        thumbnail = '/placeholder.svg'; // Twitter requires API for thumbnails
+        // Use a better placeholder for Twitter videos
+        thumbnail = 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&w=800&q=80';
         id = tweetId;
       } else {
         throw new Error("Please enter a valid YouTube or Twitter video URL");
