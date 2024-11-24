@@ -38,10 +38,7 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
           return;
         }
 
-        // Reset error state when trying with a new code
         setHasShownError(false);
-
-        // Generate a unique device identifier
         const deviceId = crypto.randomUUID();
 
         const { data: sessionData, error: fetchError } = await supabase
@@ -83,18 +80,23 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
         }
 
         // Determine if this device should be host or viewer
-        const isHost = !sessionData.host_connected;
+        let isHost = false;
         
-        if (isHost && sessionData.viewer_connected) {
-          showError(
-            "Session in use",
-            "A viewer is already connected to this session."
-          );
-          setValidating(false);
-          return;
+        // If no host is connected, this device can be the host
+        if (!sessionData.host_connected) {
+          isHost = true;
+        } 
+        // If this device was previously the host, it can reconnect as host
+        else if (sessionData.host_device_id === deviceId) {
+          isHost = true;
+        }
+        // Otherwise, this device will be a viewer
+        else {
+          isHost = false;
         }
 
-        if (!isHost && sessionData.viewer_connected) {
+        // If trying to view but a viewer is already connected
+        if (!isHost && sessionData.viewer_connected && sessionData.viewer_device_id !== deviceId) {
           showError(
             "Session in use",
             "Another viewer is already connected to this session."

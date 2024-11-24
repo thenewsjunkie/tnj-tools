@@ -116,31 +116,37 @@ export type Database = {
           created_at: string | null
           expires_at: string
           host_connected: boolean | null
+          host_device_id: string | null
           id: string
           is_active: boolean | null
           room_id: string | null
           share_code: string
           viewer_connected: boolean | null
+          viewer_device_id: string | null
         }
         Insert: {
           created_at?: string | null
           expires_at: string
           host_connected?: boolean | null
+          host_device_id?: string | null
           id?: string
           is_active?: boolean | null
           room_id?: string | null
           share_code: string
           viewer_connected?: boolean | null
+          viewer_device_id?: string | null
         }
         Update: {
           created_at?: string | null
           expires_at?: string
           host_connected?: boolean | null
+          host_device_id?: string | null
           id?: string
           is_active?: boolean | null
           room_id?: string | null
           share_code?: string
           viewer_connected?: boolean | null
+          viewer_device_id?: string | null
         }
         Relationships: []
       }
