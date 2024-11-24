@@ -22,6 +22,7 @@ const ScreenShare = () => {
         return;
       }
 
+      // Query for active sessions with the given code that haven't expired
       const { data, error } = await supabase
         .from("screen_share_sessions")
         .select()
@@ -33,11 +34,15 @@ const ScreenShare = () => {
       if (error || !data) {
         console.error("Error checking share code:", error);
         setIsValid(false);
+        toast({
+          title: "Invalid Share Code",
+          description: "This share code is invalid or has expired.",
+          variant: "destructive",
+        });
         return;
       }
 
       setIsValid(true);
-      // If host isn't connected yet, this user becomes the host
       setIsHost(!data.host_connected);
       setRoomId(data.id);
 
@@ -50,7 +55,7 @@ const ScreenShare = () => {
     };
 
     checkCode();
-  }, [code]);
+  }, [code, toast]);
 
   const handleTrackAdded = (stream: MediaStream) => {
     if (remoteVideoRef.current) {
@@ -138,7 +143,7 @@ const ScreenShare = () => {
           <div className="flex justify-between items-center">
             <h1 className="text-white text-xl">Screen Share: {code}</h1>
             <Button
-              variant="secondary"
+              variant="destructive"
               onClick={stopScreenShare}
               className="bg-red-500 hover:bg-red-600 text-white"
             >
