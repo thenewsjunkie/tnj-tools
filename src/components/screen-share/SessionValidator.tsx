@@ -1,40 +1,89 @@
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { validateShareSession } from "@/utils/supabaseSession";
 
 interface SessionValidatorProps {
   code: string;
-  onValidSession: (sessionData: any, isHost: boolean) => void;
+  onValidSession: (data: any, isHost: boolean) => void;
 }
 
 const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
-  const [isLoading, setIsLoading] = useState(true);
+  const [validating, setValidating] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
     const validateSession = async () => {
       try {
-        const sessionData = await validateShareSession(code);
-        const isHost = !sessionData.host_connected;
-        onValidSession(sessionData, isHost);
-      } catch (error: any) {
+        const { data, error } = await supabase
+          .from('screen_share_sessions')
+          .select('*')
+          .eq('share_code', code)
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (error) throw error;
+        if (!data) {
+          toast({
+            title: "Invalid session",
+            description: "This screen share session does not exist or has expired.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const now = new Date();
+        const expiresAt = new Date(data.expires_at);
+        
+        if (expiresAt < now) {
+          toast({
+            title: "Session expired",
+            description: "This screen share session has expired.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Determine if this is the host or viewer
+        const isHost = !data.host_connected;
+        
+        if (isHost && data.viewer_connected) {
+          toast({
+            title: "Session in use",
+            description: "A viewer is already connected to this session.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (!isHost && data.viewer_connected) {
+          toast({
+            title: "Session in use",
+            description: "Another viewer is already connected to this session.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        onValidSession(data, isHost);
+      } catch (error) {
+        console.error('Session validation error:', error);
         toast({
-          title: "Invalid Share Code",
-          description: error.message || "Please check the code and try again.",
+          title: "Error",
+          description: "Failed to validate screen share session.",
           variant: "destructive",
         });
       } finally {
-        setIsLoading(false);
+        setValidating(false);
       }
     };
 
     validateSession();
   }, [code, onValidSession, toast]);
 
-  if (isLoading) {
+  if (validating) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <p className="text-white">Loading...</p>
+      <div className="flex items-center justify-center p-8">
+        <p className="text-white">Validating session...</p>
       </div>
     );
   }
