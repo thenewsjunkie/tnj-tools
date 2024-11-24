@@ -1,14 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
-if (!import.meta.env.VITE_SUPABASE_URL) {
-  throw new Error('Missing environment variable: VITE_SUPABASE_URL');
-}
+const supabaseUrl = "https://gpmandlkcdompmdvethh.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwbWFuZGxrY2RvbXBtZHZldGhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI0NjM2NjcsImV4cCI6MjA0ODAzOTY2N30.KxzySIkXxhNgBWUdSpaASLZWjq8AAMeXgPmaBdnYfHI";
 
-if (!import.meta.env.VITE_SUPABASE_ANON_KEY) {
-  throw new Error('Missing environment variable: VITE_SUPABASE_ANON_KEY');
-}
-
-export const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
+export const supabase = createClient(supabaseUrl, supabaseKey);
