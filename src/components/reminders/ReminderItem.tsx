@@ -26,9 +26,32 @@ const ReminderItem = ({ reminder, onDelete, onEdit, isUpcoming }: ReminderItemPr
   const upcoming = isUpcoming(reminder.datetime);
 
   const handleSave = () => {
-    onEdit(reminder.id, editedText, editedDateTime, editedRecurringWeekly);
+    if (!editedText.trim() || !editedDateTime) {
+      return;
+    }
+    
+    onEdit(reminder.id, editedText.trim(), editedDateTime, editedRecurringWeekly);
     setIsEditing(false);
   };
+
+  // Reset form when canceling edit
+  const handleCancelEdit = () => {
+    setEditedText(reminder.text);
+    setEditedDateTime(reminder.datetime);
+    setEditedRecurringWeekly(reminder.recurring_weekly);
+    setIsEditing(false);
+  };
+
+  // Update local state when reminder prop changes
+  if (!isEditing && (
+    editedText !== reminder.text || 
+    editedDateTime !== reminder.datetime || 
+    editedRecurringWeekly !== reminder.recurring_weekly
+  )) {
+    setEditedText(reminder.text);
+    setEditedDateTime(reminder.datetime);
+    setEditedRecurringWeekly(reminder.recurring_weekly);
+  }
 
   return (
     <div
@@ -89,32 +112,44 @@ const ReminderItem = ({ reminder, onDelete, onEdit, isUpcoming }: ReminderItemPr
       </div>
       <div className="flex gap-2">
         {isEditing ? (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 shrink-0 text-green-400 hover:text-green-300"
-            onClick={handleSave}
-          >
-            <Check className="h-4 w-4" />
-          </Button>
+          <>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 shrink-0 text-green-400 hover:text-green-300"
+              onClick={handleSave}
+            >
+              <Check className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 shrink-0 text-red-400 hover:text-red-300"
+              onClick={handleCancelEdit}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </>
         ) : (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 shrink-0 text-white/50 hover:text-white"
-            onClick={() => setIsEditing(true)}
-          >
-            <Edit2 className="h-4 w-4" />
-          </Button>
+          <>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 shrink-0 text-white/50 hover:text-white"
+              onClick={() => setIsEditing(true)}
+            >
+              <Edit2 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 shrink-0 text-white/50 hover:text-white"
+              onClick={() => onDelete(reminder.id)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </>
         )}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 shrink-0 text-white/50 hover:text-white"
-          onClick={() => onDelete(reminder.id)}
-        >
-          <X className="h-4 w-4" />
-        </Button>
       </div>
     </div>
   );
