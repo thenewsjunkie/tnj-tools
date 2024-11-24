@@ -61,7 +61,7 @@ const InterviewRequests = () => {
       setEmail("");
       setEmailScript("");
       toast({
-        title: "Request sent",
+        title: "Success",
         description: "Your interview request has been sent successfully",
       });
     },

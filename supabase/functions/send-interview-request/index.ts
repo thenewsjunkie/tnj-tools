@@ -5,8 +5,7 @@ const FROM_EMAIL = Deno.env.get("FROM_EMAIL") || "no-reply@555am.io";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Content-Type": "application/json",
 };
 
