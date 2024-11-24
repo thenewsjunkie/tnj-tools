@@ -35,6 +35,7 @@ const InterviewRequests = () => {
 
   const sendRequestMutation = useMutation({
     mutationFn: async ({ email, script }: { email: string; script: string }) => {
+      // First insert the request into the database
       const { data, error } = await supabase
         .from('interview_requests')
         .insert([
@@ -43,18 +44,13 @@ const InterviewRequests = () => {
             email_script: script,
             status: 'pending',
           },
-        ])
-        .select()
-        .single();
+        ]);
 
       if (error) throw error;
 
-      // Send email using Supabase Edge Function with proper content type
+      // Send email using Supabase Edge Function
       const { error: emailError } = await supabase.functions.invoke('send-interview-request', {
         body: { email, script },
-        headers: {
-          'Content-Type': 'application/json',
-        },
       });
 
       if (emailError) throw emailError;
