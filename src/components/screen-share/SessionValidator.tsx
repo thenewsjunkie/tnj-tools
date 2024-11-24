@@ -84,7 +84,13 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
           // Update session to inactive if expired
           await supabase
             .from('screen_share_sessions')
-            .update({ is_active: false })
+            .update({ 
+              is_active: false,
+              host_connected: false,
+              viewer_connected: false,
+              host_device_id: null,
+              viewer_device_id: null
+            })
             .eq('id', sessionData.id);
             
           showError(
@@ -95,7 +101,7 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
           return;
         }
 
-        // Try to claim host role with a transaction
+        // Try to claim host or viewer role
         const { data: updatedSession, error: updateError } = await supabase.rpc(
           'claim_screen_share_role',
           { 
@@ -119,16 +125,6 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
 
         const typedSession = updatedSession as SessionData;
         const isHost = typedSession.host_device_id === deviceId;
-        
-        // If not host and viewer is already connected
-        if (!isHost && typedSession.viewer_connected && typedSession.viewer_device_id !== deviceId) {
-          showError(
-            "Session in use",
-            "Another viewer is already connected to this session."
-          );
-          setValidating(false);
-          return;
-        }
 
         // Subscribe to session changes
         subscription = supabase
