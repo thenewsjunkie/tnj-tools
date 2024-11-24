@@ -6,13 +6,18 @@ import { Monitor, Copy, ExternalLink } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { addDays } from "date-fns";
+import { debounce } from "lodash";
 
 const ScreenShareModule = () => {
   const [shareCode, setShareCode] = useState<string>("");
+  const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
-  const generateShareCode = async () => {
+  const generateShareCode = debounce(async () => {
+    if (isGenerating) return;
+    
     try {
+      setIsGenerating(true);
       // Clear the previous share code first
       setShareCode("");
       
@@ -77,8 +82,10 @@ const ScreenShareModule = () => {
         description: "Failed to generate share code: Unexpected error",
         variant: "destructive",
       });
+    } finally {
+      setIsGenerating(false);
     }
-  };
+  }, 1000, { leading: true, trailing: false });
 
   const copyToClipboard = () => {
     const shareUrl = `${window.location.origin}/screen-share/${shareCode}`;
@@ -102,6 +109,7 @@ const ScreenShareModule = () => {
           size="icon"
           className="text-white hover:text-primary hover:bg-white/10"
           onClick={generateShareCode}
+          disabled={isGenerating}
         >
           <Monitor className="h-4 w-4" />
         </Button>
@@ -135,7 +143,9 @@ const ScreenShareModule = () => {
           </div>
         ) : (
           <div className="p-3 bg-white/5 rounded-lg">
-            <p className="text-white text-sm">No active share code</p>
+            <p className="text-white text-sm">
+              {isGenerating ? "Generating share code..." : "No active share code"}
+            </p>
           </div>
         )}
       </CardContent>

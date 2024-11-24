@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { debounce } from "lodash";
 
 interface SessionValidatorProps {
   code: string;
@@ -10,8 +11,25 @@ interface SessionValidatorProps {
 const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
   const [validating, setValidating] = useState(true);
   const { toast } = useToast();
+  const [hasShownError, setHasShownError] = useState(false);
+
+  const showError = useCallback(
+    debounce((title: string, description: string) => {
+      if (!hasShownError) {
+        toast({
+          title,
+          description,
+          variant: "destructive",
+        });
+        setHasShownError(true);
+      }
+    }, 1000),
+    [hasShownError, toast]
+  );
 
   useEffect(() => {
+    let isMounted = true;
+
     const validateSession = async () => {
       try {
         if (!code) {
@@ -19,71 +37,68 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
           return;
         }
 
-        // Fetch the session first without updating anything
+        // Reset error state when trying with a new code
+        setHasShownError(false);
+
         const { data: sessionData, error: fetchError } = await supabase
           .from('screen_share_sessions')
           .select('*')
           .eq('share_code', code.toUpperCase())
           .single();
 
+        if (!isMounted) return;
+
         if (fetchError || !sessionData) {
-          toast({
-            title: "Invalid session",
-            description: "This screen share session does not exist.",
-            variant: "destructive",
-          });
+          showError(
+            "Invalid session",
+            "This screen share session does not exist."
+          );
           setValidating(false);
           return;
         }
 
-        // Check if session is expired
         const now = new Date();
         const expiresAt = new Date(sessionData.expires_at);
         
         if (expiresAt < now) {
-          toast({
-            title: "Session expired",
-            description: "This screen share session has expired.",
-            variant: "destructive",
-          });
+          showError(
+            "Session expired",
+            "This screen share session has expired."
+          );
           setValidating(false);
           return;
         }
 
         if (!sessionData.is_active) {
-          toast({
-            title: "Session inactive",
-            description: "This screen share session is no longer active.",
-            variant: "destructive",
-          });
+          showError(
+            "Session inactive",
+            "This screen share session is no longer active."
+          );
           setValidating(false);
           return;
         }
 
-        // Determine if this is the host or viewer
         const isHost = !sessionData.host_connected;
         
         if (isHost && sessionData.viewer_connected) {
-          toast({
-            title: "Session in use",
-            description: "A viewer is already connected to this session.",
-            variant: "destructive",
-          });
+          showError(
+            "Session in use",
+            "A viewer is already connected to this session."
+          );
           setValidating(false);
           return;
         }
 
         if (!isHost && sessionData.viewer_connected) {
-          toast({
-            title: "Session in use",
-            description: "Another viewer is already connected to this session.",
-            variant: "destructive",
-          });
+          showError(
+            "Session in use",
+            "Another viewer is already connected to this session."
+          );
           setValidating(false);
           return;
         }
 
-        // Update connection status
+        // Use a transaction to ensure atomic updates
         const { error: updateError } = await supabase
           .from('screen_share_sessions')
           .update({
@@ -91,39 +106,47 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
           })
           .eq('id', sessionData.id)
           .eq('is_active', true)
-          .gt('expires_at', now.toISOString());
+          .eq('share_code', code.toUpperCase())
+          .gt('expires_at', now.toISOString())
+          .select()
+          .single();
+
+        if (!isMounted) return;
 
         if (updateError) {
           console.error('Failed to update connection status:', updateError);
-          toast({
-            title: "Connection error",
-            description: "Failed to establish connection to the session.",
-            variant: "destructive",
-          });
+          showError(
+            "Connection error",
+            "Failed to establish connection to the session."
+          );
           setValidating(false);
           return;
         }
 
-        onValidSession(sessionData, isHost);
+        if (isMounted) {
+          onValidSession(sessionData, isHost);
+        }
       } catch (error) {
+        if (!isMounted) return;
         console.error('Session validation error:', error);
-        toast({
-          title: "Error",
-          description: "Failed to validate screen share session.",
-          variant: "destructive",
-        });
+        showError(
+          "Error",
+          "Failed to validate screen share session."
+        );
       } finally {
-        setValidating(false);
+        if (isMounted) {
+          setValidating(false);
+        }
       }
     };
 
     validateSession();
 
-    // Cleanup function to handle component unmount
     return () => {
+      isMounted = false;
       setValidating(false);
     };
-  }, [code, onValidSession, toast]);
+  }, [code, onValidSession, toast, showError, hasShownError]);
 
   if (validating) {
     return (
