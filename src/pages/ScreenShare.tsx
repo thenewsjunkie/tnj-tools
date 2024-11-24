@@ -22,13 +22,11 @@ const ScreenShare = () => {
         return;
       }
 
-      // Query for active sessions with the given code that haven't expired
       const { data, error } = await supabase
         .from("screen_share_sessions")
         .select()
         .eq("share_code", code)
         .eq("is_active", true)
-        .gte("expires_at", new Date().toISOString())
         .single();
 
       if (error || !data) {
@@ -37,6 +35,17 @@ const ScreenShare = () => {
         toast({
           title: "Invalid Share Code",
           description: "This share code is invalid or has expired.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check if the session has expired
+      if (new Date(data.expires_at) < new Date()) {
+        setIsValid(false);
+        toast({
+          title: "Expired Share Code",
+          description: "This share session has expired.",
           variant: "destructive",
         });
         return;
