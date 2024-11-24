@@ -13,10 +13,7 @@ const Index = () => {
       </nav>
       
       <div className="digital text-[clamp(4rem,20vw,12rem)] leading-none text-neon-red animate-led-flicker tracking-tight">
-        5:55
-      </div>
-      <div className="digital text-[clamp(1rem,5vw,2.5rem)] text-neon-red/80 mt-2">
-        AM
+        TNJ Tools
       </div>
       <div className="absolute bottom-8 text-white/50 text-sm">
         555am.io
