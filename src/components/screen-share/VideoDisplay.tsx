@@ -36,6 +36,11 @@ const VideoDisplay = ({ isHost, localVideoRef, remoteVideoRef }: VideoDisplayPro
         <div className="absolute top-2 left-2 bg-black/50 px-2 py-1 rounded text-sm text-white">
           {isHost ? "Viewer's View" : "Shared Screen"}
         </div>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <p className="text-white text-sm bg-black/50 px-3 py-1 rounded">
+            {isHost ? "Waiting for viewer..." : "Waiting for shared screen..."}
+          </p>
+        </div>
       </div>
     </div>
   );

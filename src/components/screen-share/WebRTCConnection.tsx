@@ -36,7 +36,9 @@ const WebRTCConnection = ({
 
       // Add stream tracks to peer connection if host
       if (isHost && stream) {
+        console.log('Host adding stream tracks');
         stream.getTracks().forEach(track => {
+          console.log('Adding track:', track.kind);
           peerConnectionRef.current?.addTrack(track, stream);
         });
       }
@@ -50,6 +52,7 @@ const WebRTCConnection = ({
 
       peerConnectionRef.current.onicecandidate = (event) => {
         if (event.candidate) {
+          console.log('Sending ICE candidate');
           channelRef.current.send({
             type: "broadcast",
             event: "ice-candidate",
@@ -59,12 +62,14 @@ const WebRTCConnection = ({
       };
 
       peerConnectionRef.current.ontrack = (event) => {
+        console.log('Received remote track:', event.track.kind);
         onTrackAdded(event.streams[0]);
       };
 
       // If host, create and send offer
       if (isHost) {
         try {
+          console.log('Host creating offer');
           const offer = await peerConnectionRef.current.createOffer();
           await peerConnectionRef.current.setLocalDescription(offer);
           channelRef.current.send({
@@ -80,12 +85,14 @@ const WebRTCConnection = ({
       channelRef.current
         .on("broadcast", { event: "offer" }, async ({ payload }: any) => {
           if (!isHost && peerConnectionRef.current) {
+            console.log('Viewer received offer');
             try {
               await peerConnectionRef.current.setRemoteDescription(
                 new RTCSessionDescription(payload)
               );
               const answer = await peerConnectionRef.current.createAnswer();
               await peerConnectionRef.current.setLocalDescription(answer);
+              console.log('Viewer sending answer');
               channelRef.current.send({
                 type: "broadcast",
                 event: "answer",
@@ -98,6 +105,7 @@ const WebRTCConnection = ({
         })
         .on("broadcast", { event: "answer" }, async ({ payload }: any) => {
           if (isHost && peerConnectionRef.current) {
+            console.log('Host received answer');
             try {
               await peerConnectionRef.current.setRemoteDescription(
                 new RTCSessionDescription(payload)
@@ -110,6 +118,7 @@ const WebRTCConnection = ({
         })
         .on("broadcast", { event: "ice-candidate" }, async ({ payload }: any) => {
           if (peerConnectionRef.current) {
+            console.log('Received ICE candidate');
             try {
               await peerConnectionRef.current.addIceCandidate(
                 new RTCIceCandidate(payload)
@@ -120,6 +129,8 @@ const WebRTCConnection = ({
           }
         })
         .subscribe();
+
+      console.log(`${isHost ? 'Host' : 'Viewer'} WebRTC connection initialized`);
     };
 
     initializeConnection();
