@@ -78,45 +78,15 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
           return;
         }
 
-        // Determine if this device should be host or viewer
-        let isHost = false;
-        
-        // First priority: If no host is connected, this device can be the host
-        if (!sessionData.host_connected) {
-          isHost = true;
-        }
-        // Second priority: If this device was previously the host, it can reconnect as host
-        else if (sessionData.host_device_id === deviceId) {
-          isHost = true;
-        }
-        // Otherwise, this device will be a viewer
-        else {
-          isHost = false;
-        }
-
-        // If trying to view but a viewer is already connected
-        if (!isHost && sessionData.viewer_connected && sessionData.viewer_device_id !== deviceId) {
-          showError(
-            "Session in use",
-            "Another viewer is already connected to this session."
-          );
-          setValidating(false);
-          return;
-        }
-
-        // Update connection status with device ID
-        const { error: updateError } = await supabase
-          .from('screen_share_sessions')
-          .update({
-            [isHost ? 'host_connected' : 'viewer_connected']: true,
-            [isHost ? 'host_device_id' : 'viewer_device_id']: deviceId,
-            is_active: true // Ensure session remains active
-          })
-          .eq('id', sessionData.id)
-          .eq('is_active', true)
-          .eq('share_code', code.toUpperCase())
-          .select()
-          .single();
+        // Try to claim host role with a transaction
+        const { data: updatedSession, error: updateError } = await supabase.rpc(
+          'claim_screen_share_role',
+          { 
+            p_session_id: sessionData.id,
+            p_device_id: deviceId,
+            p_share_code: code.toUpperCase()
+          }
+        );
 
         if (!isMounted) return;
 
@@ -125,6 +95,18 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
           showError(
             "Connection error",
             "Failed to establish connection to the session."
+          );
+          setValidating(false);
+          return;
+        }
+
+        const isHost = updatedSession.host_device_id === deviceId;
+        
+        // If not host and viewer is already connected
+        if (!isHost && updatedSession.viewer_connected && updatedSession.viewer_device_id !== deviceId) {
+          showError(
+            "Session in use",
+            "Another viewer is already connected to this session."
           );
           setValidating(false);
           return;
@@ -157,7 +139,7 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
           .subscribe();
 
         if (isMounted) {
-          onValidSession(sessionData, isHost);
+          onValidSession(updatedSession, isHost);
         }
       } catch (error) {
         if (!isMounted) return;
