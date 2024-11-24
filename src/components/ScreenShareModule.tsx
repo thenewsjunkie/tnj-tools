@@ -13,21 +13,25 @@ const ScreenShareModule = () => {
 
   const generateShareCode = async () => {
     try {
-      // First, deactivate any existing active sessions for cleanup
-      const { error: deactivateError } = await supabase
+      const now = new Date().toISOString();
+      
+      // First, clean up any expired or inactive sessions
+      const { error: cleanupError } = await supabase
         .from("screen_share_sessions")
-        .update({ is_active: false })
-        .eq("is_active", true);
+        .update({ 
+          is_active: false,
+          host_connected: false,
+          viewer_connected: false 
+        })
+        .or(`expires_at.lt.${now},and(host_connected.eq.false,viewer_connected.eq.false)`);
 
-      if (deactivateError) {
-        console.error('Error deactivating existing sessions:', deactivateError);
+      if (cleanupError) {
+        console.error('Error cleaning up sessions:', cleanupError);
       }
 
       // Generate a new unique code
       const code = Math.random().toString(36).substring(2, 8).toUpperCase();
       
-      console.log('Attempting to create session with code:', code);
-
       // Insert new session with all required fields
       const { data, error } = await supabase
         .from("screen_share_sessions")
@@ -62,7 +66,6 @@ const ScreenShareModule = () => {
         return;
       }
 
-      console.log('Successfully created session:', data);
       setShareCode(code);
       toast({
         title: "Success",
