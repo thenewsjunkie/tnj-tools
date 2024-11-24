@@ -20,14 +20,25 @@ const WebRTCConnection = ({
   useEffect(() => {
     const initializeConnection = async () => {
       const configuration = {
-        iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+        iceServers: [
+          {
+            urls: "stun:stun.l.google.com:19302",
+          },
+          {
+            urls: "stun:stun1.l.google.com:19302",
+          },
+        ],
       };
       
       peerConnectionRef.current = new RTCPeerConnection(configuration);
 
       // Use a unique channel name for each room
       const channelName = `room:${roomId}`;
-      channelRef.current = supabase.channel(channelName);
+      channelRef.current = supabase.channel(channelName, {
+        config: {
+          broadcast: { self: true },
+        },
+      });
 
       peerConnectionRef.current.onicecandidate = (event) => {
         if (event.candidate) {
@@ -46,25 +57,43 @@ const WebRTCConnection = ({
       channelRef.current
         .on("broadcast", { event: "offer" }, async ({ payload }: any) => {
           if (!isHost && peerConnectionRef.current) {
-            await peerConnectionRef.current.setRemoteDescription(payload);
-            const answer = await peerConnectionRef.current.createAnswer();
-            await peerConnectionRef.current.setLocalDescription(answer);
-            channelRef.current.send({
-              type: "broadcast",
-              event: "answer",
-              payload: answer,
-            });
+            try {
+              await peerConnectionRef.current.setRemoteDescription(
+                new RTCSessionDescription(payload)
+              );
+              const answer = await peerConnectionRef.current.createAnswer();
+              await peerConnectionRef.current.setLocalDescription(answer);
+              channelRef.current.send({
+                type: "broadcast",
+                event: "answer",
+                payload: answer,
+              });
+            } catch (error) {
+              console.error("Error handling offer:", error);
+            }
           }
         })
         .on("broadcast", { event: "answer" }, async ({ payload }: any) => {
           if (isHost && peerConnectionRef.current) {
-            await peerConnectionRef.current.setRemoteDescription(payload);
-            onConnectionEstablished();
+            try {
+              await peerConnectionRef.current.setRemoteDescription(
+                new RTCSessionDescription(payload)
+              );
+              onConnectionEstablished();
+            } catch (error) {
+              console.error("Error handling answer:", error);
+            }
           }
         })
-        .on("broadcast", { event: "ice-candidate" }, ({ payload }: any) => {
+        .on("broadcast", { event: "ice-candidate" }, async ({ payload }: any) => {
           if (peerConnectionRef.current) {
-            peerConnectionRef.current.addIceCandidate(payload);
+            try {
+              await peerConnectionRef.current.addIceCandidate(
+                new RTCIceCandidate(payload)
+              );
+            } catch (error) {
+              console.error("Error adding ICE candidate:", error);
+            }
           }
         })
         .subscribe();
