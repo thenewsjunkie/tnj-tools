@@ -13,10 +13,13 @@ const ScreenShareModule = () => {
 
   const generateShareCode = async () => {
     try {
+      // Clear the previous share code first
+      setShareCode("");
+      
       const now = new Date().toISOString();
       
       // First, clean up any expired or inactive sessions
-      const { error: cleanupError } = await supabase
+      await supabase
         .from("screen_share_sessions")
         .update({ 
           is_active: false,
@@ -24,10 +27,6 @@ const ScreenShareModule = () => {
           viewer_connected: false 
         })
         .or(`expires_at.lt.${now},and(host_connected.eq.false,viewer_connected.eq.false)`);
-
-      if (cleanupError) {
-        console.error('Error cleaning up sessions:', cleanupError);
-      }
 
       // Generate a new unique code
       const code = Math.random().toString(36).substring(2, 8).toUpperCase();
