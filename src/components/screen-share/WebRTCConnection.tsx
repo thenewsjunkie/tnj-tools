@@ -31,8 +31,10 @@ const WebRTCConnection = ({
     }
 
     try {
-      await peerConnectionRef.current?.addIceCandidate(candidate);
-      console.log('Added ICE candidate:', candidate);
+      if (peerConnectionRef.current?.remoteDescription) {
+        await peerConnectionRef.current.addIceCandidate(candidate);
+        console.log('Added ICE candidate:', candidate);
+      }
     } catch (error) {
       console.error('Error adding ICE candidate:', error);
     }
@@ -54,7 +56,7 @@ const WebRTCConnection = ({
 
           // Process any pending ICE candidates
           for (const candidate of pendingCandidatesRef.current) {
-            await peerConnectionRef.current.addIceCandidate(candidate);
+            await handleIceCandidate(candidate);
           }
           pendingCandidatesRef.current = [];
         } catch (error) {
@@ -71,7 +73,7 @@ const WebRTCConnection = ({
 
           // Process any pending ICE candidates
           for (const candidate of pendingCandidatesRef.current) {
-            await peerConnectionRef.current.addIceCandidate(candidate);
+            await handleIceCandidate(candidate);
           }
           pendingCandidatesRef.current = [];
         } catch (error) {
@@ -84,9 +86,25 @@ const WebRTCConnection = ({
 
   // Update stream reference when stream prop changes
   useEffect(() => {
-    streamRef.current = stream || null;
-    console.log('Stream updated:', stream ? 'Stream present' : 'No stream');
-  }, [stream]);
+    if (stream !== streamRef.current) {
+      streamRef.current = stream || null;
+      console.log('Stream updated:', stream ? 'Stream present' : 'No stream');
+      
+      // If we're the host and we have a peer connection, we need to update the tracks
+      if (isHost && peerConnectionRef.current && stream) {
+        const senders = peerConnectionRef.current.getSenders();
+        senders.forEach(sender => {
+          peerConnectionRef.current?.removeTrack(sender);
+        });
+
+        stream.getTracks().forEach(track => {
+          if (peerConnectionRef.current) {
+            peerConnectionRef.current.addTrack(track, stream);
+          }
+        });
+      }
+    }
+  }, [stream, isHost]);
 
   useEffect(() => {
     const initializeConnection = async () => {
@@ -102,7 +120,7 @@ const WebRTCConnection = ({
 
       // Add stream tracks for host
       if (isHost && streamRef.current) {
-        console.log('Host adding stream tracks');
+        console.log('Host adding initial stream tracks');
         const tracks = streamRef.current.getTracks();
         console.log('Number of tracks to add:', tracks.length);
         
