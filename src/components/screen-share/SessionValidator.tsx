@@ -101,7 +101,31 @@ const SessionValidator = ({ code, onValidSession }: SessionValidatorProps) => {
           return;
         }
 
-        // Try to claim host or viewer role
+        // Check if this device is already connected
+        const isExistingHost = sessionData.host_device_id === deviceId;
+        const isExistingViewer = sessionData.viewer_device_id === deviceId;
+
+        if (isExistingHost || isExistingViewer) {
+          // Device is already connected, update its connection status
+          const updateData = isExistingHost 
+            ? { host_connected: true }
+            : { viewer_connected: true };
+            
+          const { data: reconnectedSession } = await supabase
+            .from('screen_share_sessions')
+            .update(updateData)
+            .eq('id', sessionData.id)
+            .select()
+            .single();
+
+          if (reconnectedSession) {
+            onValidSession(reconnectedSession as SessionData, isExistingHost);
+            setValidating(false);
+            return;
+          }
+        }
+
+        // Try to claim host or viewer role if not already connected
         const { data: updatedSession, error: updateError } = await supabase.rpc(
           'claim_screen_share_role',
           { 
