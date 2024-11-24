@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
-const RAPID_API_KEY = Deno.env.get('RAPID_API_KEY')
+const RAPID_API_KEY = Deno.env.get('RAPID_API-KEY') // Note: Changed from RAPID_API_KEY to match the actual secret name
 const RAPID_API_HOST = 'youtube-mp36.p.rapidapi.com'
 
 const corsHeaders = {
@@ -11,7 +11,7 @@ const corsHeaders = {
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
@@ -46,6 +46,7 @@ serve(async (req) => {
     }
 
     console.log('Extracted video ID:', videoId)
+    console.log('Making request to RapidAPI with key:', RAPID_API_KEY ? 'Present' : 'Missing')
 
     const response = await fetch(`https://${RAPID_API_HOST}/dl?id=${videoId}`, {
       headers: {
@@ -56,7 +57,7 @@ serve(async (req) => {
 
     console.log('RapidAPI response status:', response.status)
     const data = await response.json()
-    console.log('RapidAPI response data:', data)
+    console.log('RapidAPI response data:', JSON.stringify(data))
 
     if (!response.ok) {
       throw new Error(`RapidAPI error: ${data.msg || 'Unknown error'}`)
