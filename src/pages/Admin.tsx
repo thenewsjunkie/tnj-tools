@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import Stopwatch from "@/components/Stopwatch";
 import SocialStats from "@/components/SocialStats";
 import SocialGraph from "@/components/SocialGraph";
+import ShowNotes from "@/components/ShowNotes";
 
 const Admin = () => {
   return (
@@ -19,6 +20,7 @@ const Admin = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 max-w-7xl mx-auto">
         <Stopwatch />
         <SocialStats />
+        <ShowNotes />
         <div className="md:col-span-2">
           <SocialGraph />
         </div>
