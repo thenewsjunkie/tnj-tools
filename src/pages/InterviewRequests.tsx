@@ -6,9 +6,11 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { ArrowLeft, Send, Clock } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { InterviewRequest } from "@/types/interview";
+import type { Database } from "@/integrations/supabase/types";
+
+type InterviewRequest = Database['public']['Tables']['interview_requests']['Row'];
 
 const InterviewRequests = () => {
   const [email, setEmail] = useState("");
@@ -159,7 +161,7 @@ const InterviewRequests = () => {
                       <div>
                         <p className="text-white">{request.guest_email}</p>
                         <p className="text-sm text-gray-400">
-                          {new Date(request.created_at).toLocaleString()}
+                          {new Date(request.created_at!).toLocaleString()}
                         </p>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
