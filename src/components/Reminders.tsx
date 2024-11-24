@@ -39,9 +39,7 @@ const Reminders = () => {
           const isActive = reminderDate <= now && 
                           reminderDate.getTime() + 3600000 > now.getTime();
 
-          // If it's a weekly reminder and the time has passed, schedule it for next week
           if (reminder.recurringWeekly && reminderDate < now) {
-            // Find next occurrence
             const nextDate = new Date(reminder.datetime);
             while (nextDate <= now) {
               nextDate.setDate(nextDate.getDate() + 7);
@@ -100,6 +98,17 @@ const Reminders = () => {
     });
   };
 
+  const isUpcoming = (datetime: string) => {
+    const now = new Date();
+    const reminderDate = new Date(datetime);
+    const hoursDifference = (reminderDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+    return hoursDifference >= 0 && hoursDifference <= 24;
+  };
+
+  const sortedReminders = [...reminders].sort((a, b) => 
+    new Date(a.datetime).getTime() - new Date(b.datetime).getTime()
+  );
+
   return (
     <Card className="bg-black/50 border-white/10">
       <CardHeader>
@@ -138,43 +147,50 @@ const Reminders = () => {
         </div>
         
         <div className="space-y-2">
-          {reminders.map((reminder) => (
-            <div
-              key={reminder.id}
-              className={`relative p-3 rounded-lg flex items-start justify-between gap-2 ${
-                reminder.isActive
-                  ? "bg-red-500/20 border-2 border-neon-red animate-pulse"
-                  : "bg-white/5"
-              }`}
-            >
-              <div className="flex items-start gap-2">
-                {reminder.isActive && (
-                  <AlertCircle className="h-5 w-5 text-neon-red shrink-0 mt-0.5" />
-                )}
-                <div>
-                  <p className="text-white">
-                    {reminder.text}
-                    {reminder.recurringWeekly && (
-                      <span className="ml-2 text-xs bg-blue-500/20 px-2 py-0.5 rounded">
-                        Weekly
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-sm text-gray-400">
-                    {new Date(reminder.datetime).toLocaleString()}
-                  </p>
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 shrink-0 text-white/50 hover:text-white"
-                onClick={() => handleDelete(reminder.id)}
+          {sortedReminders.map((reminder) => {
+            const upcoming = isUpcoming(reminder.datetime);
+            return (
+              <div
+                key={reminder.id}
+                className={`relative p-3 rounded-lg flex items-start justify-between gap-2 transition-all ${
+                  reminder.isActive
+                    ? "bg-red-500/20 border-2 border-neon-red animate-pulse"
+                    : upcoming
+                    ? "bg-blue-500/20 border border-blue-400"
+                    : "bg-white/5"
+                } ${upcoming ? "scale-[1.02]" : ""}`}
               >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
+                <div className="flex items-start gap-2">
+                  {(reminder.isActive || upcoming) && (
+                    <AlertCircle className={`h-5 w-5 shrink-0 mt-0.5 ${
+                      reminder.isActive ? "text-neon-red" : "text-blue-400"
+                    }`} />
+                  )}
+                  <div>
+                    <p className="text-white">
+                      {reminder.text}
+                      {reminder.recurringWeekly && (
+                        <span className="ml-2 text-xs bg-blue-500/20 px-2 py-0.5 rounded">
+                          Weekly
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      {new Date(reminder.datetime).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 shrink-0 text-white/50 hover:text-white"
+                  onClick={() => handleDelete(reminder.id)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            );
+          })}
         </div>
       </CardContent>
     </Card>
