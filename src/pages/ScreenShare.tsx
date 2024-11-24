@@ -8,15 +8,35 @@ const ScreenShare = () => {
 
   useEffect(() => {
     const checkCode = async () => {
+      if (!code) {
+        setIsValid(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from("screen_share_sessions")
         .select()
         .eq("share_code", code)
         .eq("is_active", true)
-        .gt("expires_at", new Date().toISOString())
         .single();
 
-      setIsValid(!!data && !error);
+      if (error) {
+        console.error("Error checking share code:", error);
+        setIsValid(false);
+        return;
+      }
+
+      // Check if the session exists and hasn't expired
+      const isValidSession = data && new Date(data.expires_at) > new Date();
+      setIsValid(isValidSession);
+
+      // If session is expired, update is_active to false
+      if (data && !isValidSession) {
+        await supabase
+          .from("screen_share_sessions")
+          .update({ is_active: false })
+          .eq("id", data.id);
+      }
     };
 
     checkCode();
