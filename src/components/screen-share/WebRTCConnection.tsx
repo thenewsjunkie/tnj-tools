@@ -8,16 +8,26 @@ interface WebRTCConnectionProps {
   onConnectionEstablished: () => void;
 }
 
-const WebRTCConnection = ({ roomId, isHost, onTrackAdded, onConnectionEstablished }: WebRTCConnectionProps) => {
+const WebRTCConnection = ({
+  roomId,
+  isHost,
+  onTrackAdded,
+  onConnectionEstablished,
+}: WebRTCConnectionProps) => {
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const channelRef = useRef<any>(null);
 
   useEffect(() => {
     const initializeConnection = async () => {
-      const configuration = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+      const configuration = {
+        iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+      };
+      
       peerConnectionRef.current = new RTCPeerConnection(configuration);
 
-      channelRef.current = supabase.channel(`room:${roomId}`);
+      // Use a unique channel name for each room
+      const channelName = `room:${roomId}`;
+      channelRef.current = supabase.channel(channelName);
 
       peerConnectionRef.current.onicecandidate = (event) => {
         if (event.candidate) {
@@ -34,7 +44,7 @@ const WebRTCConnection = ({ roomId, isHost, onTrackAdded, onConnectionEstablishe
       };
 
       channelRef.current
-        .on("broadcast", { event: "offer" }, async ({ payload }) => {
+        .on("broadcast", { event: "offer" }, async ({ payload }: any) => {
           if (!isHost && peerConnectionRef.current) {
             await peerConnectionRef.current.setRemoteDescription(payload);
             const answer = await peerConnectionRef.current.createAnswer();
@@ -46,13 +56,13 @@ const WebRTCConnection = ({ roomId, isHost, onTrackAdded, onConnectionEstablishe
             });
           }
         })
-        .on("broadcast", { event: "answer" }, async ({ payload }) => {
+        .on("broadcast", { event: "answer" }, async ({ payload }: any) => {
           if (isHost && peerConnectionRef.current) {
             await peerConnectionRef.current.setRemoteDescription(payload);
             onConnectionEstablished();
           }
         })
-        .on("broadcast", { event: "ice-candidate" }, ({ payload }) => {
+        .on("broadcast", { event: "ice-candidate" }, ({ payload }: any) => {
           if (peerConnectionRef.current) {
             peerConnectionRef.current.addIceCandidate(payload);
           }
@@ -66,7 +76,9 @@ const WebRTCConnection = ({ roomId, isHost, onTrackAdded, onConnectionEstablishe
       if (peerConnectionRef.current) {
         peerConnectionRef.current.close();
       }
-      channelRef.current?.unsubscribe();
+      if (channelRef.current) {
+        channelRef.current.unsubscribe();
+      }
     };
   }, [roomId, isHost, onTrackAdded, onConnectionEstablished]);
 
