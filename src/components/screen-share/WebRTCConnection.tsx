@@ -21,13 +21,46 @@ const WebRTCConnection = ({
   const remoteStreamRef = useRef<MediaStream | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  const { sendOffer, sendAnswer, sendIceCandidate } = useWebRTCSignaling(
-    roomId,
-    peerConnectionRef.current,
-    isHost
-  );
+  const { sendOffer, sendAnswer, sendIceCandidate } = useWebRTCSignaling(roomId, isHost, {
+    onOffer: async (offer) => {
+      if (!isHost && peerConnectionRef.current) {
+        try {
+          console.log('[WebRTCConnection] Viewer received offer, setting remote description');
+          await peerConnectionRef.current.setRemoteDescription(offer);
+          
+          console.log('[WebRTCConnection] Creating answer');
+          const answer = await peerConnectionRef.current.createAnswer();
+          console.log('[WebRTCConnection] Setting local description');
+          await peerConnectionRef.current.setLocalDescription(answer);
+          console.log('[WebRTCConnection] Sending answer');
+          sendAnswer(answer);
+        } catch (error) {
+          console.error('[WebRTCConnection] Error handling offer:', error);
+        }
+      }
+    },
+    onAnswer: async (answer) => {
+      if (isHost && peerConnectionRef.current) {
+        try {
+          console.log('[WebRTCConnection] Host received answer, setting remote description');
+          await peerConnectionRef.current.setRemoteDescription(answer);
+        } catch (error) {
+          console.error('[WebRTCConnection] Error handling answer:', error);
+        }
+      }
+    },
+    onIceCandidate: async (candidate) => {
+      if (peerConnectionRef.current?.remoteDescription) {
+        try {
+          console.log('[WebRTCConnection] Adding ICE candidate');
+          await peerConnectionRef.current.addIceCandidate(candidate);
+        } catch (error) {
+          console.error('[WebRTCConnection] Error adding ICE candidate:', error);
+        }
+      }
+    }
+  });
 
-  // Update stream reference when stream prop changes
   useEffect(() => {
     if (stream !== streamRef.current) {
       streamRef.current = stream || null;
@@ -43,7 +76,6 @@ const WebRTCConnection = ({
     }
   }, [stream, isHost]);
 
-  // Initialize WebRTC connection
   useEffect(() => {
     console.log('[WebRTCConnection] Initializing as:', isHost ? 'host' : 'viewer');
     
@@ -56,26 +88,11 @@ const WebRTCConnection = ({
         });
         onTrackAdded(stream);
       },
-      () => {
-        console.log('[WebRTCConnection] Connection established');
-        onConnectionEstablished();
-      }
+      onConnectionEstablished
     );
 
     peerConnectionRef.current = peerConnection;
     remoteStreamRef.current = remoteStream;
-
-    peerConnection.oniceconnectionstatechange = () => {
-      console.log('[WebRTCConnection] ICE connection state:', peerConnection.iceConnectionState);
-    };
-
-    peerConnection.onconnectionstatechange = () => {
-      console.log('[WebRTCConnection] Connection state:', peerConnection.connectionState);
-    };
-
-    peerConnection.onsignalingstatechange = () => {
-      console.log('[WebRTCConnection] Signaling state:', peerConnection.signalingState);
-    };
 
     peerConnection.onicecandidate = (event) => {
       if (event.candidate) {
@@ -88,7 +105,6 @@ const WebRTCConnection = ({
       }
     };
 
-    // Add initial stream for host and create offer
     if (isHost && streamRef.current) {
       console.log('[WebRTCConnection] Host adding initial stream tracks');
       addTracksToConnection(peerConnection, streamRef.current);

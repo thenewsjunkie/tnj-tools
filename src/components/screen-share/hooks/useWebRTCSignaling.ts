@@ -1,85 +1,22 @@
-import { useCallback, useRef } from 'react';
+import { useCallback } from 'react';
 import { useWebRTCChannel } from './useWebRTCChannel';
+
+interface SignalingCallbacks {
+  onOffer: (offer: RTCSessionDescription) => void;
+  onAnswer: (answer: RTCSessionDescription) => void;
+  onIceCandidate: (candidate: RTCIceCandidate) => void;
+}
 
 export const useWebRTCSignaling = (
   roomId: string,
-  peerConnection: RTCPeerConnection | null,
-  isHost: boolean
+  isHost: boolean,
+  callbacks: SignalingCallbacks
 ) => {
-  const hasRemoteDescRef = useRef<boolean>(false);
-  const pendingCandidatesRef = useRef<RTCIceCandidate[]>([]);
-
-  const handleIceCandidate = useCallback(async (candidate: RTCIceCandidate) => {
-    if (!peerConnection) {
-      console.log('[useWebRTCSignaling] No peer connection available');
-      return;
-    }
-
-    if (!hasRemoteDescRef.current) {
-      console.log('[useWebRTCSignaling] Queueing ICE candidate:', candidate);
-      pendingCandidatesRef.current.push(candidate);
-      return;
-    }
-
-    try {
-      console.log('[useWebRTCSignaling] Adding ICE candidate');
-      await peerConnection.addIceCandidate(candidate);
-      console.log('[useWebRTCSignaling] ICE candidate added successfully');
-    } catch (error) {
-      console.error('[useWebRTCSignaling] Error adding ICE candidate:', error);
-    }
-  }, [peerConnection]);
-
   const { sendOffer, sendAnswer, sendIceCandidate } = useWebRTCChannel(
     roomId,
-    async (offer) => {
-      if (!isHost && peerConnection) {
-        try {
-          console.log('[useWebRTCSignaling] Viewer received offer, setting remote description');
-          await peerConnection.setRemoteDescription(offer);
-          hasRemoteDescRef.current = true;
-          
-          console.log('[useWebRTCSignaling] Creating answer');
-          const answer = await peerConnection.createAnswer();
-          console.log('[useWebRTCSignaling] Setting local description');
-          await peerConnection.setLocalDescription(answer);
-          console.log('[useWebRTCSignaling] Sending answer');
-          sendAnswer(answer);
-
-          // Process any pending ICE candidates
-          if (pendingCandidatesRef.current.length > 0) {
-            console.log('[useWebRTCSignaling] Processing pending candidates:', pendingCandidatesRef.current.length);
-            for (const candidate of pendingCandidatesRef.current) {
-              await handleIceCandidate(candidate);
-            }
-            pendingCandidatesRef.current = [];
-          }
-        } catch (error) {
-          console.error('[useWebRTCSignaling] Error handling offer:', error);
-        }
-      }
-    },
-    async (answer) => {
-      if (isHost && peerConnection) {
-        try {
-          console.log('[useWebRTCSignaling] Host received answer, setting remote description');
-          await peerConnection.setRemoteDescription(answer);
-          hasRemoteDescRef.current = true;
-
-          // Process any pending ICE candidates
-          if (pendingCandidatesRef.current.length > 0) {
-            console.log('[useWebRTCSignaling] Processing pending candidates:', pendingCandidatesRef.current.length);
-            for (const candidate of pendingCandidatesRef.current) {
-              await handleIceCandidate(candidate);
-            }
-            pendingCandidatesRef.current = [];
-          }
-        } catch (error) {
-          console.error('[useWebRTCSignaling] Error handling answer:', error);
-        }
-      }
-    },
-    handleIceCandidate
+    callbacks.onOffer,
+    callbacks.onAnswer,
+    callbacks.onIceCandidate
   );
 
   return { sendOffer, sendAnswer, sendIceCandidate };
