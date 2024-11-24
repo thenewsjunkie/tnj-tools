@@ -24,7 +24,12 @@ const ShowNotes = () => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data;
+      
+      // Ensure the type is correctly converted from the database
+      return data.map(note => ({
+        ...note,
+        type: note.type as NoteType
+      }));
     },
   });
 
