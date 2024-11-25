@@ -1,12 +1,14 @@
 import { useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 import LinkItem from "./tnj-links/LinkItem";
 import AddLinkDialog from "./tnj-links/AddLinkDialog";
 
 const TNJLinks = () => {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: links = [], isLoading } = useQuery({
     queryKey: ['tnj-links'],
@@ -18,6 +20,31 @@ const TNJLinks = () => {
       
       if (error) throw error;
       return data;
+    },
+  });
+
+  const deleteLinkMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('tnj_links')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tnj-links'] });
+      toast({
+        title: "Success",
+        description: "Link deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete link",
+        variant: "destructive",
+      });
     },
   });
 
@@ -90,6 +117,7 @@ const TNJLinks = () => {
               title={link.title}
               url={link.url}
               status={link.status}
+              onDelete={() => deleteLinkMutation.mutate(link.id)}
             />
           ))}
         </div>

@@ -1,14 +1,16 @@
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ExternalLink, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface LinkItemProps {
   title: string;
   url: string;
   status: string;
+  onDelete: () => void;
 }
 
-const LinkItem = ({ title, url, status }: LinkItemProps) => {
+const LinkItem = ({ title, url, status, onDelete }: LinkItemProps) => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'up':
@@ -33,12 +35,22 @@ const LinkItem = ({ title, url, status }: LinkItemProps) => {
           {title}
         </a>
       </div>
-      <Badge 
-        variant="secondary"
-        className={cn("capitalize", getStatusColor(status))}
-      >
-        {status}
-      </Badge>
+      <div className="flex items-center gap-2">
+        <Badge 
+          variant="secondary"
+          className={cn("capitalize", getStatusColor(status))}
+        >
+          {status}
+        </Badge>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onDelete}
+          className="text-white/50 hover:text-red-500 hover:bg-red-500/10"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   );
 };

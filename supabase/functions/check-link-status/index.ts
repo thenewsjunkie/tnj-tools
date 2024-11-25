@@ -20,8 +20,36 @@ serve(async (req) => {
     const timeout = setTimeout(() => controller.abort(), 10000)
     
     try {
+      // First try HEAD request
+      try {
+        const headResponse = await fetch(fullUrl, {
+          method: 'HEAD',
+          signal: controller.signal,
+          headers: {
+            'User-Agent': 'TNJ Link Checker',
+          }
+        })
+        
+        if (headResponse.ok) {
+          clearTimeout(timeout)
+          return new Response(
+            JSON.stringify({
+              isUp: true,
+              status: headResponse.status,
+            }),
+            {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 200,
+            },
+          )
+        }
+      } catch (headError) {
+        console.log('HEAD request failed, trying GET:', headError)
+      }
+
+      // If HEAD fails, try GET request
       const response = await fetch(fullUrl, {
-        method: 'HEAD',
+        method: 'GET',
         signal: controller.signal,
         headers: {
           'User-Agent': 'TNJ Link Checker',
@@ -41,6 +69,8 @@ serve(async (req) => {
         },
       )
     } catch (error) {
+      clearTimeout(timeout)
+      console.error('Link check failed:', error)
       return new Response(
         JSON.stringify({
           isUp: false,
