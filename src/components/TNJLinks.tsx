@@ -26,44 +26,21 @@ const TNJLinks = () => {
     const checkLinksStatus = async () => {
       for (const link of links) {
         try {
-          // Create an image element to test the connection
-          const img = new Image();
-          let isResolved = false;
-          
-          const checkStatus = new Promise((resolve, reject) => {
-            const timeout = setTimeout(() => {
-              if (!isResolved) {
-                img.src = '';
-                reject(new Error('Timeout'));
-              }
-            }, 10000);
-
-            img.onload = () => {
-              isResolved = true;
-              clearTimeout(timeout);
-              resolve('up');
-            };
-
-            img.onerror = () => {
-              isResolved = true;
-              clearTimeout(timeout);
-              reject(new Error('Failed to load'));
-            };
-
-            // Try to load the favicon with a cache-busting parameter
-            const faviconUrl = new URL('/favicon.ico', link.url);
-            faviconUrl.searchParams.set('_', Date.now().toString());
-            img.src = faviconUrl.toString();
+          // Use Supabase Edge Function to check status
+          const { data, error } = await supabase.functions.invoke('check-link-status', {
+            body: { url: link.url }
           });
 
-          await checkStatus;
+          if (error) throw error;
+
+          const newStatus = data.isUp ? 'up' : 'down';
           
-          // If we get here, the site is up
-          if (link.status !== 'up') {
+          // Only update if status has changed
+          if (link.status !== newStatus) {
             await supabase
               .from('tnj_links')
               .update({ 
-                status: 'up',
+                status: newStatus,
                 last_checked: new Date().toISOString()
               })
               .eq('id', link.id);
