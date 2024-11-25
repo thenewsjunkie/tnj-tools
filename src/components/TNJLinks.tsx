@@ -29,19 +29,37 @@ const TNJLinks = () => {
           // Ensure we're using HTTPS
           const secureUrl = link.url.replace('http://', 'https://');
           
-          // Use AbortController to timeout the request after 10 seconds
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 10000);
+          // Create an image element to test the connection
+          const img = new Image();
+          let isResolved = false;
+          
+          const checkStatus = new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+              if (!isResolved) {
+                img.src = '';
+                reject(new Error('Timeout'));
+              }
+            }, 10000);
 
-          const response = await fetch(secureUrl, { 
-            method: 'HEAD',
-            mode: 'no-cors',
-            signal: controller.signal
+            img.onload = () => {
+              isResolved = true;
+              clearTimeout(timeout);
+              resolve('up');
+            };
+
+            img.onerror = () => {
+              isResolved = true;
+              clearTimeout(timeout);
+              reject(new Error('Failed to load'));
+            };
+
+            // Append a cache-busting parameter
+            img.src = `${secureUrl}/favicon.ico?_=${Date.now()}`;
           });
+
+          await checkStatus;
           
-          clearTimeout(timeoutId);
-          
-          // Since we're using no-cors, if we get here without throwing, the site is up
+          // If we get here, the site is up
           if (link.status !== 'up') {
             await supabase
               .from('tnj_links')
