@@ -21,7 +21,7 @@ const TNJLinks = () => {
     },
   });
 
-  // Check links status every 5 minutes using HEAD request with no-cors mode
+  // Check links status every 5 minutes
   useEffect(() => {
     const checkLinksStatus = async () => {
       for (const link of links) {
@@ -29,20 +29,24 @@ const TNJLinks = () => {
           // Ensure we're using HTTPS
           const secureUrl = link.url.replace('http://', 'https://');
           
+          // Use AbortController to timeout the request after 10 seconds
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
+
           const response = await fetch(secureUrl, { 
             method: 'HEAD',
-            mode: 'no-cors'  // Add this to handle CORS issues
+            mode: 'no-cors',
+            signal: controller.signal
           });
           
-          // Since we're using no-cors, we can't access response.ok
-          // Instead, if the fetch succeeds, we consider it 'up'
-          const newStatus = 'up';
+          clearTimeout(timeoutId);
           
-          if (newStatus !== link.status) {
+          // Since we're using no-cors, if we get here without throwing, the site is up
+          if (link.status !== 'up') {
             await supabase
               .from('tnj_links')
               .update({ 
-                status: newStatus,
+                status: 'up',
                 last_checked: new Date().toISOString()
               })
               .eq('id', link.id);
@@ -50,6 +54,7 @@ const TNJLinks = () => {
             queryClient.invalidateQueries({ queryKey: ['tnj-links'] });
           }
         } catch (error) {
+          // Only update if status isn't already down
           if (link.status !== 'down') {
             await supabase
               .from('tnj_links')
