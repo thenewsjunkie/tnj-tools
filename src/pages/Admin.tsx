@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import Stopwatch from "@/components/Stopwatch";
-import SocialStats from "@/components/SocialStats";
+import TNJLinks from "@/components/TNJLinks";
 import ShowNotes from "@/components/ShowNotes";
 import Reminders from "@/components/Reminders";
 import InterviewRequestsModule from "@/components/InterviewRequestsModule";
@@ -52,7 +52,7 @@ const Admin = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 max-w-7xl mx-auto">
         <Reminders />
         <Stopwatch />
-        <SocialStats />
+        <TNJLinks />
         <ShowNotes />
         <div className="md:col-span-2">
           <InterviewRequestsModule />

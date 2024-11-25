@@ -132,33 +132,36 @@ export type Database = {
         }
         Relationships: []
       }
-      social_media_stats: {
+      tnj_links: {
         Row: {
           created_at: string | null
           display_order: number
-          followers: string
-          handle: string
           id: string
-          platform_name: string
+          last_checked: string | null
+          status: string
+          title: string
           updated_at: string | null
+          url: string
         }
         Insert: {
           created_at?: string | null
           display_order: number
-          followers: string
-          handle: string
           id?: string
-          platform_name: string
+          last_checked?: string | null
+          status?: string
+          title: string
           updated_at?: string | null
+          url: string
         }
         Update: {
           created_at?: string | null
           display_order?: number
-          followers?: string
-          handle?: string
           id?: string
-          platform_name?: string
+          last_checked?: string | null
+          status?: string
+          title?: string
           updated_at?: string | null
+          url?: string
         }
         Relationships: []
       }
