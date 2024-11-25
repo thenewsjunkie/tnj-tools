@@ -21,13 +21,19 @@ const TNJLinks = () => {
     },
   });
 
-  // Check links status every 5 minutes
+  // Check links status every 5 minutes using HEAD request with no-cors mode
   useEffect(() => {
     const checkLinksStatus = async () => {
       for (const link of links) {
         try {
-          const response = await fetch(link.url, { method: 'HEAD' });
-          const newStatus = response.ok ? 'up' : 'down';
+          const response = await fetch(link.url, { 
+            method: 'HEAD',
+            mode: 'no-cors'  // Add this to handle CORS issues
+          });
+          
+          // Since we're using no-cors, we can't access response.ok
+          // Instead, if the fetch succeeds, we consider it 'up'
+          const newStatus = 'up';
           
           if (newStatus !== link.status) {
             await supabase
