@@ -26,25 +26,39 @@ const TNJLinks = () => {
     const checkLinksStatus = async () => {
       for (const link of links) {
         try {
-          // Ensure we're using HTTPS
-          const secureUrl = link.url.replace('http://', 'https://');
+          // Create an image element to test the connection
+          const img = new Image();
+          let isResolved = false;
           
-          // Use fetch with a timeout
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 10000);
+          const checkStatus = new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+              if (!isResolved) {
+                img.src = '';
+                reject(new Error('Timeout'));
+              }
+            }, 10000);
 
-          const response = await fetch(secureUrl, {
-            method: 'HEAD',
-            signal: controller.signal,
-            headers: {
-              'Cache-Control': 'no-cache',
-              'Pragma': 'no-cache'
-            }
+            img.onload = () => {
+              isResolved = true;
+              clearTimeout(timeout);
+              resolve('up');
+            };
+
+            img.onerror = () => {
+              isResolved = true;
+              clearTimeout(timeout);
+              reject(new Error('Failed to load'));
+            };
+
+            // Try to load the favicon with a cache-busting parameter
+            const faviconUrl = new URL('/favicon.ico', link.url);
+            faviconUrl.searchParams.set('_', Date.now().toString());
+            img.src = faviconUrl.toString();
           });
 
-          clearTimeout(timeoutId);
-
-          // If we get here without throwing, the site is up
+          await checkStatus;
+          
+          // If we get here, the site is up
           if (link.status !== 'up') {
             await supabase
               .from('tnj_links')
