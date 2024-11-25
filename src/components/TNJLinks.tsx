@@ -26,7 +26,10 @@ const TNJLinks = () => {
     const checkLinksStatus = async () => {
       for (const link of links) {
         try {
-          const response = await fetch(link.url, { 
+          // Ensure we're using HTTPS
+          const secureUrl = link.url.replace('http://', 'https://');
+          
+          const response = await fetch(secureUrl, { 
             method: 'HEAD',
             mode: 'no-cors'  // Add this to handle CORS issues
           });

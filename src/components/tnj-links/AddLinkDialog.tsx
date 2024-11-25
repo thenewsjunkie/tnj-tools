@@ -22,8 +22,13 @@ const AddLinkDialog = ({ onLinkAdded, lastOrder }: AddLinkDialogProps) => {
     
     try {
       let processedUrl = url;
-      if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        processedUrl = `https://${url}`;
+      // Convert HTTP to HTTPS
+      if (processedUrl.startsWith('http://')) {
+        processedUrl = processedUrl.replace('http://', 'https://');
+      }
+      // Add HTTPS if no protocol is specified
+      if (!processedUrl.startsWith('https://')) {
+        processedUrl = `https://${processedUrl}`;
       }
 
       const { error } = await supabase
