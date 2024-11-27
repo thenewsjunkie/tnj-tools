@@ -9,6 +9,33 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      audio_conversations: {
+        Row: {
+          answer_audio_url: string | null
+          answer_text: string | null
+          created_at: string | null
+          id: string
+          question_audio_url: string | null
+          question_text: string | null
+        }
+        Insert: {
+          answer_audio_url?: string | null
+          answer_text?: string | null
+          created_at?: string | null
+          id?: string
+          question_audio_url?: string | null
+          question_text?: string | null
+        }
+        Update: {
+          answer_audio_url?: string | null
+          answer_text?: string | null
+          created_at?: string | null
+          id?: string
+          question_audio_url?: string | null
+          question_text?: string | null
+        }
+        Relationships: []
+      }
       interview_requests: {
         Row: {
           conversation_history: Json | null
