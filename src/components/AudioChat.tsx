@@ -1,26 +1,57 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Button } from './ui/button'
-import { Mic, Square, Volume2, PauseCircle, PlayCircle } from 'lucide-react'
+import { Mic, Square, Volume2, PauseCircle, PlayCircle, Speakers } from 'lucide-react'
 import { useToast } from './ui/use-toast'
 import { supabase } from '@/integrations/supabase/client'
 import { Slider } from './ui/slider'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
-const AudioChat = () => {
+const TNJAi = () => {
   const [isRecording, setIsRecording] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [volume, setVolume] = useState([1])
+  const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([])
+  const [selectedDevice, setSelectedDevice] = useState<string>('')
+  const [currentConversation, setCurrentConversation] = useState<{
+    question_text?: string;
+    answer_text?: string;
+  } | null>(null)
   const mediaRecorder = useRef<MediaRecorder | null>(null)
   const audioChunks = useRef<Blob[]>([])
   const audioPlayer = useRef<HTMLAudioElement | null>(null)
   const { toast } = useToast()
+
+  useEffect(() => {
+    const getAudioDevices = async () => {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices()
+        const outputDevices = devices.filter(device => device.kind === 'audiooutput')
+        setAudioDevices(outputDevices)
+        if (outputDevices.length > 0) {
+          setSelectedDevice(outputDevices[0].deviceId)
+        }
+      } catch (error) {
+        console.error('Error getting audio devices:', error)
+      }
+    }
+
+    getAudioDevices()
+  }, [])
 
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       mediaRecorder.current = new MediaRecorder(stream, { mimeType: 'audio/webm' })
       audioChunks.current = []
+      setCurrentConversation(null)
 
       mediaRecorder.current.ondataavailable = (event) => {
         audioChunks.current.push(event.data)
@@ -46,6 +77,8 @@ const AudioChat = () => {
               throw new Error('Invalid response from server')
             }
 
+            setCurrentConversation(data.conversation)
+
             const audioArray = new Uint8Array(data.audioResponse)
             const audioBlob = new Blob([audioArray], { type: 'audio/mpeg' })
             const audioUrl = URL.createObjectURL(audioBlob)
@@ -53,15 +86,14 @@ const AudioChat = () => {
             if (audioPlayer.current) {
               audioPlayer.current.src = audioUrl
               audioPlayer.current.volume = volume[0]
+              if (selectedDevice) {
+                // @ts-ignore - setSinkId is not in the types yet
+                await audioPlayer.current.setSinkId(selectedDevice)
+              }
               audioPlayer.current.play()
               setIsPlaying(true)
               setIsPaused(false)
             }
-
-            toast({
-              title: 'Conversation',
-              description: `Q: ${data.conversation.question_text}\nA: ${data.conversation.answer_text}`,
-            })
           } catch (error) {
             console.error('Error processing audio:', error)
             toast({
@@ -109,6 +141,23 @@ const AudioChat = () => {
     }
   }
 
+  const handleDeviceChange = async (deviceId: string) => {
+    setSelectedDevice(deviceId)
+    if (audioPlayer.current) {
+      try {
+        // @ts-ignore - setSinkId is not in the types yet
+        await audioPlayer.current.setSinkId(deviceId)
+      } catch (error) {
+        console.error('Error switching audio output:', error)
+        toast({
+          title: 'Error',
+          description: 'Failed to switch audio output device.',
+          variant: 'destructive',
+        })
+      }
+    }
+  }
+
   const togglePlayPause = () => {
     if (audioPlayer.current) {
       if (isPaused) {
@@ -122,8 +171,8 @@ const AudioChat = () => {
   }
 
   return (
-    <div className="p-4 bg-card rounded-lg shadow-lg">
-      <h2 className="text-xl font-semibold mb-4">Audio Chat</h2>
+    <div className="p-4 bg-card rounded-lg shadow-lg w-full">
+      <h2 className="text-xl font-semibold mb-4">TNJ AI</h2>
       <div className="flex flex-col gap-4">
         <div className="flex gap-4 items-center">
           <Button
@@ -160,6 +209,32 @@ const AudioChat = () => {
                 className="w-32"
               />
             </div>
+            <div className="flex items-center gap-2">
+              <Speakers className="h-4 w-4" />
+              <Select value={selectedDevice} onValueChange={handleDeviceChange}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Select output device" />
+                </SelectTrigger>
+                <SelectContent>
+                  {audioDevices.map((device) => (
+                    <SelectItem key={device.deviceId} value={device.deviceId}>
+                      {device.label || `Output ${device.deviceId.slice(0, 4)}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
+
+        {currentConversation && (
+          <div className="mt-4 p-4 bg-secondary/10 rounded-lg">
+            <div className="mb-2">
+              <span className="font-semibold">Q:</span> {currentConversation.question_text}
+            </div>
+            <div>
+              <span className="font-semibold">A:</span> {currentConversation.answer_text}
+            </div>
           </div>
         )}
         
@@ -173,4 +248,4 @@ const AudioChat = () => {
   )
 }
 
-export default AudioChat
+export default TNJAi
