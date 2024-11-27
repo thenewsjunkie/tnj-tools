@@ -4,9 +4,10 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Newspaper } from "lucide-react";
 
 const NewsRoundup = () => {
-  const { data: newsRoundup, isLoading } = useQuery({
+  const { data: newsRoundup, isLoading, error } = useQuery({
     queryKey: ['news-roundup'],
     queryFn: async () => {
+      console.log('Fetching news roundup...');
       const { data, error } = await supabase
         .from('news_roundups')
         .select('*')
@@ -14,7 +15,12 @@ const NewsRoundup = () => {
         .limit(1)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
+      console.log('Fetched news:', data);
       return data;
     }
   });
@@ -32,12 +38,16 @@ const NewsRoundup = () => {
       <CardContent>
         {isLoading ? (
           <div className="text-white/60 text-center py-4">Loading news...</div>
+        ) : error ? (
+          <div className="text-red-400 text-center py-4">
+            Error loading news: {error.message}
+          </div>
         ) : newsRoundup ? (
           <div className="text-white space-y-4">
             <pre className="whitespace-pre-wrap font-sans">{newsRoundup.content}</pre>
           </div>
         ) : (
-          <div className="text-white/60 text-center py-4">No news available</div>
+          <div className="text-white/60 text-center py-4">No news available. Please wait for the next update.</div>
         )}
       </CardContent>
     </Card>
