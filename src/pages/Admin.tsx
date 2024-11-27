@@ -5,6 +5,7 @@ import ShowNotes from "@/components/ShowNotes";
 import Reminders from "@/components/Reminders";
 import InterviewRequestsModule from "@/components/InterviewRequestsModule";
 import ScreenShareModule from "@/components/ScreenShareModule";
+import NewsRoundup from "@/components/NewsRoundup";
 import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,6 +51,9 @@ const Admin = () => {
       </nav>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 max-w-7xl mx-auto">
+        <div className="md:col-span-2">
+          <NewsRoundup />
+        </div>
         <Reminders />
         <Stopwatch />
         <TNJLinks />
