@@ -9,27 +9,40 @@ const corsHeaders = {
 
 async function getTrendingTopics() {
   try {
-    // Fetch Google Trends
-    const googleTrendsResponse = await fetch('https://trends.google.com/trends/api/dailytrends?hl=en-US&tz=-480&geo=US');
-    const googleTrendsText = await googleTrendsResponse.text();
-    // Remove the safety prefix from Google's response
-    const googleTrendsData = JSON.parse(googleTrendsText.substring(5));
-    const googleTrends = googleTrendsData.default.trendingSearchesDays[0].trendingSearches
-      .slice(0, 5)
-      .map((trend: any) => trend.title.query);
+    const response = await fetch('https://trends.google.com/trends/api/dailytrends?hl=en-US&tz=-480&geo=US', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
 
-    return {
-      googleTrends,
-    };
+    if (!response.ok) {
+      console.error('Google Trends response not OK:', response.status, response.statusText);
+      return { googleTrends: [] };
+    }
+
+    const text = await response.text();
+    // Remove the safety prefix from Google's response
+    const data = JSON.parse(text.substring(5));
+    
+    if (!data?.default?.trendingSearchesDays?.[0]?.trendingSearches) {
+      console.error('Unexpected Google Trends data structure:', data);
+      return { googleTrends: [] };
+    }
+
+    const trends = data.default.trendingSearchesDays[0].trendingSearches
+      .slice(0, 5)
+      .map((trend: any) => trend.title.query)
+      .filter(Boolean);
+
+    return { googleTrends: trends };
   } catch (error) {
     console.error('Error fetching trends:', error);
-    return {
-      googleTrends: [],
-    };
+    return { googleTrends: [] };
   }
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -39,7 +52,6 @@ serve(async (req) => {
     
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAIApiKey) {
-      console.error('OPENAI_API_KEY is not set');
       throw new Error('OPENAI_API_KEY is not set');
     }
 
@@ -54,11 +66,15 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Rate limiting check
-    const { data: recentNews } = await supabase
+    const { data: recentNews, error: dbError } = await supabase
       .from('news_roundups')
       .select('created_at')
       .order('created_at', { ascending: false })
       .limit(1);
+
+    if (dbError) {
+      throw new Error(`Database error: ${dbError.message}`);
+    }
 
     if (recentNews?.[0]) {
       const lastRequestTime = new Date(recentNews[0].created_at);
@@ -79,9 +95,12 @@ serve(async (req) => {
     }
 
     // Fetch trending topics
+    console.log('Fetching trending topics...');
     const trends = await getTrendingTopics();
+    console.log('Trends fetched:', trends);
 
     // Get news summary from OpenAI
+    console.log('Requesting OpenAI summary...');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -107,18 +126,7 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`OpenAI API error: ${response.status} ${response.statusText}`, errorText);
-      
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: 'OpenAI rate limit reached. Please try again in a few minutes.' }),
-          { 
-            status: 429,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        );
-      }
-      
+      console.error('OpenAI API error:', response.status, response.statusText, errorText);
       throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
     }
 
@@ -129,7 +137,7 @@ serve(async (req) => {
     const formattedContent = `${newsContent}\n\n🔍 Trending on Google:\n${trends.googleTrends.map(trend => `• ${trend}`).join('\n')}`;
 
     // Store in database
-    const { error: dbError } = await supabase
+    const { error: insertError } = await supabase
       .from('news_roundups')
       .insert([
         {
@@ -141,17 +149,17 @@ serve(async (req) => {
         }
       ]);
 
-    if (dbError) {
-      console.error('Supabase error:', dbError);
-      throw new Error('Failed to store news in database');
+    if (insertError) {
+      throw new Error(`Failed to store news in database: ${insertError.message}`);
     }
 
+    console.log('News roundup successfully updated');
     return new Response(
       JSON.stringify({ success: true, message: 'News roundup updated' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error in fetch-news function:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
