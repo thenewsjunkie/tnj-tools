@@ -39,6 +39,30 @@ export type Database = {
         }
         Relationships: []
       }
+      news_roundups: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          sources: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          sources?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          sources?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       reminders: {
         Row: {
           created_at: string | null
