@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Button } from './ui/button'
-import { Mic, Square, Volume2, PauseCircle, PlayCircle, Speakers } from 'lucide-react'
+import { Mic, Square, Volume2, PauseCircle, PlayCircle, Speaker } from 'lucide-react'
 import { useToast } from './ui/use-toast'
 import { supabase } from '@/integrations/supabase/client'
 import { Slider } from './ui/slider'
@@ -210,7 +210,7 @@ const TNJAi = () => {
               />
             </div>
             <div className="flex items-center gap-2">
-              <Speakers className="h-4 w-4" />
+              <Speaker className="h-4 w-4" />
               <Select value={selectedDevice} onValueChange={handleDeviceChange}>
                 <SelectTrigger className="w-[200px]">
                   <SelectValue placeholder="Select output device" />
