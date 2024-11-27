@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import "https://deno.land/x/xhr@0.1.0/mod.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
 const corsHeaders = {
@@ -19,18 +20,36 @@ serve(async (req) => {
     const { audioData, type } = await req.json()
 
     if (type === 'transcribe') {
-      // Transcribe audio to text using OpenAI Whisper
+      console.log('Starting audio transcription process')
+      
+      // Convert base64 to blob
+      const base64Data = audioData.split(',')[1]
+      const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0))
+      const audioBlob = new Blob([binaryData], { type: 'audio/webm' })
+
+      // Create form data for Whisper API
+      const formData = new FormData()
+      formData.append('file', audioBlob, 'audio.webm')
+      formData.append('model', 'whisper-1')
+
+      console.log('Sending audio to Whisper API')
       const transcriptionResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${openAIApiKey}`,
         },
-        body: audioData,
+        body: formData,
       })
 
+      if (!transcriptionResponse.ok) {
+        throw new Error(`Whisper API error: ${transcriptionResponse.statusText}`)
+      }
+
       const transcription = await transcriptionResponse.json()
+      console.log('Transcription received:', transcription.text)
       
       // Get GPT response
+      console.log('Requesting GPT response')
       const chatResponse = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -45,10 +64,16 @@ serve(async (req) => {
         }),
       })
 
+      if (!chatResponse.ok) {
+        throw new Error(`GPT API error: ${chatResponse.statusText}`)
+      }
+
       const chatResult = await chatResponse.json()
       const answer = chatResult.choices[0].message.content
+      console.log('GPT response received:', answer)
 
       // Convert answer to speech
+      console.log('Converting response to speech')
       const speechResponse = await fetch('https://api.openai.com/v1/audio/speech', {
         method: 'POST',
         headers: {
@@ -62,7 +87,11 @@ serve(async (req) => {
         }),
       })
 
-      const audioBlob = await speechResponse.blob()
+      if (!speechResponse.ok) {
+        throw new Error(`Speech API error: ${speechResponse.statusText}`)
+      }
+
+      const audioBuffer = await speechResponse.arrayBuffer()
       
       // Store in Supabase
       const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
@@ -78,11 +107,12 @@ serve(async (req) => {
 
       if (error) throw error
 
+      console.log('Process completed successfully')
       return new Response(
         JSON.stringify({
           success: true,
           conversation: data,
-          audioResponse: await audioBlob.arrayBuffer(),
+          audioResponse: Array.from(new Uint8Array(audioBuffer)),
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )

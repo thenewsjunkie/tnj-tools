@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client'
 const AudioChat = () => {
   const [isRecording, setIsRecording] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
   const mediaRecorder = useRef<MediaRecorder | null>(null)
   const audioChunks = useRef<Blob[]>([])
   const audioPlayer = useRef<HTMLAudioElement | null>(null)
@@ -15,7 +16,7 @@ const AudioChat = () => {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      mediaRecorder.current = new MediaRecorder(stream)
+      mediaRecorder.current = new MediaRecorder(stream, { mimeType: 'audio/webm' })
       audioChunks.current = []
 
       mediaRecorder.current.ondataavailable = (event) => {
@@ -23,12 +24,13 @@ const AudioChat = () => {
       }
 
       mediaRecorder.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunks.current, { type: 'audio/wav' })
+        setIsProcessing(true)
+        const audioBlob = new Blob(audioChunks.current, { type: 'audio/webm' })
         const reader = new FileReader()
         
         reader.onload = async () => {
           try {
-            const { data: { audioResponse, conversation }, error } = await supabase.functions.invoke('process-audio', {
+            const { data, error } = await supabase.functions.invoke('process-audio', {
               body: {
                 type: 'transcribe',
                 audioData: reader.result,
@@ -37,8 +39,15 @@ const AudioChat = () => {
 
             if (error) throw error
 
-            // Play the response
-            const audioUrl = URL.createObjectURL(new Blob([audioResponse], { type: 'audio/mp3' }))
+            if (!data.audioResponse || !data.conversation) {
+              throw new Error('Invalid response from server')
+            }
+
+            // Convert the array back to ArrayBuffer
+            const audioArray = new Uint8Array(data.audioResponse)
+            const audioBlob = new Blob([audioArray], { type: 'audio/mpeg' })
+            const audioUrl = URL.createObjectURL(audioBlob)
+
             if (audioPlayer.current) {
               audioPlayer.current.src = audioUrl
               audioPlayer.current.play()
@@ -47,7 +56,7 @@ const AudioChat = () => {
 
             toast({
               title: 'Conversation',
-              description: `Q: ${conversation.question_text}\nA: ${conversation.answer_text}`,
+              description: `Q: ${data.conversation.question_text}\nA: ${data.conversation.answer_text}`,
             })
           } catch (error) {
             console.error('Error processing audio:', error)
@@ -56,6 +65,8 @@ const AudioChat = () => {
               description: 'Failed to process audio. Please try again.',
               variant: 'destructive',
             })
+          } finally {
+            setIsProcessing(false)
           }
         }
 
@@ -93,11 +104,13 @@ const AudioChat = () => {
         <Button
           variant={isRecording ? "destructive" : "default"}
           onClick={isRecording ? stopRecording : startRecording}
+          disabled={isProcessing}
         >
           {isRecording ? <Square className="h-4 w-4 mr-2" /> : <Mic className="h-4 w-4 mr-2" />}
           {isRecording ? 'Stop Recording' : 'Start Recording'}
         </Button>
         <div className="flex items-center gap-2">
+          {isProcessing && <span className="text-sm text-muted-foreground">Processing...</span>}
           <Volume2 className={`h-4 w-4 ${isPlaying ? 'text-primary' : 'text-muted-foreground'}`} />
           <audio
             ref={audioPlayer}
