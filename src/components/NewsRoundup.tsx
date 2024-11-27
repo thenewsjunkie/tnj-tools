@@ -12,8 +12,7 @@ const NewsRoundup = () => {
         .from('news_roundups')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
+        .limit(1);
 
       if (error) {
         console.error('Supabase error:', error);
@@ -21,7 +20,8 @@ const NewsRoundup = () => {
       }
       
       console.log('Fetched news:', data);
-      return data;
+      // Return the first item if exists, otherwise null
+      return data?.[0] || null;
     }
   });
 
