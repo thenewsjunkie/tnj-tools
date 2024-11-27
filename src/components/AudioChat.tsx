@@ -1,16 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
 import { Button } from './ui/button'
-import { Mic, Square, Volume2, PauseCircle, PlayCircle, Speaker } from 'lucide-react'
+import { Mic, Square } from 'lucide-react'
 import { useToast } from './ui/use-toast'
 import { supabase } from '@/integrations/supabase/client'
-import { Slider } from './ui/slider'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { AudioControls } from './audio/AudioControls'
+import { DeviceSelector } from './audio/DeviceSelector'
+import { ConversationDisplay } from './audio/ConversationDisplay'
 
 const TNJAi = () => {
   const [isRecording, setIsRecording] = useState(false)
@@ -186,57 +181,22 @@ const TNJAi = () => {
           {isProcessing && <span className="text-sm text-muted-foreground">Processing...</span>}
         </div>
         
-        {(isPlaying || isPaused) && (
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={togglePlayPause}
-              className="h-8 w-8 p-0"
-            >
-              {isPaused ? 
-                <PlayCircle className="h-6 w-6" /> : 
-                <PauseCircle className="h-6 w-6" />
-              }
-            </Button>
-            <div className="flex items-center gap-2 flex-1">
-              <Volume2 className="h-4 w-4" />
-              <Slider
-                value={volume}
-                onValueChange={handleVolumeChange}
-                max={1}
-                step={0.1}
-                className="w-32"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <Speaker className="h-4 w-4" />
-              <Select value={selectedDevice} onValueChange={handleDeviceChange}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Select output device" />
-                </SelectTrigger>
-                <SelectContent>
-                  {audioDevices.map((device) => (
-                    <SelectItem key={device.deviceId} value={device.deviceId}>
-                      {device.label || `Output ${device.deviceId.slice(0, 4)}`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        )}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <AudioControls
+            isPaused={isPaused}
+            isPlaying={isPlaying}
+            volume={volume}
+            onPlayPause={togglePlayPause}
+            onVolumeChange={handleVolumeChange}
+          />
+          <DeviceSelector
+            devices={audioDevices}
+            selectedDevice={selectedDevice}
+            onDeviceChange={handleDeviceChange}
+          />
+        </div>
 
-        {currentConversation && (
-          <div className="mt-4 p-4 bg-secondary/10 rounded-lg">
-            <div className="mb-2">
-              <span className="font-semibold">Q:</span> {currentConversation.question_text}
-            </div>
-            <div>
-              <span className="font-semibold">A:</span> {currentConversation.answer_text}
-            </div>
-          </div>
-        )}
+        <ConversationDisplay conversation={currentConversation} />
         
         <audio
           ref={audioPlayer}
