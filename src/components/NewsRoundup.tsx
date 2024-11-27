@@ -1,10 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Newspaper } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Newspaper, RefreshCw } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 const NewsRoundup = () => {
-  const { data: newsRoundup, isLoading, error } = useQuery({
+  const { toast } = useToast();
+  
+  const { data: newsRoundup, isLoading, error, refetch } = useQuery({
     queryKey: ['news-roundup'],
     queryFn: async () => {
       console.log('Fetching news roundup...');
@@ -20,8 +24,30 @@ const NewsRoundup = () => {
       }
       
       console.log('Fetched news:', data);
-      // Return the first item if exists, otherwise null
       return data?.[0] || null;
+    }
+  });
+
+  const fetchNewsMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke('fetch-news');
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      refetch();
+      toast({
+        title: "Success",
+        description: "News fetched successfully",
+      });
+    },
+    onError: (error) => {
+      console.error('Error fetching news:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch news: " + error.message,
+        variant: "destructive",
+      });
     }
   });
 
@@ -34,6 +60,15 @@ const NewsRoundup = () => {
             News Roundup
           </div>
         </CardTitle>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => fetchNewsMutation.mutate()}
+          disabled={fetchNewsMutation.isPending}
+          className="text-white hover:text-primary hover:bg-white/10"
+        >
+          <RefreshCw className={`h-4 w-4 ${fetchNewsMutation.isPending ? 'animate-spin' : ''}`} />
+        </Button>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -47,7 +82,7 @@ const NewsRoundup = () => {
             <pre className="whitespace-pre-wrap font-sans">{newsRoundup.content}</pre>
           </div>
         ) : (
-          <div className="text-white/60 text-center py-4">No news available. Please wait for the next update.</div>
+          <div className="text-white/60 text-center py-4">No news available. Click refresh to fetch the latest news.</div>
         )}
       </CardContent>
     </Card>
