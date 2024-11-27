@@ -7,8 +7,29 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+async function getTrendingTopics() {
+  try {
+    // Fetch Google Trends
+    const googleTrendsResponse = await fetch('https://trends.google.com/trends/api/dailytrends?hl=en-US&tz=-480&geo=US');
+    const googleTrendsText = await googleTrendsResponse.text();
+    // Remove the safety prefix from Google's response
+    const googleTrendsData = JSON.parse(googleTrendsText.substring(5));
+    const googleTrends = googleTrendsData.default.trendingSearchesDays[0].trendingSearches
+      .slice(0, 5)
+      .map((trend: any) => trend.title.query);
+
+    return {
+      googleTrends,
+    };
+  } catch (error) {
+    console.error('Error fetching trends:', error);
+    return {
+      googleTrends: [],
+    };
+  }
+}
+
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -21,7 +42,6 @@ serve(async (req) => {
       console.error('OPENAI_API_KEY is not set');
       throw new Error('OPENAI_API_KEY is not set');
     }
-    console.log('OPENAI_API_KEY is configured');
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -32,9 +52,8 @@ serve(async (req) => {
     }
     
     const supabase = createClient(supabaseUrl, supabaseKey);
-    console.log('Supabase client initialized');
 
-    // Rate limiting: Check if we've made a request in the last 5 minutes
+    // Rate limiting check
     const { data: recentNews } = await supabase
       .from('news_roundups')
       .select('created_at')
@@ -44,10 +63,9 @@ serve(async (req) => {
     if (recentNews?.[0]) {
       const lastRequestTime = new Date(recentNews[0].created_at);
       const timeSinceLastRequest = Date.now() - lastRequestTime.getTime();
-      const FIVE_MINUTES = 5 * 60 * 1000; // 5 minutes in milliseconds
+      const FIVE_MINUTES = 5 * 60 * 1000;
       
       if (timeSinceLastRequest < FIVE_MINUTES) {
-        console.log('Rate limit: Too soon since last request');
         return new Response(
           JSON.stringify({ 
             error: `Please wait ${Math.ceil((FIVE_MINUTES - timeSinceLastRequest) / 1000)} seconds before requesting new news` 
@@ -60,7 +78,10 @@ serve(async (req) => {
       }
     }
 
-    console.log('Fetching news summary from OpenAI...');
+    // Fetch trending topics
+    const trends = await getTrendingTopics();
+
+    // Get news summary from OpenAI
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -98,41 +119,32 @@ serve(async (req) => {
         );
       }
       
-      return new Response(
-        JSON.stringify({ error: `OpenAI API error: ${response.status} ${response.statusText}` }),
-        { 
-          status: response.status,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+      throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
     }
 
     const aiResponse = await response.json();
     const newsContent = aiResponse.choices[0].message.content;
-    console.log('Received news summary from OpenAI');
 
-    console.log('Storing news in database...');
+    // Format the complete content with trending topics
+    const formattedContent = `${newsContent}\n\n🔍 Trending on Google:\n${trends.googleTrends.map(trend => `• ${trend}`).join('\n')}`;
+
+    // Store in database
     const { error: dbError } = await supabase
       .from('news_roundups')
       .insert([
         {
-          content: newsContent,
-          sources: [{ source: 'OpenAI GPT-3.5' }]
+          content: formattedContent,
+          sources: [
+            { source: 'OpenAI GPT-3.5' },
+            { source: 'Google Trends' }
+          ]
         }
       ]);
 
     if (dbError) {
       console.error('Supabase error:', dbError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to store news in database' }),
-        { 
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+      throw new Error('Failed to store news in database');
     }
-
-    console.log('News roundup successfully stored');
 
     return new Response(
       JSON.stringify({ success: true, message: 'News roundup updated' }),

@@ -38,7 +38,7 @@ const NewsRoundup = () => {
       refetch();
       toast({
         title: "Success",
-        description: "News fetched successfully",
+        description: "News and trends fetched successfully",
       });
     },
     onError: (error) => {
@@ -57,7 +57,7 @@ const NewsRoundup = () => {
         <CardTitle className="text-white text-xl font-semibold">
           <div className="flex items-center gap-2">
             <Newspaper className="w-5 h-5" />
-            News Roundup
+            News & Trends Roundup
           </div>
         </CardTitle>
         <Button
@@ -72,7 +72,7 @@ const NewsRoundup = () => {
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="text-white/60 text-center py-4">Loading news...</div>
+          <div className="text-white/60 text-center py-4">Loading news and trends...</div>
         ) : error ? (
           <div className="text-red-400 text-center py-4">
             Error loading news: {error.message}
@@ -82,7 +82,7 @@ const NewsRoundup = () => {
             <pre className="whitespace-pre-wrap font-sans">{newsRoundup.content}</pre>
           </div>
         ) : (
-          <div className="text-white/60 text-center py-4">No news available. Click refresh to fetch the latest news.</div>
+          <div className="text-white/60 text-center py-4">No news available. Click refresh to fetch the latest news and trends.</div>
         )}
       </CardContent>
     </Card>
