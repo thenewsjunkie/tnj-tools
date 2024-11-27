@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
+import "https://deno.land/x/xhr@0.1.0/mod.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,35 +16,44 @@ serve(async (req) => {
   try {
     console.log('Starting news fetch...')
     
-    const rapidApiKey = Deno.env.get('RAPID_API_KEY')
-    if (!rapidApiKey) {
-      console.error('RAPID_API_KEY is not set')
-      throw new Error('RAPID_API_KEY is not set')
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY')
+    if (!openAIApiKey) {
+      console.error('OPENAI_API_KEY is not set')
+      throw new Error('OPENAI_API_KEY is not set')
     }
-    console.log('RAPID_API_KEY is configured')
+    console.log('OPENAI_API_KEY is configured')
 
-    console.log('Fetching news from external API...')
-    const response = await fetch('https://news-api14.p.rapidapi.com/top-headlines?country=us&language=en&pageSize=5', {
-      method: 'GET',
+    console.log('Fetching news summary from OpenAI...')
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
       headers: {
-        'X-RapidAPI-Key': rapidApiKey,
-        'X-RapidAPI-Host': 'news-api14.p.rapidapi.com'
-      }
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a news curator. Create a brief news roundup of the most important current events. Format it as 4-5 short bullet points, each 1-2 sentences long. Focus on significant global and tech news.'
+          },
+          {
+            role: 'user',
+            content: 'Please provide today\'s news roundup.'
+          }
+        ],
+      }),
     })
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error(`API response error: ${response.status} ${response.statusText}`, errorText)
-      throw new Error(`API response error: ${response.status} ${response.statusText}`)
+      console.error(`OpenAI API error: ${response.status} ${response.statusText}`, errorText)
+      throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`)
     }
 
-    const newsData = await response.json()
-    console.log(`Fetched ${newsData.articles?.length || 0} articles`)
-
-    if (!newsData.articles?.length) {
-      console.error('No articles received from API', newsData)
-      throw new Error('No articles received from API')
-    }
+    const aiResponse = await response.json()
+    const newsContent = aiResponse.choices[0].message.content
+    console.log('Received news summary from OpenAI')
 
     // Create Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
@@ -57,18 +67,13 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    // Format news content
-    const formattedContent = newsData.articles
-      .map((article: any) => `${article.title}\n${article.description || ''}\n\n`)
-      .join('')
-
     console.log('Storing news in database...')
     const { data, error } = await supabase
       .from('news_roundups')
       .insert([
         {
-          content: formattedContent,
-          sources: newsData.articles
+          content: newsContent,
+          sources: [{ source: 'OpenAI GPT-4' }]
         }
       ])
 
