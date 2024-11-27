@@ -1,13 +1,16 @@
 import { useState, useRef } from 'react'
 import { Button } from './ui/button'
-import { Mic, Square, Volume2 } from 'lucide-react'
+import { Mic, Square, Volume2, PauseCircle, PlayCircle } from 'lucide-react'
 import { useToast } from './ui/use-toast'
 import { supabase } from '@/integrations/supabase/client'
+import { Slider } from './ui/slider'
 
 const AudioChat = () => {
   const [isRecording, setIsRecording] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [isPaused, setIsPaused] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [volume, setVolume] = useState([1])
   const mediaRecorder = useRef<MediaRecorder | null>(null)
   const audioChunks = useRef<Blob[]>([])
   const audioPlayer = useRef<HTMLAudioElement | null>(null)
@@ -43,15 +46,16 @@ const AudioChat = () => {
               throw new Error('Invalid response from server')
             }
 
-            // Convert the array back to ArrayBuffer
             const audioArray = new Uint8Array(data.audioResponse)
             const audioBlob = new Blob([audioArray], { type: 'audio/mpeg' })
             const audioUrl = URL.createObjectURL(audioBlob)
 
             if (audioPlayer.current) {
               audioPlayer.current.src = audioUrl
+              audioPlayer.current.volume = volume[0]
               audioPlayer.current.play()
               setIsPlaying(true)
+              setIsPaused(false)
             }
 
             toast({
@@ -95,29 +99,75 @@ const AudioChat = () => {
 
   const handlePlaybackEnded = () => {
     setIsPlaying(false)
+    setIsPaused(false)
+  }
+
+  const handleVolumeChange = (newVolume: number[]) => {
+    setVolume(newVolume)
+    if (audioPlayer.current) {
+      audioPlayer.current.volume = newVolume[0]
+    }
+  }
+
+  const togglePlayPause = () => {
+    if (audioPlayer.current) {
+      if (isPaused) {
+        audioPlayer.current.play()
+        setIsPaused(false)
+      } else {
+        audioPlayer.current.pause()
+        setIsPaused(true)
+      }
+    }
   }
 
   return (
     <div className="p-4 bg-card rounded-lg shadow-lg">
       <h2 className="text-xl font-semibold mb-4">Audio Chat</h2>
-      <div className="flex gap-4 items-center">
-        <Button
-          variant={isRecording ? "destructive" : "default"}
-          onClick={isRecording ? stopRecording : startRecording}
-          disabled={isProcessing}
-        >
-          {isRecording ? <Square className="h-4 w-4 mr-2" /> : <Mic className="h-4 w-4 mr-2" />}
-          {isRecording ? 'Stop Recording' : 'Start Recording'}
-        </Button>
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-4">
+        <div className="flex gap-4 items-center">
+          <Button
+            variant={isRecording ? "destructive" : "default"}
+            onClick={isRecording ? stopRecording : startRecording}
+            disabled={isProcessing}
+          >
+            {isRecording ? <Square className="h-4 w-4 mr-2" /> : <Mic className="h-4 w-4 mr-2" />}
+            {isRecording ? 'Stop Recording' : 'Start Recording'}
+          </Button>
           {isProcessing && <span className="text-sm text-muted-foreground">Processing...</span>}
-          <Volume2 className={`h-4 w-4 ${isPlaying ? 'text-primary' : 'text-muted-foreground'}`} />
-          <audio
-            ref={audioPlayer}
-            onEnded={handlePlaybackEnded}
-            className="hidden"
-          />
         </div>
+        
+        {(isPlaying || isPaused) && (
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={togglePlayPause}
+              className="h-8 w-8 p-0"
+            >
+              {isPaused ? 
+                <PlayCircle className="h-6 w-6" /> : 
+                <PauseCircle className="h-6 w-6" />
+              }
+            </Button>
+            <div className="flex items-center gap-2 flex-1">
+              <Volume2 className="h-4 w-4" />
+              <Slider
+                value={volume}
+                onValueChange={handleVolumeChange}
+                max={1}
+                step={0.1}
+                className="w-32"
+              />
+            </div>
+          </div>
+        )}
+        
+        <audio
+          ref={audioPlayer}
+          onEnded={handlePlaybackEnded}
+          className="hidden"
+        />
       </div>
     </div>
   )
