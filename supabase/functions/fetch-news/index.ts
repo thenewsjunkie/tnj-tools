@@ -34,7 +34,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
     console.log('Supabase client initialized');
 
-    // Strict rate limiting: Check if we've made a request in the last 2 minutes
+    // Rate limiting: Check if we've made a request in the last 5 minutes
     const { data: recentNews } = await supabase
       .from('news_roundups')
       .select('created_at')
@@ -44,13 +44,13 @@ serve(async (req) => {
     if (recentNews?.[0]) {
       const lastRequestTime = new Date(recentNews[0].created_at);
       const timeSinceLastRequest = Date.now() - lastRequestTime.getTime();
-      const TWO_MINUTES = 2 * 60 * 1000; // 2 minutes in milliseconds
+      const FIVE_MINUTES = 5 * 60 * 1000; // 5 minutes in milliseconds
       
-      if (timeSinceLastRequest < TWO_MINUTES) {
+      if (timeSinceLastRequest < FIVE_MINUTES) {
         console.log('Rate limit: Too soon since last request');
         return new Response(
           JSON.stringify({ 
-            error: `Please wait ${Math.ceil((TWO_MINUTES - timeSinceLastRequest) / 1000)} seconds before requesting new news` 
+            error: `Please wait ${Math.ceil((FIVE_MINUTES - timeSinceLastRequest) / 1000)} seconds before requesting new news` 
           }),
           { 
             status: 429,
@@ -68,7 +68,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-3.5-turbo',
         messages: [
           {
             role: 'system',
@@ -79,6 +79,8 @@ serve(async (req) => {
             content: 'Please provide today\'s news roundup.'
           }
         ],
+        temperature: 0.7,
+        max_tokens: 500
       }),
     });
 
@@ -96,7 +98,13 @@ serve(async (req) => {
         );
       }
       
-      throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+      return new Response(
+        JSON.stringify({ error: `OpenAI API error: ${response.status} ${response.statusText}` }),
+        { 
+          status: response.status,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     const aiResponse = await response.json();
@@ -109,13 +117,19 @@ serve(async (req) => {
       .insert([
         {
           content: newsContent,
-          sources: [{ source: 'OpenAI GPT-4' }]
+          sources: [{ source: 'OpenAI GPT-3.5' }]
         }
       ]);
 
     if (dbError) {
       console.error('Supabase error:', dbError);
-      throw dbError;
+      return new Response(
+        JSON.stringify({ error: 'Failed to store news in database' }),
+        { 
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     console.log('News roundup successfully stored');
