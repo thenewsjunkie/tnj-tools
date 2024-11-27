@@ -23,6 +23,22 @@ serve(async (req) => {
     }
     console.log('OPENAI_API_KEY is configured');
 
+    // Check if we've made a request in the last minute
+    const { data: recentNews } = await supabase
+      .from('news_roundups')
+      .select('created_at')
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (recentNews?.[0]) {
+      const lastRequestTime = new Date(recentNews[0].created_at);
+      const timeSinceLastRequest = Date.now() - lastRequestTime.getTime();
+      if (timeSinceLastRequest < 60000) { // 1 minute in milliseconds
+        console.log('Rate limit: Too soon since last request');
+        throw new Error('Please wait a minute before requesting new news');
+      }
+    }
+
     console.log('Fetching news summary from OpenAI...');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -31,7 +47,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o-mini', // Using the correct model name
         messages: [
           {
             role: 'system',
@@ -48,6 +64,11 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`OpenAI API error: ${response.status} ${response.statusText}`, errorText);
+      
+      if (response.status === 429) {
+        throw new Error('OpenAI rate limit reached. Please try again in a minute.');
+      }
+      
       throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
     }
 
