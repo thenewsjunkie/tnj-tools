@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import NewsRoundup from "@/components/NewsRoundup";
 
 const Index = () => {
   return (
@@ -12,9 +13,14 @@ const Index = () => {
         </Link>
       </nav>
       
-      <div className="digital text-[clamp(2rem,10vw,6rem)] leading-none text-neon-red animate-led-flicker tracking-tight">
+      <div className="digital text-[clamp(2rem,10vw,6rem)] leading-none text-neon-red animate-led-flicker tracking-tight mb-8">
         TNJ Tools
       </div>
+
+      <div className="w-full max-w-2xl mx-auto">
+        <NewsRoundup />
+      </div>
+      
       <div className="absolute bottom-8 text-white/50 text-sm">
         tnjtools.com
       </div>
