@@ -7,9 +7,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
-import InterviewRequests from "./pages/InterviewRequests";
 import Login from "./pages/Login";
-import ScreenShare from "./pages/ScreenShare";
 
 const queryClient = new QueryClient();
 
@@ -61,15 +59,6 @@ const App = () => (
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/interview-requests"
-            element={
-              <ProtectedRoute>
-                <InterviewRequests />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/screen-share/:code" element={<ScreenShare />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

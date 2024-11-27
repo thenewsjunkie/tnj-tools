@@ -3,8 +3,6 @@ import Stopwatch from "@/components/Stopwatch";
 import TNJLinks from "@/components/TNJLinks";
 import ShowNotes from "@/components/ShowNotes";
 import Reminders from "@/components/Reminders";
-import InterviewRequestsModule from "@/components/InterviewRequestsModule";
-import ScreenShareModule from "@/components/ScreenShareModule";
 import NewsRoundup from "@/components/NewsRoundup";
 import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -58,12 +56,6 @@ const Admin = () => {
         <Stopwatch />
         <TNJLinks />
         <ShowNotes />
-        <div className="md:col-span-2">
-          <InterviewRequestsModule />
-        </div>
-        <div className="md:col-span-2">
-          <ScreenShareModule />
-        </div>
       </div>
     </div>
   );
