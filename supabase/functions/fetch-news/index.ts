@@ -23,6 +23,17 @@ serve(async (req) => {
     }
     console.log('OPENAI_API_KEY is configured');
 
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing Supabase credentials');
+    }
+    
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    console.log('Supabase client initialized');
+
     // Check if we've made a request in the last minute
     const { data: recentNews } = await supabase
       .from('news_roundups')
@@ -75,18 +86,6 @@ serve(async (req) => {
     const aiResponse = await response.json();
     const newsContent = aiResponse.choices[0].message.content;
     console.log('Received news summary from OpenAI');
-
-    // Create Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    
-    if (!supabaseUrl || !supabaseKey) {
-      console.error('Missing Supabase credentials');
-      throw new Error('Missing Supabase credentials');
-    }
-    console.log('Supabase credentials configured');
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
 
     console.log('Storing news in database...');
     const { data, error } = await supabase
