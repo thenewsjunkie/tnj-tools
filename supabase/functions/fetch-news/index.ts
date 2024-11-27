@@ -12,13 +12,15 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Starting news fetch...')
+    
     const rapidApiKey = Deno.env.get('RAPID_API_KEY')
     if (!rapidApiKey) {
       throw new Error('RAPID_API_KEY is not set')
     }
 
-    // Fetch news from NewsAPI
-    const response = await fetch('https://news-api14.p.rapidapi.com/top-headlines', {
+    console.log('Fetching news from external API...')
+    const response = await fetch('https://news-api14.p.rapidapi.com/top-headlines?country=us&language=en&pageSize=5', {
       method: 'GET',
       headers: {
         'X-RapidAPI-Key': rapidApiKey,
@@ -26,20 +28,33 @@ serve(async (req) => {
       }
     })
 
+    if (!response.ok) {
+      throw new Error(`API response error: ${response.status} ${response.statusText}`)
+    }
+
     const newsData = await response.json()
+    console.log(`Fetched ${newsData.articles?.length || 0} articles`)
+
+    if (!newsData.articles?.length) {
+      throw new Error('No articles received from API')
+    }
 
     // Create Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing Supabase credentials')
+    }
+
     const supabase = createClient(supabaseUrl, supabaseKey)
 
     // Format news content
     const formattedContent = newsData.articles
-      .slice(0, 5)
       .map((article: any) => `${article.title}\n${article.description || ''}\n\n`)
       .join('')
 
-    // Store in database
+    console.log('Storing news in database...')
     const { data, error } = await supabase
       .from('news_roundups')
       .insert([
@@ -51,8 +66,10 @@ serve(async (req) => {
 
     if (error) throw error
 
+    console.log('News roundup successfully stored')
+
     return new Response(
-      JSON.stringify({ success: true }),
+      JSON.stringify({ success: true, message: 'News roundup updated' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
