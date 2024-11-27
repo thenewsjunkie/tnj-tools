@@ -18,16 +18,25 @@ export const DeviceSelector = ({
   selectedDevice,
   onDeviceChange,
 }: DeviceSelectorProps) => {
+  // Filter out any devices with empty deviceIds
+  const validDevices = devices.filter(device => device.deviceId !== "");
+
   return (
     <div className="flex items-center gap-2">
       <Speaker className="h-4 w-4" />
-      <Select value={selectedDevice} onValueChange={onDeviceChange}>
+      <Select 
+        value={selectedDevice || validDevices[0]?.deviceId} 
+        onValueChange={onDeviceChange}
+      >
         <SelectTrigger className="w-[200px]">
           <SelectValue placeholder="Select output device" />
         </SelectTrigger>
         <SelectContent>
-          {devices.map((device) => (
-            <SelectItem key={device.deviceId} value={device.deviceId}>
+          {validDevices.map((device) => (
+            <SelectItem 
+              key={device.deviceId} 
+              value={device.deviceId}
+            >
               {device.label || `Output ${device.deviceId.slice(0, 4)}`}
             </SelectItem>
           ))}
