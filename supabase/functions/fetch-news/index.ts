@@ -16,8 +16,10 @@ serve(async (req) => {
     
     const rapidApiKey = Deno.env.get('RAPID_API_KEY')
     if (!rapidApiKey) {
+      console.error('RAPID_API_KEY is not set')
       throw new Error('RAPID_API_KEY is not set')
     }
+    console.log('RAPID_API_KEY is configured')
 
     console.log('Fetching news from external API...')
     const response = await fetch('https://news-api14.p.rapidapi.com/top-headlines?country=us&language=en&pageSize=5', {
@@ -29,6 +31,8 @@ serve(async (req) => {
     })
 
     if (!response.ok) {
+      const errorText = await response.text()
+      console.error(`API response error: ${response.status} ${response.statusText}`, errorText)
       throw new Error(`API response error: ${response.status} ${response.statusText}`)
     }
 
@@ -36,6 +40,7 @@ serve(async (req) => {
     console.log(`Fetched ${newsData.articles?.length || 0} articles`)
 
     if (!newsData.articles?.length) {
+      console.error('No articles received from API', newsData)
       throw new Error('No articles received from API')
     }
 
@@ -44,8 +49,10 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
     
     if (!supabaseUrl || !supabaseKey) {
+      console.error('Missing Supabase credentials')
       throw new Error('Missing Supabase credentials')
     }
+    console.log('Supabase credentials configured')
 
     const supabase = createClient(supabaseUrl, supabaseKey)
 
@@ -64,7 +71,10 @@ serve(async (req) => {
         }
       ])
 
-    if (error) throw error
+    if (error) {
+      console.error('Supabase error:', error)
+      throw error
+    }
 
     console.log('News roundup successfully stored')
 
