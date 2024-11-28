@@ -18,15 +18,23 @@ interface ReminderItemProps {
   onDelete: (id: string) => void;
   onEdit: (id: string, text: string, datetime: string, recurringWeekly: boolean) => void;
   isUpcoming: (datetime: string) => boolean;
+  theme: string;
 }
 
-const ReminderItem = ({ reminder, onDelete, onEdit, isUpcoming }: ReminderItemProps) => {
+const ReminderItem = ({ reminder, onDelete, onEdit, isUpcoming, theme }: ReminderItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState(reminder.text);
   const [editedDateTime, setEditedDateTime] = useState(reminder.datetime);
   const [editedRecurringWeekly, setEditedRecurringWeekly] = useState(reminder.recurring_weekly);
   const upcoming = isUpcoming(reminder.datetime);
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  const textColor = theme === 'light' ? 'text-black' : 'text-white';
+  const bgColor = theme === 'light' ? 'bg-gray-50' : 'bg-white/5';
+  const activeBgColor = theme === 'light' ? 'bg-red-100' : 'bg-red-500/20';
+  const upcomingBgColor = theme === 'light' ? 'bg-blue-100' : 'bg-blue-500/20';
+  const borderColor = theme === 'light' ? 'border-red-200' : 'border-neon-red';
+  const upcomingBorderColor = theme === 'light' ? 'border-blue-200' : 'border-blue-400';
 
   const handleSave = () => {
     if (!editedText.trim() || !editedDateTime) {
@@ -66,10 +74,10 @@ const ReminderItem = ({ reminder, onDelete, onEdit, isUpcoming }: ReminderItemPr
     <div
       className={`relative p-3 rounded-lg flex items-start justify-between gap-2 transition-all ${
         reminder.is_active
-          ? "bg-red-500/20 border-2 border-neon-red animate-pulse"
+          ? `${activeBgColor} border-2 ${borderColor} animate-pulse`
           : upcoming
-          ? "bg-blue-500/20 border border-blue-400"
-          : "bg-white/5"
+          ? `${upcomingBgColor} border ${upcomingBorderColor}`
+          : bgColor
       } ${upcoming ? "scale-[1.02]" : ""}`}
     >
       <div className="flex items-start gap-2 flex-1">
@@ -84,12 +92,13 @@ const ReminderItem = ({ reminder, onDelete, onEdit, isUpcoming }: ReminderItemPr
               <Input
                 value={editedText}
                 onChange={(e) => setEditedText(e.target.value)}
-                className="w-full"
+                className={`w-full ${textColor}`}
               />
               <Input
                 type="datetime-local"
                 value={editedDateTime}
                 onChange={(e) => setEditedDateTime(e.target.value)}
+                className={textColor}
               />
               <div className="flex items-center space-x-2">
                 <Checkbox
@@ -97,14 +106,14 @@ const ReminderItem = ({ reminder, onDelete, onEdit, isUpcoming }: ReminderItemPr
                   checked={editedRecurringWeekly}
                   onCheckedChange={(checked) => setEditedRecurringWeekly(checked as boolean)}
                 />
-                <Label htmlFor={`recurring-${reminder.id}`} className="text-white">
+                <Label htmlFor={`recurring-${reminder.id}`} className={textColor}>
                   Repeat weekly
                 </Label>
               </div>
             </div>
           ) : (
             <>
-              <p className="text-white">
+              <p className={textColor}>
                 {reminder.text}
                 {reminder.recurring_weekly && (
                   <span className="ml-2 text-xs bg-blue-500/20 px-2 py-0.5 rounded">
@@ -144,18 +153,18 @@ const ReminderItem = ({ reminder, onDelete, onEdit, isUpcoming }: ReminderItemPr
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 shrink-0 text-white/50 hover:text-white"
+              className={`h-6 w-6 shrink-0 hover:${textColor}`}
               onClick={() => setIsEditing(true)}
             >
-              <Edit2 className="h-4 w-4" />
+              <Edit2 className={`h-4 w-4 ${textColor}`} />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 shrink-0 text-white/50 hover:text-white"
+              className={`h-6 w-6 shrink-0 hover:${textColor}`}
               onClick={() => onDelete(reminder.id)}
             >
-              <X className="h-4 w-4" />
+              <X className={`h-4 w-4 ${textColor}`} />
             </Button>
           </>
         )}

@@ -124,6 +124,7 @@ const TNJLinks = () => {
               url={link.url}
               status={link.status}
               onDelete={() => deleteLinkMutation.mutate(link.id)}
+              theme={theme}
             />
           ))}
         </div>

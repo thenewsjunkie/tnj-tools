@@ -12,6 +12,7 @@ interface ReminderFormProps {
   recurringWeekly: boolean;
   setRecurringWeekly: (value: boolean) => void;
   onAdd: () => void;
+  theme: string;
 }
 
 const ReminderForm = ({
@@ -22,7 +23,10 @@ const ReminderForm = ({
   recurringWeekly,
   setRecurringWeekly,
   onAdd,
+  theme,
 }: ReminderFormProps) => {
+  const textColor = theme === 'light' ? 'text-black' : 'text-white';
+  
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
@@ -30,16 +34,16 @@ const ReminderForm = ({
           placeholder="Add a reminder..."
           value={newReminder}
           onChange={(e) => setNewReminder(e.target.value)}
-          className="flex-1"
+          className={`flex-1 ${textColor}`}
         />
         <Input
           type="datetime-local"
           value={newDateTime}
           onChange={(e) => setNewDateTime(e.target.value)}
-          className="w-auto"
+          className={`w-auto ${textColor}`}
         />
         <Button onClick={onAdd} size="icon">
-          <Plus className="h-4 w-4" />
+          <Plus className={`h-4 w-4 ${textColor}`} />
         </Button>
       </div>
       
@@ -49,7 +53,7 @@ const ReminderForm = ({
           checked={recurringWeekly}
           onCheckedChange={(checked) => setRecurringWeekly(checked as boolean)}
         />
-        <Label htmlFor="recurring" className="text-white">
+        <Label htmlFor="recurring" className={textColor}>
           Repeat weekly
         </Label>
       </div>

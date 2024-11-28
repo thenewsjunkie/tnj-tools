@@ -7,6 +7,7 @@ import ReminderForm from "./reminders/ReminderForm";
 import ReminderItem from "./reminders/ReminderItem";
 import { format, parseISO } from "date-fns";
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
+import { useTheme } from "@/components/theme/ThemeProvider";
 
 const Reminders = () => {
   const [newReminder, setNewReminder] = useState("");
@@ -15,6 +16,7 @@ const Reminders = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const { theme } = useTheme();
 
   const { data: reminders = [], isLoading } = useQuery({
     queryKey: ['reminders'],
@@ -165,14 +167,18 @@ const Reminders = () => {
     return hoursDifference >= 0 && hoursDifference <= 24;
   };
 
+  const bgColor = theme === 'light' ? 'bg-white' : 'bg-black/50';
+  const borderColor = theme === 'light' ? 'border-gray-200' : 'border-white/10';
+  const textColor = theme === 'light' ? 'text-black' : 'text-white';
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
 
   return (
-    <Card className="bg-black/50 border-white/10">
+    <Card className={`${bgColor} ${borderColor}`}>
       <CardHeader>
-        <CardTitle className="text-white text-lg sm:text-xl">Reminders</CardTitle>
+        <CardTitle className={`${textColor} text-lg sm:text-xl`}>Reminders</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <ReminderForm
@@ -183,6 +189,7 @@ const Reminders = () => {
           recurringWeekly={recurringWeekly}
           setRecurringWeekly={setRecurringWeekly}
           onAdd={handleAddReminder}
+          theme={theme}
         />
         
         <div className="space-y-2">
@@ -195,6 +202,7 @@ const Reminders = () => {
                 editReminderMutation.mutate({ id, text, datetime, recurringWeekly })
               }
               isUpcoming={isUpcoming}
+              theme={theme}
             />
           ))}
         </div>
