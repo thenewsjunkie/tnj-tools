@@ -25,12 +25,15 @@ serve(async (req) => {
       // Convert base64 to blob
       const base64Data = audioData.split(',')[1]
       const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0))
-      const audioBlob = new Blob([binaryData], { type: 'audio/webm' })
-
+      
       // Create form data for Whisper API
       const formData = new FormData()
-      formData.append('file', audioBlob, 'audio.webm')
+      
+      // Create file with .mp4 extension since we're prioritizing mp4 format
+      const audioBlob = new Blob([binaryData], { type: 'audio/mp4' })
+      formData.append('file', new File([audioBlob], 'audio.mp4', { type: 'audio/mp4' }))
       formData.append('model', 'whisper-1')
+      formData.append('response_format', 'json')
 
       console.log('Sending audio to Whisper API')
       const transcriptionResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
@@ -42,7 +45,9 @@ serve(async (req) => {
       })
 
       if (!transcriptionResponse.ok) {
-        throw new Error(`Whisper API error: ${transcriptionResponse.statusText}`)
+        const errorText = await transcriptionResponse.text()
+        console.error('Whisper API error:', errorText)
+        throw new Error(`Whisper API error: ${transcriptionResponse.statusText} - ${errorText}`)
       }
 
       const transcription = await transcriptionResponse.json()
