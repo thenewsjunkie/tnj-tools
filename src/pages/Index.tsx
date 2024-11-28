@@ -27,7 +27,7 @@ const Index = () => {
         TNJ Tools
       </div>
       
-      <div className="absolute bottom-8 text-white/50 text-sm">
+      <div className={`absolute bottom-8 ${theme === 'light' ? 'text-black' : 'text-white/50'} text-sm`}>
         tnjtools.com
       </div>
     </div>

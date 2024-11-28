@@ -3,12 +3,14 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useTheme } from "@/components/theme/ThemeProvider";
 import LinkItem from "./tnj-links/LinkItem";
 import AddLinkDialog from "./tnj-links/AddLinkDialog";
 
 const TNJLinks = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { theme } = useTheme();
 
   const { data: links = [], isLoading } = useQuery({
     queryKey: ['tnj-links'],
@@ -100,10 +102,14 @@ const TNJLinks = () => {
     return <div>Loading...</div>;
   }
 
+  const bgColor = theme === 'light' ? 'bg-white' : 'bg-black/50';
+  const textColor = theme === 'light' ? 'text-black' : 'text-white';
+  const borderColor = theme === 'light' ? 'border-gray-200' : 'border-white/10';
+
   return (
-    <Card className="bg-black/50 border-white/10">
+    <Card className={`${bgColor} border-${borderColor}`}>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-white text-lg sm:text-xl">TNJ Links</CardTitle>
+        <CardTitle className={`${textColor} text-lg sm:text-xl`}>TNJ Links</CardTitle>
         <AddLinkDialog 
           onLinkAdded={() => queryClient.invalidateQueries({ queryKey: ['tnj-links'] })}
           lastOrder={links.length > 0 ? Math.max(...links.map(l => l.display_order)) : 0}
