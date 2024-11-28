@@ -26,23 +26,32 @@ export function ThemeProvider({
   children,
   defaultTheme = "dark",
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(defaultTheme)
+  const [theme, setTheme] = useState<Theme>(() => {
+    // Check localStorage first
+    if (typeof window !== 'undefined') {
+      const stored = window.localStorage.getItem("theme") as Theme
+      if (stored) return stored
+    }
+    return defaultTheme
+  })
 
   useEffect(() => {
     const root = window.document.documentElement
+    
+    // Remove both classes first
     root.classList.remove("light", "dark")
+    
+    // Add the current theme class
     root.classList.add(theme)
+    
+    // Store in localStorage
+    localStorage.setItem("theme", theme)
   }, [theme])
 
   const value = {
     theme,
     setTheme: (theme: Theme) => {
       setTheme(theme)
-      try {
-        window.localStorage.setItem("theme", theme)
-      } catch (e) {
-        console.error(e)
-      }
     },
   }
 
