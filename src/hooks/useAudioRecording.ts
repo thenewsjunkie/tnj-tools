@@ -14,17 +14,51 @@ export const useAudioRecording = ({ onProcessingComplete, onError }: UseAudioRec
 
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      mediaRecorder.current = new MediaRecorder(stream, { mimeType: 'audio/webm' })
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 44100,
+        }
+      })
+
+      // Try different MIME types in order of preference
+      const mimeTypes = [
+        'audio/mp4',
+        'audio/aac',
+        'audio/webm',
+        'audio/ogg',
+        'audio/wav',
+      ]
+
+      let selectedMimeType = ''
+      for (const mimeType of mimeTypes) {
+        if (MediaRecorder.isTypeSupported(mimeType)) {
+          selectedMimeType = mimeType
+          break
+        }
+      }
+
+      if (!selectedMimeType) {
+        throw new Error('No supported audio MIME type found')
+      }
+
+      mediaRecorder.current = new MediaRecorder(stream, {
+        mimeType: selectedMimeType,
+        audioBitsPerSecond: 128000
+      })
+      
       audioChunks.current = []
 
       mediaRecorder.current.ondataavailable = (event) => {
-        audioChunks.current.push(event.data)
+        if (event.data.size > 0) {
+          audioChunks.current.push(event.data)
+        }
       }
 
       mediaRecorder.current.onstop = async () => {
         setIsProcessing(true)
-        const audioBlob = new Blob(audioChunks.current, { type: 'audio/webm' })
+        const audioBlob = new Blob(audioChunks.current, { type: selectedMimeType })
         const reader = new FileReader()
         
         reader.onload = async () => {
@@ -57,7 +91,7 @@ export const useAudioRecording = ({ onProcessingComplete, onError }: UseAudioRec
         reader.readAsDataURL(audioBlob)
       }
 
-      mediaRecorder.current.start()
+      mediaRecorder.current.start(100) // Reduced chunk size for better compatibility
       setIsRecording(true)
     } catch (error) {
       onError(error instanceof Error ? error : new Error('Failed to access microphone'))
