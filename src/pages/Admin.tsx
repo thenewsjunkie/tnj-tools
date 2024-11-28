@@ -9,10 +9,13 @@ import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { useTheme } from "@/components/theme/ThemeProvider";
 
 const Admin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { theme } = useTheme();
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -28,21 +31,22 @@ const Admin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black p-4 sm:p-6 md:p-8">
+    <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8">
       <nav className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
         <Link 
           to="/" 
-          className="text-white hover:text-neon-red transition-colors"
+          className="text-foreground hover:text-neon-red transition-colors"
         >
           ← Home
         </Link>
         <div className="flex items-center gap-4">
-          <h1 className="text-white text-xl sm:text-2xl digital">TNJ Tools Admin</h1>
+          <ThemeToggle />
+          <h1 className="text-foreground text-xl sm:text-2xl digital">TNJ Tools Admin</h1>
           <Button
             variant="ghost"
             size="icon"
             onClick={handleLogout}
-            className="text-white hover:text-neon-red hover:bg-white/10"
+            className="text-foreground hover:text-neon-red hover:bg-white/10"
           >
             <LogOut className="h-5 w-5" />
           </Button>

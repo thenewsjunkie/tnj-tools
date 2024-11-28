@@ -1,22 +1,29 @@
 import { Link } from "react-router-dom";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { useTheme } from "@/components/theme/ThemeProvider";
 
 const Index = () => {
+  const { theme } = useTheme();
+  
   return (
-    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
       <nav className="fixed top-0 right-0 p-4 flex items-center gap-4">
         <div className="flex items-center">
           <ThemeToggle />
         </div>
         <Link 
           to="/login" 
-          className="text-white hover:text-neon-red transition-colors px-4 py-2 border border-white/20 rounded"
+          className={`${
+            theme === 'light' ? 'text-black' : 'text-white'
+          } hover:text-neon-red transition-colors px-4 py-2 border border-white/20 rounded`}
         >
           Login
         </Link>
       </nav>
       
-      <div className="digital text-[clamp(2rem,10vw,6rem)] leading-none text-neon-red animate-led-flicker tracking-tight mb-8">
+      <div className={`digital text-[clamp(2rem,10vw,6rem)] leading-none ${
+        theme === 'light' ? 'text-red-600' : 'text-neon-red'
+      } animate-led-flicker tracking-tight mb-8`}>
         TNJ Tools
       </div>
       
