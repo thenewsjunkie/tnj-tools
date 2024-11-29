@@ -40,7 +40,15 @@ const NewsRoundup = () => {
         .limit(1);
 
       if (error) throw error;
-      return data?.[0] as NewsRoundupData;
+      if (!data || data.length === 0) return null;
+      
+      // Ensure sources is properly parsed
+      const roundup = data[0] as NewsRoundupData;
+      if (typeof roundup.sources === 'string') {
+        roundup.sources = JSON.parse(roundup.sources);
+      }
+      
+      return roundup;
     }
   });
 
@@ -90,8 +98,7 @@ const NewsRoundup = () => {
           url: parts[1]?.trim() || '#'
         };
       })
-      .filter(headline => headline.text.length > 0 && headline.url !== '#')
-      .slice(0, 10);
+      .filter(headline => headline.text.length > 0 && headline.url !== '#');
 
     // Process trends
     const trends = trendsSection
@@ -103,7 +110,7 @@ const NewsRoundup = () => {
       <div className="grid gap-8">
         {headlines.length > 0 && <Headlines headlines={headlines} />}
         {trends.length > 0 && <Trends trends={trends} />}
-        {newsRoundup?.sources?.boxOffice && (
+        {newsRoundup?.sources?.boxOffice && newsRoundup.sources.boxOffice.length > 0 && (
           <BoxOffice movies={newsRoundup.sources.boxOffice} />
         )}
       </div>
