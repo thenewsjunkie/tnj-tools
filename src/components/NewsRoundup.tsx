@@ -30,7 +30,6 @@ const NewsRoundup = () => {
   const { data: newsRoundup, isLoading, error, refetch } = useQuery({
     queryKey: ['news-roundup'],
     queryFn: async () => {
-      console.log('Fetching news roundup...');
       const { data, error } = await supabase
         .from('news_roundups')
         .select('*')
@@ -38,7 +37,6 @@ const NewsRoundup = () => {
         .limit(1);
 
       if (error) throw error;
-      console.log('News roundup data:', data?.[0]);
       return data?.[0] as NewsRoundupData;
     }
   });
@@ -70,16 +68,17 @@ const NewsRoundup = () => {
   });
 
   const formatContent = (content: string) => {
-    // Split content into headlines and trends sections
-    const [rawHeadlines = '', rawTrends = ''] = content.split('🔍 Trending on Google:');
+    // First, split the content at the trends marker
+    const [headlinesContent = '', trendsContent = ''] = content.split('🔍 Trending on Google:');
     
-    // Process headlines and trends into arrays
-    const headlines = rawHeadlines
+    // Process headlines - remove empty lines and trim each line
+    const headlines = headlinesContent
       .split('\n')
       .map(line => line.trim())
-      .filter(line => line.length > 0);
-      
-    const trends = rawTrends
+      .filter(line => line.length > 0 && !line.includes('🔍 Trending on Google:'));
+    
+    // Process trends - remove empty lines and trim each line
+    const trends = trendsContent
       .split('\n')
       .map(line => line.trim())
       .filter(line => line.length > 0);
