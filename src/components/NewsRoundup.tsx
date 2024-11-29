@@ -107,12 +107,14 @@ const NewsRoundup = () => {
       .filter(line => line.length > 0);
 
     return (
-      <div className="grid gap-8">
+      <div className="space-y-8">
         {headlines.length > 0 && <Headlines headlines={headlines} />}
-        {trends.length > 0 && <Trends trends={trends} />}
-        {newsRoundup?.sources?.boxOffice && newsRoundup.sources.boxOffice.length > 0 && (
-          <BoxOffice movies={newsRoundup.sources.boxOffice} />
-        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {trends.length > 0 && <Trends trends={trends} />}
+          {newsRoundup?.sources?.boxOffice && newsRoundup.sources.boxOffice.length > 0 && (
+            <BoxOffice movies={newsRoundup.sources.boxOffice} />
+          )}
+        </div>
       </div>
     );
   };
