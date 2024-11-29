@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Newspaper, RefreshCw } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useTheme } from "@/components/theme/ThemeProvider";
-import BoxOfficeChart from "./BoxOfficeChart";
 
 const NewsRoundup = () => {
   const { toast } = useToast();
@@ -56,7 +55,7 @@ const NewsRoundup = () => {
     const trends = parts[1]?.trim();
 
     return (
-      <div className="grid gap-8 lg:grid-cols-2">
+      <div className="grid gap-8">
         <div className="space-y-4">
           <h3 className="text-lg font-semibold border-b pb-2">Latest Headlines</h3>
           <div className="space-y-2 text-left">
@@ -69,23 +68,20 @@ const NewsRoundup = () => {
             ))}
           </div>
         </div>
-        <div className="space-y-8">
-          {trends && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold border-b pb-2">Trending on Google</h3>
-              <div className="space-y-2 text-left">
-                {trends.split('\n').map((trend, index) => (
-                  trend.trim() && (
-                    <p key={index} className="leading-relaxed">
-                      {trend.trim()}
-                    </p>
-                  )
-                ))}
-              </div>
+        {trends && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold border-b pb-2">Trending on Google</h3>
+            <div className="space-y-2 text-left">
+              {trends.split('\n').map((trend, index) => (
+                trend.trim() && (
+                  <p key={index} className="leading-relaxed">
+                    {trend.trim()}
+                  </p>
+                )
+              ))}
             </div>
-          )}
-          <BoxOfficeChart />
-        </div>
+          </div>
+        )}
       </div>
     );
   };
