@@ -23,7 +23,6 @@ serve(async (req) => {
     ]);
 
     console.log('Fetching box office data...');
-    // Fetch box office data with error handling
     try {
       const response = await fetch('https://www.boxofficemojo.com/weekend/chart/', {
         headers: {
@@ -38,19 +37,22 @@ serve(async (req) => {
       const html = await response.text();
       const boxOffice = [];
       
-      // Use more specific regex patterns
-      const moviePattern = /<tr.*?<a[^>]*?href="\/title\/[^"]*?"[^>]*?>([^<]+)<\/a>.*?\$([\d,]+)/gs;
-      let match;
-      let count = 0;
+      // Updated regex pattern to better match the table structure
+      const tableRows = html.match(/<tr class="a-text-right[^>]*?>[\s\S]*?<\/tr>/g) || [];
       
-      while ((match = moviePattern.exec(html)) !== null && count < 10) {
-        const title = match[1].trim();
-        const earnings = parseInt(match[2].replace(/,/g, ''), 10);
+      for (let i = 0; i < Math.min(10, tableRows.length); i++) {
+        const row = tableRows[i];
+        const titleMatch = row.match(/<a[^>]*?>([^<]+)<\/a>/);
+        const earningsMatch = row.match(/\$([0-9,]+)/);
         
-        if (title && !isNaN(earnings)) {
-          console.log(`Parsed movie: ${title} - $${earnings}`);
-          boxOffice.push({ title, earnings });
-          count++;
+        if (titleMatch && earningsMatch) {
+          const title = titleMatch[1].trim();
+          const earnings = parseInt(earningsMatch[1].replace(/,/g, ''), 10);
+          
+          if (title && !isNaN(earnings)) {
+            console.log(`Found movie: ${title} - $${earnings}`);
+            boxOffice.push({ title, earnings });
+          }
         }
       }
 
