@@ -70,37 +70,34 @@ const NewsRoundup = () => {
   });
 
   const formatContent = (content: string) => {
-    const parts = content.split('🔍 Trending on Google:');
-    const headlines = parts[0];
-    const trends = parts[1];
+    const [headlinesSection = '', trendsSection = ''] = content.split('🔍 Trending on Google:');
+    
+    const headlines = headlinesSection.trim().split('\n').filter(line => line.trim());
+    const trends = trendsSection.trim().split('\n').filter(line => line.trim());
 
     return (
       <div className="grid gap-8">
-        {headlines && (
+        {headlines.length > 0 && (
           <div className="space-y-4">
             <h3 className="text-lg font-semibold border-b pb-2">Latest Headlines</h3>
             <div className="space-y-2 text-left">
-              {headlines.split('\n').map((headline, index) => (
-                headline.trim() && (
-                  <p key={index} className="leading-relaxed">
-                    {headline.trim()}
-                  </p>
-                )
+              {headlines.map((headline, index) => (
+                <p key={index} className="leading-relaxed">
+                  {headline}
+                </p>
               ))}
             </div>
           </div>
         )}
         
-        {trends && (
+        {trends.length > 0 && (
           <div className="space-y-4">
             <h3 className="text-lg font-semibold border-b pb-2">Trending on Google</h3>
             <div className="space-y-2 text-left">
-              {trends.split('\n').map((trend, index) => (
-                trend.trim() && (
-                  <p key={index} className="leading-relaxed">
-                    {trend.trim()}
-                  </p>
-                )
+              {trends.map((trend, index) => (
+                <p key={index} className="leading-relaxed">
+                  {trend}
+                </p>
               ))}
             </div>
           </div>
