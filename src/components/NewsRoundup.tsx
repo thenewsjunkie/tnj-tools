@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Newspaper, RefreshCw } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useTheme } from "@/components/theme/ThemeProvider";
+import BoxOfficeChart from "./BoxOfficeChart";
 
 const NewsRoundup = () => {
   const { toast } = useToast();
@@ -13,40 +14,27 @@ const NewsRoundup = () => {
   const { data: newsRoundup, isLoading, error, refetch } = useQuery({
     queryKey: ['news-roundup'],
     queryFn: async () => {
-      console.log('Fetching news roundup...');
       const { data, error } = await supabase
         .from('news_roundups')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(1);
 
-      if (error) {
-        console.error('Supabase error:', error);
-        throw error;
-      }
-      
-      console.log('Fetched news:', data);
+      if (error) throw error;
       return data?.[0] || null;
     }
   });
 
   const fetchNewsMutation = useMutation({
     mutationFn: async () => {
-      console.log('Starting news fetch mutation...');
       const { data, error } = await supabase.functions.invoke('fetch-news', {
         body: { timestamp: new Date().toISOString() }
       });
       
-      if (error) {
-        console.error('Edge function error:', error);
-        throw error;
-      }
-      
-      console.log('Edge function response:', data);
+      if (error) throw error;
       return data;
     },
     onSuccess: () => {
-      console.log('News fetch successful, refetching data...');
       refetch();
       toast({
         title: "Success",
@@ -54,7 +42,6 @@ const NewsRoundup = () => {
       });
     },
     onError: (error) => {
-      console.error('Error fetching news:', error);
       toast({
         title: "Error",
         description: "Failed to fetch news. Please try again in a few minutes.",
@@ -69,17 +56,20 @@ const NewsRoundup = () => {
     const trends = parts[1]?.trim();
 
     return (
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <h3 className={`${textColor} font-semibold`}>Latest Headlines</h3>
           <div className="whitespace-pre-wrap font-sans">{headlines}</div>
         </div>
-        {trends && (
-          <div className="space-y-2">
-            <h3 className={`${textColor} font-semibold`}>Trending on Google</h3>
-            <div className="whitespace-pre-wrap font-sans">{trends}</div>
-          </div>
-        )}
+        <div className="space-y-4">
+          {trends && (
+            <div className="space-y-2">
+              <h3 className={`${textColor} font-semibold`}>Trending on Google</h3>
+              <div className="whitespace-pre-wrap font-sans">{trends}</div>
+            </div>
+          )}
+          <BoxOfficeChart />
+        </div>
       </div>
     );
   };
