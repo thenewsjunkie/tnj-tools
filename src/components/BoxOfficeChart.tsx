@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts";
 import { useTheme } from "@/components/theme/ThemeProvider";
+import { TrendingUp } from "lucide-react";
 
 const BoxOfficeChart = () => {
   const { theme } = useTheme();
@@ -52,31 +53,66 @@ const BoxOfficeChart = () => {
   const config = {
     data: {
       theme: {
-        light: theme === 'light' ? '#4338ca' : '#818cf8',
-        dark: theme === 'light' ? '#4338ca' : '#818cf8',
+        light: theme === 'light' ? '#8B5CF6' : '#9b87f5',
+        dark: theme === 'light' ? '#8B5CF6' : '#9b87f5',
       },
     },
   };
 
+  const formatCurrency = (value: number) => {
+    if (value >= 1000000) {
+      return `$${(value / 1000000).toFixed(1)}M`;
+    }
+    return `$${value.toLocaleString()}`;
+  };
+
   return (
-    <Card className="p-4 h-[300px]">
-      <h3 className="text-sm font-semibold mb-4">Weekend Box Office Top 10</h3>
-      <ChartContainer className="h-[250px]" config={config}>
+    <Card className="p-6 h-[300px]">
+      <div className="flex items-center gap-2 mb-4">
+        <TrendingUp className="w-4 h-4 text-primary" />
+        <h3 className="text-sm font-semibold">Weekend Box Office</h3>
+      </div>
+      <ChartContainer className="h-[230px]" config={config}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={chartData}
             layout="vertical"
-            margin={{ top: 0, right: 0, bottom: 0, left: 100 }}
+            margin={{ top: 5, right: 30, bottom: 5, left: 120 }}
           >
-            <XAxis type="number" tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`} />
+            <XAxis 
+              type="number" 
+              tickFormatter={formatCurrency}
+              fontSize={11}
+              tickMargin={8}
+            />
             <YAxis 
               type="category" 
               dataKey="name" 
-              width={90}
-              tickFormatter={(value) => value.length > 15 ? `${value.substring(0, 15)}...` : value}
+              width={110}
+              fontSize={11}
+              tickFormatter={(value) => 
+                value.length > 20 ? `${value.substring(0, 20)}...` : value
+              }
             />
-            <Bar dataKey="value" fill="var(--color-data)" />
-            <ChartTooltip content={<ChartTooltipContent />} />
+            <Bar 
+              dataKey="value" 
+              fill="var(--color-data)"
+              radius={[0, 4, 4, 0]}
+            />
+            <ChartTooltip 
+              content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const data = payload[0].payload;
+                return (
+                  <div className="bg-popover text-popover-foreground border border-border/50 rounded-lg p-2 shadow-lg">
+                    <p className="font-medium mb-1">{data.name}</p>
+                    <p className="text-muted-foreground">
+                      {formatCurrency(data.value)}
+                    </p>
+                  </div>
+                );
+              }}
+            />
           </BarChart>
         </ResponsiveContainer>
       </ChartContainer>
