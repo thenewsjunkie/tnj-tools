@@ -32,11 +32,21 @@ const NewsRoundup = () => {
 
   const fetchNewsMutation = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke('fetch-news');
-      if (error) throw error;
+      console.log('Starting news fetch mutation...');
+      const { data, error } = await supabase.functions.invoke('fetch-news', {
+        body: { timestamp: new Date().toISOString() }
+      });
+      
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
+      
+      console.log('Edge function response:', data);
       return data;
     },
     onSuccess: () => {
+      console.log('News fetch successful, refetching data...');
       refetch();
       toast({
         title: "Success",
@@ -47,7 +57,7 @@ const NewsRoundup = () => {
       console.error('Error fetching news:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch news: " + error.message,
+        description: "Failed to fetch news. Please try again in a few minutes.",
         variant: "destructive",
       });
     }
