@@ -5,11 +5,11 @@ import ShowNotes from "@/components/ShowNotes";
 import Reminders from "@/components/Reminders";
 import NewsRoundup from "@/components/NewsRoundup";
 import TNJAi from "@/components/AudioChat";
-import { LogOut } from "lucide-react";
+import { LogOut, Computer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { ThemeToggle } from "@/components/theme/ThemeProvider";
 import { useTheme } from "@/components/theme/ThemeProvider";
 
 const Admin = () => {
@@ -40,6 +40,13 @@ const Admin = () => {
           ← Home
         </Link>
         <div className="flex items-center gap-4">
+          <Link
+            to="/admin/ai"
+            className="flex items-center gap-2 text-foreground hover:text-primary transition-colors"
+          >
+            <Computer className="h-5 w-5" />
+            <span className="hidden sm:inline">GPT Engineer</span>
+          </Link>
           <ThemeToggle />
           <h1 className="text-foreground text-xl sm:text-2xl digital">TNJ Tools Admin</h1>
           <Button
