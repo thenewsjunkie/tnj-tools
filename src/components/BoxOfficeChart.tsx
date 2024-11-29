@@ -8,7 +8,7 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 const BoxOfficeChart = () => {
   const { theme } = useTheme();
   
-  const { data: boxOfficeData, isLoading } = useQuery({
+  const { data: boxOfficeData, isLoading, error } = useQuery({
     queryKey: ['box-office'],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke('fetch-news', {
@@ -20,7 +20,7 @@ const BoxOfficeChart = () => {
     }
   });
 
-  if (isLoading || !boxOfficeData?.length) {
+  if (isLoading) {
     return (
       <Card className="h-[300px] flex items-center justify-center text-muted-foreground">
         Loading box office data...
@@ -28,10 +28,25 @@ const BoxOfficeChart = () => {
     );
   }
 
-  // Format data for the chart
-  const chartData = boxOfficeData.slice(0, 10).map(movie => ({
+  if (error) {
+    return (
+      <Card className="h-[300px] flex items-center justify-center text-red-500">
+        Error loading box office data
+      </Card>
+    );
+  }
+
+  if (!boxOfficeData?.length) {
+    return (
+      <Card className="h-[300px] flex items-center justify-center text-muted-foreground">
+        No box office data available
+      </Card>
+    );
+  }
+
+  const chartData = boxOfficeData.map(movie => ({
     name: movie.title,
-    value: parseFloat(movie.earnings.replace(/[^0-9.-]+/g, '')),
+    value: movie.earnings,
   }));
 
   const config = {

@@ -19,17 +19,19 @@ serve(async (req) => {
       const response = await fetch('https://www.boxofficemojo.com/weekend/chart/');
       const html = await response.text();
       
-      // Simple parsing to extract box office data
+      // Parse box office data
       const boxOffice = [];
       const rows = html.match(/<tr[^>]*>.*?<\/tr>/gs);
       
       if (rows) {
         for (const row of rows.slice(1, 11)) { // Get top 10
-          const title = row.match(/>([^<]+)<\/a>/)?.[1] || '';
-          const earnings = row.match(/\$[\d,]+/)?.[0] || '';
+          const titleMatch = row.match(/>([^<]+)<\/a>/);
+          const earningsMatch = row.match(/\$([\d,]+)/);
           
-          if (title && earnings) {
-            boxOffice.push({ title, earnings });
+          if (titleMatch?.[1] && earningsMatch?.[1]) {
+            const title = titleMatch[1].trim();
+            const earnings = earningsMatch[1].replace(/,/g, '');
+            boxOffice.push({ title, earnings: parseFloat(earnings) });
           }
         }
       }
