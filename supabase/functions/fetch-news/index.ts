@@ -1,11 +1,80 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import { load } from "https://deno.land/x/cheerio@1.0.7/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+async function fetchWithTimeout(url: string, timeout = 5000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  try {
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
+    clearTimeout(id);
+    return response;
+  } catch (error) {
+    clearTimeout(id);
+    throw error;
+  }
+}
+
+async function scrapeHeadlines(url: string): Promise<string[]> {
+  try {
+    const response = await fetchWithTimeout(url);
+    if (!response.ok) {
+      console.error(`Failed to fetch ${url}: ${response.status}`);
+      return [];
+    }
+
+    const html = await response.text();
+    const $ = load(html);
+    const headlines: string[] = [];
+
+    // Different scraping logic based on the domain
+    if (url.includes('dailymail.co.uk')) {
+      $('.linkro-darkred').each((_, el) => {
+        headlines.push($(el).text().trim());
+      });
+    } else if (url.includes('nypost.com')) {
+      $('h2.story__headline, h3.story__headline').each((_, el) => {
+        headlines.push($(el).text().trim());
+      });
+    } else if (url.includes('businessinsider.com')) {
+      $('h2.headline').each((_, el) => {
+        headlines.push($(el).text().trim());
+      });
+    } else if (url.includes('brobible.com')) {
+      $('h2.entry-title').each((_, el) => {
+        headlines.push($(el).text().trim());
+      });
+    } else if (url.includes('dailydot.com')) {
+      $('h2.article-title').each((_, el) => {
+        headlines.push($(el).text().trim());
+      });
+    } else if (url.includes('drudgereport.com')) {
+      $('a').each((_, el) => {
+        headlines.push($(el).text().trim());
+      });
+    } else if (url.includes('mediaite.com')) {
+      $('.article-title').each((_, el) => {
+        headlines.push($(el).text().trim());
+      });
+    }
+
+    return headlines.filter(h => h.length > 0).slice(0, 5);
+  } catch (error) {
+    console.error(`Error scraping ${url}:`, error);
+    return [];
+  }
+}
 
 async function getTrendingTopics() {
   try {
@@ -42,7 +111,6 @@ async function getTrendingTopics() {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -55,7 +123,6 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY is not set');
     }
 
-    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
@@ -94,10 +161,25 @@ serve(async (req) => {
       }
     }
 
-    // Fetch trending topics
+    // Fetch active news sources
+    const { data: sources, error: sourcesError } = await supabase
+      .from('news_sources')
+      .select('url')
+      .eq('is_active', true);
+
+    if (sourcesError) {
+      throw new Error(`Failed to fetch news sources: ${sourcesError.message}`);
+    }
+
+    // Scrape headlines from all sources
+    console.log('Fetching headlines from sources...');
+    const headlinesPromises = sources.map(source => scrapeHeadlines(source.url));
+    const headlinesArrays = await Promise.all(headlinesPromises);
+    const allHeadlines = headlinesArrays.flat().filter(Boolean);
+
+    // Get trending topics
     console.log('Fetching trending topics...');
     const trends = await getTrendingTopics();
-    console.log('Trends fetched:', trends);
 
     // Get news summary from OpenAI
     console.log('Requesting OpenAI summary...');
@@ -112,11 +194,11 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a news curator. Create a brief news roundup of the most important current events. Format it as 4-5 short bullet points, each 1-2 sentences long. Focus on significant global and tech news.'
+            content: 'You are a news curator. Create a brief news roundup based on the headlines provided. Format it as 4-5 short bullet points, each 1-2 sentences long. Focus on the most significant stories.'
           },
           {
             role: 'user',
-            content: 'Please provide today\'s news roundup.'
+            content: `Here are today's headlines:\n${allHeadlines.join('\n')}\n\nPlease provide a concise news roundup.`
           }
         ],
         temperature: 0.7,
@@ -144,7 +226,8 @@ serve(async (req) => {
           content: formattedContent,
           sources: [
             { source: 'OpenAI GPT-3.5' },
-            { source: 'Google Trends' }
+            { source: 'Google Trends' },
+            ...sources.map(s => ({ source: new URL(s.url).hostname }))
           ]
         }
       ]);
