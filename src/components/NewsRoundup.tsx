@@ -18,7 +18,7 @@ interface NewsRoundupSources {
 interface NewsRoundupData {
   id: string;
   content: string;
-  sources: NewsRoundupSources | null;
+  sources: NewsRoundupSources;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -30,6 +30,7 @@ const NewsRoundup = () => {
   const { data: newsRoundup, isLoading, error, refetch } = useQuery({
     queryKey: ['news-roundup'],
     queryFn: async () => {
+      console.log('Fetching news roundup...');
       const { data, error } = await supabase
         .from('news_roundups')
         .select('*')
@@ -37,7 +38,8 @@ const NewsRoundup = () => {
         .limit(1);
 
       if (error) throw error;
-      return data?.[0] as NewsRoundupData | null;
+      console.log('News roundup data:', data?.[0]);
+      return data?.[0] as NewsRoundupData;
     }
   });
 
@@ -58,6 +60,7 @@ const NewsRoundup = () => {
       });
     },
     onError: (error) => {
+      console.error('Error fetching news:', error);
       toast({
         title: "Error",
         description: "Failed to fetch news. Please try again in a few minutes.",
@@ -99,19 +102,21 @@ const NewsRoundup = () => {
             </div>
           </div>
         )}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold border-b pb-2">Box Office Numbers</h3>
-          <div className="space-y-2 text-left">
-            {newsRoundup?.sources?.boxOffice?.map((movie, index) => (
-              <p key={index} className="leading-relaxed flex justify-between items-center">
-                <span className="font-medium">{movie.title}</span>
-                <span className="text-muted-foreground">
-                  ${movie.earnings.toLocaleString()}
-                </span>
-              </p>
-            ))}
+        {newsRoundup?.sources?.boxOffice && newsRoundup.sources.boxOffice.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold border-b pb-2">Box Office Numbers</h3>
+            <div className="space-y-2 text-left">
+              {newsRoundup.sources.boxOffice.map((movie, index) => (
+                <p key={index} className="leading-relaxed flex justify-between items-center">
+                  <span className="font-medium">{movie.title}</span>
+                  <span className="text-muted-foreground">
+                    ${movie.earnings.toLocaleString()}
+                  </span>
+                </p>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     );
   };

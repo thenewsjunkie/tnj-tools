@@ -10,6 +10,8 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Starting news fetch process...');
+    
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -20,6 +22,7 @@ serve(async (req) => {
       getTrendingTopics()
     ]);
 
+    console.log('Fetching box office data...');
     // Fetch box office data
     const response = await fetch('https://www.boxofficemojo.com/weekend/chart/');
     const html = await response.text();
@@ -29,6 +32,7 @@ serve(async (req) => {
     const rows = html.match(/<tr[^>]*>.*?<\/tr>/gs);
     
     if (rows) {
+      console.log(`Found ${rows.length} rows in box office data`);
       for (const row of rows.slice(1, 11)) { // Get top 10
         const titleMatch = row.match(/>([^<]+)<\/a>/);
         const earningsMatch = row.match(/\$([\d,]+)/);
@@ -41,8 +45,11 @@ serve(async (req) => {
       }
     }
 
+    console.log('Box office data:', boxOffice);
+
     const content = `${headlines}\n\n🔍 Trending on Google:\n${googleTrends.join('\n')}`;
 
+    console.log('Inserting data into Supabase...');
     // Insert data with sources including box office data
     const { error } = await supabase
       .from('news_roundups')
@@ -51,8 +58,12 @@ serve(async (req) => {
         sources: { boxOffice }
       }]);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error inserting data:', error);
+      throw error;
+    }
 
+    console.log('Successfully inserted news roundup data');
     return new Response(
       JSON.stringify({ success: true }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
