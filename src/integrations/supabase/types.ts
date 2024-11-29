@@ -36,6 +36,36 @@ export type Database = {
         }
         Relationships: []
       }
+      code_implementations: {
+        Row: {
+          code: string
+          created_at: string | null
+          filename: string
+          id: string
+          prompt: string
+          status: string | null
+          target_page: string
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          filename: string
+          id?: string
+          prompt: string
+          status?: string | null
+          target_page: string
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          filename?: string
+          id?: string
+          prompt?: string
+          status?: string | null
+          target_page?: string
+        }
+        Relationships: []
+      }
       interview_requests: {
         Row: {
           conversation_history: Json | null

@@ -42,7 +42,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }
@@ -65,6 +65,7 @@ serve(async (req) => {
       while ((match = codeBlockRegex.exec(content)) !== null) {
         const filename = match[1].trim();
         const code = match[2].trim();
+        
         if (filename && code) {
           // Store the implementation in Supabase
           const { data: implData, error: implError } = await supabase
@@ -74,6 +75,7 @@ serve(async (req) => {
               code,
               target_page: targetPage,
               prompt,
+              status: 'pending'
             })
             .select()
             .single();
