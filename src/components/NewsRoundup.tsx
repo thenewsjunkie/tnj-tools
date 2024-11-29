@@ -2,10 +2,12 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Newspaper, RefreshCw, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
+import { Newspaper, RefreshCw } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useTheme } from "@/components/theme/ThemeProvider";
-import { useState } from "react";
+import Headlines from "./news/Headlines";
+import Trends from "./news/Trends";
+import BoxOffice from "./news/BoxOffice";
 
 interface BoxOfficeMovie {
   title: string;
@@ -27,7 +29,6 @@ interface NewsRoundupData {
 const NewsRoundup = () => {
   const { toast } = useToast();
   const { theme } = useTheme();
-  const [showAllHeadlines, setShowAllHeadlines] = useState(false);
   
   const { data: newsRoundup, isLoading, error, refetch } = useQuery({
     queryKey: ['news-roundup'],
@@ -79,7 +80,7 @@ const NewsRoundup = () => {
     // Get trends section (second part)
     const trendsSection = sections[1] || '';
 
-    // Process headlines and limit to 10
+    // Process headlines
     const headlines = headlinesSection
       .split('\n')
       .map(line => {
@@ -98,72 +99,12 @@ const NewsRoundup = () => {
       .map(line => line.trim())
       .filter(line => line.length > 0);
 
-    const visibleHeadlines = showAllHeadlines ? headlines : headlines.slice(0, 3);
-
     return (
       <div className="grid gap-8">
-        {headlines.length > 0 && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold border-b pb-2">Latest Headlines</h3>
-            <div className="space-y-2 text-left">
-              {visibleHeadlines.map((headline, index) => (
-                <p key={index} className="leading-relaxed flex items-center justify-between group">
-                  <span>{headline.text}</span>
-                  <a 
-                    href={headline.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-muted-foreground hover:text-primary transition-colors ml-2 opacity-0 group-hover:opacity-100"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                </p>
-              ))}
-            </div>
-            {headlines.length > 3 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowAllHeadlines(!showAllHeadlines)}
-                className="w-full flex items-center gap-2 text-muted-foreground hover:text-primary"
-              >
-                {showAllHeadlines ? (
-                  <>Show Less <ChevronUp className="h-4 w-4" /></>
-                ) : (
-                  <>Show More <ChevronDown className="h-4 w-4" /></>
-                )}
-              </Button>
-            )}
-          </div>
-        )}
-        
-        {trends.length > 0 && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold border-b pb-2">Trending on Google</h3>
-            <div className="space-y-2 text-left">
-              {trends.map((trend, index) => (
-                <p key={index} className="leading-relaxed">
-                  {trend}
-                </p>
-              ))}
-            </div>
-          </div>
-        )}
-        
-        {newsRoundup?.sources?.boxOffice && newsRoundup.sources.boxOffice.length > 0 && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold border-b pb-2">Box Office Numbers</h3>
-            <div className="space-y-2 text-left">
-              {newsRoundup.sources.boxOffice.map((movie, index) => (
-                <p key={index} className="leading-relaxed flex justify-between items-center">
-                  <span className="font-medium">{movie.title}</span>
-                  <span className="text-muted-foreground">
-                    ${movie.earnings.toLocaleString()}
-                  </span>
-                </p>
-              ))}
-            </div>
-          </div>
+        {headlines.length > 0 && <Headlines headlines={headlines} />}
+        {trends.length > 0 && <Trends trends={trends} />}
+        {newsRoundup?.sources?.boxOffice && (
+          <BoxOffice movies={newsRoundup.sources.boxOffice} />
         )}
       </div>
     );
