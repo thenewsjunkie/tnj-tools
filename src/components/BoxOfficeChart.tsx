@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { TrendingUp } from "lucide-react";
@@ -23,7 +23,7 @@ const BoxOfficeChart = () => {
 
   if (isLoading) {
     return (
-      <Card className="h-[300px] flex items-center justify-center text-muted-foreground">
+      <Card className="h-[300px] w-full flex items-center justify-center text-muted-foreground">
         Loading box office data...
       </Card>
     );
@@ -31,7 +31,7 @@ const BoxOfficeChart = () => {
 
   if (error) {
     return (
-      <Card className="h-[300px] flex items-center justify-center text-red-500">
+      <Card className="h-[300px] w-full flex items-center justify-center text-red-500">
         Error loading box office data
       </Card>
     );
@@ -39,7 +39,7 @@ const BoxOfficeChart = () => {
 
   if (!boxOfficeData?.length) {
     return (
-      <Card className="h-[300px] flex items-center justify-center text-muted-foreground">
+      <Card className="h-[300px] w-full flex items-center justify-center text-muted-foreground">
         No box office data available
       </Card>
     );
@@ -67,12 +67,12 @@ const BoxOfficeChart = () => {
   };
 
   return (
-    <Card className="p-6 h-[300px]">
+    <Card className="p-6 h-[300px] w-full">
       <div className="flex items-center gap-2 mb-4">
         <TrendingUp className="w-4 h-4 text-primary" />
         <h3 className="text-sm font-semibold">Weekend Box Office</h3>
       </div>
-      <ChartContainer className="h-[230px]" config={config}>
+      <ChartContainer className="h-[230px] w-full" config={config}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={chartData}
