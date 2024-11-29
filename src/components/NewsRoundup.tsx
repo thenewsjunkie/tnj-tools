@@ -70,29 +70,31 @@ const NewsRoundup = () => {
   });
 
   const formatContent = (content: string) => {
-    const parts = content.split('🔍 Trending on Google:');
-    const headlines = parts[0].trim();
-    const trends = parts[1]?.trim();
-
+    // Split content into headlines and trends sections
+    const [headlines = '', trendsSection = ''] = content.split('🔍 Trending on Google:');
+    
     return (
       <div className="grid gap-8">
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold border-b pb-2">Latest Headlines</h3>
-          <div className="space-y-2 text-left">
-            {headlines.split('\n').map((headline, index) => (
-              headline.trim() && (
-                <p key={index} className="leading-relaxed">
-                  {headline.trim()}
-                </p>
-              )
-            ))}
+        {headlines.trim() && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold border-b pb-2">Latest Headlines</h3>
+            <div className="space-y-2 text-left">
+              {headlines.trim().split('\n').map((headline, index) => (
+                headline.trim() && (
+                  <p key={index} className="leading-relaxed">
+                    {headline.trim()}
+                  </p>
+                )
+              ))}
+            </div>
           </div>
-        </div>
-        {trends && (
+        )}
+        
+        {trendsSection.trim() && (
           <div className="space-y-4">
             <h3 className="text-lg font-semibold border-b pb-2">Trending on Google</h3>
             <div className="space-y-2 text-left">
-              {trends.split('\n').map((trend, index) => (
+              {trendsSection.trim().split('\n').map((trend, index) => (
                 trend.trim() && (
                   <p key={index} className="leading-relaxed">
                     {trend.trim()}
@@ -102,6 +104,7 @@ const NewsRoundup = () => {
             </div>
           </div>
         )}
+        
         {newsRoundup?.sources?.boxOffice && newsRoundup.sources.boxOffice.length > 0 && (
           <div className="space-y-4">
             <h3 className="text-lg font-semibold border-b pb-2">Box Office Numbers</h3>
