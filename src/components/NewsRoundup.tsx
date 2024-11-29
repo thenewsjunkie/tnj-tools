@@ -2,7 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Newspaper, RefreshCw } from "lucide-react";
+import { Newspaper, RefreshCw, ExternalLink } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useTheme } from "@/components/theme/ThemeProvider";
 
@@ -68,36 +68,33 @@ const NewsRoundup = () => {
   });
 
   const formatContent = (content: string) => {
-    console.log('Raw content:', content);
-
     // Split content into sections
     const sections = content.split('🔍 Trending on Google:');
-    console.log('Split sections:', sections);
 
     // Get headlines section (first part)
     const headlinesSection = sections[0] || '';
-    console.log('Headlines section:', headlinesSection);
 
     // Get trends section (second part)
     const trendsSection = sections[1] || '';
-    console.log('Trends section:', trendsSection);
 
-    // Process headlines
+    // Process headlines and limit to 10
     const headlines = headlinesSection
       .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0);
-    console.log('Processed headlines:', headlines);
+      .map(line => {
+        const parts = line.split(' - ');
+        return {
+          text: parts[0].trim(),
+          url: parts[1]?.trim() || '#'
+        };
+      })
+      .filter(headline => headline.text.length > 0 && headline.url !== '#')
+      .slice(0, 10);
 
     // Process trends
     const trends = trendsSection
       .split('\n')
       .map(line => line.trim())
       .filter(line => line.length > 0);
-    console.log('Processed trends:', trends);
-
-    // Log box office data
-    console.log('Box office data:', newsRoundup?.sources?.boxOffice);
 
     return (
       <div className="grid gap-8">
@@ -106,8 +103,16 @@ const NewsRoundup = () => {
             <h3 className="text-lg font-semibold border-b pb-2">Latest Headlines</h3>
             <div className="space-y-2 text-left">
               {headlines.map((headline, index) => (
-                <p key={index} className="leading-relaxed">
-                  {headline}
+                <p key={index} className="leading-relaxed flex items-center justify-between group">
+                  <span>{headline.text}</span>
+                  <a 
+                    href={headline.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-muted-foreground hover:text-primary transition-colors ml-2 opacity-0 group-hover:opacity-100"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
                 </p>
               ))}
             </div>
