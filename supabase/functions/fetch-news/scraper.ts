@@ -45,14 +45,26 @@ export async function scrapeHeadlines(): Promise<string> {
       const headlines: string[] = [];
 
       if (source.url.includes('dailymail.co.uk')) {
-        doc.querySelectorAll('.linkro-darkred').forEach(el => 
-          headlines.push(el.textContent?.trim() || ''));
+        doc.querySelectorAll('.linkro-darkred').forEach(el => {
+          const text = el.textContent?.trim();
+          if (text) {
+            headlines.push(`${text} - ${source.url}`);
+          }
+        });
       } else if (source.url.includes('nypost.com')) {
-        doc.querySelectorAll('h2.story__headline, h3.story__headline').forEach(el => 
-          headlines.push(el.textContent?.trim() || ''));
+        doc.querySelectorAll('h2.story__headline, h3.story__headline').forEach(el => {
+          const text = el.textContent?.trim();
+          if (text) {
+            headlines.push(`${text} - ${source.url}`);
+          }
+        });
       } else if (source.url.includes('businessinsider.com')) {
-        doc.querySelectorAll('h2.headline').forEach(el => 
-          headlines.push(el.textContent?.trim() || ''));
+        doc.querySelectorAll('h2.headline').forEach(el => {
+          const text = el.textContent?.trim();
+          if (text) {
+            headlines.push(`${text} - ${source.url}`);
+          }
+        });
       }
 
       allHeadlines = [...allHeadlines, ...headlines.slice(0, 3)];
@@ -62,6 +74,7 @@ export async function scrapeHeadlines(): Promise<string> {
     }
   }
 
+  // Filter out empty headlines and join with newlines
   return allHeadlines
     .filter(h => h.length > 0)
     .slice(0, 5)

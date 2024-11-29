@@ -79,16 +79,11 @@ const NewsRoundup = () => {
   });
 
   const formatContent = (content: string) => {
-    // Add debug logs
-    console.log('Raw content:', content);
-    
     // Split content into sections
     const sections = content.split('🔍 Trending on Google:');
-    console.log('Sections:', sections);
 
     // Get headlines section (first part)
     const headlinesSection = sections[0] || '';
-    console.log('Headlines section:', headlinesSection);
 
     // Get trends section (second part)
     const trendsSection = sections[1] || '';
@@ -97,35 +92,17 @@ const NewsRoundup = () => {
     const headlines = headlinesSection
       .split('\n')
       .map(line => {
-        console.log('Processing line:', line);
-        // Split by the last occurrence of " - "
-        const lastDashIndex = line.lastIndexOf(' - ');
-        if (lastDashIndex === -1) {
-          console.log('No dash found in line');
-          return null;
-        }
-
-        const text = line.substring(0, lastDashIndex).trim();
-        const url = line.substring(lastDashIndex + 3).trim();
-        console.log('Extracted text:', text);
-        console.log('Extracted URL:', url);
-
-        // Validate URL format
-        try {
-          new URL(url);
-          return { text, url };
-        } catch {
-          console.log('Invalid URL format');
-          return null;
-        }
+        const text = line.substring(0, line.lastIndexOf(' - ')).trim();
+        const url = line.substring(line.lastIndexOf(' - ') + 3).trim();
+        
+        if (!text || !url) return null;
+        return { text, url };
       })
-      .filter((headline): headline is { text: string; url: string } => {
-        const isValid = headline !== null && headline.text.length > 0 && headline.url.length > 0;
-        console.log('Headline valid?', isValid, headline);
-        return isValid;
-      });
-
-    console.log('Final headlines:', headlines);
+      .filter((headline): headline is { text: string; url: string } => 
+        headline !== null && 
+        headline.text.length > 0 && 
+        headline.url.length > 0
+      );
 
     // Process trends
     const trends = trendsSection
