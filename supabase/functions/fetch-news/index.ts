@@ -1,11 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from '@supabase/supabase-js';
-import { scrapeNews } from "./scraper.ts";
-import { getTrends } from "./trends.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 import { corsHeaders } from "./cors.ts";
-
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+import { scrapeHeadlines } from "./scraper.ts";
+import { getTrendingTopics } from "./trends.ts";
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -13,6 +10,8 @@ serve(async (req) => {
   }
 
   try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const { type } = await req.json();
 
@@ -42,12 +41,12 @@ serve(async (req) => {
     }
 
     // Regular news fetch logic
-    const [news, trends] = await Promise.all([
-      scrapeNews(),
-      getTrends()
+    const [headlines, { googleTrends }] = await Promise.all([
+      scrapeHeadlines(),
+      getTrendingTopics()
     ]);
 
-    const content = `${news}\n\n🔍 Trending on Google:\n${trends}`;
+    const content = `${headlines}\n\n🔍 Trending on Google:\n${googleTrends.join('\n')}`;
 
     const { error } = await supabase
       .from('news_roundups')

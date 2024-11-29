@@ -61,9 +61,7 @@ const BoxOfficeChart = () => {
               tickFormatter={(value) => value.length > 15 ? `${value.substring(0, 15)}...` : value}
             />
             <Bar dataKey="value" fill="var(--color-data)" />
-            <ChartTooltip>
-              <ChartTooltipContent />
-            </ChartTooltip>
+            <ChartTooltip content={<ChartTooltipContent />} />
           </BarChart>
         </ResponsiveContainer>
       </ChartContainer>
