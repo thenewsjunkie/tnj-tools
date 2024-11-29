@@ -88,17 +88,28 @@ const NewsRoundup = () => {
     // Get trends section (second part)
     const trendsSection = sections[1] || '';
 
-    // Process headlines
+    // Process headlines - now properly extracting URLs
     const headlines = headlinesSection
       .split('\n')
       .map(line => {
-        const parts = line.split(' - ');
+        // Look for URLs in the text
+        const urlMatch = line.match(/\bhttps?:\/\/\S+/gi);
+        if (!urlMatch) return null;
+
+        // Get the URL and remove it from the text
+        const url = urlMatch[0];
+        const text = line.replace(url, '').replace(/\s*-\s*$/, '').trim();
+
         return {
-          text: parts[0].trim(),
-          url: parts[1]?.trim() || '#'
+          text,
+          url
         };
       })
-      .filter(headline => headline.text.length > 0 && headline.url !== '#');
+      .filter((headline): headline is { text: string; url: string } => 
+        headline !== null && 
+        headline.text.length > 0 && 
+        headline.url.length > 0
+      );
 
     // Process trends
     const trends = trendsSection
