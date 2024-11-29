@@ -6,28 +6,41 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { supabase } from "@/integrations/supabase/client";
 
 const AI = () => {
   const [prompt, setPrompt] = useState("");
   const [targetPage, setTargetPage] = useState("");
+  const [suggestions, setSuggestions] = useState("");
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
+    setSuggestions("");
 
     try {
-      // Here we would integrate with GPT Engineer
-      // For now, show a toast message
-      toast({
-        title: "Feature Coming Soon",
-        description: "GPT Engineer integration is under development.",
+      const { data, error } = await supabase.functions.invoke('gpt-engineer', {
+        body: { targetPage, prompt }
       });
+
+      if (error) throw error;
+
+      if (data.success) {
+        setSuggestions(data.suggestions);
+        toast({
+          title: "Analysis Complete",
+          description: "GPT Engineer has analyzed your request.",
+        });
+      } else {
+        throw new Error('Failed to process request');
+      }
     } catch (error) {
+      console.error('Error:', error);
       toast({
         title: "Error",
-        description: "Failed to process request",
+        description: "Failed to process request. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -50,7 +63,7 @@ const AI = () => {
         </div>
       </nav>
 
-      <div className="max-w-2xl mx-auto space-y-8">
+      <div className="max-w-4xl mx-auto space-y-8">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <label htmlFor="targetPage" className="block text-sm font-medium">
@@ -84,16 +97,25 @@ const AI = () => {
             className="w-full"
             disabled={isProcessing}
           >
-            {isProcessing ? "Processing..." : "Generate Changes"}
+            {isProcessing ? "Processing..." : "Analyze Changes"}
           </Button>
         </form>
+
+        {suggestions && (
+          <div className="mt-8 p-6 bg-card rounded-lg border">
+            <h2 className="text-lg font-semibold mb-4">Analysis Results</h2>
+            <pre className="whitespace-pre-wrap text-sm">
+              {suggestions}
+            </pre>
+          </div>
+        )}
 
         <div className="text-sm text-muted-foreground">
           <h2 className="font-medium mb-2">How to use:</h2>
           <ol className="list-decimal list-inside space-y-1">
             <li>Enter the target page URL (e.g., /index, /admin)</li>
             <li>Describe the changes you want to make</li>
-            <li>Click "Generate Changes" to process your request</li>
+            <li>Review the AI's analysis and suggestions</li>
           </ol>
         </div>
       </div>
