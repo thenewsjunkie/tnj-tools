@@ -91,21 +91,19 @@ const NewsRoundup = () => {
     // Process headlines
     const headlines = headlinesSection
       .split('\n')
+      .filter(line => line.trim().length > 0)
       .map(line => {
-        // Split by the last occurrence of " - "
-        const lastDashIndex = line.lastIndexOf(' - ');
-        if (lastDashIndex === -1) return null;
+        // Extract URL from the line
+        const urlMatch = line.match(/https?:\/\/[^\s]+$/);
+        if (!urlMatch) return null;
 
-        const text = line.substring(0, lastDashIndex).trim();
-        const url = line.substring(lastDashIndex + 3).trim();
+        const url = urlMatch[0];
+        // Get text by removing the URL and any trailing separators
+        const text = line.replace(url, '').replace(/[-|]+$/, '').trim();
 
-        // Validate URL format
-        try {
-          new URL(url);
-          return { text, url };
-        } catch {
-          return null;
-        }
+        if (!text || !url) return null;
+
+        return { text, url };
       })
       .filter((headline): headline is { text: string; url: string } => 
         headline !== null && 
