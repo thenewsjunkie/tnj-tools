@@ -8,11 +8,16 @@ import { useToast } from "@/components/ui/use-toast";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 
+interface Implementation {
+  filename: string;
+  code: string;
+}
+
 const AI = () => {
   const [prompt, setPrompt] = useState("");
   const [targetPage, setTargetPage] = useState("");
   const [suggestions, setSuggestions] = useState("");
-  const [implementation, setImplementation] = useState<string | null>(null);
+  const [implementations, setImplementations] = useState<Implementation[]>([]);
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -20,7 +25,7 @@ const AI = () => {
     e.preventDefault();
     setIsProcessing(true);
     setSuggestions("");
-    setImplementation(null);
+    setImplementations([]);
 
     try {
       const { data, error } = await supabase.functions.invoke('gpt-engineer', {
@@ -31,13 +36,13 @@ const AI = () => {
 
       if (data.success) {
         setSuggestions(data.suggestions);
-        if (shouldImplement && data.implementation) {
-          setImplementation(data.implementation);
+        if (shouldImplement && data.implementations) {
+          setImplementations(data.implementations);
         }
         toast({
           title: shouldImplement ? "Implementation Complete" : "Analysis Complete",
           description: shouldImplement 
-            ? "GPT Engineer has analyzed and implemented your request."
+            ? "GPT Engineer has analyzed and provided implementation code."
             : "GPT Engineer has analyzed your request.",
         });
       } else {
@@ -125,17 +130,22 @@ const AI = () => {
           <div className="mt-8 space-y-6">
             <div className="p-6 bg-card rounded-lg border">
               <h2 className="text-lg font-semibold mb-4">Analysis Results</h2>
-              <pre className="whitespace-pre-wrap text-sm">
+              <div className="whitespace-pre-wrap text-sm">
                 {suggestions}
-              </pre>
+              </div>
             </div>
 
-            {implementation && (
-              <div className="p-6 bg-card rounded-lg border">
-                <h2 className="text-lg font-semibold mb-4">Implementation Code</h2>
-                <pre className="whitespace-pre-wrap text-sm overflow-x-auto">
-                  {implementation}
-                </pre>
+            {implementations.length > 0 && (
+              <div className="space-y-6">
+                <h2 className="text-lg font-semibold">Implementation Code</h2>
+                {implementations.map((impl, index) => (
+                  <div key={index} className="p-6 bg-card rounded-lg border">
+                    <h3 className="text-md font-medium mb-4">{impl.filename}</h3>
+                    <pre className="whitespace-pre-wrap text-sm overflow-x-auto bg-muted p-4 rounded">
+                      {impl.code}
+                    </pre>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -148,6 +158,7 @@ const AI = () => {
             <li>Describe the changes you want to make</li>
             <li>Click "Analyze Changes" to review suggestions</li>
             <li>Or click "Analyze & Implement" to get implementation code</li>
+            <li>Copy the implementation code for each file and apply the changes</li>
           </ol>
         </div>
       </div>

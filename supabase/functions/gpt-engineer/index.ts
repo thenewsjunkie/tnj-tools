@@ -20,7 +20,12 @@ serve(async (req) => {
     const { targetPage, prompt, implement = false } = await req.json();
 
     const systemPrompt = implement 
-      ? `You are a React developer assistant. Analyze and implement the following changes to the ${targetPage} page. Provide the complete implementation code and any necessary instructions.`
+      ? `You are a React developer assistant. Analyze and implement the following changes to the ${targetPage} page. 
+         Your response should be structured as follows:
+         1. First, provide a brief analysis of the changes needed
+         2. Then, for each file that needs to be modified, provide the complete file contents in a code block starting with \`\`\`filename.tsx
+         Make sure to include the full path of each file relative to the src directory.
+         Only include files that actually need changes.`
       : `You are a React developer assistant. Analyze the following request for changes to the ${targetPage} page and provide detailed suggestions for implementation.`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -46,30 +51,37 @@ serve(async (req) => {
 
     // Parse implementation code if requested
     let suggestions = content;
-    let implementation = null;
+    let implementations = [];
 
     if (implement) {
-      // Extract code blocks from the response
-      const codeBlockRegex = /```(?:jsx?|tsx?)\n([\s\S]*?)```/g;
-      const codeBlocks = [];
+      // Extract code blocks with filenames
+      const codeBlockRegex = /```(.*?)\n([\s\S]*?)```/g;
       let match;
       
+      // Get the analysis part (everything before the first code block)
+      suggestions = content.split(/```.*?\n/)[0].trim();
+      
+      // Extract all code blocks with their filenames
       while ((match = codeBlockRegex.exec(content)) !== null) {
-        codeBlocks.push(match[1]);
+        const filename = match[1].trim();
+        const code = match[2].trim();
+        if (filename && code) {
+          implementations.push({
+            filename,
+            code
+          });
+        }
       }
-
-      implementation = codeBlocks.length > 0 ? codeBlocks.join('\n\n') : null;
-      suggestions = content.replace(codeBlockRegex, '').trim();
     }
 
     console.log('GPT Engineer request:', { targetPage, prompt, implement });
-    console.log('GPT Engineer response:', { suggestions, implementation });
+    console.log('GPT Engineer response:', { suggestions, implementations });
 
     return new Response(
       JSON.stringify({ 
         success: true,
         suggestions,
-        implementation,
+        implementations,
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
