@@ -53,15 +53,19 @@ const Admin = () => {
         </div>
       </nav>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 max-w-7xl mx-auto">
-        <div className="md:col-span-2">
-          <NewsRoundup />
+      <div className="space-y-8 max-w-7xl mx-auto">
+        <div className="w-full">
+          <TNJAi />
         </div>
-        <TNJAi />
-        <Reminders />
-        <Stopwatch />
-        <TNJLinks />
-        <ShowNotes />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+          <div className="md:col-span-2">
+            <NewsRoundup />
+          </div>
+          <Reminders />
+          <Stopwatch />
+          <TNJLinks />
+          <ShowNotes />
+        </div>
       </div>
     </div>
   );
