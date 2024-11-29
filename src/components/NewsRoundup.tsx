@@ -68,20 +68,36 @@ const NewsRoundup = () => {
   });
 
   const formatContent = (content: string) => {
-    // First, split the content at the trends marker
-    const [headlinesContent = '', trendsContent = ''] = content.split('🔍 Trending on Google:');
-    
-    // Process headlines - remove empty lines and trim each line
-    const headlines = headlinesContent
-      .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0 && !line.includes('🔍 Trending on Google:'));
-    
-    // Process trends - remove empty lines and trim each line
-    const trends = trendsContent
+    console.log('Raw content:', content);
+
+    // Split content into sections
+    const sections = content.split('🔍 Trending on Google:');
+    console.log('Split sections:', sections);
+
+    // Get headlines section (first part)
+    const headlinesSection = sections[0] || '';
+    console.log('Headlines section:', headlinesSection);
+
+    // Get trends section (second part)
+    const trendsSection = sections[1] || '';
+    console.log('Trends section:', trendsSection);
+
+    // Process headlines
+    const headlines = headlinesSection
       .split('\n')
       .map(line => line.trim())
       .filter(line => line.length > 0);
+    console.log('Processed headlines:', headlines);
+
+    // Process trends
+    const trends = trendsSection
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0);
+    console.log('Processed trends:', trends);
+
+    // Log box office data
+    console.log('Box office data:', newsRoundup?.sources?.boxOffice);
 
     return (
       <div className="grid gap-8">
