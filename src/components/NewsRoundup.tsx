@@ -53,6 +53,27 @@ const NewsRoundup = () => {
     }
   });
 
+  const formatContent = (content: string) => {
+    const parts = content.split('🔍 Trending on Google:');
+    const headlines = parts[0].trim();
+    const trends = parts[1]?.trim();
+
+    return (
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <h3 className={`${textColor} font-semibold`}>Latest Headlines</h3>
+          <div className="whitespace-pre-wrap font-sans">{headlines}</div>
+        </div>
+        {trends && (
+          <div className="space-y-2">
+            <h3 className={`${textColor} font-semibold`}>Trending on Google</h3>
+            <div className="whitespace-pre-wrap font-sans">{trends}</div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const bgColor = theme === 'light' ? 'bg-white' : 'bg-black/50';
   const textColor = theme === 'light' ? 'text-black' : 'text-white';
   const borderColor = theme === 'light' ? 'border-gray-200' : 'border-white/10';
@@ -85,7 +106,7 @@ const NewsRoundup = () => {
           </div>
         ) : newsRoundup ? (
           <div className={textColor}>
-            <pre className="whitespace-pre-wrap font-sans">{newsRoundup.content}</pre>
+            {formatContent(newsRoundup.content)}
           </div>
         ) : (
           <div className={`${theme === 'light' ? 'text-black/60' : 'text-white/60'} text-center py-4`}>
