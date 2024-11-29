@@ -34,12 +34,13 @@ serve(async (req) => {
     if (rows) {
       console.log(`Found ${rows.length} rows in box office data`);
       for (const row of rows.slice(1, 11)) { // Get top 10
-        const titleMatch = row.match(/>([^<]+)<\/a>/);
+        const titleMatch = row.match(/title\/.*?>([^<]+)<\/a>/);
         const earningsMatch = row.match(/\$([\d,]+)/);
         
         if (titleMatch?.[1] && earningsMatch?.[1]) {
           const title = titleMatch[1].trim();
           const earnings = parseInt(earningsMatch[1].replace(/,/g, ''), 10);
+          console.log(`Parsed movie: ${title} - $${earnings}`);
           boxOffice.push({ title, earnings });
         }
       }
@@ -51,21 +52,22 @@ serve(async (req) => {
 
     console.log('Inserting data into Supabase...');
     // Insert data with sources including box office data
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('news_roundups')
       .insert([{ 
         content,
-        sources: { boxOffice }
-      }]);
+        sources: { boxOffice: boxOffice }
+      }])
+      .select();
 
     if (error) {
       console.error('Error inserting data:', error);
       throw error;
     }
 
-    console.log('Successfully inserted news roundup data');
+    console.log('Successfully inserted news roundup data:', data);
     return new Response(
-      JSON.stringify({ success: true }),
+      JSON.stringify({ success: true, data }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
