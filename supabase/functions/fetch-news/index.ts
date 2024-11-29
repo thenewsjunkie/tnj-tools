@@ -23,53 +23,78 @@ serve(async (req) => {
     ]);
 
     console.log('Fetching box office data...');
-    // Fetch box office data
-    const response = await fetch('https://www.boxofficemojo.com/weekend/chart/');
-    const html = await response.text();
-    
-    // Parse box office data
-    const boxOffice = [];
-    const rows = html.match(/<tr[^>]*>.*?<\/tr>/gs);
-    
-    if (rows) {
-      console.log(`Found ${rows.length} rows in box office data`);
-      for (const row of rows.slice(1, 11)) { // Get top 10
-        const titleMatch = row.match(/title\/.*?>([^<]+)<\/a>/);
-        const earningsMatch = row.match(/\$([\d,]+)/);
+    // Fetch box office data with error handling
+    try {
+      const response = await fetch('https://www.boxofficemojo.com/weekend/chart/', {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const html = await response.text();
+      const boxOffice = [];
+      
+      // Use more specific regex patterns
+      const moviePattern = /<tr.*?<a[^>]*?href="\/title\/[^"]*?"[^>]*?>([^<]+)<\/a>.*?\$([\d,]+)/gs;
+      let match;
+      let count = 0;
+      
+      while ((match = moviePattern.exec(html)) !== null && count < 10) {
+        const title = match[1].trim();
+        const earnings = parseInt(match[2].replace(/,/g, ''), 10);
         
-        if (titleMatch?.[1] && earningsMatch?.[1]) {
-          const title = titleMatch[1].trim();
-          const earnings = parseInt(earningsMatch[1].replace(/,/g, ''), 10);
+        if (title && !isNaN(earnings)) {
           console.log(`Parsed movie: ${title} - $${earnings}`);
           boxOffice.push({ title, earnings });
+          count++;
         }
       }
+
+      console.log('Box office data:', boxOffice);
+
+      const content = `${headlines}\n\n🔍 Trending on Google:\n${googleTrends.join('\n')}`;
+
+      console.log('Inserting data into Supabase...');
+      const { data, error } = await supabase
+        .from('news_roundups')
+        .insert([{ 
+          content,
+          sources: { boxOffice }
+        }])
+        .select();
+
+      if (error) throw error;
+
+      console.log('Successfully inserted news roundup data:', data);
+      return new Response(
+        JSON.stringify({ success: true, data }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+
+    } catch (error) {
+      console.error('Error fetching box office data:', error);
+      // Continue with empty box office data rather than failing completely
+      const content = `${headlines}\n\n🔍 Trending on Google:\n${googleTrends.join('\n')}`;
+      
+      const { data, error: dbError } = await supabase
+        .from('news_roundups')
+        .insert([{ 
+          content,
+          sources: { boxOffice: [] }
+        }])
+        .select();
+
+      if (dbError) throw dbError;
+
+      return new Response(
+        JSON.stringify({ success: true, data }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
-
-    console.log('Box office data:', boxOffice);
-
-    const content = `${headlines}\n\n🔍 Trending on Google:\n${googleTrends.join('\n')}`;
-
-    console.log('Inserting data into Supabase...');
-    // Insert data with sources including box office data
-    const { data, error } = await supabase
-      .from('news_roundups')
-      .insert([{ 
-        content,
-        sources: { boxOffice: boxOffice }
-      }])
-      .select();
-
-    if (error) {
-      console.error('Error inserting data:', error);
-      throw error;
-    }
-
-    console.log('Successfully inserted news roundup data:', data);
-    return new Response(
-      JSON.stringify({ success: true, data }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
 
   } catch (error) {
     console.error('Error:', error);

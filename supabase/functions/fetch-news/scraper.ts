@@ -1,4 +1,5 @@
 import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts";
+import { NewsSource } from "./types.ts";
 
 export async function fetchWithTimeout(url: string, timeout = 5000) {
   const controller = new AbortController();
@@ -18,47 +19,51 @@ export async function fetchWithTimeout(url: string, timeout = 5000) {
   }
 }
 
-export async function scrapeHeadlines(url: string): Promise<string[]> {
-  try {
-    const response = await fetchWithTimeout(url);
-    if (!response.ok) {
-      console.error(`Failed to fetch ${url}: ${response.status}`);
-      return [];
+const NEWS_SOURCES: NewsSource[] = [
+  { url: 'https://www.dailymail.co.uk/news/headlines/index.html' },
+  { url: 'https://nypost.com' },
+  { url: 'https://www.businessinsider.com' }
+];
+
+export async function scrapeHeadlines(): Promise<string> {
+  let allHeadlines: string[] = [];
+  
+  for (const source of NEWS_SOURCES) {
+    try {
+      console.log(`Fetching headlines from ${source.url}`);
+      const response = await fetchWithTimeout(source.url);
+      if (!response.ok) {
+        console.error(`Failed to fetch ${source.url}: ${response.status}`);
+        continue;
+      }
+
+      const html = await response.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
+      if (!doc) continue;
+      
+      const headlines: string[] = [];
+
+      if (source.url.includes('dailymail.co.uk')) {
+        doc.querySelectorAll('.linkro-darkred').forEach(el => 
+          headlines.push(el.textContent?.trim() || ''));
+      } else if (source.url.includes('nypost.com')) {
+        doc.querySelectorAll('h2.story__headline, h3.story__headline').forEach(el => 
+          headlines.push(el.textContent?.trim() || ''));
+      } else if (source.url.includes('businessinsider.com')) {
+        doc.querySelectorAll('h2.headline').forEach(el => 
+          headlines.push(el.textContent?.trim() || ''));
+      }
+
+      allHeadlines = [...allHeadlines, ...headlines.slice(0, 3)];
+    } catch (error) {
+      console.error(`Error scraping ${source.url}:`, error);
+      continue;
     }
-
-    const html = await response.text();
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, "text/html");
-    if (!doc) return [];
-    
-    const headlines: string[] = [];
-
-    if (url.includes('dailymail.co.uk')) {
-      doc.querySelectorAll('.linkro-darkred').forEach(el => 
-        headlines.push(el.textContent?.trim() || ''));
-    } else if (url.includes('nypost.com')) {
-      doc.querySelectorAll('h2.story__headline, h3.story__headline').forEach(el => 
-        headlines.push(el.textContent?.trim() || ''));
-    } else if (url.includes('businessinsider.com')) {
-      doc.querySelectorAll('h2.headline').forEach(el => 
-        headlines.push(el.textContent?.trim() || ''));
-    } else if (url.includes('brobible.com')) {
-      doc.querySelectorAll('h2.entry-title').forEach(el => 
-        headlines.push(el.textContent?.trim() || ''));
-    } else if (url.includes('dailydot.com')) {
-      doc.querySelectorAll('h2.article-title').forEach(el => 
-        headlines.push(el.textContent?.trim() || ''));
-    } else if (url.includes('drudgereport.com')) {
-      doc.querySelectorAll('a').forEach(el => 
-        headlines.push(el.textContent?.trim() || ''));
-    } else if (url.includes('mediaite.com')) {
-      doc.querySelectorAll('.article-title').forEach(el => 
-        headlines.push(el.textContent?.trim() || ''));
-    }
-
-    return headlines.filter(h => h.length > 0).slice(0, 5);
-  } catch (error) {
-    console.error(`Error scraping ${url}:`, error);
-    return [];
   }
+
+  return allHeadlines
+    .filter(h => h.length > 0)
+    .slice(0, 5)
+    .join('\n');
 }
