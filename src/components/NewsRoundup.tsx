@@ -6,6 +6,23 @@ import { Newspaper, RefreshCw } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useTheme } from "@/components/theme/ThemeProvider";
 
+interface BoxOfficeMovie {
+  title: string;
+  earnings: number;
+}
+
+interface NewsRoundupSources {
+  boxOffice?: BoxOfficeMovie[];
+}
+
+interface NewsRoundupData {
+  id: string;
+  content: string;
+  sources: NewsRoundupSources | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
 const NewsRoundup = () => {
   const { toast } = useToast();
   const { theme } = useTheme();
@@ -20,7 +37,7 @@ const NewsRoundup = () => {
         .limit(1);
 
       if (error) throw error;
-      return data?.[0] || null;
+      return data?.[0] as NewsRoundupData | null;
     }
   });
 
@@ -85,7 +102,7 @@ const NewsRoundup = () => {
         <div className="space-y-4">
           <h3 className="text-lg font-semibold border-b pb-2">Box Office Numbers</h3>
           <div className="space-y-2 text-left">
-            {newsRoundup?.sources?.boxOffice?.map((movie: { title: string, earnings: number }, index: number) => (
+            {newsRoundup?.sources?.boxOffice?.map((movie, index) => (
               <p key={index} className="leading-relaxed flex justify-between items-center">
                 <span className="font-medium">{movie.title}</span>
                 <span className="text-muted-foreground">
