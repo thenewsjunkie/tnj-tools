@@ -12,15 +12,17 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { targetPage, prompt } = await req.json();
+    const { targetPage, prompt, implement = false } = await req.json();
 
-    // Initialize OpenAI API call
+    const systemPrompt = implement 
+      ? `You are a React developer assistant. Analyze and implement the following changes to the ${targetPage} page. Provide the complete implementation code and any necessary instructions.`
+      : `You are a React developer assistant. Analyze the following request for changes to the ${targetPage} page and provide detailed suggestions for implementation.`;
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -28,11 +30,11 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: 'gpt-4',
         messages: [
           {
             role: 'system',
-            content: `You are a React developer assistant. Analyze the following request for changes to the ${targetPage} page and provide detailed suggestions for implementation.`
+            content: systemPrompt
           },
           { role: 'user', content: prompt }
         ],
@@ -40,16 +42,34 @@ serve(async (req) => {
     });
 
     const data = await response.json();
-    const suggestions = data.choices[0].message.content;
+    const content = data.choices[0].message.content;
 
-    // Log the request and response
-    console.log('GPT Engineer request:', { targetPage, prompt });
-    console.log('GPT Engineer response:', suggestions);
+    // Parse implementation code if requested
+    let suggestions = content;
+    let implementation = null;
+
+    if (implement) {
+      // Extract code blocks from the response
+      const codeBlockRegex = /```(?:jsx?|tsx?)\n([\s\S]*?)```/g;
+      const codeBlocks = [];
+      let match;
+      
+      while ((match = codeBlockRegex.exec(content)) !== null) {
+        codeBlocks.push(match[1]);
+      }
+
+      implementation = codeBlocks.length > 0 ? codeBlocks.join('\n\n') : null;
+      suggestions = content.replace(codeBlockRegex, '').trim();
+    }
+
+    console.log('GPT Engineer request:', { targetPage, prompt, implement });
+    console.log('GPT Engineer response:', { suggestions, implementation });
 
     return new Response(
       JSON.stringify({ 
         success: true,
         suggestions,
+        implementation,
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Computer } from "lucide-react";
+import { Computer, Code2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,26 +12,33 @@ const AI = () => {
   const [prompt, setPrompt] = useState("");
   const [targetPage, setTargetPage] = useState("");
   const [suggestions, setSuggestions] = useState("");
+  const [implementation, setImplementation] = useState<string | null>(null);
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, shouldImplement = false) => {
     e.preventDefault();
     setIsProcessing(true);
     setSuggestions("");
+    setImplementation(null);
 
     try {
       const { data, error } = await supabase.functions.invoke('gpt-engineer', {
-        body: { targetPage, prompt }
+        body: { targetPage, prompt, implement: shouldImplement }
       });
 
       if (error) throw error;
 
       if (data.success) {
         setSuggestions(data.suggestions);
+        if (shouldImplement && data.implementation) {
+          setImplementation(data.implementation);
+        }
         toast({
-          title: "Analysis Complete",
-          description: "GPT Engineer has analyzed your request.",
+          title: shouldImplement ? "Implementation Complete" : "Analysis Complete",
+          description: shouldImplement 
+            ? "GPT Engineer has analyzed and implemented your request."
+            : "GPT Engineer has analyzed your request.",
         });
       } else {
         throw new Error('Failed to process request');
@@ -64,7 +71,7 @@ const AI = () => {
       </nav>
 
       <div className="max-w-4xl mx-auto space-y-8">
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-6">
           <div className="space-y-2">
             <label htmlFor="targetPage" className="block text-sm font-medium">
               Target Page
@@ -92,21 +99,45 @@ const AI = () => {
             />
           </div>
 
-          <Button 
-            type="submit" 
-            className="w-full"
-            disabled={isProcessing}
-          >
-            {isProcessing ? "Processing..." : "Analyze Changes"}
-          </Button>
+          <div className="flex gap-4">
+            <Button 
+              type="submit" 
+              className="flex-1"
+              disabled={isProcessing}
+            >
+              <Computer className="w-4 h-4 mr-2" />
+              {isProcessing ? "Processing..." : "Analyze Changes"}
+            </Button>
+            <Button 
+              type="button"
+              onClick={(e) => handleSubmit(e, true)}
+              className="flex-1"
+              disabled={isProcessing}
+              variant="secondary"
+            >
+              <Code2 className="w-4 h-4 mr-2" />
+              {isProcessing ? "Processing..." : "Analyze & Implement"}
+            </Button>
+          </div>
         </form>
 
         {suggestions && (
-          <div className="mt-8 p-6 bg-card rounded-lg border">
-            <h2 className="text-lg font-semibold mb-4">Analysis Results</h2>
-            <pre className="whitespace-pre-wrap text-sm">
-              {suggestions}
-            </pre>
+          <div className="mt-8 space-y-6">
+            <div className="p-6 bg-card rounded-lg border">
+              <h2 className="text-lg font-semibold mb-4">Analysis Results</h2>
+              <pre className="whitespace-pre-wrap text-sm">
+                {suggestions}
+              </pre>
+            </div>
+
+            {implementation && (
+              <div className="p-6 bg-card rounded-lg border">
+                <h2 className="text-lg font-semibold mb-4">Implementation Code</h2>
+                <pre className="whitespace-pre-wrap text-sm overflow-x-auto">
+                  {implementation}
+                </pre>
+              </div>
+            )}
           </div>
         )}
 
@@ -115,7 +146,8 @@ const AI = () => {
           <ol className="list-decimal list-inside space-y-1">
             <li>Enter the target page URL (e.g., /index, /admin)</li>
             <li>Describe the changes you want to make</li>
-            <li>Review the AI's analysis and suggestions</li>
+            <li>Click "Analyze Changes" to review suggestions</li>
+            <li>Or click "Analyze & Implement" to get implementation code</li>
           </ol>
         </div>
       </div>
