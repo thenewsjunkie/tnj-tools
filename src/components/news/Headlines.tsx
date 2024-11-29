@@ -20,17 +20,24 @@ const Headlines = ({ headlines }: HeadlinesProps) => {
       <h3 className="text-lg font-semibold border-b pb-2">Latest Headlines</h3>
       <div className="space-y-2 text-left">
         {visibleHeadlines.map((headline, index) => (
-          <p key={index} className="leading-relaxed flex items-center justify-between group">
-            <span>{headline.text}</span>
-            <a 
-              href={headline.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-muted-foreground hover:text-primary transition-colors ml-2 opacity-0 group-hover:opacity-100"
+          <div key={index} className="flex items-center justify-between group">
+            <span className="flex-1">{headline.text}</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              asChild
+              className="opacity-0 group-hover:opacity-100 transition-opacity"
             >
-              <ExternalLink className="h-4 w-4" />
-            </a>
-          </p>
+              <a 
+                href={headline.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary"
+              >
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            </Button>
+          </div>
         ))}
       </div>
       {headlines.length > 3 && (
