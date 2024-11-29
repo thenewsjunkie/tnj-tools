@@ -56,16 +56,32 @@ const NewsRoundup = () => {
     const trends = parts[1]?.trim();
 
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <h3 className={`${textColor} font-semibold`}>Latest Headlines</h3>
-          <div className="whitespace-pre-wrap font-sans">{headlines}</div>
-        </div>
+      <div className="grid gap-8 lg:grid-cols-2">
         <div className="space-y-4">
+          <h3 className="text-lg font-semibold border-b pb-2">Latest Headlines</h3>
+          <div className="space-y-2 text-left">
+            {headlines.split('\n').map((headline, index) => (
+              headline.trim() && (
+                <p key={index} className="leading-relaxed">
+                  {headline.trim()}
+                </p>
+              )
+            ))}
+          </div>
+        </div>
+        <div className="space-y-8">
           {trends && (
-            <div className="space-y-2">
-              <h3 className={`${textColor} font-semibold`}>Trending on Google</h3>
-              <div className="whitespace-pre-wrap font-sans">{trends}</div>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold border-b pb-2">Trending on Google</h3>
+              <div className="space-y-2 text-left">
+                {trends.split('\n').map((trend, index) => (
+                  trend.trim() && (
+                    <p key={index} className="leading-relaxed">
+                      {trend.trim()}
+                    </p>
+                  )
+                ))}
+              </div>
             </div>
           )}
           <BoxOfficeChart />
@@ -75,41 +91,37 @@ const NewsRoundup = () => {
   };
 
   const bgColor = theme === 'light' ? 'bg-white' : 'bg-black/50';
-  const textColor = theme === 'light' ? 'text-black' : 'text-white';
   const borderColor = theme === 'light' ? 'border-gray-200' : 'border-white/10';
 
   return (
     <Card className={`${bgColor} border-${borderColor}`}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className={`${textColor} text-xl font-semibold`}>
-          <div className="flex items-center gap-2">
-            <Newspaper className="w-5 h-5" />
-            News & Trends Roundup
-          </div>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+        <CardTitle className="text-xl font-semibold flex items-center gap-2">
+          <Newspaper className="w-5 h-5" />
+          News & Trends Roundup
         </CardTitle>
         <Button
           variant="ghost"
           size="icon"
           onClick={() => fetchNewsMutation.mutate()}
           disabled={fetchNewsMutation.isPending}
-          className={`${textColor} hover:text-primary hover:bg-black/10`}
         >
           <RefreshCw className={`h-4 w-4 ${fetchNewsMutation.isPending ? 'animate-spin' : ''}`} />
         </Button>
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className={`${theme === 'light' ? 'text-black/60' : 'text-white/60'} text-center py-4`}>Loading news and trends...</div>
+          <div className="text-muted-foreground text-center py-8">
+            Loading news and trends...
+          </div>
         ) : error ? (
-          <div className="text-red-400 text-center py-4">
+          <div className="text-red-400 text-center py-8">
             Error loading news: {error.message}
           </div>
         ) : newsRoundup ? (
-          <div className={textColor}>
-            {formatContent(newsRoundup.content)}
-          </div>
+          formatContent(newsRoundup.content)
         ) : (
-          <div className={`${theme === 'light' ? 'text-black/60' : 'text-white/60'} text-center py-4`}>
+          <div className="text-muted-foreground text-center py-8">
             No news available. Click refresh to fetch the latest news and trends.
           </div>
         )}
