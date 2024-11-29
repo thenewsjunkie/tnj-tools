@@ -70,10 +70,19 @@ const NewsRoundup = () => {
   });
 
   const formatContent = (content: string) => {
-    const [headlinesSection = '', trendsSection = ''] = content.split('🔍 Trending on Google:');
+    // Split content into headlines and trends sections
+    const [rawHeadlines = '', rawTrends = ''] = content.split('🔍 Trending on Google:');
     
-    const headlines = headlinesSection.trim().split('\n').filter(line => line.trim());
-    const trends = trendsSection.trim().split('\n').filter(line => line.trim());
+    // Process headlines and trends into arrays
+    const headlines = rawHeadlines
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0);
+      
+    const trends = rawTrends
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0);
 
     return (
       <div className="grid gap-8">
