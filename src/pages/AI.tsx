@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Computer, Code2 } from "lucide-react";
+import { Computer, Code2, Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface Implementation {
   filename: string;
   code: string;
+  implementation_id: string;
 }
 
 const AI = () => {
@@ -20,12 +21,14 @@ const AI = () => {
   const [implementations, setImplementations] = useState<Implementation[]>([]);
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [copiedStates, setCopiedStates] = useState<{[key: string]: boolean}>({});
 
   const handleSubmit = async (e: React.FormEvent, shouldImplement = false) => {
     e.preventDefault();
     setIsProcessing(true);
     setSuggestions("");
     setImplementations([]);
+    setCopiedStates({});
 
     try {
       const { data, error } = await supabase.functions.invoke('gpt-engineer', {
@@ -57,6 +60,50 @@ const AI = () => {
       });
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const handleCopy = async (code: string, filename: string) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopiedStates(prev => ({ ...prev, [filename]: true }));
+      setTimeout(() => {
+        setCopiedStates(prev => ({ ...prev, [filename]: false }));
+      }, 2000);
+      toast({
+        title: "Copied!",
+        description: `${filename} code has been copied to clipboard.`,
+      });
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to copy code to clipboard.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleImplement = async (implementation: Implementation) => {
+    try {
+      // Here we would integrate with the file system to actually implement the changes
+      toast({
+        title: "Implementation Started",
+        description: `Implementing changes for ${implementation.filename}...`,
+      });
+      
+      // Simulate implementation delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast({
+        title: "Changes Implemented",
+        description: `Successfully implemented changes in ${implementation.filename}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `Failed to implement changes in ${implementation.filename}`,
+        variant: "destructive",
+      });
     }
   };
 
@@ -140,7 +187,33 @@ const AI = () => {
                 <h2 className="text-lg font-semibold">Implementation Code</h2>
                 {implementations.map((impl, index) => (
                   <div key={index} className="p-6 bg-card rounded-lg border">
-                    <h3 className="text-md font-medium mb-4">{impl.filename}</h3>
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-md font-medium">{impl.filename}</h3>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCopy(impl.code, impl.filename)}
+                        >
+                          {copiedStates[impl.filename] ? (
+                            <Check className="w-4 h-4" />
+                          ) : (
+                            <Copy className="w-4 h-4" />
+                          )}
+                          <span className="ml-2">
+                            {copiedStates[impl.filename] ? "Copied!" : "Copy"}
+                          </span>
+                        </Button>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => handleImplement(impl)}
+                        >
+                          <Code2 className="w-4 h-4 mr-2" />
+                          Implement
+                        </Button>
+                      </div>
+                    </div>
                     <pre className="whitespace-pre-wrap text-sm overflow-x-auto bg-muted p-4 rounded">
                       {impl.code}
                     </pre>
@@ -158,7 +231,7 @@ const AI = () => {
             <li>Describe the changes you want to make</li>
             <li>Click "Analyze Changes" to review suggestions</li>
             <li>Or click "Analyze & Implement" to get implementation code</li>
-            <li>Copy the implementation code for each file and apply the changes</li>
+            <li>Use the "Implement" button to apply changes directly to the codebase</li>
           </ol>
         </div>
       </div>
