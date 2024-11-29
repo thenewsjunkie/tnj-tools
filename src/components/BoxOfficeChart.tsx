@@ -77,7 +77,7 @@ const BoxOfficeChart = () => {
           <BarChart
             data={chartData}
             layout="vertical"
-            margin={{ top: 5, right: 30, bottom: 5, left: 120 }}
+            margin={{ top: 5, right: 30, bottom: 5, left: 140 }}
           >
             <XAxis 
               type="number" 
@@ -88,10 +88,10 @@ const BoxOfficeChart = () => {
             <YAxis 
               type="category" 
               dataKey="name" 
-              width={110}
+              width={130}
               fontSize={11}
               tickFormatter={(value) => 
-                value.length > 20 ? `${value.substring(0, 20)}...` : value
+                value.length > 25 ? `${value.substring(0, 25)}...` : value
               }
             />
             <Bar 
