@@ -36,6 +36,42 @@ export type Database = {
         }
         Relationships: []
       }
+      call_sessions: {
+        Row: {
+          caller_name: string
+          connection_quality: string | null
+          created_at: string | null
+          ended_at: string | null
+          id: string
+          is_muted: boolean | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["call_status"] | null
+          topic: string | null
+        }
+        Insert: {
+          caller_name: string
+          connection_quality?: string | null
+          created_at?: string | null
+          ended_at?: string | null
+          id?: string
+          is_muted?: boolean | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["call_status"] | null
+          topic?: string | null
+        }
+        Update: {
+          caller_name?: string
+          connection_quality?: string | null
+          created_at?: string | null
+          ended_at?: string | null
+          id?: string
+          is_muted?: boolean | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["call_status"] | null
+          topic?: string | null
+        }
+        Relationships: []
+      }
       code_implementations: {
         Row: {
           code: string
@@ -314,7 +350,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      call_status: "waiting" | "connected" | "ended"
     }
     CompositeTypes: {
       [_ in never]: never

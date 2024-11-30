@@ -11,6 +11,7 @@ import Admin from "./pages/Admin";
 import Login from "./pages/Login";
 import AI from "./pages/AI";
 import Connect from "./pages/Connect";
+import Calls from "./pages/Calls";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Admin />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/calls"
+              element={
+                <ProtectedRoute>
+                  <Calls />
                 </ProtectedRoute>
               }
             />
