@@ -83,7 +83,8 @@ const Connect = () => {
         caller_name: name,
         topic: topic,
         status: 'waiting',
-        is_muted: true
+        is_muted: true,
+        started_at: new Date().toISOString()
       })
       .select()
       .single();

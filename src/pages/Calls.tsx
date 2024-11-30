@@ -14,6 +14,8 @@ const Calls = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    fetchCalls();
+
     // Subscribe to call_sessions changes
     const channel = supabase
       .channel('call_sessions')
@@ -25,13 +27,10 @@ const Calls = () => {
           table: 'call_sessions'
         },
         (payload) => {
-          // Refresh calls when there's a change
           fetchCalls();
         }
       )
       .subscribe();
-
-    fetchCalls();
 
     return () => {
       supabase.removeChannel(channel);
@@ -43,8 +42,7 @@ const Calls = () => {
       .from('call_sessions')
       .select('*')
       .in('status', ['waiting', 'connected'])
-      .order('created_at', { ascending: true })
-      .limit(3);
+      .order('created_at', { ascending: true });
 
     if (error) {
       toast({
@@ -55,7 +53,7 @@ const Calls = () => {
       return;
     }
 
-    setCalls(data);
+    setCalls(data || []);
   };
 
   return (
@@ -69,7 +67,7 @@ const Calls = () => {
               className="flex items-center gap-2 text-primary hover:text-primary/80"
             >
               <PhoneIncoming className="h-5 w-5" />
-              <span>Join Call</span>
+              <span>Callers</span>
             </Link>
             <CallControls calls={calls} />
           </div>
