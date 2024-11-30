@@ -18,7 +18,7 @@ const Calls = () => {
 
     // Subscribe to call_sessions changes
     const channel = supabase
-      .channel('call_sessions')
+      .channel('call_sessions_channel')
       .on(
         'postgres_changes',
         {
@@ -27,6 +27,7 @@ const Calls = () => {
           table: 'call_sessions'
         },
         (payload) => {
+          console.log('Received real-time update:', payload);
           fetchCalls();
         }
       )

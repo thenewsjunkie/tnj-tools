@@ -66,7 +66,7 @@ const App = () => (
               }
             />
             <Route
-              path="/admin/calls"
+              path="/calls"
               element={
                 <ProtectedRoute>
                   <Calls />

@@ -3,6 +3,7 @@ import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Maximize2, Mic, MicOff, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useEffect, useRef } from "react";
 import type { CallSession } from "@/types/calls";
 
 interface CallGridProps {
@@ -13,6 +14,37 @@ interface CallGridProps {
 
 export const CallGrid = ({ calls, fullscreenCall, setFullscreenCall }: CallGridProps) => {
   const { toast } = useToast();
+  const videoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>({});
+
+  useEffect(() => {
+    // Set up video connections for each call
+    calls.forEach(async (call) => {
+      if (!videoRefs.current[call.id]) return;
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: true, 
+          audio: true 
+        });
+        
+        if (videoRefs.current[call.id]) {
+          videoRefs.current[call.id]!.srcObject = stream;
+        }
+      } catch (err) {
+        console.error('Error accessing media devices:', err);
+      }
+    });
+
+    // Cleanup function
+    return () => {
+      Object.values(videoRefs.current).forEach(videoRef => {
+        if (videoRef && videoRef.srcObject) {
+          const stream = videoRef.srcObject as MediaStream;
+          stream.getTracks().forEach(track => track.stop());
+        }
+      });
+    };
+  }, [calls]);
 
   const toggleMute = async (callId: string) => {
     const call = calls.find(c => c.id === callId);
@@ -60,9 +92,13 @@ export const CallGrid = ({ calls, fullscreenCall, setFullscreenCall }: CallGridP
           }`}
         >
           <AspectRatio ratio={16 / 9}>
-            <div className="absolute inset-0 bg-black/90 flex items-center justify-center">
-              <p className="text-white">Video Feed</p>
-            </div>
+            <video
+              ref={el => videoRefs.current[call.id] = el}
+              autoPlay
+              playsInline
+              muted={call.is_muted}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
           </AspectRatio>
 
           <div className="absolute top-2 right-2 flex gap-2">
@@ -98,10 +134,10 @@ export const CallGrid = ({ calls, fullscreenCall, setFullscreenCall }: CallGridP
             </Button>
           </div>
 
-          <div className="p-4">
-            <h3 className="font-semibold">{call.caller_name}</h3>
+          <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+            <h3 className="font-semibold text-white">{call.caller_name}</h3>
             {call.topic && (
-              <p className="text-sm text-muted-foreground">{call.topic}</p>
+              <p className="text-sm text-white/80">{call.topic}</p>
             )}
           </div>
         </div>
