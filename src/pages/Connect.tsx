@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Connect = () => {
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -63,7 +64,7 @@ const Connect = () => {
     }
   };
 
-  const handleJoinCall = () => {
+  const handleJoinCall = async () => {
     if (!name || !topic) {
       toast({
         title: "Missing Information",
@@ -74,12 +75,39 @@ const Connect = () => {
     }
 
     setIsConnecting(true);
-    // Simulated connection delay
-    setTimeout(() => {
+
+    // Create a new call session
+    const { data: callSession, error } = await supabase
+      .from('call_sessions')
+      .insert({
+        caller_name: name,
+        topic: topic,
+        status: 'waiting',
+        is_muted: true
+      })
+      .select()
+      .single();
+
+    if (error) {
+      toast({
+        title: "Error joining call",
+        description: error.message,
+        variant: "destructive",
+      });
       setIsConnecting(false);
-      setQueuePosition(3); // Example queue position
-      setEstimatedWait(5); // Example wait time in minutes
-    }, 1500);
+      return;
+    }
+
+    // Get current queue position
+    const { count } = await supabase
+      .from('call_sessions')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'waiting')
+      .lt('created_at', callSession.created_at);
+
+    setQueuePosition((count || 0) + 1);
+    setEstimatedWait((count || 0) * 5); // Estimate 5 minutes per caller
+    setIsConnecting(false);
   };
 
   return (
