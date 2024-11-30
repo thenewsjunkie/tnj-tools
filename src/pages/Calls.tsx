@@ -3,10 +3,10 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { Maximize2, Mic, MicOff, X, PhoneIncoming } from "lucide-react";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { PhoneIncoming } from "lucide-react";
 import { CallGrid } from "@/components/calls/CallGrid";
 import { CallControls } from "@/components/calls/CallControls";
+import type { CallSession } from "@/types/calls";
 
 const Calls = () => {
   const [calls, setCalls] = useState<CallSession[]>([]);
