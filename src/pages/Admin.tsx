@@ -48,7 +48,7 @@ const Admin = () => {
             <span className="hidden sm:inline">GPT Engineer</span>
           </Link>
           <ThemeToggle />
-          <h1 className="text-foreground text-xl sm:text-2xl digital">TNJ Tools Admin</h1>
+          <h1 className="text-foreground text-xl sm:text-2xl digital">TNJ Tools</h1>
           <Button
             variant="ghost"
             size="icon"
