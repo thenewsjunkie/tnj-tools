@@ -21,17 +21,12 @@ const AI = () => {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent, shouldImplement = false) => {
-    e.preventDefault();
+  const handleSubmit = async (targetPage: string, prompt: string, shouldImplement: boolean) => {
     setIsProcessing(true);
     setSuggestions("");
     setImplementations([]);
 
     try {
-      const formData = new FormData(e.target as HTMLFormElement);
-      const targetPage = formData.get('targetPage') as string;
-      const prompt = formData.get('prompt') as string;
-
       console.log('Submitting request:', { targetPage, prompt, shouldImplement });
 
       const { data, error } = await supabase.functions.invoke('gpt-engineer', {

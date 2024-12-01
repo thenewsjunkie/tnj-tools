@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 
 interface AIFormProps {
-  onSubmit: (e: React.FormEvent, shouldImplement: boolean) => Promise<void>;
+  onSubmit: (targetPage: string, prompt: string, shouldImplement: boolean) => Promise<void>;
   isProcessing: boolean;
 }
 
@@ -14,21 +14,20 @@ const AIForm = ({ onSubmit, isProcessing }: AIFormProps) => {
   const [targetPage, setTargetPage] = useState("");
   const [prompt, setPrompt] = useState("");
 
-  const handleSubmit = (e: React.FormEvent, shouldImplement: boolean) => {
+  const handleSubmit = async (e: React.FormEvent, shouldImplement: boolean) => {
     e.preventDefault();
-    onSubmit(e, shouldImplement);
+    await onSubmit(targetPage, prompt, shouldImplement);
   };
 
   return (
-    <form className="space-y-6">
+    <form className="space-y-6" onSubmit={(e) => handleSubmit(e, false)}>
       <div className="space-y-2">
         <Label htmlFor="targetPage">Target Page</Label>
         <Input
           id="targetPage"
-          name="targetPage"
-          placeholder="/index, /admin, etc."
           value={targetPage}
           onChange={(e) => setTargetPage(e.target.value)}
+          placeholder="/index, /admin, etc."
           required
         />
       </div>
@@ -37,10 +36,9 @@ const AIForm = ({ onSubmit, isProcessing }: AIFormProps) => {
         <Label htmlFor="prompt">What changes would you like to make?</Label>
         <Textarea
           id="prompt"
-          name="prompt"
-          placeholder="Describe the changes you want to make..."
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
+          placeholder="Describe the changes you want to make..."
           className="min-h-[100px]"
           required
         />
@@ -49,7 +47,6 @@ const AIForm = ({ onSubmit, isProcessing }: AIFormProps) => {
       <div className="flex gap-4">
         <Button
           type="submit"
-          onClick={(e) => handleSubmit(e, false)}
           disabled={isProcessing}
         >
           {isProcessing ? (
@@ -62,7 +59,7 @@ const AIForm = ({ onSubmit, isProcessing }: AIFormProps) => {
           )}
         </Button>
         <Button
-          type="submit"
+          type="button"
           onClick={(e) => handleSubmit(e, true)}
           disabled={isProcessing}
           variant="secondary"
