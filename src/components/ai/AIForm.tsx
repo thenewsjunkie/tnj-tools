@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Computer, Code2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
 
 interface AIFormProps {
   onSubmit: (e: React.FormEvent, shouldImplement: boolean) => Promise<void>;
@@ -10,28 +11,22 @@ interface AIFormProps {
 }
 
 const AIForm = ({ onSubmit, isProcessing }: AIFormProps) => {
-  const [prompt, setPrompt] = useState("");
   const [targetPage, setTargetPage] = useState("");
+  const [prompt, setPrompt] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent, shouldImplement: boolean) => {
+  const handleSubmit = (e: React.FormEvent, shouldImplement: boolean) => {
     e.preventDefault();
-    await onSubmit(e, shouldImplement);
-    // Don't clear the form on error
-    if (!isProcessing) {
-      setPrompt("");
-      setTargetPage("");
-    }
+    onSubmit(e, shouldImplement);
   };
 
   return (
-    <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-6">
+    <form className="space-y-6">
       <div className="space-y-2">
-        <label htmlFor="targetPage" className="block text-sm font-medium">
-          Target Page
-        </label>
+        <Label htmlFor="targetPage">Target Page</Label>
         <Input
           id="targetPage"
-          placeholder="e.g., /index, /admin, etc."
+          name="targetPage"
+          placeholder="/index, /admin, etc."
           value={targetPage}
           onChange={(e) => setTargetPage(e.target.value)}
           required
@@ -39,37 +34,47 @@ const AIForm = ({ onSubmit, isProcessing }: AIFormProps) => {
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="prompt" className="block text-sm font-medium">
-          What changes would you like to make?
-        </label>
+        <Label htmlFor="prompt">What changes would you like to make?</Label>
         <Textarea
           id="prompt"
+          name="prompt"
           placeholder="Describe the changes you want to make..."
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          className="h-32"
+          className="min-h-[100px]"
           required
         />
       </div>
 
       <div className="flex gap-4">
-        <Button 
-          type="submit" 
-          className="flex-1"
+        <Button
+          type="submit"
+          onClick={(e) => handleSubmit(e, false)}
           disabled={isProcessing}
         >
-          <Computer className="w-4 h-4 mr-2" />
-          {isProcessing ? "Processing..." : "Analyze Changes"}
+          {isProcessing ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Processing...
+            </>
+          ) : (
+            "Analyze Changes"
+          )}
         </Button>
-        <Button 
-          type="button"
+        <Button
+          type="submit"
           onClick={(e) => handleSubmit(e, true)}
-          className="flex-1"
           disabled={isProcessing}
           variant="secondary"
         >
-          <Code2 className="w-4 h-4 mr-2" />
-          {isProcessing ? "Processing..." : "Analyze & Implement"}
+          {isProcessing ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Processing...
+            </>
+          ) : (
+            "Analyze & Implement"
+          )}
         </Button>
       </div>
     </form>
