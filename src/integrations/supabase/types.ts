@@ -102,6 +102,39 @@ export type Database = {
         }
         Relationships: []
       }
+      code_versions: {
+        Row: {
+          branch_name: string
+          changes: Json
+          commit_hash: string
+          commit_message: string
+          created_at: string | null
+          id: string
+          prompt: string
+          status: string | null
+        }
+        Insert: {
+          branch_name: string
+          changes: Json
+          commit_hash: string
+          commit_message: string
+          created_at?: string | null
+          id?: string
+          prompt: string
+          status?: string | null
+        }
+        Update: {
+          branch_name?: string
+          changes?: Json
+          commit_hash?: string
+          commit_message?: string
+          created_at?: string | null
+          id?: string
+          prompt?: string
+          status?: string | null
+        }
+        Relationships: []
+      }
       interview_requests: {
         Row: {
           conversation_history: Json | null

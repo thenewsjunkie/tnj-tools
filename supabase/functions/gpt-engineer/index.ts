@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
+import { Octokit } from "https://esm.sh/@octokit/core";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,8 +9,13 @@ const corsHeaders = {
 };
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const githubToken = Deno.env.get('GITHUB_TOKEN');
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+const repoOwner = Deno.env.get('GITHUB_REPO_OWNER');
+const repoName = Deno.env.get('GITHUB_REPO_NAME');
+
+const octokit = new Octokit({ auth: githubToken });
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -17,8 +23,24 @@ serve(async (req) => {
   }
 
   try {
-    const { targetPage, prompt, implement = false } = await req.json();
+    const { targetPage, prompt, implement = false, rollback = false, commitHash, branchName } = await req.json();
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Handle rollback
+    if (rollback && commitHash) {
+      await octokit.request('POST /repos/{owner}/{repo}/git/refs', {
+        owner: repoOwner,
+        repo: repoName,
+        ref: `refs/heads/${branchName}`,
+        sha: commitHash,
+        force: true,
+      });
+
+      return new Response(
+        JSON.stringify({ success: true }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     const systemPrompt = implement 
       ? `You are a React developer assistant that can directly modify the codebase. Analyze and implement the following changes to the ${targetPage} page.
@@ -55,6 +77,7 @@ serve(async (req) => {
 
     let suggestions = content;
     let implementations = [];
+    let commitInfo = null;
 
     if (implement) {
       const codeBlockRegex = /```(.*?)\n([\s\S]*?)```/g;
@@ -62,33 +85,90 @@ serve(async (req) => {
       
       suggestions = content.split(/```.*?\n/)[0].trim();
       
+      // Create a new branch for the changes
+      const timestamp = new Date().getTime();
+      const branchName = `gpt-engineer/${timestamp}`;
+      const defaultBranch = 'main';
+
+      // Get the SHA of the latest commit on the default branch
+      const { data: refData } = await octokit.request('GET /repos/{owner}/{repo}/git/ref/{ref}', {
+        owner: repoOwner,
+        repo: repoName,
+        ref: `heads/${defaultBranch}`,
+      });
+
+      // Create a new branch
+      await octokit.request('POST /repos/{owner}/{repo}/git/refs', {
+        owner: repoOwner,
+        repo: repoName,
+        ref: `refs/heads/${branchName}`,
+        sha: refData.object.sha,
+      });
+
       while ((match = codeBlockRegex.exec(content)) !== null) {
         const filename = match[1].trim();
         const code = match[2].trim();
         
         if (filename && code) {
-          // Store the implementation in Supabase
-          const { data: implData, error: implError } = await supabase
-            .from('code_implementations')
-            .insert({
-              filename,
-              code,
-              target_page: targetPage,
-              prompt,
-              status: 'pending'
-            })
-            .select()
-            .single();
+          // Get the current file content to get its SHA
+          try {
+            const { data: fileData } = await octokit.request('GET /repos/{owner}/{repo}/contents/{path}', {
+              owner: repoOwner,
+              repo: repoName,
+              path: filename,
+              ref: branchName,
+            });
 
-          if (implError) throw implError;
+            // Update the file
+            await octokit.request('PUT /repos/{owner}/{repo}/contents/{path}', {
+              owner: repoOwner,
+              repo: repoName,
+              path: filename,
+              message: `Update ${filename} - ${prompt}`,
+              content: btoa(code),
+              sha: fileData.sha,
+              branch: branchName,
+            });
+          } catch (error) {
+            if (error.status === 404) {
+              // File doesn't exist, create it
+              await octokit.request('PUT /repos/{owner}/{repo}/contents/{path}', {
+                owner: repoOwner,
+                repo: repoName,
+                path: filename,
+                message: `Create ${filename} - ${prompt}`,
+                content: btoa(code),
+                branch: branchName,
+              });
+            } else {
+              throw error;
+            }
+          }
 
           implementations.push({
             filename,
             code,
-            implementation_id: implData.id
+            implementation_id: crypto.randomUUID()
           });
         }
       }
+
+      // Create a pull request
+      const { data: prData } = await octokit.request('POST /repos/{owner}/{repo}/pulls', {
+        owner: repoOwner,
+        repo: repoName,
+        title: `[GPT Engineer] ${prompt}`,
+        head: branchName,
+        base: defaultBranch,
+        body: suggestions,
+      });
+
+      commitInfo = {
+        hash: refData.object.sha,
+        message: prompt,
+        branch: branchName,
+        pr: prData.number
+      };
     }
 
     return new Response(
@@ -96,6 +176,7 @@ serve(async (req) => {
         success: true,
         suggestions,
         implementations,
+        commitInfo,
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
