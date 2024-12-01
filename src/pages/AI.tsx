@@ -32,13 +32,20 @@ const AI = () => {
       const targetPage = formData.get('targetPage') as string;
       const prompt = formData.get('prompt') as string;
 
+      console.log('Submitting request:', { targetPage, prompt, shouldImplement });
+
       const { data, error } = await supabase.functions.invoke('gpt-engineer', {
         body: { targetPage, prompt, implement: shouldImplement }
       });
 
-      if (error) throw error;
+      console.log('Response:', { data, error });
 
-      if (data.success) {
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
+
+      if (data?.success) {
         setSuggestions(data.suggestions);
         if (shouldImplement && data.implementations) {
           setImplementations(data.implementations);
@@ -55,7 +62,10 @@ const AI = () => {
                 branch_name: data.commitInfo.branch
               });
 
-            if (versionError) throw versionError;
+            if (versionError) {
+              console.error('Version storage error:', versionError);
+              throw versionError;
+            }
           }
         }
         
@@ -66,13 +76,14 @@ const AI = () => {
             : "GPT Engineer has analyzed your request.",
         });
       } else {
-        throw new Error('Failed to process request');
+        console.error('Invalid response data:', data);
+        throw new Error('Failed to process request: Invalid response data');
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error in handleSubmit:', error);
       toast({
         title: "Error",
-        description: "Failed to process request. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to process request. Please try again.",
         variant: "destructive",
       });
     } finally {

@@ -1,6 +1,10 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const githubToken = Deno.env.get('GITHUB_TOKEN');
+const repoOwner = Deno.env.get('GITHUB_REPO_OWNER');
+const repoName = Deno.env.get('GITHUB_REPO_NAME');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,40 +18,11 @@ serve(async (req) => {
   }
 
   try {
-    const { targetPage, prompt, implement, rollback, commitHash, branchName } = await req.json();
-
-    // Initialize GitHub API configuration
-    const githubToken = Deno.env.get('GITHUB_TOKEN');
-    const repoOwner = Deno.env.get('GITHUB_REPO_OWNER');
-    const repoName = Deno.env.get('GITHUB_REPO_NAME');
-    const baseUrl = `https://api.github.com/repos/${repoOwner}/${repoName}`;
-
-    // Handle rollback request
-    if (rollback) {
-      const response = await fetch(`${baseUrl}/git/refs/heads/${branchName}`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `token ${githubToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sha: commitHash,
-          force: true
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to rollback changes');
-      }
-
-      return new Response(
-        JSON.stringify({ success: true }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    console.log('Processing request...');
+    const { targetPage, prompt, implement } = await req.json();
+    console.log('Request params:', { targetPage, prompt, implement });
 
     // Get suggestions from OpenAI
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -70,6 +45,8 @@ serve(async (req) => {
     });
 
     const openAIData = await openAIResponse.json();
+    console.log('OpenAI response:', openAIData);
+
     const suggestions = openAIData.choices[0].message.content;
 
     if (!implement) {
@@ -84,7 +61,7 @@ serve(async (req) => {
     const safeBranchName = `feature/${prompt.slice(0, 50).replace(/[^a-z0-9]/gi, '-')}-${timestamp}`;
     
     // Get the default branch
-    const repoResponse = await fetch(`${baseUrl}`, {
+    const repoResponse = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}`, {
       headers: {
         'Authorization': `token ${githubToken}`,
       },
@@ -93,7 +70,7 @@ serve(async (req) => {
     const defaultBranch = repoData.default_branch;
 
     // Get the SHA of the default branch
-    const refResponse = await fetch(`${baseUrl}/git/refs/heads/${defaultBranch}`, {
+    const refResponse = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/git/refs/heads/${defaultBranch}`, {
       headers: {
         'Authorization': `token ${githubToken}`,
       },
@@ -102,7 +79,7 @@ serve(async (req) => {
     const sha = refData.object.sha;
 
     // Create new branch
-    await fetch(`${baseUrl}/git/refs`, {
+    await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/git/refs`, {
       method: 'POST',
       headers: {
         'Authorization': `token ${githubToken}`,
@@ -114,10 +91,10 @@ serve(async (req) => {
       })
     });
 
-    // Simulate file changes (in a real implementation, this would be based on OpenAI's suggestions)
+    // For now, return mock implementation data
     const implementations = [
       {
-        filename: 'example.tsx',
+        filename: `${targetPage}.tsx`,
         code: '// Example implementation\nconsole.log("Hello World");',
         implementation_id: crypto.randomUUID()
       }
@@ -125,7 +102,7 @@ serve(async (req) => {
 
     // Create commit
     const commitMessage = `feat: ${prompt.slice(0, 50)}`;
-    const createCommitResponse = await fetch(`${baseUrl}/git/commits`, {
+    const createCommitResponse = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/git/commits`, {
       method: 'POST',
       headers: {
         'Authorization': `token ${githubToken}`,
@@ -155,7 +132,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error in gpt-engineer function:', error);
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
       { 
