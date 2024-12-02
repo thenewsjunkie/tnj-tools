@@ -47,13 +47,15 @@ const Admin = () => {
             <Phone className="h-5 w-5" />
             <span className="hidden sm:inline">Calls</span>
           </Link>
-          <Link
-            to="/admin/ai"
+          <a
+            href="https://github.com/thenewsjunkie/tnj-tools"
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex items-center gap-2 text-foreground hover:text-primary transition-colors"
           >
-            <Computer className="h-5 w-5" />
-            <span className="hidden sm:inline">GPT Engineer</span>
-          </Link>
+            <Edit2 className="h-5 w-5" />
+            <span className="hidden sm:inline">Edit</span>
+          </a>
           <ThemeToggle />
           <h1 className="text-foreground text-xl sm:text-2xl digital">TNJ Tools</h1>
           <Button
