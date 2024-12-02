@@ -12,24 +12,22 @@ interface NoteItemProps {
 const NoteItem = ({ note, onDelete }: NoteItemProps) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  // Render text with clickable links
   const renderTextWithLinks = (text: string) => {
-    // Comprehensive URL regex pattern
-    const urlPattern = /(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/gi;
-    
+    const urlPattern = /(https?:\/\/[^\s]+)/g; // Simplified URL regex pattern
     const parts = [];
     let lastIndex = 0;
 
     text.replace(urlPattern, (url, offset) => {
-      // Add text before the URL
+      // Add text before the link
       if (offset > lastIndex) {
         parts.push(text.slice(lastIndex, offset));
       }
-
       // Add the clickable link
       parts.push(
         <a
-          key={`link-${offset}`}
-          href={url.startsWith('http') ? url : `https://${url}`}
+          key={offset}
+          href={url}
           target="_blank"
           rel="noopener noreferrer"
           className="text-primary hover:underline inline-block break-all"
@@ -37,13 +35,11 @@ const NoteItem = ({ note, onDelete }: NoteItemProps) => {
           {url}
         </a>
       );
-
-      // Update the last index to after the URL
       lastIndex = offset + url.length;
       return url;
     });
 
-    // Add any remaining text after the last URL
+    // Add any remaining text after the last link
     if (lastIndex < text.length) {
       parts.push(text.slice(lastIndex));
     }
@@ -51,17 +47,19 @@ const NoteItem = ({ note, onDelete }: NoteItemProps) => {
     return parts;
   };
 
+  // Render note content
   const renderNoteContent = () => {
     switch (note.type) {
-      case 'link':
+      case "link":
+        // Render a rich preview for links
         return (
-          <a 
-            href={note.url} 
-            target="_blank" 
+          <a
+            href={note.url}
+            target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-4 p-3 bg-secondary rounded-md hover:bg-secondary/80 transition-colors"
           >
-            <img 
+            <img
               src="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d"
               alt="Link thumbnail"
               className="w-16 h-16 object-cover rounded"
@@ -72,15 +70,16 @@ const NoteItem = ({ note, onDelete }: NoteItemProps) => {
             </div>
           </a>
         );
-      case 'image':
+      case "image":
+        // Render an image
         return (
-          <div 
+          <div
             className="relative aspect-video cursor-pointer"
             onClick={() => setIsFullscreen(true)}
           >
-            <img 
-              src={note.url} 
-              alt={note.title || 'Show note image'} 
+            <img
+              src={note.url}
+              alt={note.title || "Show note image"}
               className="rounded-md object-cover w-full h-full"
             />
             {note.title && (
@@ -90,21 +89,23 @@ const NoteItem = ({ note, onDelete }: NoteItemProps) => {
             )}
           </div>
         );
-      case 'video':
+      case "video":
+        // Render a video
         return (
           <div className="relative aspect-video">
             <iframe
               src={note.url}
-              title={note.title || 'Show note video'}
+              title={note.title || "Show note video"}
               className="rounded-md w-full h-full"
               allowFullScreen
             />
           </div>
         );
       default:
+        // Render plain text with links
         return (
           <div className="whitespace-pre-wrap break-words">
-            {renderTextWithLinks(note.content || '')}
+            {renderTextWithLinks(note.content || "")}
           </div>
         );
     }
@@ -128,7 +129,7 @@ const NoteItem = ({ note, onDelete }: NoteItemProps) => {
         </Card>
       </div>
 
-      {isFullscreen && note.type === 'image' && (
+      {isFullscreen && note.type === "image" && (
         <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
           <Button
             variant="ghost"
@@ -138,9 +139,9 @@ const NoteItem = ({ note, onDelete }: NoteItemProps) => {
           >
             <X className="h-6 w-6" />
           </Button>
-          <img 
-            src={note.url} 
-            alt={note.title || 'Show note image'} 
+          <img
+            src={note.url}
+            alt={note.title || "Show note image"}
             className="max-w-full max-h-full object-contain"
           />
           {note.title && (
@@ -155,3 +156,4 @@ const NoteItem = ({ note, onDelete }: NoteItemProps) => {
 };
 
 export default NoteItem;
+
