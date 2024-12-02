@@ -16,25 +16,34 @@ const NoteItem = ({ note, onDelete }: NoteItemProps) => {
     // More comprehensive URL regex pattern
     const urlPattern = /(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/gi;
     
-    // Split the text by URLs and map through parts
-    const parts = text.split(urlPattern);
-    
     // Find all URLs in the text
     const urls = text.match(urlPattern) || [];
     
-    // Combine parts and URLs
+    // Replace URLs in the text with a placeholder
+    let placeholders = [];
+    let modifiedText = text.replace(urlPattern, (_, index) => {
+      placeholders.push(urls[index]);
+      return `@URL${placeholders.length - 1}@`;
+    });
+
+    // Split the text by URL placeholders
+    const parts = modifiedText.split(/@URL\d+@/);
+
+    // Combine parts with URL placeholders replaced by anchor tags
     const combined = parts.reduce((acc: (string | JSX.Element)[], part, i) => {
-      acc.push(part);
-      if (urls[i]) {
+      if (part) {
+        acc.push(part);
+      }
+      if (placeholders[i]) {
         acc.push(
           <a
             key={`link-${i}`}
-            href={urls[i].startsWith('http') ? urls[i] : `https://${urls[i]}`}
+            href={placeholders[i].startsWith('http') ? placeholders[i] : `https://${placeholders[i]}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary hover:underline inline-block break-all"
           >
-            {urls[i]}
+            {placeholders[i]}
           </a>
         );
       }
