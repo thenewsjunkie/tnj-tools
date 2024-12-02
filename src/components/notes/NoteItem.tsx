@@ -13,27 +13,35 @@ const NoteItem = ({ note, onDelete }: NoteItemProps) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const renderTextWithLinks = (text: string) => {
-    // URL regex pattern
-    const urlPattern = /(https?:\/\/[^\s]+)/g;
+    // More comprehensive URL regex pattern
+    const urlPattern = /(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/gi;
     
     // Split the text by URLs and map through parts
     const parts = text.split(urlPattern);
-    return parts.map((part, index) => {
-      if (part.match(urlPattern)) {
-        return (
+    
+    // Find all URLs in the text
+    const urls = text.match(urlPattern) || [];
+    
+    // Combine parts and URLs
+    const combined = parts.reduce((acc: (string | JSX.Element)[], part, i) => {
+      acc.push(part);
+      if (urls[i]) {
+        acc.push(
           <a
-            key={index}
-            href={part}
+            key={`link-${i}`}
+            href={urls[i].startsWith('http') ? urls[i] : `https://${urls[i]}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-primary hover:underline break-words"
+            className="text-primary hover:underline inline-block break-all"
           >
-            {part}
+            {urls[i]}
           </a>
         );
       }
-      return <span key={index}>{part}</span>;
-    });
+      return acc;
+    }, []);
+
+    return combined;
   };
 
   const renderNoteContent = () => {
@@ -89,7 +97,7 @@ const NoteItem = ({ note, onDelete }: NoteItemProps) => {
       default:
         return (
           <div className="whitespace-pre-wrap break-words">
-            {renderTextWithLinks(note.content)}
+            {renderTextWithLinks(note.content || '')}
           </div>
         );
     }
