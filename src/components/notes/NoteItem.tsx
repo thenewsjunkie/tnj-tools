@@ -20,11 +20,12 @@ const NoteItem = ({ note, onDelete }: NoteItemProps) => {
     let lastIndex = 0;
 
     text.replace(urlPattern, (url, offset) => {
-      // Push text before the URL
+      // Add text before the URL
       if (offset > lastIndex) {
         parts.push(text.slice(lastIndex, offset));
       }
-      // Push the clickable link
+
+      // Add the clickable link
       parts.push(
         <a
           key={`link-${offset}`}
@@ -36,12 +37,13 @@ const NoteItem = ({ note, onDelete }: NoteItemProps) => {
           {url}
         </a>
       );
-      // Update the last index to after the current URL
+
+      // Update the last index to after the URL
       lastIndex = offset + url.length;
       return url;
     });
 
-    // Add remaining text after the last URL
+    // Add any remaining text after the last URL
     if (lastIndex < text.length) {
       parts.push(text.slice(lastIndex));
     }
