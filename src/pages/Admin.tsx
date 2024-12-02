@@ -5,7 +5,7 @@ import ShowNotes from "@/components/ShowNotes";
 import Reminders from "@/components/Reminders";
 import NewsRoundup from "@/components/NewsRoundup";
 import TNJAi from "@/components/AudioChat";
-import { LogOut, Computer, Phone } from "lucide-react";
+import { LogOut, Edit2, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
