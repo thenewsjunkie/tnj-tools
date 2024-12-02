@@ -12,9 +12,8 @@ interface NoteItemProps {
 const NoteItem = ({ note, onDelete }: NoteItemProps) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Render text with clickable links
   const renderTextWithLinks = (text: string) => {
-    const urlPattern = /(https?:\/\/[^\s]+)/g; // Simplified URL regex pattern
+    const urlPattern = /(https?:\/\/[^\s]+)/g; // Regex to detect URLs
     const parts = [];
     let lastIndex = 0;
 
@@ -27,7 +26,7 @@ const NoteItem = ({ note, onDelete }: NoteItemProps) => {
       parts.push(
         <a
           key={offset}
-          href={url}
+          href={url.startsWith("http") ? url : `https://${url}`}
           target="_blank"
           rel="noopener noreferrer"
           className="text-primary hover:underline inline-block break-all"
@@ -47,11 +46,9 @@ const NoteItem = ({ note, onDelete }: NoteItemProps) => {
     return parts;
   };
 
-  // Render note content
   const renderNoteContent = () => {
     switch (note.type) {
       case "link":
-        // Render a rich preview for links
         return (
           <a
             href={note.url}
@@ -71,7 +68,6 @@ const NoteItem = ({ note, onDelete }: NoteItemProps) => {
           </a>
         );
       case "image":
-        // Render an image
         return (
           <div
             className="relative aspect-video cursor-pointer"
@@ -90,7 +86,6 @@ const NoteItem = ({ note, onDelete }: NoteItemProps) => {
           </div>
         );
       case "video":
-        // Render a video
         return (
           <div className="relative aspect-video">
             <iframe
@@ -102,7 +97,6 @@ const NoteItem = ({ note, onDelete }: NoteItemProps) => {
           </div>
         );
       default:
-        // Render plain text with links
         return (
           <div className="whitespace-pre-wrap break-words">
             {renderTextWithLinks(note.content || "")}
@@ -156,4 +150,3 @@ const NoteItem = ({ note, onDelete }: NoteItemProps) => {
 };
 
 export default NoteItem;
-
