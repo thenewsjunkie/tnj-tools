@@ -13,35 +13,40 @@ const NoteItem = ({ note, onDelete }: NoteItemProps) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const renderTextWithLinks = (text: string) => {
-    // More comprehensive URL regex pattern
+    // Comprehensive URL regex pattern
     const urlPattern = /(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/gi;
     
-    // Split the text by URLs and map through parts
-    const parts = text.split(urlPattern);
-    
-    // Find all URLs in the text
-    const urls = text.match(urlPattern) || [];
-    
-    // Combine parts and URLs
-    const combined = parts.reduce((acc: (string | JSX.Element)[], part, i) => {
-      acc.push(part);
-      if (urls[i]) {
-        acc.push(
-          <a
-            key={`link-${i}`}
-            href={urls[i].startsWith('http') ? urls[i] : `https://${urls[i]}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:underline inline-block break-all"
-          >
-            {urls[i]}
-          </a>
-        );
-      }
-      return acc;
-    }, []);
+    const parts = [];
+    let lastIndex = 0;
 
-    return combined;
+    text.replace(urlPattern, (url, offset) => {
+      // Push text before the URL
+      if (offset > lastIndex) {
+        parts.push(text.slice(lastIndex, offset));
+      }
+      // Push the clickable link
+      parts.push(
+        <a
+          key={`link-${offset}`}
+          href={url.startsWith('http') ? url : `https://${url}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary hover:underline inline-block break-all"
+        >
+          {url}
+        </a>
+      );
+      // Update the last index to after the current URL
+      lastIndex = offset + url.length;
+      return url;
+    });
+
+    // Add remaining text after the last URL
+    if (lastIndex < text.length) {
+      parts.push(text.slice(lastIndex));
+    }
+
+    return parts;
   };
 
   const renderNoteContent = () => {
