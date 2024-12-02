@@ -43,7 +43,13 @@ const NoteItem = ({ note, onDelete }: NoteItemProps) => {
       parts.push(text.slice(lastIndex));
     }
 
-    return parts;
+    return parts.map((part, index) =>
+      typeof part === "string" ? (
+        <span key={index}>{part}</span>
+      ) : (
+        part
+      )
+    );
   };
 
   const renderNoteContent = () => {
