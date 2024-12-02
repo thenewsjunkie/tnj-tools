@@ -12,6 +12,30 @@ interface NoteItemProps {
 const NoteItem = ({ note, onDelete }: NoteItemProps) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  const renderTextWithLinks = (text: string) => {
+    // URL regex pattern
+    const urlPattern = /(https?:\/\/[^\s]+)/g;
+    
+    // Split the text by URLs and map through parts
+    const parts = text.split(urlPattern);
+    return parts.map((part, index) => {
+      if (part.match(urlPattern)) {
+        return (
+          <a
+            key={index}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline break-words"
+          >
+            {part}
+          </a>
+        );
+      }
+      return <span key={index}>{part}</span>;
+    });
+  };
+
   const renderNoteContent = () => {
     switch (note.type) {
       case 'link':
@@ -27,9 +51,9 @@ const NoteItem = ({ note, onDelete }: NoteItemProps) => {
               alt="Link thumbnail"
               className="w-16 h-16 object-cover rounded"
             />
-            <div className="flex items-center gap-2">
-              <Link className="h-4 w-4" />
-              <span>{note.title || note.url}</span>
+            <div className="flex items-center gap-2 min-w-0">
+              <Link className="h-4 w-4 flex-shrink-0" />
+              <span className="truncate">{note.title || note.url}</span>
             </div>
           </a>
         );
@@ -63,7 +87,11 @@ const NoteItem = ({ note, onDelete }: NoteItemProps) => {
           </div>
         );
       default:
-        return <p className="whitespace-pre-wrap">{note.content}</p>;
+        return (
+          <div className="whitespace-pre-wrap break-words">
+            {renderTextWithLinks(note.content)}
+          </div>
+        );
     }
   };
 
