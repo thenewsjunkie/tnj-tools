@@ -9,11 +9,16 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AddNoteForm from "./notes/AddNoteForm";
 import NoteItem from "./notes/NoteItem";
 import type { Note, NoteType } from "./notes/types";
+import { useAuth } from "@/hooks/useAuth";
+
+const INITIAL_DISPLAY_COUNT = 10;
 
 const ShowNotes = () => {
   const [newNote, setNewNote] = useState({ type: 'text' as NoteType, content: '', title: '', url: '' });
+  const [showAll, setShowAll] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { session } = useAuth();
 
   const { data: notes = [], isLoading } = useQuery({
     queryKey: ['show-notes'],
@@ -95,40 +100,55 @@ const ShowNotes = () => {
     return <div>Loading...</div>;
   }
 
+  const displayedNotes = showAll ? notes : notes.slice(0, INITIAL_DISPLAY_COUNT);
+  const hasMoreNotes = notes.length > INITIAL_DISPLAY_COUNT;
+
   return (
     <Card className="w-full">
       <CardHeader>
         <CardTitle className="flex justify-between items-center">
           Show Notes
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Note
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add New Note</DialogTitle>
-              </DialogHeader>
-              <AddNoteForm
-                newNote={newNote}
-                setNewNote={setNewNote}
-                handleAddNote={(note) => addNoteMutation.mutate(note)}
-              />
-            </DialogContent>
-          </Dialog>
+          {session && (
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Note
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add New Note</DialogTitle>
+                </DialogHeader>
+                <AddNoteForm
+                  newNote={newNote}
+                  setNewNote={setNewNote}
+                  handleAddNote={(note) => addNoteMutation.mutate(note)}
+                />
+              </DialogContent>
+            </Dialog>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {notes.map((note) => (
+          {displayedNotes.map((note) => (
             <NoteItem
               key={note.id}
               note={note}
-              onDelete={() => deleteNoteMutation.mutate(note.id)}
+              onDelete={session ? () => deleteNoteMutation.mutate(note.id) : undefined}
             />
           ))}
+          {hasMoreNotes && (
+            <div className="flex justify-center pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowAll(!showAll)}
+              >
+                {showAll ? "Show Less" : "Show More"}
+              </Button>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
