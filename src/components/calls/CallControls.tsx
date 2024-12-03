@@ -1,68 +1,55 @@
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Mic, MicOff, Video, VideoOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
-import type { CallSession } from "@/types/calls";
+import { webRTCService } from "@/services/webrtc";
 
 interface CallControlsProps {
-  calls: CallSession[];
+  callId: string;
+  isMuted: boolean;
 }
 
-export const CallControls = ({ calls }: CallControlsProps) => {
-  const { toast } = useToast();
+export const CallControls = ({ callId, isMuted }: CallControlsProps) => {
+  const [videoEnabled, setVideoEnabled] = useState(true);
 
-  const muteAll = async () => {
+  const toggleMute = async () => {
     const { error } = await supabase
       .from('call_sessions')
-      .update({ is_muted: true })
-      .in('id', calls.map(c => c.id));
+      .update({ is_muted: !isMuted })
+      .eq('id', callId);
 
     if (error) {
-      toast({
-        title: "Error muting all calls",
-        description: error.message,
-        variant: "destructive",
-      });
+      console.error('Error toggling mute:', error);
     }
   };
 
-  const unmuteAll = async () => {
-    const { error } = await supabase
-      .from('call_sessions')
-      .update({ is_muted: false })
-      .in('id', calls.map(c => c.id));
-
-    if (error) {
-      toast({
-        title: "Error unmuting all calls",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const endAllCalls = async () => {
-    const { error } = await supabase
-      .from('call_sessions')
-      .update({ 
-        status: 'ended',
-        ended_at: new Date().toISOString()
-      })
-      .in('id', calls.map(c => c.id));
-
-    if (error) {
-      toast({
-        title: "Error ending all calls",
-        description: error.message,
-        variant: "destructive",
-      });
+  const toggleVideo = () => {
+    const localStream = webRTCService.localStream;
+    if (localStream) {
+      const videoTrack = localStream.getVideoTracks()[0];
+      videoTrack.enabled = !videoEnabled;
+      setVideoEnabled(!videoEnabled);
     }
   };
 
   return (
-    <div className="flex gap-2">
-      <Button onClick={muteAll} variant="outline">Mute All</Button>
-      <Button onClick={unmuteAll} variant="outline">Unmute All</Button>
-      <Button onClick={endAllCalls} variant="destructive">End All Calls</Button>
+    <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 flex gap-4 bg-background/80 backdrop-blur-sm p-4 rounded-lg shadow-lg">
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={toggleMute}
+        className={isMuted ? "bg-destructive text-destructive-foreground" : ""}
+      >
+        {isMuted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+      </Button>
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={toggleVideo}
+        className={!videoEnabled ? "bg-destructive text-destructive-foreground" : ""}
+      >
+        {videoEnabled ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
+      </Button>
     </div>
   );
 };

@@ -1,110 +1,96 @@
-import { Button } from "@/components/ui/button";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Maximize2, Mic, MicOff, X } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import React, { useEffect, useRef, useState } from "react";
+import { Card } from "@/components/ui/card";
 import type { CallSession } from "@/types/calls";
+import { webRTCService } from "@/services/webrtc";
 
 interface CallGridProps {
   calls: CallSession[];
   fullscreenCall: string | null;
-  setFullscreenCall: (id: string | null) => void;
+  onFullscreenChange: (callId: string | null) => void;
 }
 
-export const CallGrid = ({ calls, fullscreenCall, setFullscreenCall }: CallGridProps) => {
-  const { toast } = useToast();
+export const CallGrid = ({ calls, fullscreenCall, onFullscreenChange }: CallGridProps) => {
+  const [streams, setStreams] = useState<{ [key: string]: MediaStream }>({});
+  const videoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>({});
 
-  const toggleMute = async (callId: string) => {
-    const call = calls.find(c => c.id === callId);
-    if (!call) return;
+  useEffect(() => {
+    // Initialize video calls for new sessions
+    calls.forEach(async (call) => {
+      if (call.status === 'connected' && !streams[call.id]) {
+        try {
+          const localStream = await webRTCService.initializeCall(call.id);
+          setStreams(prev => ({
+            ...prev,
+            [call.id]: localStream
+          }));
 
-    const { error } = await supabase
-      .from('call_sessions')
-      .update({ is_muted: !call.is_muted })
-      .eq('id', callId);
+          // Handle remote stream
+          webRTCService.onTrack((remoteStream) => {
+            setStreams(prev => ({
+              ...prev,
+              [call.id]: remoteStream
+            }));
+          });
 
-    if (error) {
-      toast({
-        title: "Error toggling mute",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
+          // Create offer for the call initiator
+          if (call.status === 'connected') {
+            await webRTCService.createOffer();
+          }
+        } catch (error) {
+          console.error('Error initializing call:', error);
+        }
+      }
+    });
 
-  const endCall = async (callId: string) => {
-    const { error } = await supabase
-      .from('call_sessions')
-      .update({ 
-        status: 'ended',
-        ended_at: new Date().toISOString()
-      })
-      .eq('id', callId);
+    // Cleanup streams for ended calls
+    Object.keys(streams).forEach(streamId => {
+      if (!calls.find(call => call.id === streamId)) {
+        webRTCService.cleanup();
+        setStreams(prev => {
+          const newStreams = { ...prev };
+          delete newStreams[streamId];
+          return newStreams;
+        });
+      }
+    });
+  }, [calls, streams]);
 
-    if (error) {
-      toast({
-        title: "Error ending call",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
+  useEffect(() => {
+    // Attach streams to video elements
+    Object.entries(streams).forEach(([callId, stream]) => {
+      const videoElement = videoRefs.current[callId];
+      if (videoElement && stream && videoElement.srcObject !== stream) {
+        videoElement.srcObject = stream;
+      }
+    });
+  }, [streams]);
+
+  const gridClassName = fullscreenCall
+    ? "grid grid-cols-1"
+    : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4";
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className={gridClassName}>
       {calls.map((call) => (
-        <div
+        <Card
           key={call.id}
-          className={`relative bg-card rounded-lg overflow-hidden border ${
-            fullscreenCall === call.id ? 'fixed inset-0 z-50' : ''
+          className={`relative overflow-hidden ${
+            fullscreenCall === call.id ? 'col-span-full aspect-video' : 'aspect-video'
           }`}
+          onClick={() => onFullscreenChange(fullscreenCall === call.id ? null : call.id)}
         >
-          <AspectRatio ratio={16 / 9}>
-            <div className="absolute inset-0 bg-black/90 flex items-center justify-center">
-              <p className="text-white">Video Feed</p>
-            </div>
-          </AspectRatio>
-
-          <div className="absolute top-2 right-2 flex gap-2">
-            <Button
-              variant="secondary"
-              size="icon"
-              className="bg-black/50 hover:bg-black/70"
-              onClick={() => toggleMute(call.id)}
-            >
-              {call.is_muted ? (
-                <MicOff className="h-4 w-4" />
-              ) : (
-                <Mic className="h-4 w-4" />
-              )}
-            </Button>
-            <Button
-              variant="secondary"
-              size="icon"
-              className="bg-black/50 hover:bg-black/70"
-              onClick={() => setFullscreenCall(
-                fullscreenCall === call.id ? null : call.id
-              )}
-            >
-              <Maximize2 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="destructive"
-              size="icon"
-              className="bg-black/50 hover:bg-black/70"
-              onClick={() => endCall(call.id)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+          <video
+            ref={el => videoRefs.current[call.id] = el}
+            autoPlay
+            playsInline
+            muted={call.is_muted}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/50 text-white">
+            <p className="text-sm truncate">{call.caller_name}</p>
+            {call.topic && <p className="text-xs truncate text-gray-300">{call.topic}</p>}
           </div>
-
-          <div className="p-4">
-            <h3 className="font-semibold">{call.caller_name}</h3>
-            {call.topic && (
-              <p className="text-sm text-muted-foreground">{call.topic}</p>
-            )}
-          </div>
-        </div>
+        </Card>
       ))}
     </div>
   );
