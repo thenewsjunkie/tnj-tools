@@ -14,7 +14,6 @@ const Calls = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Use React Query for data fetching
   const { data: calls = [] } = useQuery({
     queryKey: ['calls'],
     queryFn: async () => {
@@ -38,7 +37,6 @@ const Calls = () => {
   });
 
   useEffect(() => {
-    // Subscribe to call_sessions changes
     const channel = supabase
       .channel('call_sessions_channel')
       .on(
@@ -49,7 +47,6 @@ const Calls = () => {
           table: 'call_sessions'
         },
         () => {
-          // Invalidate and refetch calls when data changes
           queryClient.invalidateQueries({ queryKey: ['calls'] });
         }
       )
@@ -59,6 +56,9 @@ const Calls = () => {
       supabase.removeChannel(channel);
     };
   }, [queryClient]);
+
+  // Get the active call for controls
+  const activeCall = calls.find(call => call.status === 'connected');
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8">
@@ -73,14 +73,19 @@ const Calls = () => {
               <PhoneIncoming className="h-5 w-5" />
               <span>Callers</span>
             </Link>
-            <CallControls calls={calls} />
+            {activeCall && (
+              <CallControls 
+                callId={activeCall.id} 
+                isMuted={activeCall.is_muted} 
+              />
+            )}
           </div>
         </div>
 
         <CallGrid 
           calls={calls} 
           fullscreenCall={fullscreenCall}
-          setFullscreenCall={setFullscreenCall}
+          onFullscreenChange={setFullscreenCall}
         />
       </div>
     </div>

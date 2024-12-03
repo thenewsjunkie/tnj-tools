@@ -1,36 +1,37 @@
 import { supabase } from "@/integrations/supabase/client";
 
 class WebRTCService {
-  private peerConnection: RTCPeerConnection | null = null;
-  private localStream: MediaStream | null = null;
+  private _peerConnection: RTCPeerConnection | null = null;
+  private _localStream: MediaStream | null = null;
   private channel: any = null;
   private callId: string | null = null;
 
+  // Add getter for localStream
+  get localStream(): MediaStream | null {
+    return this._localStream;
+  }
+
   async initializeCall(callId: string) {
     this.callId = callId;
-    this.peerConnection = new RTCPeerConnection({
+    this._peerConnection = new RTCPeerConnection({
       iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
     });
 
-    // Get local stream
     try {
-      this.localStream = await navigator.mediaDevices.getUserMedia({ 
+      this._localStream = await navigator.mediaDevices.getUserMedia({ 
         video: true, 
         audio: true 
       });
       
-      // Add tracks to peer connection
-      this.localStream.getTracks().forEach(track => {
-        if (this.localStream && this.peerConnection) {
-          this.peerConnection.addTrack(track, this.localStream);
+      this._localStream.getTracks().forEach(track => {
+        if (this._localStream && this._peerConnection) {
+          this._peerConnection.addTrack(track, this._localStream);
         }
       });
 
-      // Set up Supabase channel for signaling
       this.channel = supabase.channel(`call-${callId}`);
       
-      // Handle ICE candidates
-      this.peerConnection.onicecandidate = (event) => {
+      this._peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
           this.channel.send({
             type: 'broadcast',
@@ -40,18 +41,17 @@ class WebRTCService {
         }
       };
 
-      // Subscribe to channel events
       this.channel
         .on('broadcast', { event: 'ice-candidate' }, ({ payload }) => {
-          if (this.peerConnection) {
-            this.peerConnection.addIceCandidate(new RTCIceCandidate(payload));
+          if (this._peerConnection) {
+            this._peerConnection.addIceCandidate(new RTCIceCandidate(payload));
           }
         })
         .on('broadcast', { event: 'offer' }, async ({ payload }) => {
-          if (this.peerConnection) {
-            await this.peerConnection.setRemoteDescription(new RTCSessionDescription(payload));
-            const answer = await this.peerConnection.createAnswer();
-            await this.peerConnection.setLocalDescription(answer);
+          if (this._peerConnection) {
+            await this._peerConnection.setRemoteDescription(new RTCSessionDescription(payload));
+            const answer = await this._peerConnection.createAnswer();
+            await this._peerConnection.setLocalDescription(answer);
             this.channel.send({
               type: 'broadcast',
               event: 'answer',
@@ -60,8 +60,8 @@ class WebRTCService {
           }
         })
         .on('broadcast', { event: 'answer' }, async ({ payload }) => {
-          if (this.peerConnection) {
-            await this.peerConnection.setRemoteDescription(new RTCSessionDescription(payload));
+          if (this._peerConnection) {
+            await this._peerConnection.setRemoteDescription(new RTCSessionDescription(payload));
           }
         })
         .subscribe();
@@ -70,15 +70,15 @@ class WebRTCService {
       throw error;
     }
 
-    return this.localStream;
+    return this._localStream;
   }
 
   async createOffer() {
-    if (!this.peerConnection) return;
+    if (!this._peerConnection) return;
 
     try {
-      const offer = await this.peerConnection.createOffer();
-      await this.peerConnection.setLocalDescription(offer);
+      const offer = await this._peerConnection.createOffer();
+      await this._peerConnection.setLocalDescription(offer);
       
       this.channel.send({
         type: 'broadcast',
@@ -92,22 +92,22 @@ class WebRTCService {
   }
 
   onTrack(callback: (stream: MediaStream) => void) {
-    if (!this.peerConnection) return;
+    if (!this._peerConnection) return;
 
-    this.peerConnection.ontrack = (event) => {
+    this._peerConnection.ontrack = (event) => {
       callback(event.streams[0]);
     };
   }
 
   async cleanup() {
-    if (this.localStream) {
-      this.localStream.getTracks().forEach(track => track.stop());
-      this.localStream = null;
+    if (this._localStream) {
+      this._localStream.getTracks().forEach(track => track.stop());
+      this._localStream = null;
     }
 
-    if (this.peerConnection) {
-      this.peerConnection.close();
-      this.peerConnection = null;
+    if (this._peerConnection) {
+      this._peerConnection.close();
+      this._peerConnection = null;
     }
 
     if (this.channel) {
