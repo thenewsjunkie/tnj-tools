@@ -7,18 +7,40 @@ import { PhoneIncoming } from "lucide-react";
 import { CallGrid } from "@/components/calls/CallGrid";
 import { CallControls } from "@/components/calls/CallControls";
 import type { CallSession } from "@/types/calls";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const Calls = () => {
-  const [calls, setCalls] = useState<CallSession[]>([]);
   const [fullscreenCall, setFullscreenCall] = useState<string | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Use React Query for data fetching
+  const { data: calls = [] } = useQuery({
+    queryKey: ['calls'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('call_sessions')
+        .select('*')
+        .in('status', ['waiting', 'connected'])
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        toast({
+          title: "Error fetching calls",
+          description: error.message,
+          variant: "destructive",
+        });
+        return [];
+      }
+
+      return data;
+    }
+  });
 
   useEffect(() => {
-    fetchCalls();
-
     // Subscribe to call_sessions changes
     const channel = supabase
-      .channel('call_sessions')
+      .channel('call_sessions_channel')
       .on(
         'postgres_changes',
         {
@@ -26,8 +48,9 @@ const Calls = () => {
           schema: 'public',
           table: 'call_sessions'
         },
-        (payload) => {
-          fetchCalls();
+        () => {
+          // Invalidate and refetch calls when data changes
+          queryClient.invalidateQueries({ queryKey: ['calls'] });
         }
       )
       .subscribe();
@@ -35,26 +58,7 @@ const Calls = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
-
-  const fetchCalls = async () => {
-    const { data, error } = await supabase
-      .from('call_sessions')
-      .select('*')
-      .in('status', ['waiting', 'connected'])
-      .order('created_at', { ascending: true });
-
-    if (error) {
-      toast({
-        title: "Error fetching calls",
-        description: error.message,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setCalls(data || []);
-  };
+  }, [queryClient]);
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8">
