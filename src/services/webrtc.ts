@@ -39,7 +39,7 @@ class WebRTCService {
       this.room = new Room(roomOptions);
 
       // Connect to LiveKit room
-      await this.room.connect('wss://your-livekit-server.com', token);
+      await this.room.connect(import.meta.env.VITE_LIVEKIT_WS_URL || 'wss://your-livekit-server.com', token);
       
       // Start capturing local media
       await this.room.localParticipant.enableCameraAndMicrophone();

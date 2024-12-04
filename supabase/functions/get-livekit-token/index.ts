@@ -1,9 +1,49 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { AccessToken } from 'https://esm.sh/livekit-server-sdk@1.2.7'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+// Simple JWT token generation without external dependencies
+function generateToken(apiKey: string, apiSecret: string, identity: string, roomName: string): string {
+  const header = {
+    alg: 'HS256',
+    typ: 'JWT'
+  };
+
+  const now = Math.floor(Date.now() / 1000);
+  const exp = now + (2 * 60 * 60); // 2 hours
+
+  const payload = {
+    iss: apiKey,
+    sub: identity,
+    jti: crypto.randomUUID(),
+    exp: exp,
+    nbf: now,
+    iat: now,
+    room: roomName,
+    video: {
+      roomJoin: true,
+      canPublish: true,
+      canSubscribe: true
+    }
+  };
+
+  const encodedHeader = btoa(JSON.stringify(header));
+  const encodedPayload = btoa(JSON.stringify(payload));
+  
+  const input = `${encodedHeader}.${encodedPayload}`;
+  const key = new TextEncoder().encode(apiSecret);
+  
+  // Create signature
+  const signature = crypto.subtle.sign(
+    'HMAC',
+    key,
+    new TextEncoder().encode(input)
+  );
+
+  return `${encodedHeader}.${encodedPayload}.${btoa(signature)}`;
 }
 
 serve(async (req) => {
@@ -30,21 +70,12 @@ serve(async (req) => {
 
   try {
     const { callId } = await req.json()
+    const identity = crypto.randomUUID();
     
-    const at = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, {
-      identity: crypto.randomUUID(),
-      ttl: 60 * 60 * 2 // 2 hours
-    });
-    
-    at.addGrant({ 
-      room: callId,
-      roomJoin: true,
-      canPublish: true,
-      canSubscribe: true
-    });
+    const token = generateToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, identity, callId);
 
     return new Response(
-      JSON.stringify({ token: at.toJwt() }),
+      JSON.stringify({ token }),
       { 
         headers: { 
           'Content-Type': 'application/json',
@@ -53,6 +84,7 @@ serve(async (req) => {
       }
     )
   } catch (error) {
+    console.error('Error generating token:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
