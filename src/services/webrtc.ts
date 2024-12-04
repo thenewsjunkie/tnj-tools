@@ -38,8 +38,8 @@ class WebRTCService {
 
       this.room = new Room(roomOptions);
 
-      // Connect to LiveKit room
-      await this.room.connect(import.meta.env.VITE_LIVEKIT_WS_URL || 'wss://your-livekit-server.com', token);
+      // Connect to LiveKit room using the provided WebSocket URL
+      await this.room.connect('wss://tnj-tools-2azakdqh.livekit.cloud', token);
       
       // Start capturing local media
       await this.room.localParticipant.enableCameraAndMicrophone();
