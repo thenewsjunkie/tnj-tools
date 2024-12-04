@@ -19,11 +19,13 @@ const queryClient = new QueryClient();
 // Protected Route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<boolean | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Check initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(!!session);
+      setIsLoading(false);
     });
 
     // Listen for auth changes
@@ -31,15 +33,18 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(!!session);
+      setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  if (session === null) {
-    return null; // Loading state
+  // Show nothing while loading
+  if (isLoading) {
+    return null;
   }
 
+  // Only redirect if we're not loading and there's no session
   if (!session) {
     return <Navigate to="/login" replace />;
   }
