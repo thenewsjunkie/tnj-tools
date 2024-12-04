@@ -31,11 +31,6 @@ export const CallGrid = ({ calls, fullscreenCall, onFullscreenChange }: CallGrid
               [call.id]: remoteStream
             }));
           });
-
-          // Create offer for the call initiator
-          if (call.status === 'connected') {
-            await webRTCService.createOffer();
-          }
         } catch (error) {
           console.error('Error initializing call:', error);
         }

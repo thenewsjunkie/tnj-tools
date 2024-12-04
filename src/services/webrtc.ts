@@ -1,4 +1,4 @@
-import { Room, RoomEvent, RemoteParticipant, LocalParticipant, RemoteTrack, RoomOptions, connect } from 'livekit-client';
+import { Room, RoomEvent, RemoteParticipant, LocalParticipant, RemoteTrack, RoomOptions } from 'livekit-client';
 import { supabase } from "@/integrations/supabase/client";
 
 class WebRTCService {
@@ -39,7 +39,7 @@ class WebRTCService {
       this.room = new Room(roomOptions);
 
       // Connect to LiveKit room
-      await this.room.connect('https://your-livekit-server.com', token);
+      await this.room.connect('wss://your-livekit-server.com', token);
       
       // Start capturing local media
       await this.room.localParticipant.enableCameraAndMicrophone();
