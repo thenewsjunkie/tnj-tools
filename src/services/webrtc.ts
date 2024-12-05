@@ -9,18 +9,22 @@ class WebRTCService {
 
   get localStream(): MediaStream | null {
     if (!this._localParticipant) return null;
-    const audioTrack = this._localParticipant.getTrackPublications()[0]?.track;
-    const videoTrack = this._localParticipant.getTrackPublications()[1]?.track;
-    if (!audioTrack || !videoTrack) return null;
+    const tracks = this._localParticipant.getTracks();
+    if (tracks.length === 0) return null;
     
     const stream = new MediaStream();
-    stream.addTrack(audioTrack.mediaStreamTrack);
-    stream.addTrack(videoTrack.mediaStreamTrack);
+    tracks.forEach(track => {
+      if (track.track) {
+        stream.addTrack(track.track);
+      }
+    });
     return stream;
   }
 
-  async initializeCall(callId: string) {
+  async initializeCall(callId: string): Promise<MediaStream | null> {
     try {
+      console.log('Initializing call with ID:', callId);
+      
       // Get LiveKit connection token from Supabase Edge Function
       const { data: { token }, error } = await supabase.functions.invoke('get-livekit-token', {
         body: { callId }
@@ -37,16 +41,20 @@ class WebRTCService {
       };
 
       this.room = new Room(roomOptions);
-
-      // Connect to LiveKit room using the provided WebSocket URL
+      
+      // Connect to LiveKit room
       await this.room.connect('wss://tnj-tools-2azakdqh.livekit.cloud', token);
+      console.log('Connected to LiveKit room');
       
       // Start capturing local media
       await this.room.localParticipant.enableCameraAndMicrophone();
+      console.log('Local media enabled');
+      
       this._localParticipant = this.room.localParticipant;
 
       // Set up remote participant handling
       this.room.on(RoomEvent.ParticipantConnected, (participant: RemoteParticipant) => {
+        console.log('Remote participant connected:', participant.identity);
         this._remoteParticipants.set(participant.sid, participant);
         this.handleParticipantTracks(participant);
       });
@@ -62,10 +70,21 @@ class WebRTCService {
     const stream = new MediaStream();
     
     participant.on('trackSubscribed', (track: RemoteTrack) => {
+      console.log('Track subscribed:', track.kind);
       stream.addTrack(track.mediaStreamTrack);
       if (this.onTrackCallback) {
         this.onTrackCallback(stream);
       }
+    });
+
+    participant.on('trackUnsubscribed', (track: RemoteTrack) => {
+      console.log('Track unsubscribed:', track.kind);
+      const tracks = stream.getTracks();
+      tracks.forEach(t => {
+        if (t.id === track.mediaStreamTrack.id) {
+          stream.removeTrack(t);
+        }
+      });
     });
   }
 
@@ -75,6 +94,7 @@ class WebRTCService {
 
   async cleanup() {
     if (this.room) {
+      console.log('Cleaning up WebRTC connection');
       await this.room.disconnect();
       this.room = null;
     }
