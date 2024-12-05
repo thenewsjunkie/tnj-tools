@@ -27,10 +27,15 @@ class WebRTCService {
       
       // Get LiveKit connection token from Supabase Edge Function
       const { data: { token }, error } = await supabase.functions.invoke('get-livekit-token', {
-        body: { callId }
+        body: { callId, role: 'publisher' }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error getting LiveKit token:', error);
+        throw error;
+      }
+
+      console.log('Got LiveKit token, connecting to room...');
 
       const roomOptions: RoomOptions = {
         adaptiveStream: true,
@@ -57,6 +62,15 @@ class WebRTCService {
         console.log('Remote participant connected:', participant.identity);
         this._remoteParticipants.set(participant.sid, participant);
         this.handleParticipantTracks(participant);
+      });
+
+      // Add error handling for room events
+      this.room.on(RoomEvent.Disconnected, () => {
+        console.log('Disconnected from room');
+      });
+
+      this.room.on(RoomEvent.ConnectionStateChanged, (state) => {
+        console.log('Connection state changed:', state);
       });
 
       return this.localStream;
