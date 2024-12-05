@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { webRTCService } from "@/services/webrtc";
 
 const Connect = () => {
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -41,6 +42,7 @@ const Connect = () => {
         }
       })
       .catch((err) => {
+        console.error("Camera access error:", err);
         toast({
           title: "Camera Access Error",
           description: "Please enable camera and microphone access to join the show.",
@@ -49,7 +51,6 @@ const Connect = () => {
       });
 
     return () => {
-      // Cleanup: stop all tracks when component unmounts
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
@@ -75,40 +76,62 @@ const Connect = () => {
     }
 
     setIsConnecting(true);
+    console.log("Starting call join process...");
 
-    // Create a new call session
-    const { data: callSession, error } = await supabase
-      .from('call_sessions')
-      .insert({
-        caller_name: name,
-        topic: topic,
-        status: 'waiting',
-        is_muted: true,
-        started_at: new Date().toISOString()
-      })
-      .select()
-      .single();
+    try {
+      // Create a new call session
+      const { data: callSession, error: sessionError } = await supabase
+        .from('call_sessions')
+        .insert({
+          caller_name: name,
+          topic: topic,
+          status: 'waiting',
+          is_muted: true,
+          started_at: new Date().toISOString()
+        })
+        .select()
+        .single();
 
-    if (error) {
+      if (sessionError) {
+        console.error("Error creating call session:", sessionError);
+        throw sessionError;
+      }
+
+      console.log("Call session created:", callSession);
+
+      // Initialize WebRTC connection
+      const localStream = await webRTCService.initializeCall(callSession.id);
+      console.log("WebRTC initialized, local stream:", localStream ? "obtained" : "failed");
+
+      if (!localStream) {
+        throw new Error("Failed to initialize video call");
+      }
+
+      // Get current queue position
+      const { count } = await supabase
+        .from('call_sessions')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'waiting')
+        .lt('created_at', callSession.created_at);
+
+      setQueuePosition((count || 0) + 1);
+      setEstimatedWait((count || 0) * 5); // Estimate 5 minutes per caller
+
+      toast({
+        title: "Successfully Joined",
+        description: "You've been added to the call queue.",
+      });
+
+    } catch (error) {
+      console.error("Error joining call:", error);
       toast({
         title: "Error joining call",
         description: error.message,
         variant: "destructive",
       });
+    } finally {
       setIsConnecting(false);
-      return;
     }
-
-    // Get current queue position
-    const { count } = await supabase
-      .from('call_sessions')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'waiting')
-      .lt('created_at', callSession.created_at);
-
-    setQueuePosition((count || 0) + 1);
-    setEstimatedWait((count || 0) * 5); // Estimate 5 minutes per caller
-    setIsConnecting(false);
   };
 
   return (
