@@ -37,10 +37,9 @@ serve(async (req) => {
 
     console.log("Creating access token for call:", callId);
 
-    // Create an access token with a longer TTL for testing
+    // Create an access token
     const at = new AccessToken(apiKey, apiSecret, {
       identity: crypto.randomUUID(),
-      ttl: 3600 * 24, // 24 hours
     });
 
     at.addGrant({
