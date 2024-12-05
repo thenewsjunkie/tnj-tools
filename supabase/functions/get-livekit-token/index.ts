@@ -37,18 +37,21 @@ serve(async (req) => {
 
     console.log("Creating access token for call:", callId);
 
-    // Create an access token
+    // Create an access token with the provided identity
     const at = new AccessToken(apiKey, apiSecret, {
       identity: crypto.randomUUID(),
+      ttl: 60 * 60 * 2 // 2 hours in seconds
     });
 
+    // Add grants to the token
     at.addGrant({
-      room: callId,
       roomJoin: true,
+      room: callId,
       canPublish: role === 'publisher',
       canSubscribe: true,
     });
 
+    // Generate the JWT token
     const token = at.toJwt();
     console.log("Generated token successfully");
 
