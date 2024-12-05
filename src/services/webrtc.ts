@@ -9,13 +9,13 @@ class WebRTCService {
 
   get localStream(): MediaStream | null {
     if (!this._localParticipant) return null;
-    const tracks = this._localParticipant.getTracks();
-    if (tracks.length === 0) return null;
+    const tracks = this._localParticipant.trackPublications;
+    if (tracks.size === 0) return null;
     
     const stream = new MediaStream();
-    tracks.forEach(track => {
-      if (track.track) {
-        stream.addTrack(track.track);
+    tracks.forEach(publication => {
+      if (publication.track) {
+        stream.addTrack(publication.track.mediaStreamTrack);
       }
     });
     return stream;
