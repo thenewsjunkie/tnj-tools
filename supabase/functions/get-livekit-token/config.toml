@@ -1,1 +1,3 @@
 project_id = "gpmandlkcdompmdvethh"
+[functions.get-livekit-token]
+verify_jwt = false
