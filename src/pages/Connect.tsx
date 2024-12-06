@@ -1,16 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  Camera, 
-  Mic, 
-  MicOff, 
-  X, 
-  Play,
-  CheckCircle,
-  AlertCircle,
-  Info,
-  Shield
-} from "lucide-react";
+import { Camera, Mic, MicOff, X, Shield, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { webRTCService } from "@/services/webrtc";
+import { DeviceSelector } from "@/components/connect/DeviceSelector";
 
 const Connect = () => {
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -27,35 +18,71 @@ const Connect = () => {
   const [topic, setTopic] = useState("");
   const [queuePosition, setQueuePosition] = useState(0);
   const [estimatedWait, setEstimatedWait] = useState(0);
+  const [currentAudioDevice, setCurrentAudioDevice] = useState("");
+  const [currentVideoDevice, setCurrentVideoDevice] = useState("");
   const videoRef = useRef<HTMLVideoElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  useEffect(() => {
-    // Request camera and microphone permissions
-    navigator.mediaDevices
-      .getUserMedia({ video: true, audio: true })
-      .then((mediaStream) => {
-        setStream(mediaStream);
-        if (videoRef.current) {
-          videoRef.current.srcObject = mediaStream;
-        }
-      })
-      .catch((err) => {
-        console.error("Camera access error:", err);
-        toast({
-          title: "Camera Access Error",
-          description: "Please enable camera and microphone access to join the show.",
-          variant: "destructive",
-        });
-      });
+  const initializeStream = async (audioDeviceId?: string, videoDeviceId?: string) => {
+    try {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
 
+      const constraints: MediaStreamConstraints = {
+        video: videoDeviceId ? { deviceId: videoDeviceId } : true,
+        audio: audioDeviceId ? { deviceId: audioDeviceId } : true
+      };
+
+      const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      setStream(mediaStream);
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+      }
+
+      // Update current device IDs
+      const videoTrack = mediaStream.getVideoTracks()[0];
+      const audioTrack = mediaStream.getAudioTracks()[0];
+      
+      if (videoTrack) {
+        const settings = videoTrack.getSettings();
+        setCurrentVideoDevice(settings.deviceId || "");
+      }
+      
+      if (audioTrack) {
+        const settings = audioTrack.getSettings();
+        setCurrentAudioDevice(settings.deviceId || "");
+      }
+    } catch (err) {
+      console.error("Camera access error:", err);
+      toast({
+        title: "Camera Access Error",
+        description: "Please enable camera and microphone access to join the show.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  useEffect(() => {
+    initializeStream();
     return () => {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
     };
   }, []);
+
+  const handleAudioDeviceChange = (deviceId: string) => {
+    setCurrentAudioDevice(deviceId);
+    initializeStream(deviceId, currentVideoDevice);
+  };
+
+  const handleVideoDeviceChange = (deviceId: string) => {
+    setCurrentVideoDevice(deviceId);
+    initializeStream(currentAudioDevice, deviceId);
+  };
 
   const toggleMicrophone = () => {
     if (stream) {
@@ -136,7 +163,6 @@ const Connect = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Header */}
       <header className="flex justify-between items-center p-4 border-b">
         <h1 className="text-2xl font-bold digital">Connect to TNJ Show</h1>
         <Button
@@ -150,7 +176,6 @@ const Connect = () => {
       </header>
 
       <div className="container max-w-4xl mx-auto p-4 space-y-8">
-        {/* Video Preview */}
         <div className="relative aspect-video bg-black/90 rounded-lg overflow-hidden">
           <video
             ref={videoRef}
@@ -182,7 +207,13 @@ const Connect = () => {
           </div>
         </div>
 
-        {/* Connection Information */}
+        <DeviceSelector
+          currentAudioDevice={currentAudioDevice}
+          currentVideoDevice={currentVideoDevice}
+          onAudioDeviceChange={handleAudioDeviceChange}
+          onVideoDeviceChange={handleVideoDeviceChange}
+        />
+
         <div className="grid gap-6">
           <div className="space-y-2">
             <Label htmlFor="name">Your Name</Label>
