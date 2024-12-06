@@ -1,14 +1,15 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Camera, Mic, MicOff, X, Shield, Info, CheckCircle } from "lucide-react";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { webRTCService } from "@/services/webrtc";
 import { DeviceSelector } from "@/components/connect/DeviceSelector";
+import VideoPreview from "@/components/connect/VideoPreview";
+import CallForm from "@/components/connect/CallForm";
+import Guidelines from "@/components/connect/Guidelines";
+import QueueStatus from "@/components/connect/QueueStatus";
 
 const Connect = () => {
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -20,7 +21,6 @@ const Connect = () => {
   const [estimatedWait, setEstimatedWait] = useState(0);
   const [currentAudioDevice, setCurrentAudioDevice] = useState("");
   const [currentVideoDevice, setCurrentVideoDevice] = useState("");
-  const videoRef = useRef<HTMLVideoElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -37,10 +37,6 @@ const Connect = () => {
 
       const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
       setStream(mediaStream);
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-      }
 
       // Update current device IDs
       const videoTrack = mediaStream.getVideoTracks()[0];
@@ -106,7 +102,6 @@ const Connect = () => {
     console.log("Starting call join process...");
 
     try {
-      // Create a new call session
       const { data: callSession, error: sessionError } = await supabase
         .from('call_sessions')
         .insert({
@@ -126,7 +121,6 @@ const Connect = () => {
 
       console.log("Call session created:", callSession);
 
-      // Initialize WebRTC connection
       const localStream = await webRTCService.initializeCall(callSession.id);
       console.log("WebRTC initialized, local stream:", localStream ? "obtained" : "failed");
 
@@ -134,7 +128,6 @@ const Connect = () => {
         throw new Error("Failed to initialize video call");
       }
 
-      // Get current queue position
       const { count } = await supabase
         .from('call_sessions')
         .select('*', { count: 'exact', head: true })
@@ -142,7 +135,7 @@ const Connect = () => {
         .lt('created_at', callSession.created_at);
 
       setQueuePosition((count || 0) + 1);
-      setEstimatedWait((count || 0) * 5); // Estimate 5 minutes per caller
+      setEstimatedWait((count || 0) * 5);
 
       toast({
         title: "Successfully Joined",
@@ -176,36 +169,11 @@ const Connect = () => {
       </header>
 
       <div className="container max-w-4xl mx-auto p-4 space-y-8">
-        <div className="relative aspect-video bg-black/90 rounded-lg overflow-hidden">
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-4">
-            <Button
-              variant="secondary"
-              size="icon"
-              onClick={toggleMicrophone}
-              className="rounded-full bg-black/50 hover:bg-black/70"
-            >
-              {isMuted ? (
-                <MicOff className="h-5 w-5" />
-              ) : (
-                <Mic className="h-5 w-5" />
-              )}
-            </Button>
-            <Button
-              variant="secondary"
-              size="icon"
-              className="rounded-full bg-black/50 hover:bg-black/70"
-            >
-              <Camera className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
+        <VideoPreview 
+          stream={stream}
+          isMuted={isMuted}
+          toggleMicrophone={toggleMicrophone}
+        />
 
         <DeviceSelector
           currentAudioDevice={currentAudioDevice}
@@ -214,81 +182,23 @@ const Connect = () => {
           onVideoDeviceChange={handleVideoDeviceChange}
         />
 
-        <div className="grid gap-6">
-          <div className="space-y-2">
-            <Label htmlFor="name">Your Name</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Enter your name"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="topic">Call Topic</Label>
-            <Textarea
-              id="topic"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              placeholder="What would you like to discuss?"
-              className="resize-none"
-            />
-          </div>
-        </div>
+        <CallForm
+          name={name}
+          setName={setName}
+          topic={topic}
+          setTopic={setTopic}
+        />
 
-        {/* Guidelines */}
-        <div className="bg-secondary/50 p-4 rounded-lg space-y-2">
-          <div className="flex items-center gap-2">
-            <Info className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold">Guidelines</h3>
-          </div>
-          <ul className="list-disc list-inside text-sm space-y-1 text-muted-foreground">
-            <li>Ensure you're in a quiet environment</li>
-            <li>Use headphones to prevent echo</li>
-            <li>Stay on topic and be respectful</li>
-            <li>Follow the host's instructions</li>
-          </ul>
-        </div>
+        <Guidelines />
 
-        {/* Privacy Notice */}
-        <div className="flex items-start gap-2 text-sm text-muted-foreground">
-          <Shield className="h-4 w-4 mt-0.5 flex-shrink-0" />
-          <p>
-            By joining, you agree to be live on air and consent to our{" "}
-            <a href="#" className="text-primary hover:underline">
-              privacy policy
-            </a>{" "}
-            and{" "}
-            <a href="#" className="text-primary hover:underline">
-              terms of service
-            </a>
-            .
-          </p>
-        </div>
-
-        {/* Connection Status */}
-        {queuePosition > 0 ? (
-          <div className="bg-primary/10 p-4 rounded-lg">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-primary" />
-              <p>
-                You're #{queuePosition} in line. Estimated wait: {estimatedWait} minutes
-              </p>
-            </div>
-          </div>
-        ) : (
-          <Button
-            className="w-full py-6 text-lg"
-            onClick={handleJoinCall}
-            disabled={isConnecting || !name || !topic}
-          >
-            {isConnecting ? (
-              "Connecting..."
-            ) : (
-              "Join Call"
-            )}
-          </Button>
-        )}
+        <QueueStatus
+          queuePosition={queuePosition}
+          estimatedWait={estimatedWait}
+          isConnecting={isConnecting}
+          name={name}
+          topic={topic}
+          onJoinCall={handleJoinCall}
+        />
       </div>
     </div>
   );
