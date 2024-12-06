@@ -37,35 +37,41 @@ serve(async (req) => {
 
     console.log("Creating access token for call:", callId);
 
-    // Create an access token with a unique identity
+    // Create a unique identity for this participant
     const participantIdentity = crypto.randomUUID();
-    const at = new AccessToken(apiKey, apiSecret, {
-      identity: participantIdentity,
-      ttl: 60 * 60 * 2 // 2 hours in seconds
-    });
 
-    // Add grants to the token
-    at.addGrant({
-      roomJoin: true,
-      room: callId,
-      canPublish: role === 'publisher',
-      canSubscribe: true,
-      roomCreate: true, // Allow room creation if it doesn't exist
-      roomList: true,
-    });
+    try {
+      // Create the access token
+      const at = new AccessToken(apiKey, apiSecret, {
+        identity: participantIdentity
+      });
 
-    // Generate the JWT token
-    const token = at.toJwt();
-    console.log("Generated token successfully for participant:", participantIdentity);
+      // Add grants to the token
+      at.addGrant({
+        roomJoin: true,
+        room: callId,
+        canPublish: role === 'publisher',
+        canSubscribe: true,
+        roomCreate: true,
+        roomList: true
+      });
 
-    return new Response(
-      JSON.stringify({ 
-        token,
-        identity: participantIdentity,
-        room: callId
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+      // Generate the token
+      const token = at.toJwt();
+      console.log("Generated token successfully for participant:", participantIdentity);
+
+      return new Response(
+        JSON.stringify({ 
+          token,
+          identity: participantIdentity,
+          room: callId
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (tokenError) {
+      console.error("Token generation error:", tokenError);
+      throw tokenError;
+    }
   } catch (error) {
     console.error("Error generating token:", error);
     return new Response(
