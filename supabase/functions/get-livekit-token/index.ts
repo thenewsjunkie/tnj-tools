@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { AccessToken } from 'https://esm.sh/livekit-server-sdk@1.2.7';
+import { AccessToken } from "https://esm.sh/livekit-server-sdk@1.1.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -42,7 +42,6 @@ serve(async (req) => {
     try {
       const at = new AccessToken(apiKey, apiSecret, {
         identity: participantIdentity,
-        ttl: 14400 // 4 hours
       });
 
       at.addGrant({
