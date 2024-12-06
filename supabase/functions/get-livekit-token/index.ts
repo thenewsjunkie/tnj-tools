@@ -1,10 +1,10 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { AccessToken } from 'https://esm.sh/livekit-server-sdk@1.2.7';
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { AccessToken } from 'https://esm.sh/livekit-server-sdk@1.2.7'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -37,9 +37,10 @@ serve(async (req) => {
 
     console.log("Creating access token for call:", callId);
 
-    // Create an access token with the provided identity
+    // Create an access token with a unique identity
+    const participantIdentity = crypto.randomUUID();
     const at = new AccessToken(apiKey, apiSecret, {
-      identity: crypto.randomUUID(),
+      identity: participantIdentity,
       ttl: 60 * 60 * 2 // 2 hours in seconds
     });
 
@@ -49,14 +50,20 @@ serve(async (req) => {
       room: callId,
       canPublish: role === 'publisher',
       canSubscribe: true,
+      roomCreate: true, // Allow room creation if it doesn't exist
+      roomList: true,
     });
 
     // Generate the JWT token
     const token = at.toJwt();
-    console.log("Generated token successfully");
+    console.log("Generated token successfully for participant:", participantIdentity);
 
     return new Response(
-      JSON.stringify({ token }),
+      JSON.stringify({ 
+        token,
+        identity: participantIdentity,
+        room: callId
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
