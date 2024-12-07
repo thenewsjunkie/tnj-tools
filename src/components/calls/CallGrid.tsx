@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { X, PhoneCall } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import type { CallSession } from "@/types/calls";
 import { webRTCService } from "@/services/webrtc";
@@ -49,36 +49,66 @@ export const CallGrid = ({ calls, fullscreenCall, onFullscreenChange }: CallGrid
     }
   };
 
+  const handleConnectCall = async (callId: string) => {
+    try {
+      console.log('Connecting to call:', callId);
+      
+      // Update call status to connected
+      const { error: updateError } = await supabase
+        .from('call_sessions')
+        .update({ status: 'connected' })
+        .eq('id', callId);
+
+      if (updateError) throw updateError;
+
+      // Initialize WebRTC connection
+      const localStream = await webRTCService.initializeCall(callId);
+      if (localStream) {
+        console.log('Local stream obtained:', localStream.id);
+        setStreams(prev => ({
+          ...prev,
+          [callId]: localStream
+        }));
+      }
+
+      // Handle remote stream
+      webRTCService.onTrack((remoteStream) => {
+        console.log('Remote stream received:', remoteStream.id);
+        setStreams(prev => ({
+          ...prev,
+          [callId]: remoteStream
+        }));
+      });
+
+      toast({
+        title: "Connected",
+        description: "Successfully connected to the call",
+      });
+    } catch (error) {
+      console.error('Error connecting to call:', error);
+      toast({
+        title: "Connection Error",
+        description: "Failed to connect to the call. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   useEffect(() => {
-    // Initialize video calls for new sessions
+    // Initialize video calls for connected sessions
     sortedCalls.forEach(async (call) => {
       if (call.status === 'connected' && !streams[call.id]) {
         try {
-          console.log('Initializing call:', call.id);
+          console.log('Initializing connected call:', call.id);
           const localStream = await webRTCService.initializeCall(call.id);
           if (localStream) {
-            console.log('Local stream obtained:', localStream.id);
             setStreams(prev => ({
               ...prev,
               [call.id]: localStream
             }));
           }
-
-          // Handle remote stream
-          webRTCService.onTrack((remoteStream) => {
-            console.log('Remote stream received:', remoteStream.id);
-            setStreams(prev => ({
-              ...prev,
-              [call.id]: remoteStream
-            }));
-          });
         } catch (error) {
           console.error('Error initializing call:', error);
-          toast({
-            title: "Connection Error",
-            description: "Failed to establish video connection",
-            variant: "destructive",
-          });
         }
       }
     });
@@ -131,7 +161,20 @@ export const CallGrid = ({ calls, fullscreenCall, onFullscreenChange }: CallGrid
             muted={call.is_muted}
             className="w-full h-full object-cover bg-black"
           />
-          <div className="absolute top-2 right-2 z-10">
+          <div className="absolute top-2 right-2 z-10 flex gap-2">
+            {call.status === 'waiting' && (
+              <Button
+                variant="default"
+                size="icon"
+                className="h-8 w-8 rounded-full"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleConnectCall(call.id);
+                }}
+              >
+                <PhoneCall className="h-4 w-4" />
+              </Button>
+            )}
             <Button
               variant="destructive"
               size="icon"
@@ -147,6 +190,7 @@ export const CallGrid = ({ calls, fullscreenCall, onFullscreenChange }: CallGrid
           <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/50 text-white">
             <p className="text-sm truncate">{call.caller_name}</p>
             {call.topic && <p className="text-xs truncate text-gray-300">{call.topic}</p>}
+            <p className="text-xs text-primary">{call.status}</p>
           </div>
         </Card>
       ))}
