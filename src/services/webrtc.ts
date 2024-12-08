@@ -1,4 +1,4 @@
-import { Room, RoomEvent, RemoteParticipant, LocalParticipant, RemoteTrack, RoomOptions } from 'livekit-client';
+import { Room, RoomEvent, RemoteParticipant, LocalParticipant, RemoteTrack, RoomOptions, ConnectionState } from 'livekit-client';
 import { supabase } from "@/integrations/supabase/client";
 
 class WebRTCService {
@@ -45,13 +45,38 @@ class WebRTCService {
         },
       };
 
+      // Cleanup any existing room connection
+      if (this.room) {
+        console.log('Cleaning up existing room connection');
+        await this.cleanup();
+      }
+
       this.room = new Room(roomOptions);
       
-      // Connect to LiveKit room
+      // Set up connection state monitoring
+      this.room.on(RoomEvent.ConnectionStateChanged, (state: ConnectionState) => {
+        console.log('Connection state changed:', state);
+      });
+
+      // Connect to LiveKit room and wait for connection to be established
       await this.room.connect('wss://tnj-tools-2azakdqh.livekit.cloud', token);
       console.log('Connected to LiveKit room');
+
+      // Wait for the connection to be fully established
+      if (this.room.state !== 'connected') {
+        await new Promise<void>((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            reject(new Error('Connection timeout'));
+          }, 10000);
+
+          this.room?.once(RoomEvent.Connected, () => {
+            clearTimeout(timeout);
+            resolve();
+          });
+        });
+      }
       
-      // Start capturing local media
+      // Start capturing local media only after connection is established
       await this.room.localParticipant.enableCameraAndMicrophone();
       console.log('Local media enabled');
       
@@ -69,13 +94,10 @@ class WebRTCService {
         console.log('Disconnected from room');
       });
 
-      this.room.on(RoomEvent.ConnectionStateChanged, (state) => {
-        console.log('Connection state changed:', state);
-      });
-
       return this.localStream;
     } catch (error) {
       console.error('Error initializing call:', error);
+      await this.cleanup();
       throw error;
     }
   }
