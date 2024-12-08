@@ -21,9 +21,22 @@ export const DeviceSelector = ({
   useEffect(() => {
     const loadDevices = async () => {
       try {
+        console.log('Loading media devices...');
         const devices = await navigator.mediaDevices.enumerateDevices();
-        setAudioDevices(devices.filter(device => device.kind === 'audioinput'));
-        setVideoDevices(devices.filter(device => device.kind === 'videoinput'));
+        const audioInputs = devices.filter(device => device.kind === 'audioinput');
+        const videoInputs = devices.filter(device => device.kind === 'videoinput');
+        
+        console.log('Available audio devices:', audioInputs.map(d => ({ 
+          deviceId: d.deviceId, 
+          label: d.label 
+        })));
+        console.log('Available video devices:', videoInputs.map(d => ({ 
+          deviceId: d.deviceId, 
+          label: d.label 
+        })));
+        
+        setAudioDevices(audioInputs);
+        setVideoDevices(videoInputs);
       } catch (error) {
         console.error('Error loading devices:', error);
       }
@@ -37,19 +50,34 @@ export const DeviceSelector = ({
     };
   }, []);
 
+  // Only render if we have valid devices
+  if (!audioDevices.length || !videoDevices.length) {
+    console.log('Waiting for devices to be available...');
+    return null;
+  }
+
+  // Find default devices (first available device if current is not set)
+  const defaultAudioDevice = currentAudioDevice || audioDevices[0]?.deviceId;
+  const defaultVideoDevice = currentVideoDevice || videoDevices[0]?.deviceId;
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="audio-device">Microphone</Label>
-        <Select value={currentAudioDevice} onValueChange={onAudioDeviceChange}>
+        <Select 
+          value={defaultAudioDevice} 
+          onValueChange={onAudioDeviceChange}
+        >
           <SelectTrigger id="audio-device">
             <SelectValue placeholder="Select microphone" />
           </SelectTrigger>
           <SelectContent>
             {audioDevices.map((device) => (
-              <SelectItem key={device.deviceId} value={device.deviceId}>
-                {device.label || `Microphone ${device.deviceId.slice(0, 5)}...`}
-              </SelectItem>
+              device.deviceId && (
+                <SelectItem key={device.deviceId} value={device.deviceId}>
+                  {device.label || `Microphone ${device.deviceId.slice(0, 5)}...`}
+                </SelectItem>
+              )
             ))}
           </SelectContent>
         </Select>
@@ -57,15 +85,20 @@ export const DeviceSelector = ({
 
       <div className="space-y-2">
         <Label htmlFor="video-device">Camera</Label>
-        <Select value={currentVideoDevice} onValueChange={onVideoDeviceChange}>
+        <Select 
+          value={defaultVideoDevice} 
+          onValueChange={onVideoDeviceChange}
+        >
           <SelectTrigger id="video-device">
             <SelectValue placeholder="Select camera" />
           </SelectTrigger>
           <SelectContent>
             {videoDevices.map((device) => (
-              <SelectItem key={device.deviceId} value={device.deviceId}>
-                {device.label || `Camera ${device.deviceId.slice(0, 5)}...`}
-              </SelectItem>
+              device.deviceId && (
+                <SelectItem key={device.deviceId} value={device.deviceId}>
+                  {device.label || `Camera ${device.deviceId.slice(0, 5)}...`}
+                </SelectItem>
+              )
             ))}
           </SelectContent>
         </Select>
