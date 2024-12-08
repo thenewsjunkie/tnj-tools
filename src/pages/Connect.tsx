@@ -21,22 +21,36 @@ const Connect = () => {
   const [estimatedWait, setEstimatedWait] = useState(0);
   const [currentAudioDevice, setCurrentAudioDevice] = useState("");
   const [currentVideoDevice, setCurrentVideoDevice] = useState("");
+  const [mediaError, setMediaError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const initializeStream = async (audioDeviceId?: string, videoDeviceId?: string) => {
     try {
+      console.log('Initializing media stream...');
+      
       if (stream) {
+        console.log('Stopping existing stream tracks');
         stream.getTracks().forEach(track => track.stop());
       }
 
+      // iOS Safari requires a specific configuration
       const constraints: MediaStreamConstraints = {
-        video: videoDeviceId ? { deviceId: videoDeviceId } : true,
-        audio: audioDeviceId ? { deviceId: audioDeviceId } : true
+        video: videoDeviceId 
+          ? { deviceId: { exact: videoDeviceId } }
+          : { facingMode: 'user' },
+        audio: audioDeviceId 
+          ? { deviceId: { exact: audioDeviceId } }
+          : true
       };
 
+      console.log('Requesting media with constraints:', constraints);
+      
       const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      console.log('Media stream obtained:', mediaStream.id);
+      
       setStream(mediaStream);
+      setMediaError(null);
 
       // Update current device IDs
       const videoTrack = mediaStream.getVideoTracks()[0];
@@ -44,28 +58,51 @@ const Connect = () => {
       
       if (videoTrack) {
         const settings = videoTrack.getSettings();
+        console.log('Video track settings:', settings);
         setCurrentVideoDevice(settings.deviceId || "");
       }
       
       if (audioTrack) {
         const settings = audioTrack.getSettings();
+        console.log('Audio track settings:', settings);
         setCurrentAudioDevice(settings.deviceId || "");
       }
     } catch (err) {
       console.error("Camera access error:", err);
+      setMediaError(err.message);
       toast({
         title: "Camera Access Error",
-        description: "Please enable camera and microphone access to join the show.",
+        description: "Please enable camera and microphone access to join the show. If on iOS, make sure you're using Safari.",
         variant: "destructive",
       });
     }
   };
 
   useEffect(() => {
-    initializeStream();
+    const checkMediaPermissions = async () => {
+      try {
+        // Check if the browser supports getUserMedia
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw new Error("Your browser doesn't support media devices");
+        }
+
+        console.log('Checking media permissions...');
+        await initializeStream();
+      } catch (error) {
+        console.error('Media permissions error:', error);
+        setMediaError(error.message);
+      }
+    };
+
+    checkMediaPermissions();
+
     return () => {
       if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+        console.log('Cleaning up media stream');
+        stream.getTracks().forEach(track => {
+          track.stop();
+          console.log(`Stopped track: ${track.kind}`);
+        });
       }
     };
   }, []);
@@ -93,6 +130,15 @@ const Connect = () => {
       toast({
         title: "Missing Information",
         description: "Please provide your name and topic before joining.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!stream) {
+      toast({
+        title: "Camera Required",
+        description: "Please enable your camera and microphone before joining.",
         variant: "destructive",
       });
       return;
@@ -169,11 +215,32 @@ const Connect = () => {
       </header>
 
       <div className="container max-w-4xl mx-auto p-4 space-y-8">
-        <VideoPreview 
-          stream={stream}
-          isMuted={isMuted}
-          toggleMicrophone={toggleMicrophone}
-        />
+        {mediaError ? (
+          <div className="bg-destructive/10 p-4 rounded-lg text-destructive">
+            <p className="font-semibold">Camera Access Error</p>
+            <p className="text-sm">{mediaError}</p>
+            <p className="text-sm mt-2">
+              Tips:
+              <ul className="list-disc list-inside mt-1">
+                <li>Make sure you're using Safari on iOS</li>
+                <li>Check your browser permissions</li>
+                <li>Allow camera and microphone access when prompted</li>
+              </ul>
+            </p>
+            <Button 
+              onClick={() => initializeStream()}
+              className="mt-4"
+            >
+              Retry Camera Access
+            </Button>
+          </div>
+        ) : (
+          <VideoPreview 
+            stream={stream}
+            isMuted={isMuted}
+            toggleMicrophone={toggleMicrophone}
+          />
+        )}
 
         <DeviceSelector
           currentAudioDevice={currentAudioDevice}

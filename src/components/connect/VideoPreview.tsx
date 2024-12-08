@@ -13,7 +13,20 @@ const VideoPreview = ({ stream, isMuted, toggleMicrophone }: VideoPreviewProps) 
 
   useEffect(() => {
     if (videoRef.current && stream) {
+      console.log('Setting video stream:', stream.id);
       videoRef.current.srcObject = stream;
+      
+      // iOS Safari specific playback handling
+      const playVideo = async () => {
+        try {
+          await videoRef.current?.play();
+          console.log('Video playback started');
+        } catch (err) {
+          console.error('Error playing video:', err);
+        }
+      };
+      
+      playVideo();
     }
   }, [stream]);
 
