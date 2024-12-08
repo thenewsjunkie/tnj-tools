@@ -6,6 +6,7 @@ class WebRTCService {
   private _localParticipant: LocalParticipant | null = null;
   private _remoteParticipants: Map<string, RemoteParticipant> = new Map();
   private onTrackCallback: ((stream: MediaStream) => void) | null = null;
+  private isConnecting: boolean = false;
 
   get localStream(): MediaStream | null {
     if (!this._localParticipant) return null;
@@ -22,6 +23,13 @@ class WebRTCService {
   }
 
   async initializeCall(callId: string): Promise<MediaStream | null> {
+    if (this.isConnecting) {
+      console.log('Connection already in progress, skipping');
+      return null;
+    }
+
+    this.isConnecting = true;
+
     try {
       console.log('Initializing call with ID:', callId);
       
@@ -37,6 +45,9 @@ class WebRTCService {
 
       console.log('Got LiveKit token, connecting to room...');
 
+      // Cleanup any existing room connection
+      await this.cleanup();
+
       const roomOptions: RoomOptions = {
         adaptiveStream: true,
         dynacast: true,
@@ -45,12 +56,6 @@ class WebRTCService {
         },
       };
 
-      // Cleanup any existing room connection
-      if (this.room) {
-        console.log('Cleaning up existing room connection');
-        await this.cleanup();
-      }
-
       this.room = new Room(roomOptions);
       
       // Set up connection state monitoring
@@ -58,25 +63,43 @@ class WebRTCService {
         console.log('Connection state changed:', state);
       });
 
-      // Connect to LiveKit room and wait for connection to be established
+      // Connect to LiveKit room
       await this.room.connect('wss://tnj-tools-2azakdqh.livekit.cloud', token);
-      console.log('Connected to LiveKit room');
-
-      // Wait for the connection to be fully established
-      if (this.room.state !== 'connected') {
-        await new Promise<void>((resolve, reject) => {
-          const timeout = setTimeout(() => {
-            reject(new Error('Connection timeout'));
-          }, 10000);
-
-          this.room?.once(RoomEvent.Connected, () => {
-            clearTimeout(timeout);
-            resolve();
-          });
-        });
-      }
       
-      // Start capturing local media only after connection is established
+      // Wait for the connection to be fully established
+      await new Promise<void>((resolve, reject) => {
+        if (!this.room) {
+          reject(new Error('Room not initialized'));
+          return;
+        }
+
+        if (this.room.state === 'connected') {
+          resolve();
+          return;
+        }
+
+        const timeout = setTimeout(() => {
+          reject(new Error('Connection timeout'));
+        }, 10000);
+
+        this.room.once(RoomEvent.Connected, () => {
+          clearTimeout(timeout);
+          resolve();
+        });
+
+        this.room.once(RoomEvent.Disconnected, () => {
+          clearTimeout(timeout);
+          reject(new Error('Connection failed'));
+        });
+      });
+
+      console.log('Connected to LiveKit room');
+      
+      // Start capturing local media
+      if (!this.room.localParticipant) {
+        throw new Error('Local participant not available');
+      }
+
       await this.room.localParticipant.enableCameraAndMicrophone();
       console.log('Local media enabled');
       
@@ -99,6 +122,8 @@ class WebRTCService {
       console.error('Error initializing call:', error);
       await this.cleanup();
       throw error;
+    } finally {
+      this.isConnecting = false;
     }
   }
 
@@ -137,6 +162,7 @@ class WebRTCService {
     this._localParticipant = null;
     this._remoteParticipants.clear();
     this.onTrackCallback = null;
+    this.isConnecting = false;
   }
 }
 
