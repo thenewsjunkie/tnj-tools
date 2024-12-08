@@ -13,20 +13,38 @@ const VideoPreview = ({ stream, isMuted, toggleMicrophone }: VideoPreviewProps) 
 
   useEffect(() => {
     if (videoRef.current && stream) {
-      console.log('Setting video stream:', stream.id);
+      console.log('Setting video stream to element:', {
+        streamId: stream.id,
+        tracks: stream.getTracks().map(t => ({
+          kind: t.kind,
+          enabled: t.enabled,
+          muted: t.muted
+        }))
+      });
+      
       videoRef.current.srcObject = stream;
       
       // iOS Safari specific playback handling
       const playVideo = async () => {
         try {
-          await videoRef.current?.play();
-          console.log('Video playback started');
+          if (!videoRef.current?.played.length) {
+            console.log('Attempting to play video...');
+            const playPromise = videoRef.current?.play();
+            await playPromise;
+            console.log('Video playback started successfully');
+          }
         } catch (err) {
           console.error('Error playing video:', err);
         }
       };
       
+      // Try to play immediately and also on user interaction
       playVideo();
+      document.addEventListener('touchstart', playVideo, { once: true });
+      
+      return () => {
+        document.removeEventListener('touchstart', playVideo);
+      };
     }
   }, [stream]);
 

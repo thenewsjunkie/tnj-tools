@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import VideoPreview from "@/components/connect/VideoPreview";
 import CallForm from "@/components/connect/CallForm";
 import Guidelines from "@/components/connect/Guidelines";
 import QueueStatus from "@/components/connect/QueueStatus";
+import MediaDeviceInitializer from "@/components/connect/MediaDeviceInitializer";
 
 const Connect = () => {
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -25,103 +26,60 @@ const Connect = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const initializeStream = async (audioDeviceId?: string, videoDeviceId?: string) => {
-    try {
-      console.log('Initializing media stream...');
-      
-      if (stream) {
-        console.log('Stopping existing stream tracks');
-        stream.getTracks().forEach(track => track.stop());
-      }
+  const handleStreamReady = (newStream: MediaStream) => {
+    console.log('Stream ready:', newStream.id);
+    setStream(newStream);
+    setMediaError(null);
 
-      // iOS Safari requires a specific configuration
-      const constraints: MediaStreamConstraints = {
-        video: videoDeviceId 
-          ? { deviceId: { exact: videoDeviceId } }
-          : { facingMode: 'user' },
-        audio: audioDeviceId 
-          ? { deviceId: { exact: audioDeviceId } }
-          : true
-      };
-
-      console.log('Requesting media with constraints:', constraints);
-      
-      const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-      console.log('Media stream obtained:', mediaStream.id);
-      
-      setStream(mediaStream);
-      setMediaError(null);
-
-      // Update current device IDs
-      const videoTrack = mediaStream.getVideoTracks()[0];
-      const audioTrack = mediaStream.getAudioTracks()[0];
-      
-      if (videoTrack) {
-        const settings = videoTrack.getSettings();
-        console.log('Video track settings:', settings);
-        setCurrentVideoDevice(settings.deviceId || "");
-      }
-      
-      if (audioTrack) {
-        const settings = audioTrack.getSettings();
-        console.log('Audio track settings:', settings);
-        setCurrentAudioDevice(settings.deviceId || "");
-      }
-    } catch (err) {
-      console.error("Camera access error:", err);
-      setMediaError(err.message);
-      toast({
-        title: "Camera Access Error",
-        description: "Please enable camera and microphone access to join the show. If on iOS, make sure you're using Safari.",
-        variant: "destructive",
-      });
+    // Update current device IDs
+    const videoTrack = newStream.getVideoTracks()[0];
+    const audioTrack = newStream.getAudioTracks()[0];
+    
+    if (videoTrack) {
+      const settings = videoTrack.getSettings();
+      console.log('Video track settings:', settings);
+      setCurrentVideoDevice(settings.deviceId || "");
+    }
+    
+    if (audioTrack) {
+      const settings = audioTrack.getSettings();
+      console.log('Audio track settings:', settings);
+      setCurrentAudioDevice(settings.deviceId || "");
     }
   };
 
-  useEffect(() => {
-    const checkMediaPermissions = async () => {
-      try {
-        // Check if the browser supports getUserMedia
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          throw new Error("Your browser doesn't support media devices");
-        }
-
-        console.log('Checking media permissions...');
-        await initializeStream();
-      } catch (error) {
-        console.error('Media permissions error:', error);
-        setMediaError(error.message);
-      }
-    };
-
-    checkMediaPermissions();
-
-    return () => {
-      if (stream) {
-        console.log('Cleaning up media stream');
-        stream.getTracks().forEach(track => {
-          track.stop();
-          console.log(`Stopped track: ${track.kind}`);
-        });
-      }
-    };
-  }, []);
+  const handleMediaError = (error: string) => {
+    console.error('Media error:', error);
+    setMediaError(error);
+    setStream(null);
+  };
 
   const handleAudioDeviceChange = (deviceId: string) => {
     setCurrentAudioDevice(deviceId);
-    initializeStream(deviceId, currentVideoDevice);
+    // Stop current stream before requesting new one
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+    }
+    // MediaDeviceInitializer will handle the new stream
   };
 
   const handleVideoDeviceChange = (deviceId: string) => {
     setCurrentVideoDevice(deviceId);
-    initializeStream(currentAudioDevice, deviceId);
+    // Stop current stream before requesting new one
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+    }
+    // MediaDeviceInitializer will handle the new stream
   };
 
   const toggleMicrophone = () => {
     if (stream) {
       const audioTrack = stream.getAudioTracks()[0];
-      audioTrack.enabled = !audioTrack.enabled;
-      setIsMuted(!audioTrack.enabled);
+      if (audioTrack) {
+        audioTrack.enabled = !audioTrack.enabled;
+        setIsMuted(!audioTrack.enabled);
+        console.log('Microphone toggled:', { enabled: audioTrack.enabled });
+      }
     }
   };
 
@@ -228,17 +186,22 @@ const Connect = () => {
               </ul>
             </p>
             <Button 
-              onClick={() => initializeStream()}
+              onClick={() => setMediaError(null)}
               className="mt-4"
             >
               Retry Camera Access
             </Button>
           </div>
-        ) : (
+        ) : stream ? (
           <VideoPreview 
             stream={stream}
             isMuted={isMuted}
             toggleMicrophone={toggleMicrophone}
+          />
+        ) : (
+          <MediaDeviceInitializer
+            onStreamReady={handleStreamReady}
+            onError={handleMediaError}
           />
         )}
 
