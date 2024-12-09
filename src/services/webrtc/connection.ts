@@ -22,7 +22,7 @@ export class ConnectionManager {
 
     const token = await this.getToken(callId);
     
-    this.pendingConnection = new Promise((resolve, reject) => {
+    this.pendingConnection = new Promise<Room>((resolve, reject) => {
       const roomOptions: RoomOptions = {
         adaptiveStream: true,
         dynacast: true,
@@ -49,6 +49,10 @@ export class ConnectionManager {
         }
 
         if (state === 'connected') {
+          if (this.connectionTimeout) {
+            clearTimeout(this.connectionTimeout);
+            this.connectionTimeout = null;
+          }
           resolve(room);
         }
 
