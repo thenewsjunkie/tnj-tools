@@ -7,6 +7,7 @@ class WebRTCService {
   private _remoteParticipants: Map<string, RemoteParticipant> = new Map();
   private onTrackCallback: ((stream: MediaStream) => void) | null = null;
   private isConnecting: boolean = false;
+  private activeCallId: string | null = null;
 
   get localStream(): MediaStream | null {
     if (!this._localParticipant) return null;
@@ -23,6 +24,12 @@ class WebRTCService {
   }
 
   async initializeCall(callId: string): Promise<MediaStream | null> {
+    // If we're already connected to this call, don't reconnect
+    if (this.activeCallId === callId && this.room?.state === 'connected') {
+      console.log('Already connected to this call:', callId);
+      return this.localStream;
+    }
+
     if (this.isConnecting) {
       console.log('Connection already in progress, skipping');
       return null;
@@ -45,8 +52,10 @@ class WebRTCService {
 
       console.log('Got LiveKit token, connecting to room...');
 
-      // Cleanup any existing room connection
-      await this.cleanup();
+      // Only cleanup if we're connecting to a different call
+      if (this.activeCallId !== callId) {
+        await this.cleanup();
+      }
 
       const roomOptions: RoomOptions = {
         adaptiveStream: true,
@@ -104,6 +113,7 @@ class WebRTCService {
       console.log('Local media enabled');
       
       this._localParticipant = this.room.localParticipant;
+      this.activeCallId = callId;
 
       // Set up remote participant handling
       this.room.on(RoomEvent.ParticipantConnected, (participant: RemoteParticipant) => {
@@ -115,6 +125,7 @@ class WebRTCService {
       // Add error handling for room events
       this.room.on(RoomEvent.Disconnected, () => {
         console.log('Disconnected from room');
+        this.activeCallId = null;
       });
 
       return this.localStream;
@@ -163,6 +174,7 @@ class WebRTCService {
     this._remoteParticipants.clear();
     this.onTrackCallback = null;
     this.isConnecting = false;
+    this.activeCallId = null;
   }
 }
 
