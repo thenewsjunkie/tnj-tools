@@ -8,6 +8,7 @@ class WebRTCService {
   private onTrackCallback: ((stream: MediaStream) => void) | null = null;
   private isConnecting: boolean = false;
   private activeCallId: string | null = null;
+  private connectionTimeout: NodeJS.Timeout | null = null;
 
   get localStream(): MediaStream | null {
     if (!this._localParticipant) return null;
@@ -24,12 +25,13 @@ class WebRTCService {
   }
 
   async initializeCall(callId: string): Promise<MediaStream | null> {
-    // If we're already connected to this call, don't reconnect
+    // If we're already connected to this call, return the existing stream
     if (this.activeCallId === callId && this.room?.state === 'connected') {
       console.log('Already connected to this call:', callId);
       return this.localStream;
     }
 
+    // If we're in the process of connecting, don't start another connection
     if (this.isConnecting) {
       console.log('Connection already in progress, skipping');
       return null;
@@ -70,6 +72,20 @@ class WebRTCService {
       // Set up connection state monitoring
       this.room.on(RoomEvent.ConnectionStateChanged, (state: ConnectionState) => {
         console.log('Connection state changed:', state);
+        
+        // Clear any existing timeout
+        if (this.connectionTimeout) {
+          clearTimeout(this.connectionTimeout);
+          this.connectionTimeout = null;
+        }
+
+        // Set new timeout for connecting state
+        if (state === 'connecting') {
+          this.connectionTimeout = setTimeout(() => {
+            console.log('Connection timeout, cleaning up');
+            this.cleanup();
+          }, 10000); // 10 second timeout
+        }
       });
 
       // Connect to LiveKit room
@@ -175,6 +191,11 @@ class WebRTCService {
     this.onTrackCallback = null;
     this.isConnecting = false;
     this.activeCallId = null;
+    
+    if (this.connectionTimeout) {
+      clearTimeout(this.connectionTimeout);
+      this.connectionTimeout = null;
+    }
   }
 }
 
