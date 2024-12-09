@@ -20,4 +20,19 @@ export class MediaManager {
       throw error;
     }
   }
+
+  getLocalStream(participant: LocalParticipant | null): MediaStream | null {
+    if (!participant) return null;
+    
+    const tracks = participant.trackPublications;
+    if (tracks.size === 0) return null;
+    
+    const stream = new MediaStream();
+    tracks.forEach(publication => {
+      if (publication.track) {
+        stream.addTrack(publication.track.mediaStreamTrack);
+      }
+    });
+    return stream;
+  }
 }

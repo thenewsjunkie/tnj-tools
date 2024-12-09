@@ -1,7 +1,8 @@
-import { Room, RemoteParticipant, RemoteTrack } from 'livekit-client';
+import { Room, RemoteParticipant } from 'livekit-client';
 import { WebRTCState, TrackCallback } from './types';
 import { ConnectionManager } from './connection';
 import { MediaManager } from './media';
+import { ParticipantManager } from './participants';
 
 class WebRTCService {
   private state: WebRTCState = {
@@ -15,19 +16,10 @@ class WebRTCService {
   private onTrackCallback: TrackCallback | null = null;
   private connectionManager = new ConnectionManager();
   private mediaManager = new MediaManager();
+  private participantManager = new ParticipantManager();
 
   get localStream(): MediaStream | null {
-    if (!this.state.localParticipant) return null;
-    const tracks = this.state.localParticipant.trackPublications;
-    if (tracks.size === 0) return null;
-    
-    const stream = new MediaStream();
-    tracks.forEach(publication => {
-      if (publication.track) {
-        stream.addTrack(publication.track.mediaStreamTrack);
-      }
-    });
-    return stream;
+    return this.mediaManager.getLocalStream(this.state.localParticipant);
   }
 
   async initializeCall(callId: string): Promise<MediaStream | null> {
@@ -74,34 +66,12 @@ class WebRTCService {
   private handleParticipantConnected(participant: RemoteParticipant) {
     console.log('Remote participant connected:', participant.identity);
     this.state.remoteParticipants.set(participant.sid, participant);
-    this.handleParticipantTracks(participant);
+    this.participantManager.handleParticipantTracks(participant, this.onTrackCallback);
   }
 
   private handleParticipantDisconnected(participant: RemoteParticipant) {
     console.log('Remote participant disconnected:', participant.identity);
     this.state.remoteParticipants.delete(participant.sid);
-  }
-
-  private handleParticipantTracks(participant: RemoteParticipant) {
-    const stream = new MediaStream();
-    
-    participant.on('trackSubscribed', (track: RemoteTrack) => {
-      console.log('Track subscribed:', track.kind);
-      stream.addTrack(track.mediaStreamTrack);
-      if (this.onTrackCallback) {
-        this.onTrackCallback(stream);
-      }
-    });
-
-    participant.on('trackUnsubscribed', (track: RemoteTrack) => {
-      console.log('Track unsubscribed:', track.kind);
-      const tracks = stream.getTracks();
-      tracks.forEach(t => {
-        if (t.id === track.mediaStreamTrack.id) {
-          stream.removeTrack(t);
-        }
-      });
-    });
   }
 
   onTrack(callback: TrackCallback) {
