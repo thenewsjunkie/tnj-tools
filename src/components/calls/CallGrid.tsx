@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import type { CallSession } from "@/types/calls";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,27 +16,57 @@ export const CallGrid = ({ calls, fullscreenCall, onFullscreenChange }: CallGrid
   const [streams, setStreams] = useState<{ [key: string]: MediaStream }>({});
   const { toast } = useToast();
 
-  // Sort calls to show newest first
-  const sortedCalls = [...calls].sort((a, b) => 
-    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  );
+  // Clean up old calls on component mount
+  useEffect(() => {
+    const cleanupOldCalls = async () => {
+      try {
+        const twentyFourHoursAgo = new Date();
+        twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+
+        const { error } = await supabase
+          .from('call_sessions')
+          .update({ 
+            status: 'ended',
+            ended_at: new Date().toISOString()
+          })
+          .eq('status', 'connected')
+          .lt('created_at', twentyFourHoursAgo.toISOString());
+
+        if (error) {
+          console.error('Error cleaning up old calls:', error);
+        }
+      } catch (error) {
+        console.error('Error in cleanupOldCalls:', error);
+      }
+    };
+
+    cleanupOldCalls();
+  }, []);
+
+  // Sort calls to show newest first and filter out ended calls
+  const sortedCalls = [...calls]
+    .filter(call => call.status !== 'ended')
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   const handleDelete = async (callId: string) => {
     try {
       const { error } = await supabase
         .from('call_sessions')
-        .update({ status: 'ended', ended_at: new Date().toISOString() })
+        .update({ 
+          status: 'ended', 
+          ended_at: new Date().toISOString() 
+        })
         .eq('id', callId);
 
       if (error) throw error;
+
+      // Cleanup WebRTC connection
+      await webRTCService.cleanup();
 
       toast({
         title: "Call ended",
         description: "The call has been successfully ended",
       });
-
-      // Cleanup WebRTC connection
-      webRTCService.cleanup();
     } catch (error) {
       console.error('Error ending call:', error);
       toast({
