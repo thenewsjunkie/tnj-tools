@@ -15,6 +15,7 @@ interface CallGridProps {
 export const CallGrid = ({ calls, fullscreenCall, onFullscreenChange }: CallGridProps) => {
   const [streams, setStreams] = useState<{ [key: string]: MediaStream }>({});
   const { toast } = useToast();
+  const [activeCallIds, setActiveCallIds] = useState<Set<string>>(new Set());
 
   // Clean up old calls on component mount
   useEffect(() => {
@@ -53,23 +54,29 @@ export const CallGrid = ({ calls, fullscreenCall, onFullscreenChange }: CallGrid
   // Monitor calls for status changes and cleanup ended calls
   useEffect(() => {
     const handleCallStatusChange = async () => {
-      const endedCalls = calls.filter(call => call.status === 'ended');
+      const activeCalls = new Set(calls
+        .filter(call => call.status === 'connected')
+        .map(call => call.id));
       
-      for (const call of endedCalls) {
-        // Remove the stream for ended calls
+      // Cleanup streams and connections for ended calls
+      const endedCallIds = Array.from(activeCallIds).filter(id => !activeCalls.has(id));
+      
+      for (const callId of endedCallIds) {
+        console.log('Cleaning up ended call:', callId);
         setStreams(prev => {
           const newStreams = { ...prev };
-          delete newStreams[call.id];
+          delete newStreams[callId];
           return newStreams;
         });
         
-        // Cleanup WebRTC connection
         await webRTCService.cleanup();
       }
+
+      setActiveCallIds(activeCalls);
     };
 
     handleCallStatusChange();
-  }, [calls]);
+  }, [calls, activeCallIds]);
 
   // Sort calls to show newest first and filter out ended calls
   const sortedCalls = [...calls]
@@ -89,11 +96,17 @@ export const CallGrid = ({ calls, fullscreenCall, onFullscreenChange }: CallGrid
 
       if (error) throw error;
 
-      // Remove the stream
+      // Remove the stream and active call tracking
       setStreams(prev => {
         const newStreams = { ...prev };
         delete newStreams[callId];
         return newStreams;
+      });
+      
+      setActiveCallIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(callId);
+        return newSet;
       });
 
       // Cleanup WebRTC connection
@@ -115,6 +128,11 @@ export const CallGrid = ({ calls, fullscreenCall, onFullscreenChange }: CallGrid
 
   const handleConnectCall = async (callId: string) => {
     try {
+      if (activeCallIds.has(callId)) {
+        console.log('Call already active:', callId);
+        return;
+      }
+
       console.log('Connecting to call:', callId);
       
       // Update call status to connected
@@ -133,6 +151,8 @@ export const CallGrid = ({ calls, fullscreenCall, onFullscreenChange }: CallGrid
           ...prev,
           [callId]: localStream
         }));
+        
+        setActiveCallIds(prev => new Set([...prev, callId]));
       }
 
       toast({
@@ -150,6 +170,11 @@ export const CallGrid = ({ calls, fullscreenCall, onFullscreenChange }: CallGrid
   };
 
   const handleStreamUpdate = (callId: string, stream: MediaStream) => {
+    if (!activeCallIds.has(callId)) {
+      console.log('Ignoring stream update for inactive call:', callId);
+      return;
+    }
+    
     setStreams(prev => ({
       ...prev,
       [callId]: stream
@@ -163,7 +188,7 @@ export const CallGrid = ({ calls, fullscreenCall, onFullscreenChange }: CallGrid
   return (
     <div className={gridClassName}>
       <CallStreamManager 
-        calls={sortedCalls} 
+        calls={sortedCalls.filter(call => activeCallIds.has(call.id))} 
         onStreamUpdate={handleStreamUpdate} 
       />
       {sortedCalls.map((call) => (
