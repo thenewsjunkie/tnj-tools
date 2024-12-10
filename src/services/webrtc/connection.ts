@@ -94,7 +94,7 @@ export class ConnectionManager {
           reject(error);
         });
     }).finally(() => {
-      if (!this.currentRoom?.state === 'connected') {
+      if (this.currentRoom?.state !== 'connected') {
         this.pendingConnection = null;
       }
     });
