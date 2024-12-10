@@ -38,7 +38,7 @@ class WebRTCService {
     this.state.isConnecting = true;
 
     try {
-      // Only cleanup if we're connecting to a different call
+      // Clean up any existing connection if connecting to a different call
       if (this.state.activeCallId !== callId) {
         await this.cleanup();
       }
@@ -79,10 +79,8 @@ class WebRTCService {
   }
 
   async cleanup() {
-    if (this.state.room) {
-      console.log('Cleaning up WebRTC connection');
-      await this.state.room.disconnect();
-    }
+    console.log('Cleaning up WebRTC connection');
+    await this.connectionManager.disconnect();
     
     this.state = {
       room: null,

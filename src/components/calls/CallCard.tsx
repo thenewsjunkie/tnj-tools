@@ -22,14 +22,37 @@ export const CallCard = ({
   isFullscreen,
 }: CallCardProps) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const playAttempts = useRef(0);
+  const maxPlayAttempts = 3;
+
+  const attemptPlay = async () => {
+    if (!videoRef.current || !stream || playAttempts.current >= maxPlayAttempts) return;
+
+    try {
+      await videoRef.current.play();
+      playAttempts.current = 0; // Reset counter on successful play
+    } catch (error) {
+      console.error('Error playing video:', error);
+      playAttempts.current++;
+      
+      // Retry after a short delay if we haven't exceeded max attempts
+      if (playAttempts.current < maxPlayAttempts) {
+        setTimeout(attemptPlay, 1000);
+      }
+    }
+  };
 
   useEffect(() => {
     if (videoRef.current && stream) {
       videoRef.current.srcObject = stream;
-      videoRef.current.play().catch(error => {
-        console.error('Error playing video:', error);
-      });
+      attemptPlay();
     }
+
+    return () => {
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+    };
   }, [stream]);
 
   return (

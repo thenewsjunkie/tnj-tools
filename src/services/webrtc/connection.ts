@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 export class ConnectionManager {
   private connectionTimeout: NodeJS.Timeout | null = null;
   private pendingConnection: Promise<Room> | null = null;
+  private currentRoom: Room | null = null;
 
   async getToken(callId: string): Promise<string> {
     const { data: { token }, error } = await supabase.functions.invoke('get-livekit-token', {
@@ -15,8 +16,15 @@ export class ConnectionManager {
   }
 
   async connect(callId: string): Promise<Room> {
-    // If there's already a connection attempt in progress, return it
+    // If already connected to this room, return the current room
+    if (this.currentRoom?.state === 'connected') {
+      console.log('Already connected to room:', callId);
+      return this.currentRoom;
+    }
+
+    // If there's a pending connection, wait for it
     if (this.pendingConnection) {
+      console.log('Waiting for pending connection to complete');
       return this.pendingConnection;
     }
 
@@ -30,6 +38,14 @@ export class ConnectionManager {
       };
 
       const room = new Room(roomOptions);
+      
+      const cleanup = () => {
+        if (this.connectionTimeout) {
+          clearTimeout(this.connectionTimeout);
+          this.connectionTimeout = null;
+        }
+        this.pendingConnection = null;
+      };
 
       // Set up connection state monitoring
       room.on(RoomEvent.ConnectionStateChanged, (state: ConnectionState) => {
@@ -43,20 +59,21 @@ export class ConnectionManager {
         if (state === 'connecting') {
           this.connectionTimeout = setTimeout(() => {
             console.log('Connection timeout, cleaning up');
+            cleanup();
             room.disconnect();
             reject(new Error('Connection timeout'));
           }, 10000);
         }
 
         if (state === 'connected') {
-          if (this.connectionTimeout) {
-            clearTimeout(this.connectionTimeout);
-            this.connectionTimeout = null;
-          }
+          cleanup();
+          this.currentRoom = room;
           resolve(room);
         }
 
         if (state === 'disconnected') {
+          cleanup();
+          this.currentRoom = null;
           reject(new Error('Connection failed'));
         }
       });
@@ -64,16 +81,28 @@ export class ConnectionManager {
       // Connect to LiveKit room
       room.connect('wss://tnj-tools-2azakdqh.livekit.cloud', token)
         .catch(error => {
+          cleanup();
           reject(error);
         });
     }).finally(() => {
       this.pendingConnection = null;
-      if (this.connectionTimeout) {
-        clearTimeout(this.connectionTimeout);
-        this.connectionTimeout = null;
-      }
     });
 
     return this.pendingConnection;
+  }
+
+  async disconnect() {
+    if (this.currentRoom) {
+      console.log('Disconnecting from room');
+      await this.currentRoom.disconnect();
+      this.currentRoom = null;
+    }
+
+    if (this.connectionTimeout) {
+      clearTimeout(this.connectionTimeout);
+      this.connectionTimeout = null;
+    }
+
+    this.pendingConnection = null;
   }
 }
