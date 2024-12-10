@@ -5,6 +5,7 @@ export class ConnectionManager {
   private connectionTimeout: NodeJS.Timeout | null = null;
   private pendingConnection: Promise<Room> | null = null;
   private currentRoom: Room | null = null;
+  private activeCallId: string | null = null;
 
   async getToken(callId: string): Promise<string> {
     const { data: { token }, error } = await supabase.functions.invoke('get-livekit-token', {
@@ -16,14 +17,20 @@ export class ConnectionManager {
   }
 
   async connect(callId: string): Promise<Room> {
-    // If already connected to this room, return the current room
-    if (this.currentRoom?.state === 'connected') {
+    // If already connected to this call, return the current room
+    if (this.currentRoom?.state === 'connected' && this.activeCallId === callId) {
       console.log('Already connected to room:', callId);
       return this.currentRoom;
     }
 
-    // If there's a pending connection, wait for it
-    if (this.pendingConnection) {
+    // If connecting to a different call, disconnect from the current one
+    if (this.activeCallId && this.activeCallId !== callId) {
+      console.log('Disconnecting from previous call before connecting to new one');
+      await this.disconnect();
+    }
+
+    // If there's a pending connection for this call, wait for it
+    if (this.pendingConnection && this.activeCallId === callId) {
       console.log('Waiting for pending connection to complete');
       return this.pendingConnection;
     }
@@ -68,12 +75,14 @@ export class ConnectionManager {
         if (state === 'connected') {
           cleanup();
           this.currentRoom = room;
+          this.activeCallId = callId;
           resolve(room);
         }
 
         if (state === 'disconnected') {
           cleanup();
           this.currentRoom = null;
+          this.activeCallId = null;
           reject(new Error('Connection failed'));
         }
       });
@@ -85,15 +94,18 @@ export class ConnectionManager {
           reject(error);
         });
     }).finally(() => {
-      this.pendingConnection = null;
+      if (!this.currentRoom?.state === 'connected') {
+        this.pendingConnection = null;
+      }
     });
 
     return this.pendingConnection;
   }
 
   async disconnect() {
+    console.log('Disconnecting from room:', this.activeCallId);
+    
     if (this.currentRoom) {
-      console.log('Disconnecting from room');
       await this.currentRoom.disconnect();
       this.currentRoom = null;
     }
@@ -103,6 +115,11 @@ export class ConnectionManager {
       this.connectionTimeout = null;
     }
 
+    this.activeCallId = null;
     this.pendingConnection = null;
+  }
+
+  isConnectedTo(callId: string): boolean {
+    return this.currentRoom?.state === 'connected' && this.activeCallId === callId;
   }
 }

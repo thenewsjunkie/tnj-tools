@@ -24,7 +24,7 @@ class WebRTCService {
 
   async initializeCall(callId: string): Promise<MediaStream | null> {
     // If we're already connected to this call, return the existing stream
-    if (this.state.activeCallId === callId && this.state.room?.state === 'connected') {
+    if (this.connectionManager.isConnectedTo(callId)) {
       console.log('Already connected to this call:', callId);
       return this.localStream;
     }
@@ -38,12 +38,8 @@ class WebRTCService {
     this.state.isConnecting = true;
 
     try {
-      // Clean up any existing connection if connecting to a different call
-      if (this.state.activeCallId !== callId) {
-        await this.cleanup();
-      }
-
       const room = await this.connectionManager.connect(callId);
+      
       this.state.room = room;
       this.state.localParticipant = room.localParticipant;
       this.state.activeCallId = callId;
