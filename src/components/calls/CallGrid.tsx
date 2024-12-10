@@ -43,6 +43,34 @@ export const CallGrid = ({ calls, fullscreenCall, onFullscreenChange }: CallGrid
     cleanupOldCalls();
   }, []);
 
+  // Cleanup WebRTC connections when component unmounts
+  useEffect(() => {
+    return () => {
+      webRTCService.cleanup();
+    };
+  }, []);
+
+  // Monitor calls for status changes and cleanup ended calls
+  useEffect(() => {
+    const handleCallStatusChange = async () => {
+      const endedCalls = calls.filter(call => call.status === 'ended');
+      
+      for (const call of endedCalls) {
+        // Remove the stream for ended calls
+        setStreams(prev => {
+          const newStreams = { ...prev };
+          delete newStreams[call.id];
+          return newStreams;
+        });
+        
+        // Cleanup WebRTC connection
+        await webRTCService.cleanup();
+      }
+    };
+
+    handleCallStatusChange();
+  }, [calls]);
+
   // Sort calls to show newest first and filter out ended calls
   const sortedCalls = [...calls]
     .filter(call => call.status !== 'ended')
@@ -50,6 +78,7 @@ export const CallGrid = ({ calls, fullscreenCall, onFullscreenChange }: CallGrid
 
   const handleDelete = async (callId: string) => {
     try {
+      // First update the database
       const { error } = await supabase
         .from('call_sessions')
         .update({ 
@@ -59,6 +88,13 @@ export const CallGrid = ({ calls, fullscreenCall, onFullscreenChange }: CallGrid
         .eq('id', callId);
 
       if (error) throw error;
+
+      // Remove the stream
+      setStreams(prev => {
+        const newStreams = { ...prev };
+        delete newStreams[callId];
+        return newStreams;
+      });
 
       // Cleanup WebRTC connection
       await webRTCService.cleanup();
