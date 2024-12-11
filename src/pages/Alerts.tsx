@@ -14,9 +14,12 @@ const Alerts = () => {
 
     channel
       .on('broadcast', { event: 'play_alert' }, ({ payload }) => {
+        console.log('Received alert:', payload);
         setCurrentAlert(payload);
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Channel status:', status);
+      });
 
     return () => {
       channel.unsubscribe();
@@ -25,9 +28,15 @@ const Alerts = () => {
 
   useEffect(() => {
     if (currentAlert && mediaRef.current) {
+      console.log('Playing media:', currentAlert.media_url, currentAlert.media_type);
       if (currentAlert.media_type.startsWith('video')) {
-        (mediaRef.current as HTMLVideoElement).play();
+        const videoElement = mediaRef.current as HTMLVideoElement;
+        videoElement.play().catch(error => {
+          console.error('Error playing video:', error);
+        });
       }
+      
+      // Clear alert after playback (5s for images, automatic for videos)
       const timer = setTimeout(() => {
         setCurrentAlert(null);
       }, currentAlert.media_type.startsWith('video') ? 0 : 5000);
@@ -46,6 +55,8 @@ const Alerts = () => {
           src={currentAlert.media_url}
           className="w-full h-full object-contain"
           onEnded={() => setCurrentAlert(null)}
+          autoPlay
+          playsInline
         />
       ) : (
         <img
