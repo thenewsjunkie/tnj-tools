@@ -5,7 +5,7 @@ import ShowNotes from "@/components/ShowNotes";
 import Reminders from "@/components/Reminders";
 import NewsRoundup from "@/components/NewsRoundup";
 import TNJAi from "@/components/AudioChat";
-import { LogOut, Edit2, Phone } from "lucide-react";
+import { LogOut, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -40,13 +40,6 @@ const Admin = () => {
           ← Home
         </Link>
         <div className="flex items-center gap-4">
-          <Link
-            to="/admin/calls"
-            className="flex items-center gap-2 text-foreground hover:text-primary transition-colors"
-          >
-            <Phone className="h-5 w-5" />
-            <span className="hidden sm:inline">Calls</span>
-          </Link>
           <a
             href="https://github.com/thenewsjunkie/tnj-tools"
             target="_blank"
