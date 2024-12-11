@@ -5,6 +5,7 @@ import ShowNotes from "@/components/ShowNotes";
 import Reminders from "@/components/Reminders";
 import NewsRoundup from "@/components/NewsRoundup";
 import TNJAi from "@/components/AudioChat";
+import Alerts from "@/components/Alerts";
 import { LogOut, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -73,6 +74,7 @@ const Admin = () => {
           <div className="md:col-span-2">
             <NewsRoundup />
           </div>
+          <Alerts />
           <Reminders />
           <Stopwatch />
           <TNJLinks />

@@ -11,6 +11,7 @@ import Admin from "./pages/Admin";
 import Login from "./pages/Login";
 import AI from "./pages/AI";
 import Notes from "./pages/Notes";
+import Alerts from "./pages/Alerts";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/notes" element={<Notes />} />
+            <Route path="/alerts" element={<Alerts />} />
             <Route
               path="/admin"
               element={
