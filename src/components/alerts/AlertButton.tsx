@@ -12,7 +12,7 @@ interface AlertButtonProps {
 
 const AlertButton = ({ alert }: AlertButtonProps) => {
   const handleClick = async () => {
-    const { error } = await supabase
+    const response = await supabase
       .channel('alerts')
       .send({
         type: 'broadcast',
@@ -20,8 +20,8 @@ const AlertButton = ({ alert }: AlertButtonProps) => {
         payload: alert
       });
 
-    if (error) {
-      console.error('Error sending alert:', error);
+    if (!response.ok) {
+      console.error('Error sending alert:', response.error);
     }
   };
 
