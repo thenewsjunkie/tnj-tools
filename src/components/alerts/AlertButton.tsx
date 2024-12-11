@@ -20,8 +20,8 @@ const AlertButton = ({ alert }: AlertButtonProps) => {
         payload: alert
       });
 
-    if (!response.ok) {
-      console.error('Error sending alert:', response.error);
+    if (response !== 'ok') {
+      console.error('Error sending alert');
     }
   };
 
