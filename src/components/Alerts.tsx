@@ -33,6 +33,10 @@ const Alerts = () => {
     });
   };
 
+  const handleAlertDeleted = () => {
+    refetch();
+  };
+
   return (
     <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
       <div className="flex flex-col space-y-1.5 p-6">
@@ -58,9 +62,13 @@ const Alerts = () => {
           </div>
         </div>
       </div>
-      <div className="p-6 pt-0 grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
+      <div className="p-6 pt-0 grid gap-4 grid-cols-1">
         {alerts?.map((alert) => (
-          <AlertButton key={alert.id} alert={alert} />
+          <AlertButton 
+            key={alert.id} 
+            alert={alert} 
+            onAlertDeleted={handleAlertDeleted}
+          />
         ))}
       </div>
       <AddAlertDialog
