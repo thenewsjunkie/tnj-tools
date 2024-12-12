@@ -68,6 +68,27 @@ const Alerts = () => {
 
   if (!currentAlert) return null;
 
+  const renderMessage = () => {
+    if (!currentAlert.message_enabled || !currentAlert.message_text) return null;
+
+    const parts = currentAlert.message_text.split(' ');
+    const name = parts[0];
+    const message = parts.slice(1).join(' ');
+
+    return (
+      <div 
+        className="absolute bottom-10 w-full text-center"
+        style={{
+          fontFamily: 'Radiate Sans Extra Bold',
+          fontSize: `${currentAlert.font_size}px`,
+        }}
+      >
+        <span className="text-[#31c3a6]">{name}</span>
+        {message && <span className="text-white"> {message}</span>}
+      </div>
+    );
+  };
+
   return (
     <div className="fixed inset-0 flex flex-col items-center justify-center">
       <div className="relative w-full h-full flex flex-col items-center justify-center">
@@ -99,18 +120,7 @@ const Alerts = () => {
             Play with Sound
           </Button>
         )}
-        {currentAlert.message_enabled && currentAlert.message_text && (
-          <div 
-            className="absolute bottom-10 w-full text-center"
-            style={{
-              fontFamily: 'Radiate Sans Extra Bold',
-              fontSize: `${currentAlert.font_size}px`,
-              color: currentAlert.message_text.includes(" ") ? "#31c3a6" : "#ffffff"
-            }}
-          >
-            {currentAlert.message_text}
-          </div>
-        )}
+        {renderMessage()}
       </div>
     </div>
   );
