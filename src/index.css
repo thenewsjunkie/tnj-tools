@@ -9,7 +9,7 @@
 
 @font-face {
   font-family: 'Radiate Sans Extra Bold';
-  src: url('/fonts/RadiateSansExtraBold.ttf') format('truetype');
+  src: url('/radiate-sans-extrabold.ttf') format('truetype');
 }
 
 @layer base {
