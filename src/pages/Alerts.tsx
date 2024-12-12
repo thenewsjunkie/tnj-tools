@@ -67,7 +67,7 @@ const Alerts = () => {
   if (!currentAlert) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center">
+    <div className="fixed inset-0 flex items-center justify-center">
       {currentAlert.media_type.startsWith('video') ? (
         <div className="relative w-full h-full flex items-center justify-center">
           <video

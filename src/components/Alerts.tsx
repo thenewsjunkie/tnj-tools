@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Link } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,14 +38,24 @@ const Alerts = () => {
       <div className="flex flex-col space-y-1.5 p-6">
         <div className="flex justify-between items-center">
           <h3 className="text-2xl font-semibold leading-none tracking-tight">Alerts</h3>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsDialogOpen(true)}
-            className="text-white hover:text-primary hover:bg-white/10"
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <a
+              href="/alerts"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white hover:text-primary hover:bg-white/10 rounded-md p-2"
+            >
+              <Link className="h-4 w-4" />
+            </a>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsDialogOpen(true)}
+              className="text-white hover:text-primary hover:bg-white/10"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
       <div className="p-6 pt-0 grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
