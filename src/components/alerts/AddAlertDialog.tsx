@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -13,6 +15,9 @@ interface AddAlertDialogProps {
 
 const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProps) => {
   const [title, setTitle] = useState("");
+  const [messageEnabled, setMessageEnabled] = useState(false);
+  const [messageText, setMessageText] = useState("");
+  const [fontSize, setFontSize] = useState(24);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
@@ -50,12 +55,18 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
         .insert({
           title,
           media_url: publicUrl.publicUrl,
-          media_type: file.type
+          media_type: file.type,
+          message_enabled: messageEnabled,
+          message_text: messageText,
+          font_size: fontSize
         });
 
       if (dbError) throw dbError;
 
       setTitle("");
+      setMessageEnabled(false);
+      setMessageText("");
+      setFontSize(24);
       if (fileInput) fileInput.value = "";
       onAlertAdded();
     } catch (error) {
@@ -85,6 +96,35 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
               required
             />
           </div>
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="message-enabled"
+              checked={messageEnabled}
+              onCheckedChange={setMessageEnabled}
+            />
+            <Label htmlFor="message-enabled">Enable Alert Message</Label>
+          </div>
+          {messageEnabled && (
+            <>
+              <div className="space-y-2">
+                <Input
+                  placeholder="Alert Message"
+                  value={messageText}
+                  onChange={(e) => setMessageText(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Font Size (px)</Label>
+                <Input
+                  type="number"
+                  min="12"
+                  max="72"
+                  value={fontSize}
+                  onChange={(e) => setFontSize(Number(e.target.value))}
+                />
+              </div>
+            </>
+          )}
           <div className="space-y-2">
             <Input
               type="file"

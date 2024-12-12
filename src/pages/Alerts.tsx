@@ -8,6 +8,9 @@ const Alerts = () => {
     id: string;
     media_url: string;
     media_type: string;
+    message_enabled?: boolean;
+    message_text?: string;
+    font_size?: number;
   } | null>(null);
   const [showPlayButton, setShowPlayButton] = useState(false);
   const mediaRef = useRef<HTMLVideoElement | HTMLImageElement>(null);
@@ -43,7 +46,6 @@ const Alerts = () => {
         });
       }
       
-      // Clear alert after playback (5s for images, automatic for videos)
       const timer = setTimeout(() => {
         if (!currentAlert.media_type.startsWith('video')) {
           setCurrentAlert(null);
@@ -67,9 +69,9 @@ const Alerts = () => {
   if (!currentAlert) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center">
-      {currentAlert.media_type.startsWith('video') ? (
-        <div className="relative w-full h-full flex items-center justify-center">
+    <div className="fixed inset-0 flex flex-col items-center justify-center">
+      <div className="relative w-full h-full flex flex-col items-center justify-center">
+        {currentAlert.media_type.startsWith('video') ? (
           <video
             ref={mediaRef as React.RefObject<HTMLVideoElement>}
             src={currentAlert.media_url}
@@ -79,25 +81,37 @@ const Alerts = () => {
             playsInline
             muted
           />
-          {showPlayButton && (
-            <Button
-              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
-              size="lg"
-              onClick={handleManualPlay}
-            >
-              <Play className="mr-2 h-6 w-6" />
-              Play with Sound
-            </Button>
-          )}
-        </div>
-      ) : (
-        <img
-          ref={mediaRef as React.RefObject<HTMLImageElement>}
-          src={currentAlert.media_url}
-          className="w-full h-full object-contain"
-          alt="Alert"
-        />
-      )}
+        ) : (
+          <img
+            ref={mediaRef as React.RefObject<HTMLImageElement>}
+            src={currentAlert.media_url}
+            className="w-full h-full object-contain"
+            alt="Alert"
+          />
+        )}
+        {showPlayButton && (
+          <Button
+            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+            size="lg"
+            onClick={handleManualPlay}
+          >
+            <Play className="mr-2 h-6 w-6" />
+            Play with Sound
+          </Button>
+        )}
+        {currentAlert.message_enabled && currentAlert.message_text && (
+          <div 
+            className="absolute bottom-10 w-full text-center"
+            style={{
+              fontFamily: 'Radiate Sans Extra Bold',
+              fontSize: `${currentAlert.font_size}px`,
+              color: currentAlert.message_text.includes(" ") ? "#31c3a6" : "#ffffff"
+            }}
+          >
+            {currentAlert.message_text}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

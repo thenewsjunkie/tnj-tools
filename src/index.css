@@ -7,6 +7,11 @@
   src: url('/fonts/digital-7.mono.ttf') format('truetype');
 }
 
+@font-face {
+  font-family: 'Radiate Sans Extra Bold';
+  src: url('/fonts/RadiateSansExtraBold.ttf') format('truetype');
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

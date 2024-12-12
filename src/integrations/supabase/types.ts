@@ -12,23 +12,32 @@ export type Database = {
       alerts: {
         Row: {
           created_at: string
+          font_size: number | null
           id: string
           media_type: string
           media_url: string
+          message_enabled: boolean | null
+          message_text: string | null
           title: string
         }
         Insert: {
           created_at?: string
+          font_size?: number | null
           id?: string
           media_type: string
           media_url: string
+          message_enabled?: boolean | null
+          message_text?: string | null
           title: string
         }
         Update: {
           created_at?: string
+          font_size?: number | null
           id?: string
           media_type?: string
           media_url?: string
+          message_enabled?: boolean | null
+          message_text?: string | null
           title?: string
         }
         Relationships: []
