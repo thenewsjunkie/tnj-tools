@@ -13,15 +13,7 @@ import AI from "./pages/AI";
 import Notes from "./pages/Notes";
 import Alerts from "./pages/Alerts";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
-      refetchOnWindowFocus: false,
-      staleTime: 5000, // Add a small stale time to prevent rapid refetches
-    },
-  },
-});
+const queryClient = new QueryClient();
 
 // Protected Route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -29,33 +21,21 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    let mounted = true;
-
     // Check initial session
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (mounted) {
-        setSession(!!session);
-        setIsLoading(false);
-      }
-    };
-
-    checkSession();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(!!session);
+      setIsLoading(false);
+    });
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (mounted) {
-        setSession(!!session);
-        setIsLoading(false);
-      }
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(!!session);
+      setIsLoading(false);
     });
 
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   // Show nothing while loading
