@@ -17,11 +17,13 @@ const Alerts = () => {
   const [showPlayButton, setShowPlayButton] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const mediaRef = useRef<HTMLVideoElement | HTMLImageElement>(null);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   // Query for getting the next pending alert
   const { data: nextAlert, refetch: refetchNextAlert } = useQuery({
     queryKey: ['nextAlert'],
     queryFn: async () => {
+      console.log('Fetching next alert...');
       const { data, error } = await supabase
         .from('alert_queue')
         .select(`
@@ -41,23 +43,33 @@ const Alerts = () => {
         .single();
 
       if (error && error.code !== 'PGRST116') throw error;
+      console.log('Next alert data:', data);
       return data;
     },
     enabled: !isProcessing && !currentAlert,
   });
 
   useEffect(() => {
+    // Clean up previous subscription if it exists
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+    }
+
+    // Create new subscription
     const channel = supabase.channel('alert_queue_changes')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'alert_queue' },
         () => {
+          console.log('Queue change detected, current state:', { isProcessing, currentAlert });
           if (!isProcessing && !currentAlert) {
             refetchNextAlert();
           }
         }
       )
       .subscribe();
+
+    channelRef.current = channel;
 
     return () => {
       supabase.removeChannel(channel);
@@ -67,6 +79,7 @@ const Alerts = () => {
   useEffect(() => {
     const processNextAlert = async () => {
       if (nextAlert && !isProcessing && !currentAlert) {
+        console.log('Processing next alert:', nextAlert);
         setIsProcessing(true);
         
         // Update alert status to playing
@@ -83,6 +96,7 @@ const Alerts = () => {
 
         // Mark alert as completed after playing
         const completeAlert = async () => {
+          console.log('Completing alert:', nextAlert.id);
           await supabase
             .from('alert_queue')
             .update({ 
@@ -131,6 +145,7 @@ const Alerts = () => {
 
   const handleVideoEnded = async () => {
     if (currentAlert) {
+      console.log('Video ended, completing alert');
       const { error } = await supabase
         .from('alert_queue')
         .update({ 
