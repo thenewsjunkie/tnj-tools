@@ -24,7 +24,6 @@ const Alerts = () => {
   const { data: nextAlert, refetch: refetchNextAlert } = useQuery({
     queryKey: ['nextAlert'],
     queryFn: async () => {
-      console.log('Fetching next alert...');
       const { data, error } = await supabase
         .from('alert_queue')
         .select(`
@@ -44,7 +43,6 @@ const Alerts = () => {
         .single();
 
       if (error && error.code !== 'PGRST116') throw error;
-      console.log('Next alert data:', data);
       return data;
     },
     enabled: !isProcessing && !currentAlert,
@@ -53,19 +51,17 @@ const Alerts = () => {
   });
 
   useEffect(() => {
+    // Clean up existing channel subscription
     if (channelRef.current) {
       supabase.removeChannel(channelRef.current);
     }
 
+    // Create new channel subscription
     const channel = supabase.channel('alert_queue_changes')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'alert_queue' },
         () => {
-          console.log('Queue change detected, processing state:', { 
-            isProcessing: processingRef.current, 
-            hasCurrentAlert: !!currentAlert 
-          });
           if (!processingRef.current && !currentAlert) {
             refetchNextAlert();
           }
@@ -75,9 +71,11 @@ const Alerts = () => {
 
     channelRef.current = channel;
 
+    // Cleanup function
     return () => {
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
       }
     };
   }, [currentAlert, refetchNextAlert]);
@@ -85,7 +83,6 @@ const Alerts = () => {
   useEffect(() => {
     const processNextAlert = async () => {
       if (nextAlert && !processingRef.current && !currentAlert) {
-        console.log('Starting to process alert:', nextAlert.id);
         processingRef.current = true;
         setIsProcessing(true);
         
@@ -114,27 +111,26 @@ const Alerts = () => {
       }
     };
 
-    const completeAlert = async (alertId: string) => {
-      console.log('Completing alert:', alertId);
-      const { error } = await supabase
-        .from('alert_queue')
-        .update({ 
-          status: 'completed',
-          played_at: new Date().toISOString()
-        })
-        .eq('id', alertId);
-
-      if (error) {
-        console.error('Error completing alert:', error);
-      }
-
-      setCurrentAlert(null);
-      setIsProcessing(false);
-      processingRef.current = false;
-    };
-
     processNextAlert();
   }, [nextAlert, currentAlert]);
+
+  const completeAlert = async (alertId: string) => {
+    const { error } = await supabase
+      .from('alert_queue')
+      .update({ 
+        status: 'completed',
+        played_at: new Date().toISOString()
+      })
+      .eq('id', alertId);
+
+    if (error) {
+      console.error('Error completing alert:', error);
+    }
+
+    setCurrentAlert(null);
+    setIsProcessing(false);
+    processingRef.current = false;
+  };
 
   useEffect(() => {
     if (currentAlert && mediaRef.current) {
@@ -162,22 +158,7 @@ const Alerts = () => {
 
   const handleVideoEnded = async () => {
     if (currentAlert && nextAlert) {
-      console.log('Video ended, completing alert:', nextAlert.id);
-      const { error } = await supabase
-        .from('alert_queue')
-        .update({ 
-          status: 'completed',
-          played_at: new Date().toISOString()
-        })
-        .eq('id', nextAlert.id);
-
-      if (error) {
-        console.error('Error completing alert:', error);
-      }
-
-      setCurrentAlert(null);
-      setIsProcessing(false);
-      processingRef.current = false;
+      await completeAlert(nextAlert.id);
     }
   };
 
