@@ -18,6 +18,7 @@ const queryClient = new QueryClient({
     queries: {
       retry: false,
       refetchOnWindowFocus: false,
+      staleTime: 5000, // Add a small stale time to prevent rapid refetches
     },
   },
 });
@@ -28,21 +29,33 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
+
     // Check initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(!!session);
-      setIsLoading(false);
-    });
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (mounted) {
+        setSession(!!session);
+        setIsLoading(false);
+      }
+    };
+
+    checkSession();
 
     // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(!!session);
-      setIsLoading(false);
+      if (mounted) {
+        setSession(!!session);
+        setIsLoading(false);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Show nothing while loading

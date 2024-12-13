@@ -19,6 +19,7 @@ const Alerts = () => {
   const mediaRef = useRef<HTMLVideoElement | HTMLImageElement>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const processingRef = useRef(false);
+  const completingRef = useRef(false);
 
   // Query for getting the next pending alert
   const { data: nextAlert, refetch: refetchNextAlert } = useQuery({
@@ -48,6 +49,7 @@ const Alerts = () => {
     enabled: !isProcessing && !currentAlert,
     staleTime: 0,
     gcTime: 0,
+    refetchInterval: false,
   });
 
   useEffect(() => {
@@ -62,7 +64,7 @@ const Alerts = () => {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'alert_queue' },
         () => {
-          if (!processingRef.current && !currentAlert) {
+          if (!processingRef.current && !currentAlert && !completingRef.current) {
             refetchNextAlert();
           }
         }
@@ -80,9 +82,35 @@ const Alerts = () => {
     };
   }, [currentAlert, refetchNextAlert]);
 
+  const completeAlert = async (alertId: string) => {
+    if (completingRef.current) return;
+    completingRef.current = true;
+
+    try {
+      const { error } = await supabase
+        .from('alert_queue')
+        .update({ 
+          status: 'completed',
+          played_at: new Date().toISOString()
+        })
+        .eq('id', alertId);
+
+      if (error) {
+        console.error('Error completing alert:', error);
+        return;
+      }
+
+      setCurrentAlert(null);
+      setIsProcessing(false);
+      processingRef.current = false;
+    } finally {
+      completingRef.current = false;
+    }
+  };
+
   useEffect(() => {
     const processNextAlert = async () => {
-      if (nextAlert && !processingRef.current && !currentAlert) {
+      if (nextAlert && !processingRef.current && !currentAlert && !completingRef.current) {
         processingRef.current = true;
         setIsProcessing(true);
         
@@ -114,30 +142,11 @@ const Alerts = () => {
     processNextAlert();
   }, [nextAlert, currentAlert]);
 
-  const completeAlert = async (alertId: string) => {
-    const { error } = await supabase
-      .from('alert_queue')
-      .update({ 
-        status: 'completed',
-        played_at: new Date().toISOString()
-      })
-      .eq('id', alertId);
-
-    if (error) {
-      console.error('Error completing alert:', error);
-    }
-
-    setCurrentAlert(null);
-    setIsProcessing(false);
-    processingRef.current = false;
-  };
-
   useEffect(() => {
     if (currentAlert && mediaRef.current) {
       if (currentAlert.media_type.startsWith('video')) {
         const videoElement = mediaRef.current as HTMLVideoElement;
         videoElement.play().catch(error => {
-          console.error('Error playing video:', error);
           if (error.name === 'NotAllowedError') {
             setShowPlayButton(true);
           }
@@ -149,9 +158,7 @@ const Alerts = () => {
   const handleManualPlay = () => {
     if (mediaRef.current && currentAlert?.media_type.startsWith('video')) {
       const videoElement = mediaRef.current as HTMLVideoElement;
-      videoElement.play().catch(error => {
-        console.error('Error playing video:', error);
-      });
+      videoElement.play().catch(console.error);
       setShowPlayButton(false);
     }
   };
@@ -216,7 +223,7 @@ const Alerts = () => {
             size="lg"
             onClick={handleManualPlay}
           >
-            <Play className="mr-2 h-6 w-6" />
+            <Play className="mr-2 h-6 w-4" />
             Play with Sound
           </Button>
         )}
