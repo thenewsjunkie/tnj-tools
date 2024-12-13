@@ -49,7 +49,7 @@ const Alerts = () => {
     },
     enabled: !isProcessing && !currentAlert,
     staleTime: 0,
-    cacheTime: 0,
+    gcTime: 0,
   });
 
   useEffect(() => {
