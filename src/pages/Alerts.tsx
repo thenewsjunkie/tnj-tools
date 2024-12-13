@@ -18,6 +18,7 @@ const Alerts = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const mediaRef = useRef<HTMLVideoElement | HTMLImageElement>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const processingRef = useRef(false);
 
   // Query for getting the next pending alert
   const { data: nextAlert, refetch: refetchNextAlert } = useQuery({
@@ -47,22 +48,25 @@ const Alerts = () => {
       return data;
     },
     enabled: !isProcessing && !currentAlert,
+    staleTime: 0,
+    cacheTime: 0,
   });
 
   useEffect(() => {
-    // Clean up previous subscription if it exists
     if (channelRef.current) {
       supabase.removeChannel(channelRef.current);
     }
 
-    // Create new subscription
     const channel = supabase.channel('alert_queue_changes')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'alert_queue' },
         () => {
-          console.log('Queue change detected, current state:', { isProcessing, currentAlert });
-          if (!isProcessing && !currentAlert) {
+          console.log('Queue change detected, processing state:', { 
+            isProcessing: processingRef.current, 
+            hasCurrentAlert: !!currentAlert 
+          });
+          if (!processingRef.current && !currentAlert) {
             refetchNextAlert();
           }
         }
@@ -72,52 +76,65 @@ const Alerts = () => {
     channelRef.current = channel;
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+      }
     };
-  }, [isProcessing, currentAlert, refetchNextAlert]);
+  }, [currentAlert, refetchNextAlert]);
 
   useEffect(() => {
     const processNextAlert = async () => {
-      if (nextAlert && !isProcessing && !currentAlert) {
-        console.log('Processing next alert:', nextAlert);
+      if (nextAlert && !processingRef.current && !currentAlert) {
+        console.log('Starting to process alert:', nextAlert.id);
+        processingRef.current = true;
         setIsProcessing(true);
         
-        // Update alert status to playing
-        await supabase
+        const { error } = await supabase
           .from('alert_queue')
           .update({ status: 'playing' })
           .eq('id', nextAlert.id);
 
-        // Set current alert with combined data
+        if (error) {
+          console.error('Error updating alert status:', error);
+          processingRef.current = false;
+          setIsProcessing(false);
+          return;
+        }
+
         setCurrentAlert({
           ...nextAlert.alert,
           username: nextAlert.username
         });
 
-        // Mark alert as completed after playing
-        const completeAlert = async () => {
-          console.log('Completing alert:', nextAlert.id);
-          await supabase
-            .from('alert_queue')
-            .update({ 
-              status: 'completed',
-              played_at: new Date().toISOString()
-            })
-            .eq('id', nextAlert.id);
-          
-          setCurrentAlert(null);
-          setIsProcessing(false);
-        };
-
-        // Set timeout for image alerts
         if (!nextAlert.alert.media_type.startsWith('video')) {
-          setTimeout(completeAlert, 5000);
+          setTimeout(async () => {
+            await completeAlert(nextAlert.id);
+          }, 5000);
         }
       }
     };
 
+    const completeAlert = async (alertId: string) => {
+      console.log('Completing alert:', alertId);
+      const { error } = await supabase
+        .from('alert_queue')
+        .update({ 
+          status: 'completed',
+          played_at: new Date().toISOString()
+        })
+        .eq('id', alertId);
+
+      if (error) {
+        console.error('Error completing alert:', error);
+      }
+
+      setCurrentAlert(null);
+      setIsProcessing(false);
+      processingRef.current = false;
+    };
+
     processNextAlert();
-  }, [nextAlert, isProcessing, currentAlert]);
+  }, [nextAlert, currentAlert]);
 
   useEffect(() => {
     if (currentAlert && mediaRef.current) {
@@ -144,15 +161,15 @@ const Alerts = () => {
   };
 
   const handleVideoEnded = async () => {
-    if (currentAlert) {
-      console.log('Video ended, completing alert');
+    if (currentAlert && nextAlert) {
+      console.log('Video ended, completing alert:', nextAlert.id);
       const { error } = await supabase
         .from('alert_queue')
         .update({ 
           status: 'completed',
           played_at: new Date().toISOString()
         })
-        .eq('alert_id', currentAlert.id);
+        .eq('id', nextAlert.id);
 
       if (error) {
         console.error('Error completing alert:', error);
@@ -160,6 +177,7 @@ const Alerts = () => {
 
       setCurrentAlert(null);
       setIsProcessing(false);
+      processingRef.current = false;
     }
   };
 
