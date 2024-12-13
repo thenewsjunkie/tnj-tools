@@ -30,27 +30,32 @@ const AlertButton = ({ alert, onAlertDeleted }: AlertButtonProps) => {
     if (alert.message_enabled) {
       setIsNameDialogOpen(true);
     } else {
-      sendAlert();
+      queueAlert();
     }
   };
 
-  const sendAlert = async (name?: string) => {
-    const alertData = {
-      ...alert,
-      message_text: name ? `${name} ${alert.message_text}` : alert.message_text,
-    };
-
-    const response = await supabase
-      .channel('alerts')
-      .send({
-        type: 'broadcast',
-        event: 'play_alert',
-        payload: alertData
+  const queueAlert = async (name?: string) => {
+    const { error } = await supabase
+      .from('alert_queue')
+      .insert({
+        alert_id: alert.id,
+        username: name
       });
 
-    if (response !== 'ok') {
-      console.error('Error sending alert');
+    if (error) {
+      console.error('Error queueing alert:', error);
+      toast({
+        title: "Error",
+        description: "Failed to queue alert",
+        variant: "destructive",
+      });
+      return;
     }
+
+    toast({
+      title: "Success",
+      description: "Alert queued successfully",
+    });
 
     setIsNameDialogOpen(false);
     setUsername("");
@@ -58,7 +63,7 @@ const AlertButton = ({ alert, onAlertDeleted }: AlertButtonProps) => {
 
   const handleSubmitName = (e: React.FormEvent) => {
     e.preventDefault();
-    sendAlert(username);
+    queueAlert(username);
   };
 
   const handleDelete = async () => {

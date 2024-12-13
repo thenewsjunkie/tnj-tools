@@ -9,6 +9,41 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      alert_queue: {
+        Row: {
+          alert_id: string
+          created_at: string
+          id: string
+          played_at: string | null
+          status: string
+          username: string | null
+        }
+        Insert: {
+          alert_id: string
+          created_at?: string
+          id?: string
+          played_at?: string | null
+          status?: string
+          username?: string | null
+        }
+        Update: {
+          alert_id?: string
+          created_at?: string
+          id?: string
+          played_at?: string | null
+          status?: string
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alert_queue_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "alerts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alerts: {
         Row: {
           created_at: string
