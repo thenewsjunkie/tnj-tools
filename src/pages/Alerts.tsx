@@ -63,23 +63,18 @@ const Alerts = () => {
       
       if (matchingAlert) {
         completingRef.current = true;
-        const alertData = {
-          ...matchingAlert,
-          message_text: username 
-            ? `${formatUsername(username)} ${matchingAlert.message_text}`
-            : matchingAlert.message_text
-        };
-
-        const response = await supabase
-          .channel('alerts')
-          .send({
-            type: 'broadcast',
-            event: 'play_alert',
-            payload: alertData
+        
+        // Add to queue instead of playing immediately
+        const { error } = await supabase
+          .from('alert_queue')
+          .insert({
+            alert_id: matchingAlert.id,
+            username: username ? formatUsername(username) : null,
+            status: 'pending'
           });
 
-        if (response !== 'ok') {
-          console.error('Error sending alert');
+        if (error) {
+          console.error('Error queueing alert:', error);
         }
       }
     };
@@ -102,8 +97,7 @@ const Alerts = () => {
       
       const timer = setTimeout(() => {
         if (!currentAlert.media_type.startsWith('video')) {
-          setCurrentAlert(null);
-          completingRef.current = false;
+          handleAlertComplete();
         }
       }, 5000);
 
@@ -121,9 +115,39 @@ const Alerts = () => {
     }
   };
 
-  const handleVideoEnded = () => {
+  const handleAlertComplete = async () => {
+    // Mark the current alert as completed in the queue
+    const { data: queueData } = await supabase
+      .from('alert_queue')
+      .select('id')
+      .eq('status', 'playing')
+      .single();
+
+    if (queueData) {
+      await supabase
+        .from('alert_queue')
+        .update({ 
+          status: 'completed',
+          played_at: new Date().toISOString()
+        })
+        .eq('id', queueData.id);
+
+      // Notify that the alert is completed
+      await supabase
+        .channel('alert-queue')
+        .send({
+          type: 'broadcast',
+          event: 'alert_completed',
+          payload: { id: queueData.id }
+        });
+    }
+
     setCurrentAlert(null);
     completingRef.current = false;
+  };
+
+  const handleVideoEnded = () => {
+    handleAlertComplete();
   };
 
   if (!currentAlert) return null;
