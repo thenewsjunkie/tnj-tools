@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useParams } from "react-router-dom";
 
 const Alerts = () => {
   const [currentAlert, setCurrentAlert] = useState<{
@@ -14,6 +15,20 @@ const Alerts = () => {
   } | null>(null);
   const [showPlayButton, setShowPlayButton] = useState(false);
   const mediaRef = useRef<HTMLVideoElement | HTMLImageElement>(null);
+  const { alertSlug, username } = useParams();
+  const completingRef = useRef(false);
+
+  // Function to convert title to slug
+  const titleToSlug = (title: string) => {
+    return title.toLowerCase().replace(/\s+/g, '-');
+  };
+
+  // Function to format username from URL
+  const formatUsername = (username: string) => {
+    return username.split('-').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+  };
 
   useEffect(() => {
     const channel = supabase.channel('alerts');
@@ -33,6 +48,45 @@ const Alerts = () => {
     };
   }, []);
 
+  // Effect to handle URL-based alert triggering
+  useEffect(() => {
+    const triggerAlertFromUrl = async () => {
+      if (!alertSlug || completingRef.current) return;
+
+      const { data: alerts } = await supabase
+        .from('alerts')
+        .select('*');
+
+      if (!alerts) return;
+
+      const matchingAlert = alerts.find(alert => titleToSlug(alert.title) === alertSlug);
+      
+      if (matchingAlert) {
+        completingRef.current = true;
+        const alertData = {
+          ...matchingAlert,
+          message_text: username 
+            ? `${formatUsername(username)} ${matchingAlert.message_text}`
+            : matchingAlert.message_text
+        };
+
+        const response = await supabase
+          .channel('alerts')
+          .send({
+            type: 'broadcast',
+            event: 'play_alert',
+            payload: alertData
+          });
+
+        if (response !== 'ok') {
+          console.error('Error sending alert');
+        }
+      }
+    };
+
+    triggerAlertFromUrl();
+  }, [alertSlug, username]);
+
   useEffect(() => {
     if (currentAlert && mediaRef.current) {
       console.log('Playing media:', currentAlert.media_url, currentAlert.media_type);
@@ -49,6 +103,7 @@ const Alerts = () => {
       const timer = setTimeout(() => {
         if (!currentAlert.media_type.startsWith('video')) {
           setCurrentAlert(null);
+          completingRef.current = false;
         }
       }, 5000);
 
@@ -64,6 +119,11 @@ const Alerts = () => {
       });
       setShowPlayButton(false);
     }
+  };
+
+  const handleVideoEnded = () => {
+    setCurrentAlert(null);
+    completingRef.current = false;
   };
 
   if (!currentAlert) return null;
@@ -97,7 +157,7 @@ const Alerts = () => {
             ref={mediaRef as React.RefObject<HTMLVideoElement>}
             src={currentAlert.media_url}
             className="w-full h-full object-contain"
-            onEnded={() => setCurrentAlert(null)}
+            onEnded={handleVideoEnded}
             autoPlay
             playsInline
             muted

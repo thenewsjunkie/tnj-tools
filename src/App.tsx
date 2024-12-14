@@ -13,7 +13,13 @@ import AI from "./pages/AI";
 import Notes from "./pages/Notes";
 import Alerts from "./pages/Alerts";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    },
+  },
+});
 
 // Protected Route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -63,6 +69,8 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/notes" element={<Notes />} />
             <Route path="/alerts" element={<Alerts />} />
+            <Route path="/alerts/:alertSlug" element={<Alerts />} />
+            <Route path="/alerts/:alertSlug/:username" element={<Alerts />} />
             <Route
               path="/admin"
               element={
