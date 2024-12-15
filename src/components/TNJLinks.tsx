@@ -107,8 +107,8 @@ const TNJLinks = () => {
   const borderColor = theme === 'light' ? 'border-gray-200' : 'border-white/10';
 
   return (
-    <Card className={`${bgColor} border-border`}>
-      <CardHeader className="flex flex-row items-center justify-between">
+    <Card className={`w-full ${bgColor} border border-border`}>
+      <CardHeader>
         <CardTitle className={`${textColor} text-lg sm:text-xl`}>TNJ Links</CardTitle>
         <AddLinkDialog 
           onLinkAdded={() => queryClient.invalidateQueries({ queryKey: ['tnj-links'] })}
