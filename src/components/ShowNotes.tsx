@@ -120,9 +120,9 @@ const ShowNotes = () => {
                   Add Note
                 </Button>
               </DialogTrigger>
-              <DialogContent className="dark:bg-gray-900">
+              <DialogContent className="bg-black dark:border-white/10">
                 <DialogHeader>
-                  <DialogTitle className="dark:text-white">Add New Note</DialogTitle>
+                  <DialogTitle className="text-white">Add New Note</DialogTitle>
                 </DialogHeader>
                 <AddNoteForm
                   newNote={newNote}
