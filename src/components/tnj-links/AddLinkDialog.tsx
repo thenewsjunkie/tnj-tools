@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Plus } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useTheme } from "@/components/theme/ThemeProvider";
 
 interface AddLinkDialogProps {
   onLinkAdded: () => void;
@@ -16,6 +17,7 @@ const AddLinkDialog = ({ onLinkAdded, lastOrder }: AddLinkDialogProps) => {
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const { toast } = useToast();
+  const { theme } = useTheme();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,6 +61,8 @@ const AddLinkDialog = ({ onLinkAdded, lastOrder }: AddLinkDialogProps) => {
     }
   };
 
+  const textColor = theme === 'dark' ? 'text-white' : 'text-foreground';
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -68,8 +72,8 @@ const AddLinkDialog = ({ onLinkAdded, lastOrder }: AddLinkDialogProps) => {
       </DialogTrigger>
       <DialogContent className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <DialogHeader>
-          <DialogTitle>Add New Link</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className={textColor}>Add New Link</DialogTitle>
+          <DialogDescription className={theme === 'dark' ? 'text-white/70' : 'text-muted-foreground'}>
             Add a new link to your TNJ Links collection. The link status will be checked automatically.
           </DialogDescription>
         </DialogHeader>
@@ -80,6 +84,7 @@ const AddLinkDialog = ({ onLinkAdded, lastOrder }: AddLinkDialogProps) => {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
+              className={textColor}
             />
           </div>
           <div className="space-y-2">
@@ -88,6 +93,7 @@ const AddLinkDialog = ({ onLinkAdded, lastOrder }: AddLinkDialogProps) => {
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               required
+              className={textColor}
             />
           </div>
           <Button type="submit" className="w-full">
