@@ -27,6 +27,8 @@ const Alerts = () => {
     const triggerAlertFromUrl = async () => {
       if (!alertSlug || completingRef.current) return;
 
+      console.log('Attempting to trigger alert from URL:', alertSlug);
+      
       const { data: alerts } = await supabase
         .from('alerts')
         .select('*');
@@ -36,6 +38,7 @@ const Alerts = () => {
       const matchingAlert = alerts.find(alert => titleToSlug(alert.title) === alertSlug);
       
       if (matchingAlert) {
+        console.log('Found matching alert:', matchingAlert.title);
         completingRef.current = true;
         
         // Add to queue
@@ -49,6 +52,8 @@ const Alerts = () => {
 
         if (error) {
           console.error('Error queueing alert:', error);
+        } else {
+          console.log('Alert queued successfully');
         }
       }
     };
@@ -56,7 +61,12 @@ const Alerts = () => {
     triggerAlertFromUrl();
   }, [alertSlug, username]);
 
-  if (!currentAlert) return null;
+  if (!currentAlert) {
+    console.log('No current alert to display');
+    return null;
+  }
+
+  console.log('Rendering alert:', currentAlert.alert.title);
 
   const displayAlert = {
     media_type: currentAlert.alert.media_type,

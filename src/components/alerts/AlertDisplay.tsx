@@ -24,11 +24,13 @@ export const AlertDisplay = ({
   const mediaRef = useRef<HTMLVideoElement | HTMLImageElement>(null);
 
   useEffect(() => {
+    console.log('Alert display mounted with media type:', currentAlert?.media_type);
+    
     // For images, trigger completion after a delay
     if (currentAlert?.media_type.startsWith('image')) {
       console.log('Setting up image timer');
       const timer = setTimeout(() => {
-        console.log('Image timer completed');
+        console.log('Image timer completed, triggering onComplete');
         onComplete();
       }, 5000); // Show image for 5 seconds
       return () => clearTimeout(timer);
@@ -37,8 +39,11 @@ export const AlertDisplay = ({
 
   const handleManualPlay = () => {
     if (mediaRef.current && currentAlert?.media_type.startsWith('video')) {
+      console.log('Manual play triggered');
       const videoElement = mediaRef.current as HTMLVideoElement;
-      videoElement.play();
+      videoElement.play().catch(error => {
+        console.error('Error playing video:', error);
+      });
       setShowPlayButton(false);
     }
   };
@@ -46,6 +51,19 @@ export const AlertDisplay = ({
   const handleVideoEnded = () => {
     console.log('Video ended, triggering completion');
     onComplete();
+  };
+
+  const handleVideoLoadedMetadata = () => {
+    console.log('Video metadata loaded');
+    setShowPlayButton(true);
+    if (mediaRef.current && currentAlert?.media_type.startsWith('video')) {
+      const videoElement = mediaRef.current as HTMLVideoElement;
+      // Some browsers require user interaction before playing
+      videoElement.play().catch(error => {
+        console.log('Auto-play failed, showing play button:', error);
+        setShowPlayButton(true);
+      });
+    }
   };
 
   return (
@@ -57,7 +75,7 @@ export const AlertDisplay = ({
             src={currentAlert.media_url}
             className="max-h-screen max-w-screen-lg"
             onEnded={handleVideoEnded}
-            onLoadedMetadata={() => setShowPlayButton(true)}
+            onLoadedMetadata={handleVideoLoadedMetadata}
           />
           {showPlayButton && (
             <Button
