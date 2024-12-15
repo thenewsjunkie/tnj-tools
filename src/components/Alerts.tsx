@@ -27,7 +27,7 @@ const Alerts = () => {
         .single();
       
       if (!error && data) {
-        const queueState = (data.value as Json) as QueueState;
+        const queueState = (data.value as unknown) as QueueState;
         setIsPaused(queueState.isPaused);
       }
     };
@@ -46,7 +46,7 @@ const Alerts = () => {
           filter: 'key=eq.queue_state'
         },
         (payload) => {
-          const queueState = (payload.new?.value as Json) as QueueState;
+          const queueState = (payload.new?.value as unknown) as QueueState;
           if (queueState?.isPaused !== undefined) {
             setIsPaused(queueState.isPaused);
           }
