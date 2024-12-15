@@ -73,6 +73,7 @@ const Alerts = () => {
     triggerAlertFromUrl();
   }, [alertSlug, username]);
 
+  // Effect to log current alert state
   useEffect(() => {
     if (currentAlert) {
       console.log('[Alerts Page] Current alert state:', currentAlert);

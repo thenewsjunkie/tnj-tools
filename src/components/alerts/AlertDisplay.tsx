@@ -36,9 +36,27 @@ export const AlertDisplay = ({
         console.log('[AlertDisplay] Image timer completed, triggering onComplete');
         onComplete();
       }, 5000); // Show image for 5 seconds
-      return () => clearTimeout(timer);
+      return () => {
+        console.log('[AlertDisplay] Cleaning up image timer');
+        clearTimeout(timer);
+      };
     }
-  }, [currentAlert, onComplete]);
+
+    // For videos, ensure we're ready to play
+    if (currentAlert?.media_type.startsWith('video') && mediaRef.current) {
+      const videoElement = mediaRef.current as HTMLVideoElement;
+      console.log('[AlertDisplay] Setting up video element');
+      
+      // Force load the video
+      videoElement.load();
+      
+      // Attempt autoplay
+      videoElement.play().catch(error => {
+        console.log('[AlertDisplay] Autoplay failed, showing play button:', error);
+        setShowPlayButton(true);
+      });
+    }
+  }, [currentAlert, onComplete, setShowPlayButton]);
 
   const handleManualPlay = () => {
     if (mediaRef.current && currentAlert?.media_type.startsWith('video')) {
@@ -74,6 +92,8 @@ export const AlertDisplay = ({
 
   const handleImageError = (error: any) => {
     console.error('[AlertDisplay] Error with image element:', error);
+    // If image fails to load, complete the alert
+    onComplete();
   };
 
   if (!currentAlert) {
@@ -95,6 +115,7 @@ export const AlertDisplay = ({
             onLoadedMetadata={handleVideoLoadedMetadata}
             onError={handleVideoError}
             playsInline
+            muted={false}
             controls={false}
             autoPlay
           />
