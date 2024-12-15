@@ -24,13 +24,13 @@ export const AlertDisplay = ({
   const mediaRef = useRef<HTMLVideoElement | HTMLImageElement>(null);
 
   useEffect(() => {
-    console.log('Alert display mounted with media type:', currentAlert?.media_type);
+    console.log('[AlertDisplay] Component mounted with media type:', currentAlert?.media_type);
     
     // For images, trigger completion after a delay
     if (currentAlert?.media_type.startsWith('image')) {
-      console.log('Setting up image timer');
+      console.log('[AlertDisplay] Setting up image timer');
       const timer = setTimeout(() => {
-        console.log('Image timer completed, triggering onComplete');
+        console.log('[AlertDisplay] Image timer completed, triggering onComplete');
         onComplete();
       }, 5000); // Show image for 5 seconds
       return () => clearTimeout(timer);
@@ -39,36 +39,38 @@ export const AlertDisplay = ({
 
   const handleManualPlay = () => {
     if (mediaRef.current && currentAlert?.media_type.startsWith('video')) {
-      console.log('Manual play triggered');
+      console.log('[AlertDisplay] Manual play triggered');
       const videoElement = mediaRef.current as HTMLVideoElement;
       videoElement.play().catch(error => {
-        console.error('Error playing video:', error);
+        console.error('[AlertDisplay] Error playing video:', error);
       });
       setShowPlayButton(false);
     }
   };
 
   const handleVideoEnded = () => {
-    console.log('Video ended, triggering completion');
+    console.log('[AlertDisplay] Video ended, triggering completion');
     onComplete();
   };
 
   const handleVideoLoadedMetadata = () => {
-    console.log('Video metadata loaded');
+    console.log('[AlertDisplay] Video metadata loaded');
     if (mediaRef.current && currentAlert?.media_type.startsWith('video')) {
       const videoElement = mediaRef.current as HTMLVideoElement;
-      // Some browsers require user interaction before playing
+      console.log('[AlertDisplay] Attempting to auto-play video');
       videoElement.play().catch(error => {
-        console.log('Auto-play failed, showing play button:', error);
+        console.log('[AlertDisplay] Auto-play failed, showing play button:', error);
         setShowPlayButton(true);
       });
     }
   };
 
   if (!currentAlert) {
-    console.log('No alert to display');
+    console.log('[AlertDisplay] No alert to display');
     return null;
   }
+
+  console.log('[AlertDisplay] Rendering alert with URL:', currentAlert.media_url);
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black">
