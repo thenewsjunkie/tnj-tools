@@ -2,7 +2,6 @@ import { Link, useNavigate } from "react-router-dom";
 import Stopwatch from "@/components/Stopwatch";
 import TNJLinks from "@/components/TNJLinks";
 import ShowNotes from "@/components/ShowNotes";
-import Reminders from "@/components/Reminders";
 import NewsRoundup from "@/components/NewsRoundup";
 import TNJAi from "@/components/AudioChat";
 import Alerts from "@/components/Alerts";
@@ -75,7 +74,6 @@ const Admin = () => {
             <NewsRoundup />
           </div>
           <Alerts />
-          <Reminders />
           <Stopwatch />
           <TNJLinks />
         </div>
