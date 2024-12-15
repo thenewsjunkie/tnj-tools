@@ -59,7 +59,9 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
           message_enabled: messageEnabled,
           message_text: messageText,
           font_size: fontSize
-        });
+        })
+        .select('*')
+        .single();
 
       if (dbError) throw dbError;
 
