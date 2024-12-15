@@ -6,12 +6,10 @@ interface AlertMessageProps {
 const AlertMessage = ({ message, fontSize = 24 }: AlertMessageProps) => {
   return (
     <div 
-      className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white text-center"
+      className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white text-center alert-message-font"
       style={{ 
-        fontFamily: "'Radiate Sans Extra Bold', sans-serif !important",
         fontSize: `${fontSize}px`,
-        textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
-        fontWeight: 800
+        textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)'
       }}
     >
       {message}

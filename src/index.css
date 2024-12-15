@@ -107,3 +107,9 @@ a {
 .light .Card {
   @apply border border-gray-200;
 }
+
+/* Preload font for OBS */
+.alert-message-font {
+  font-family: 'Radiate Sans Extra Bold', system-ui, -apple-system, sans-serif !important;
+  font-weight: 800 !important;
+}
