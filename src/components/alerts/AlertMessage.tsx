@@ -8,9 +8,10 @@ const AlertMessage = ({ message, fontSize = 24 }: AlertMessageProps) => {
     <div 
       className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white text-center"
       style={{ 
-        fontFamily: 'Radiate Sans Extra Bold',
+        fontFamily: "'Radiate Sans Extra Bold', sans-serif !important",
         fontSize: `${fontSize}px`,
-        textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)'
+        textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
+        fontWeight: 800
       }}
     >
       {message}

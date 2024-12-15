@@ -10,8 +10,12 @@
 
 @font-face {
   font-family: 'Radiate Sans Extra Bold';
-  src: url('/radiate-sans-extrabold.ttf') format('truetype');
-  font-display: swap;
+  src: 
+    local('Radiate Sans Extra Bold'),
+    url('/radiate-sans-extrabold.ttf') format('truetype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: block;
 }
 
 @layer base {
