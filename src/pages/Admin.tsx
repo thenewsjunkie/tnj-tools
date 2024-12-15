@@ -63,7 +63,8 @@ const Admin = () => {
       </nav>
       
       <div className="space-y-8 max-w-7xl mx-auto">
-        <div className="w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+          <Alerts />
           <TNJAi />
         </div>
         <div className="w-full">
@@ -73,7 +74,6 @@ const Admin = () => {
           <div className="md:col-span-2">
             <NewsRoundup />
           </div>
-          <Alerts />
           <Stopwatch />
           <TNJLinks />
         </div>
