@@ -52,6 +52,15 @@ export const useAlertQueue = () => {
 
     console.log('[useAlertQueue] Alert marked as completed');
     await refetchQueue();
+
+    // Broadcast completion event
+    const channel = supabase.channel('alert-queue');
+    await channel.subscribe();
+    await channel.send({
+      type: 'broadcast',
+      event: 'alert_completed',
+      payload: { alert_id: currentAlert.id }
+    });
   };
 
   const processNextAlert = async (isPaused: boolean) => {

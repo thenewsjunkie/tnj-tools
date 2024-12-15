@@ -25,6 +25,7 @@ export const AlertDisplay = ({
 
   useEffect(() => {
     console.log('[AlertDisplay] Component mounted with media type:', currentAlert?.media_type);
+    console.log('[AlertDisplay] Media URL:', currentAlert?.media_url);
     
     // For images, trigger completion after a delay
     if (currentAlert?.media_type.startsWith('image')) {
@@ -65,6 +66,14 @@ export const AlertDisplay = ({
     }
   };
 
+  const handleVideoError = (error: any) => {
+    console.error('[AlertDisplay] Error with video element:', error);
+  };
+
+  const handleImageError = (error: any) => {
+    console.error('[AlertDisplay] Error with image element:', error);
+  };
+
   if (!currentAlert) {
     console.log('[AlertDisplay] No alert to display');
     return null;
@@ -82,6 +91,9 @@ export const AlertDisplay = ({
             className="max-h-screen max-w-screen-lg"
             onEnded={handleVideoEnded}
             onLoadedMetadata={handleVideoLoadedMetadata}
+            onError={handleVideoError}
+            playsInline
+            controls={false}
           />
           {showPlayButton && (
             <Button
@@ -100,6 +112,7 @@ export const AlertDisplay = ({
           src={currentAlert?.media_url}
           alt="Alert"
           className="max-h-screen max-w-screen-lg"
+          onError={handleImageError}
         />
       )}
       {currentAlert?.message_enabled && currentAlert?.message_text && (

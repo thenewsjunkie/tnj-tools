@@ -24,31 +24,31 @@ const Alerts = () => {
 
   // Effect to handle URL-based alert triggering
   useEffect(() => {
-    console.log('[Alerts] Component mounted. Alert slug:', alertSlug, 'Username:', username);
+    console.log('[Alerts Page] Component mounted. Alert slug:', alertSlug, 'Username:', username);
     
     const triggerAlertFromUrl = async () => {
       if (!alertSlug || completingRef.current) {
-        console.log('[Alerts] No alert slug or already completing, skipping trigger');
+        console.log('[Alerts Page] No alert slug or already completing, skipping trigger');
         return;
       }
 
-      console.log('[Alerts] Attempting to trigger alert from URL:', alertSlug);
+      console.log('[Alerts Page] Attempting to trigger alert from URL:', alertSlug);
       
       const { data: alerts, error } = await supabase
         .from('alerts')
         .select('*');
 
       if (error) {
-        console.error('[Alerts] Error fetching alerts:', error);
+        console.error('[Alerts Page] Error fetching alerts:', error);
         return;
       }
 
-      console.log('[Alerts] Fetched alerts:', alerts);
+      console.log('[Alerts Page] Fetched alerts:', alerts);
 
       const matchingAlert = alerts.find(alert => titleToSlug(alert.title) === alertSlug);
       
       if (matchingAlert) {
-        console.log('[Alerts] Found matching alert:', matchingAlert.title);
+        console.log('[Alerts Page] Found matching alert:', matchingAlert.title);
         completingRef.current = true;
         
         // Add to queue
@@ -61,12 +61,12 @@ const Alerts = () => {
           });
 
         if (queueError) {
-          console.error('[Alerts] Error queueing alert:', queueError);
+          console.error('[Alerts Page] Error queueing alert:', queueError);
         } else {
-          console.log('[Alerts] Alert queued successfully');
+          console.log('[Alerts Page] Alert queued successfully');
         }
       } else {
-        console.log('[Alerts] No matching alert found for slug:', alertSlug);
+        console.log('[Alerts Page] No matching alert found for slug:', alertSlug);
       }
     };
 
@@ -74,15 +74,15 @@ const Alerts = () => {
   }, [alertSlug, username]);
 
   useEffect(() => {
-    console.log('[Alerts] Current alert state:', currentAlert);
+    console.log('[Alerts Page] Current alert state:', currentAlert);
   }, [currentAlert]);
 
   if (!currentAlert) {
-    console.log('[Alerts] No current alert to display');
+    console.log('[Alerts Page] No current alert to display');
     return null;
   }
 
-  console.log('[Alerts] Rendering alert:', currentAlert.alert.title);
+  console.log('[Alerts Page] Rendering alert:', currentAlert.alert.title);
 
   const displayAlert = {
     media_type: currentAlert.alert.media_type,
