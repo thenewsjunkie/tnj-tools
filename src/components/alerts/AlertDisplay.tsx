@@ -24,35 +24,38 @@ export const AlertDisplay = ({
   const mediaRef = useRef<HTMLVideoElement | HTMLImageElement>(null);
 
   useEffect(() => {
-    console.log('[AlertDisplay] Component mounted');
-    console.log('[AlertDisplay] Current alert:', currentAlert);
-    console.log('[AlertDisplay] Media type:', currentAlert?.media_type);
-    console.log('[AlertDisplay] Media URL:', currentAlert?.media_url);
+    console.log('[AlertDisplay] Component mounted or alert changed');
+    
+    if (!currentAlert) {
+      console.log('[AlertDisplay] No alert to display');
+      return;
+    }
+
+    console.log('[AlertDisplay] Setting up media:', currentAlert.media_type);
     
     // For images, trigger completion after a delay
-    if (currentAlert?.media_type.startsWith('image')) {
+    if (currentAlert.media_type.startsWith('image')) {
       console.log('[AlertDisplay] Setting up image timer');
       const timer = setTimeout(() => {
-        console.log('[AlertDisplay] Image timer completed, triggering onComplete');
+        console.log('[AlertDisplay] Image timer completed');
         onComplete();
-      }, 5000); // Show image for 5 seconds
+      }, 5000);
+      
       return () => {
         console.log('[AlertDisplay] Cleaning up image timer');
         clearTimeout(timer);
       };
     }
 
-    // For videos, ensure we're ready to play
-    if (currentAlert?.media_type.startsWith('video') && mediaRef.current) {
+    // For videos, set up the video element
+    if (currentAlert.media_type.startsWith('video') && mediaRef.current) {
       const videoElement = mediaRef.current as HTMLVideoElement;
       console.log('[AlertDisplay] Setting up video element');
       
-      // Force load the video
+      // Load and play the video
       videoElement.load();
-      
-      // Attempt autoplay
       videoElement.play().catch(error => {
-        console.log('[AlertDisplay] Autoplay failed, showing play button:', error);
+        console.log('[AlertDisplay] Initial autoplay failed:', error);
         setShowPlayButton(true);
       });
     }
@@ -63,14 +66,14 @@ export const AlertDisplay = ({
       console.log('[AlertDisplay] Manual play triggered');
       const videoElement = mediaRef.current as HTMLVideoElement;
       videoElement.play().catch(error => {
-        console.error('[AlertDisplay] Error playing video:', error);
+        console.error('[AlertDisplay] Manual play failed:', error);
       });
       setShowPlayButton(false);
     }
   };
 
   const handleVideoEnded = () => {
-    console.log('[AlertDisplay] Video ended, triggering completion');
+    console.log('[AlertDisplay] Video ended');
     onComplete();
   };
 
@@ -78,34 +81,31 @@ export const AlertDisplay = ({
     console.log('[AlertDisplay] Video metadata loaded');
     if (mediaRef.current && currentAlert?.media_type.startsWith('video')) {
       const videoElement = mediaRef.current as HTMLVideoElement;
-      console.log('[AlertDisplay] Attempting to auto-play video');
       videoElement.play().catch(error => {
-        console.log('[AlertDisplay] Auto-play failed, showing play button:', error);
+        console.log('[AlertDisplay] Autoplay after metadata failed:', error);
         setShowPlayButton(true);
       });
     }
   };
 
   const handleVideoError = (error: any) => {
-    console.error('[AlertDisplay] Error with video element:', error);
+    console.error('[AlertDisplay] Video error:', error);
+    onComplete(); // Complete the alert if video fails
   };
 
   const handleImageError = (error: any) => {
-    console.error('[AlertDisplay] Error with image element:', error);
-    // If image fails to load, complete the alert
-    onComplete();
+    console.error('[AlertDisplay] Image error:', error);
+    onComplete(); // Complete the alert if image fails
   };
 
   if (!currentAlert) {
-    console.log('[AlertDisplay] No alert to display');
+    console.log('[AlertDisplay] No alert to render');
     return null;
   }
 
-  console.log('[AlertDisplay] Rendering alert with URL:', currentAlert.media_url);
-
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black">
-      {currentAlert?.media_type.startsWith('video') ? (
+      {currentAlert.media_type.startsWith('video') ? (
         <>
           <video
             ref={mediaRef as React.RefObject<HTMLVideoElement>}
@@ -133,13 +133,13 @@ export const AlertDisplay = ({
       ) : (
         <img
           ref={mediaRef as React.RefObject<HTMLImageElement>}
-          src={currentAlert?.media_url}
+          src={currentAlert.media_url}
           alt="Alert"
           className="max-h-screen max-w-screen-lg"
           onError={handleImageError}
         />
       )}
-      {currentAlert?.message_enabled && currentAlert?.message_text && (
+      {currentAlert.message_enabled && currentAlert.message_text && (
         <div 
           className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white text-center"
           style={{ 
