@@ -62,11 +62,12 @@ const AddLinkDialog = ({ onLinkAdded, lastOrder }: AddLinkDialogProps) => {
   };
 
   const textColor = theme === 'dark' ? 'text-white' : 'text-foreground';
+  const iconColor = theme === 'dark' ? 'text-white' : 'text-neon-red';
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="text-white hover:text-primary hover:bg-white/10">
+        <Button variant="ghost" size="icon" className={`${iconColor} hover:text-primary hover:bg-white/10`}>
           <Plus className="h-4 w-4" />
         </Button>
       </DialogTrigger>
