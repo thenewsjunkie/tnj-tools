@@ -60,7 +60,7 @@ const TNJAi = () => {
       <div className="flex flex-col gap-4">
         <div className="flex gap-4 items-center">
           <Button
-            variant={isRecording ? "destructive" : "default"}
+            variant="default"
             onClick={isRecording ? stopRecording : startRecording}
             disabled={isProcessing}
           >

@@ -9,7 +9,7 @@ export const ConversationDisplay = ({ conversation }: ConversationDisplayProps) 
   if (!conversation) return null
 
   return (
-    <div className="mt-4 p-4 bg-secondary/10 rounded-lg">
+    <div className="mt-4 p-4 bg-secondary/10 rounded-lg dark:text-white">
       <div className="mb-2">
         <span className="font-semibold">Q:</span> {conversation.question_text}
       </div>
