@@ -72,7 +72,7 @@
 
 /* Override note borders */
 .dark .note-card {
-  @apply border-0;
+  @apply border border-white/10;
 }
 
 .note-card {
