@@ -36,9 +36,11 @@ const Alerts = () => {
           alert:alerts(*)
         `)
         .in('status', ['pending', 'playing'])
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: true }) // Ensure oldest pending alerts are processed first
+        .limit(10); // Limit to prevent overloading
       
       if (error) throw error;
+      console.log('Queue data fetched:', data); // Debug log
       return data;
     },
     refetchInterval: 1000, // Poll every second
