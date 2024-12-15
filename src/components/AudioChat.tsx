@@ -63,6 +63,7 @@ const TNJAi = () => {
             variant="default"
             onClick={isRecording ? stopRecording : startRecording}
             disabled={isProcessing}
+            className="light:bg-tnj-dark light:hover:bg-neon-red light:text-white"
           >
             {isRecording ? <Square className="h-4 w-4 mr-2" /> : <Mic className="h-4 w-4 mr-2" />}
             {isRecording ? 'Stop Recording' : 'Start Recording'}
