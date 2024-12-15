@@ -139,7 +139,11 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
               className="text-foreground bg-background"
             />
           </div>
-          <Button type="submit" className="w-full" disabled={isUploading}>
+          <Button 
+            type="submit" 
+            className="w-full dark:text-white text-black" 
+            disabled={isUploading}
+          >
             {isUploading ? "Uploading..." : "Add Alert"}
           </Button>
         </form>
