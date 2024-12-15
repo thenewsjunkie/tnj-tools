@@ -56,7 +56,7 @@ const TNJAi = () => {
 
   return (
     <div className="p-4 bg-card rounded-lg shadow-lg w-full">
-      <h2 className="text-xl font-semibold mb-4">TNJ AI</h2>
+      <h2 className="text-xl font-semibold mb-4 tnj-ai-title">TNJ AI</h2>
       <div className="flex flex-col gap-4">
         <div className="flex gap-4 items-center">
           <Button

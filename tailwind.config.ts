@@ -53,8 +53,12 @@ export default {
           foreground: "hsl(var(--card-foreground))",
         },
         neon: {
-          red: "#ff1717",
+          red: "#f21516",
           glow: "#ff171733",
+        },
+        tnj: {
+          light: "#f2f2f2",
+          dark: "#f21516",
         },
       },
       keyframes: {

@@ -139,7 +139,7 @@ const Alerts = () => {
               variant="outline"
               size="icon"
               onClick={togglePause}
-              className={isPaused ? "text-green-500" : "text-red-500"}
+              className={isPaused ? "text-neon-red" : "text-neon-red"}
             >
               {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
             </Button>
@@ -147,7 +147,7 @@ const Alerts = () => {
               href="/alerts"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-white hover:text-primary hover:bg-white/10 rounded-md p-2"
+              className="alert-icon hover:text-neon-red hover:bg-white/10 rounded-md p-2"
             >
               <Link className="h-4 w-4" />
             </a>
@@ -155,7 +155,7 @@ const Alerts = () => {
               variant="ghost"
               size="icon"
               onClick={() => setIsDialogOpen(true)}
-              className="text-white hover:text-primary hover:bg-white/10"
+              className="alert-icon hover:text-neon-red hover:bg-white/10"
             >
               <Plus className="h-4 w-4" />
             </Button>

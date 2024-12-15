@@ -133,11 +133,12 @@ const ShowNotes = () => {
       <CardContent>
         <div className="space-y-4">
           {displayedNotes.map((note) => (
-            <NoteItem
-              key={note.id}
-              note={note}
-              onDelete={session ? () => deleteNoteMutation.mutate(note.id) : undefined}
-            />
+            <div key={note.id} className="note-card">
+              <NoteItem
+                note={note}
+                onDelete={session ? () => deleteNoteMutation.mutate(note.id) : undefined}
+              />
+            </div>
           ))}
           {hasMoreNotes && (
             <div className="flex justify-center pt-4">
