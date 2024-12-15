@@ -6,6 +6,7 @@ import AlertButton from "./alerts/AlertButton";
 import AlertsHeader from "./alerts/AlertsHeader";
 import QueueManager from "./alerts/QueueManager";
 import { useQuery } from "@tanstack/react-query";
+import { Json } from "@/integrations/supabase/types";
 
 interface QueueState {
   isPaused: boolean;
@@ -26,7 +27,7 @@ const Alerts = () => {
         .single();
       
       if (!error && data) {
-        const queueState = data.value as QueueState;
+        const queueState = (data.value as Json) as QueueState;
         setIsPaused(queueState.isPaused);
       }
     };
@@ -45,7 +46,7 @@ const Alerts = () => {
           filter: 'key=eq.queue_state'
         },
         (payload) => {
-          const queueState = payload.new?.value as QueueState;
+          const queueState = (payload.new?.value as Json) as QueueState;
           if (queueState?.isPaused !== undefined) {
             setIsPaused(queueState.isPaused);
           }
@@ -156,7 +157,7 @@ const Alerts = () => {
     const { error } = await supabase
       .from('system_settings')
       .update({ 
-        value: { isPaused: newPausedState } as QueueState,
+        value: { isPaused: newPausedState } as unknown as Json,
         updated_at: new Date().toISOString()
       })
       .eq('key', 'queue_state');
