@@ -27,7 +27,8 @@ export const useAlertQueue = () => {
 
   const currentAlert = queueData?.find(item => item.status === 'playing');
   const pendingAlerts = queueData?.filter(item => item.status === 'pending') || [];
-  const queueCount = pendingAlerts.length;
+  // Include both pending and playing alerts in the count
+  const queueCount = (queueData || []).length;
 
   const handleAlertComplete = async () => {
     if (!currentAlert) {
