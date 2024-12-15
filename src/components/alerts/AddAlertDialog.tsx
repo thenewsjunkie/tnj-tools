@@ -85,7 +85,7 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <DialogHeader>
-          <DialogTitle>Add New Alert</DialogTitle>
+          <DialogTitle className="text-foreground">Add New Alert</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="space-y-2">
@@ -102,7 +102,7 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
               checked={messageEnabled}
               onCheckedChange={setMessageEnabled}
             />
-            <Label htmlFor="message-enabled">Enable Alert Message</Label>
+            <Label htmlFor="message-enabled" className="text-foreground">Enable Alert Message</Label>
           </div>
           {messageEnabled && (
             <>
@@ -114,7 +114,7 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
                 />
               </div>
               <div className="space-y-2">
-                <Label>Font Size (px)</Label>
+                <Label className="text-foreground">Font Size (px)</Label>
                 <Input
                   type="number"
                   min="12"
