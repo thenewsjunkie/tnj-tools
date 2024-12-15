@@ -41,7 +41,7 @@ const VideoAlert = ({ mediaUrl, onComplete }: VideoAlertProps) => {
     <video
       ref={videoRef}
       src={mediaUrl}
-      className="max-h-screen max-w-screen-lg"
+      className="max-h-[70vh] w-auto"
       onEnded={onComplete}
       onLoadedMetadata={handleVideoLoadedMetadata}
       onError={handleVideoError}
