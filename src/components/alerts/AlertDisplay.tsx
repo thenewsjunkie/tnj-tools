@@ -129,16 +129,7 @@ export const AlertDisplay = ({
             controls={false}
             autoPlay
           />
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-            {showPlayButton && (
-              <Button
-                size="icon"
-                variant="outline"
-                onClick={handleManualPlay}
-              >
-                <Play className="h-4 w-4" />
-              </Button>
-            )}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
             <Button
               size="icon"
               variant="outline"
