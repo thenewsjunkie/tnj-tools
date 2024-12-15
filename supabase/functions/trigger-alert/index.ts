@@ -41,35 +41,29 @@ Deno.serve(async (req) => {
     }
 
     const alert = alerts[0]
-    const alertData = {
-      ...alert,
-      message_text: username 
-        ? `${username.split('-').map(word => 
-            word.charAt(0).toUpperCase() + word.slice(1)
-          ).join(' ')} ${alert.message_text}`
-        : alert.message_text
-    }
 
-    // Send the broadcast message
-    const response = await supabase
-      .channel('alerts')
-      .send({
-        type: 'broadcast',
-        event: 'play_alert',
-        payload: alertData
+    // Add to queue instead of broadcasting directly
+    const { error: queueError } = await supabase
+      .from('alert_queue')
+      .insert({
+        alert_id: alert.id,
+        username: username ? username.split('-').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ') : null,
+        status: 'pending'
       })
 
-    if (response === 'ok') {
-      return new Response(
-        JSON.stringify({ success: true, message: 'Alert triggered successfully' }),
-        { 
-          status: 200,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      )
-    } else {
-      throw new Error('Failed to send broadcast')
+    if (queueError) {
+      throw new Error('Failed to queue alert')
     }
+
+    return new Response(
+      JSON.stringify({ success: true, message: 'Alert queued successfully' }),
+      { 
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    )
 
   } catch (error) {
     return new Response(

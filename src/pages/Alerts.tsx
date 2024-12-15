@@ -40,7 +40,7 @@ const Alerts = () => {
       if (matchingAlert) {
         completingRef.current = true;
         
-        // Add to queue instead of playing immediately
+        // Add to queue
         const { error } = await supabase
           .from('alert_queue')
           .insert({
