@@ -51,6 +51,7 @@ const Alerts = () => {
   useEffect(() => {
     const channel = supabase.channel('alert-queue')
       .on('broadcast', { event: 'alert_completed' }, async () => {
+        console.log('Alert completed event received');
         await refetchQueue();
         // If we're not paused, automatically start the next alert
         if (!isPaused) {

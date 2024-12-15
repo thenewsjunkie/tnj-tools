@@ -4,9 +4,8 @@ import { Play } from "lucide-react";
 
 interface AlertDisplayProps {
   currentAlert: {
-    id: string;
-    media_url: string;
     media_type: string;
+    media_url: string;
     message_enabled?: boolean;
     message_text?: string;
     font_size?: number;
@@ -20,14 +19,16 @@ export const AlertDisplay = ({
   currentAlert,
   showPlayButton,
   setShowPlayButton,
-  onComplete
+  onComplete,
 }: AlertDisplayProps) => {
   const mediaRef = useRef<HTMLVideoElement | HTMLImageElement>(null);
 
   useEffect(() => {
     // For images, trigger completion after a delay
     if (currentAlert?.media_type.startsWith('image')) {
+      console.log('Setting up image timer');
       const timer = setTimeout(() => {
+        console.log('Image timer completed');
         onComplete();
       }, 5000); // Show image for 5 seconds
       return () => clearTimeout(timer);
@@ -37,9 +38,7 @@ export const AlertDisplay = ({
   const handleManualPlay = () => {
     if (mediaRef.current && currentAlert?.media_type.startsWith('video')) {
       const videoElement = mediaRef.current as HTMLVideoElement;
-      videoElement.play().catch(error => {
-        console.error('Error playing video:', error);
-      });
+      videoElement.play();
       setShowPlayButton(false);
     }
   };
@@ -49,60 +48,47 @@ export const AlertDisplay = ({
     onComplete();
   };
 
-  const renderMessage = () => {
-    if (!currentAlert.message_enabled || !currentAlert.message_text) return null;
-
-    const parts = currentAlert.message_text.split(' ');
-    const name = parts[0];
-    const message = parts.slice(1).join(' ');
-
-    return (
-      <div 
-        className="absolute bottom-10 w-full text-center"
-        style={{
-          fontFamily: 'Radiate Sans Extra Bold',
-          fontSize: `${currentAlert.font_size}px`,
-        }}
-      >
-        <span className="text-[#31c3a6]">{name}</span>
-        {message && <span className="text-white"> {message}</span>}
-      </div>
-    );
-  };
-
   return (
-    <div className="fixed inset-0 flex flex-col items-center justify-center">
-      <div className="relative w-full h-full flex flex-col items-center justify-center">
-        {currentAlert.media_type.startsWith('video') ? (
+    <div className="fixed inset-0 flex items-center justify-center bg-black">
+      {currentAlert?.media_type.startsWith('video') ? (
+        <>
           <video
             ref={mediaRef as React.RefObject<HTMLVideoElement>}
             src={currentAlert.media_url}
-            className="w-full h-full object-contain"
+            className="max-h-screen max-w-screen-lg"
             onEnded={handleVideoEnded}
-            autoPlay
-            playsInline
-            muted
+            onLoadedMetadata={() => setShowPlayButton(true)}
           />
-        ) : (
-          <img
-            ref={mediaRef as React.RefObject<HTMLImageElement>}
-            src={currentAlert.media_url}
-            className="w-full h-full object-contain"
-            alt="Alert"
-          />
-        )}
-        {showPlayButton && (
-          <Button
-            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
-            size="lg"
-            onClick={handleManualPlay}
-          >
-            <Play className="mr-2 h-6 w-6" />
-            Play with Sound
-          </Button>
-        )}
-        {renderMessage()}
-      </div>
+          {showPlayButton && (
+            <Button
+              className="absolute"
+              size="icon"
+              variant="outline"
+              onClick={handleManualPlay}
+            >
+              <Play className="h-4 w-4" />
+            </Button>
+          )}
+        </>
+      ) : (
+        <img
+          ref={mediaRef as React.RefObject<HTMLImageElement>}
+          src={currentAlert?.media_url}
+          alt="Alert"
+          className="max-h-screen max-w-screen-lg"
+        />
+      )}
+      {currentAlert?.message_enabled && currentAlert?.message_text && (
+        <div 
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white text-center"
+          style={{ 
+            fontSize: `${currentAlert.font_size || 24}px`,
+            textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)'
+          }}
+        >
+          {currentAlert.message_text}
+        </div>
+      )}
     </div>
   );
 };
