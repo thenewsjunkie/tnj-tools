@@ -53,7 +53,7 @@ export const AlertDisplay = ({
       const videoElement = mediaRef.current as HTMLVideoElement;
       console.log('[AlertDisplay] Setting up video element');
       
-      // Load and attempt to play muted first
+      // Load and attempt to play muted
       videoElement.load();
       videoElement.muted = true;
       videoElement.play().catch(error => {
@@ -71,14 +71,6 @@ export const AlertDisplay = ({
         console.error('[AlertDisplay] Manual play failed:', error);
       });
       setShowPlayButton(false);
-    }
-  };
-
-  const toggleMute = () => {
-    if (mediaRef.current && currentAlert?.media_type.startsWith('video')) {
-      const videoElement = mediaRef.current as HTMLVideoElement;
-      videoElement.muted = !videoElement.muted;
-      setIsMuted(!isMuted);
     }
   };
 
@@ -116,29 +108,18 @@ export const AlertDisplay = ({
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black">
       {currentAlert.media_type.startsWith('video') ? (
-        <>
-          <video
-            ref={mediaRef as React.RefObject<HTMLVideoElement>}
-            src={currentAlert.media_url}
-            className="max-h-screen max-w-screen-lg"
-            onEnded={handleVideoEnded}
-            onLoadedMetadata={handleVideoLoadedMetadata}
-            onError={handleVideoError}
-            playsInline
-            muted={isMuted}
-            controls={false}
-            autoPlay
-          />
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
-            <Button
-              size="icon"
-              variant="outline"
-              onClick={toggleMute}
-            >
-              {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-            </Button>
-          </div>
-        </>
+        <video
+          ref={mediaRef as React.RefObject<HTMLVideoElement>}
+          src={currentAlert.media_url}
+          className="max-h-screen max-w-screen-lg"
+          onEnded={handleVideoEnded}
+          onLoadedMetadata={handleVideoLoadedMetadata}
+          onError={handleVideoError}
+          playsInline
+          muted={true}
+          controls={false}
+          autoPlay
+        />
       ) : (
         <img
           ref={mediaRef as React.RefObject<HTMLImageElement>}
