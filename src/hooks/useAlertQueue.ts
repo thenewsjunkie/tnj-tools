@@ -1,58 +1,85 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useAlertQueue = () => {
-  const [currentAlert, setCurrentAlert] = useState<any>(null);
-
-  useEffect(() => {
-    const channel = supabase.channel('alerts');
-
-    channel
-      .on('broadcast', { event: 'play_alert' }, ({ payload }) => {
-        console.log('Received alert:', payload);
-        setCurrentAlert(payload);
-      })
-      .subscribe((status) => {
-        console.log('Channel status:', status);
-      });
-
-    return () => {
-      channel.unsubscribe();
-    };
-  }, []);
-
-  const handleAlertComplete = async () => {
-    // Mark the current alert as completed in the queue
-    const { data: queueData } = await supabase
-      .from('alert_queue')
-      .select('id')
-      .eq('status', 'playing')
-      .single();
-
-    if (queueData) {
-      await supabase
+  const { data: queueData, refetch: refetchQueue } = useQuery({
+    queryKey: ['alert_queue'],
+    queryFn: async () => {
+      console.log('Fetching queue...');
+      const { data, error } = await supabase
         .from('alert_queue')
-        .update({ 
-          status: 'completed',
-          played_at: new Date().toISOString()
-        })
-        .eq('id', queueData.id);
+        .select(`
+          *,
+          alert:alerts(*)
+        `)
+        .in('status', ['pending', 'playing'])
+        .order('created_at', { ascending: true })
+        .limit(50);
+      
+      if (error) {
+        console.error('Error fetching queue:', error);
+        throw error;
+      }
+      console.log('Queue data fetched:', data);
+      return data;
+    },
+    refetchInterval: 1000,
+  });
 
-      // Notify that the alert is completed
-      await supabase
-        .channel('alert-queue')
-        .send({
-          type: 'broadcast',
-          event: 'alert_completed',
-          payload: { id: queueData.id }
-        });
+  const currentAlert = queueData?.find(item => item.status === 'playing');
+  const pendingAlerts = queueData?.filter(item => item.status === 'pending') || [];
+  const queueCount = (currentAlert ? 1 : 0) + pendingAlerts.length;
+
+  const processNextAlert = async (isPaused: boolean) => {
+    if (isPaused) {
+      console.log('Queue is paused, not processing next alert');
+      return;
     }
 
-    setCurrentAlert(null);
+    if (currentAlert) {
+      console.log('Current alert still playing, not processing next alert');
+      return;
+    }
+
+    const nextAlert = pendingAlerts[0];
+    if (!nextAlert) {
+      console.log('No pending alerts in queue');
+      return;
+    }
+
+    console.log('Processing next alert:', nextAlert);
+
+    const { error } = await supabase
+      .from('alert_queue')
+      .update({ status: 'playing' })
+      .eq('id', nextAlert.id);
+
+    if (error) {
+      console.error('Error updating alert status:', error);
+      return;
+    }
+
+    await supabase
+      .channel('alerts')
+      .send({
+        type: 'broadcast',
+        event: 'play_alert',
+        payload: {
+          ...nextAlert.alert,
+          message_text: nextAlert.username 
+            ? `${nextAlert.username} ${nextAlert.alert.message_text}`
+            : nextAlert.alert.message_text
+        }
+      });
+
+    await refetchQueue();
   };
 
   return {
     currentAlert,
-    handleAlertComplete
+    queueCount,
+    pendingAlerts,
+    processNextAlert,
+    refetchQueue
   };
 };
