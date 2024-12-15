@@ -32,7 +32,7 @@
     --accent-foreground: 240 5.9% 10%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 0%;
+    --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
     --ring: 0 86% 97%;
     --radius: 0.5rem;
@@ -97,4 +97,9 @@
 
 a {
   @apply text-tnj-dark hover:text-neon-red transition-colors;
+}
+
+/* Light mode card styles */
+.light .Card {
+  @apply border border-gray-200;
 }

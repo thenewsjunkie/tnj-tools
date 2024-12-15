@@ -104,10 +104,9 @@ const TNJLinks = () => {
 
   const bgColor = theme === 'light' ? 'bg-white' : 'bg-black/50';
   const textColor = theme === 'light' ? 'text-black' : 'text-white';
-  const borderColor = theme === 'light' ? 'border-gray-200' : 'border-white/10';
 
   return (
-    <Card className={`w-full ${bgColor} border border-border`}>
+    <Card className={`w-full ${bgColor} border border-gray-200 dark:border-white/10`}>
       <CardHeader>
         <CardTitle className={`${textColor} text-lg sm:text-xl`}>TNJ Links</CardTitle>
         <AddLinkDialog 

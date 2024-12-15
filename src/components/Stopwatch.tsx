@@ -32,7 +32,7 @@ const Stopwatch = () => {
   const textColor = theme === 'light' ? 'text-black' : 'text-white';
 
   return (
-    <Card className={`${bgColor} border border-border`}>
+    <Card className={`${bgColor} border border-gray-200 dark:border-white/10`}>
       <CardHeader>
         <CardTitle className={`${textColor} text-lg sm:text-xl`}>Stopwatch</CardTitle>
       </CardHeader>

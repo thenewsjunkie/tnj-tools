@@ -126,7 +126,7 @@ const NewsRoundup = () => {
   const bgColor = theme === 'light' ? 'bg-white' : 'bg-black/50';
 
   return (
-    <Card className={`${bgColor} border border-border`}>
+    <Card className={`${bgColor} border border-gray-200 dark:border-white/10`}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
         <CardTitle className="text-xl font-semibold flex items-center gap-2">
           <Newspaper className="w-5 h-5" />

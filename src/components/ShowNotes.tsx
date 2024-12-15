@@ -108,7 +108,7 @@ const ShowNotes = () => {
   const bgColor = theme === 'light' ? 'bg-white' : 'bg-black/50';
 
   return (
-    <Card className={`w-full ${bgColor} border border-border`}>
+    <Card className={`w-full ${bgColor} border border-gray-200 dark:border-white/10`}>
       <CardHeader>
         <CardTitle className="flex justify-between items-center">
           Show Notes

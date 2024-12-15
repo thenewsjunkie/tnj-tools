@@ -40,7 +40,7 @@ const Alerts = () => {
   const bgColor = theme === 'light' ? 'bg-white' : 'bg-black/50';
 
   return (
-    <div className={`rounded-lg ${bgColor} text-card-foreground shadow-sm border border-border`}>
+    <div className={`rounded-lg ${bgColor} text-card-foreground shadow-sm border border-gray-200 dark:border-white/10`}>
       <AlertsHeader 
         isPaused={isPaused}
         togglePause={handleTogglePause}
