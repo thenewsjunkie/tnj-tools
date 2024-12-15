@@ -60,10 +60,10 @@ const TNJAi = () => {
       <div className="flex flex-col gap-4">
         <div className="flex gap-4 items-center">
           <Button
-            variant="default"
+            variant="outline"
             onClick={isRecording ? stopRecording : startRecording}
             disabled={isProcessing}
-            className="light:bg-tnj-dark light:hover:bg-neon-red light:text-white"
+            className="dark:bg-background dark:text-white dark:hover:bg-accent light:bg-white light:text-tnj-dark light:hover:bg-accent border-2 border-tnj-dark dark:border-white"
           >
             {isRecording ? <Square className="h-4 w-4 mr-2" /> : <Mic className="h-4 w-4 mr-2" />}
             {isRecording ? 'Stop Recording' : 'Start Recording'}
