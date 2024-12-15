@@ -74,10 +74,15 @@ const Alerts = () => {
   }, [alertSlug, username]);
 
   useEffect(() => {
-    console.log('[Alerts Page] Current alert state:', currentAlert);
+    if (currentAlert) {
+      console.log('[Alerts Page] Current alert state:', currentAlert);
+      console.log('[Alerts Page] Alert media type:', currentAlert.alert.media_type);
+      console.log('[Alerts Page] Alert media URL:', currentAlert.alert.media_url);
+    }
   }, [currentAlert]);
 
-  if (!currentAlert) {
+  // Return early if no alert to display
+  if (!currentAlert?.alert) {
     console.log('[Alerts Page] No current alert to display');
     return null;
   }

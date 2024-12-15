@@ -24,7 +24,9 @@ export const AlertDisplay = ({
   const mediaRef = useRef<HTMLVideoElement | HTMLImageElement>(null);
 
   useEffect(() => {
-    console.log('[AlertDisplay] Component mounted with media type:', currentAlert?.media_type);
+    console.log('[AlertDisplay] Component mounted');
+    console.log('[AlertDisplay] Current alert:', currentAlert);
+    console.log('[AlertDisplay] Media type:', currentAlert?.media_type);
     console.log('[AlertDisplay] Media URL:', currentAlert?.media_url);
     
     // For images, trigger completion after a delay
@@ -94,6 +96,7 @@ export const AlertDisplay = ({
             onError={handleVideoError}
             playsInline
             controls={false}
+            autoPlay
           />
           {showPlayButton && (
             <Button
