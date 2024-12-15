@@ -115,7 +115,10 @@ const ShowNotes = () => {
           {session && (
             <Dialog>
               <DialogTrigger asChild>
-                <Button size="sm">
+                <Button 
+                  size="sm"
+                  className="border-2 border-tnj-dark hover:bg-neon-red hover:text-white transition-colors light:bg-white light:text-tnj-dark"
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Note
                 </Button>
