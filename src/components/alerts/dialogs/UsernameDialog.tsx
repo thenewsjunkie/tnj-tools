@@ -32,7 +32,7 @@ const UsernameDialog = ({ open, onOpenChange, onSubmit }: UsernameDialogProps) =
             required
             className="text-foreground bg-background"
           />
-          <Button type="submit" className="w-full dark:text-white text-black">Submit</Button>
+          <Button type="submit" className="w-full text-black dark:text-black">Submit</Button>
         </form>
       </DialogContent>
     </Dialog>
