@@ -36,7 +36,7 @@ const Alerts = () => {
           alert:alerts(*)
         `)
         .in('status', ['pending', 'playing'])
-        .order('created_at', { ascending: false }) // Changed to descending to show newest first
+        .order('created_at', { ascending: true }) // Process oldest alerts first (FIFO queue)
         .limit(10);
       
       if (error) throw error;
@@ -47,10 +47,7 @@ const Alerts = () => {
   });
 
   const currentAlert = queueData?.find(item => item.status === 'playing');
-  const pendingAlerts = queueData?.filter(item => item.status === 'pending').sort((a, b) => {
-    // Secondary sort by created_at timestamp in ascending order for pending alerts
-    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-  }) || [];
+  const pendingAlerts = queueData?.filter(item => item.status === 'pending') || [];
   const queueCount = (currentAlert ? 1 : 0) + pendingAlerts.length;
 
   useEffect(() => {
