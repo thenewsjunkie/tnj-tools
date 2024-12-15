@@ -103,7 +103,7 @@ const EditAlertDialog = ({ alert, open, onOpenChange, onAlertUpdated }: EditAler
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <DialogHeader>
-          <DialogTitle>Edit Alert</DialogTitle>
+          <DialogTitle className="text-foreground">Edit Alert</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="space-y-2">
