@@ -7,6 +7,7 @@ import QueueManager from "./alerts/QueueManager";
 import { useQueueState } from "@/hooks/useQueueState";
 import { useAlerts } from "@/hooks/useAlerts";
 import { useAlertQueue } from "@/hooks/useAlertQueue";
+import { useTheme } from "@/components/theme/ThemeProvider";
 
 const Alerts = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -14,6 +15,7 @@ const Alerts = () => {
   const { isPaused, togglePause } = useQueueState();
   const { alerts, refetch } = useAlerts();
   const { currentAlert, queueCount, processNextAlert } = useAlertQueue();
+  const { theme } = useTheme();
 
   const handleAlertAdded = () => {
     refetch();
@@ -35,8 +37,10 @@ const Alerts = () => {
     }
   };
 
+  const bgColor = theme === 'light' ? 'bg-white' : 'bg-black/50';
+
   return (
-    <div className="rounded-lg border bg-card text-card-foreground shadow-sm border-border">
+    <div className={`rounded-lg border ${bgColor} text-card-foreground shadow-sm border-border`}>
       <AlertsHeader 
         isPaused={isPaused}
         togglePause={handleTogglePause}

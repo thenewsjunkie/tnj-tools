@@ -10,6 +10,7 @@ import AddNoteForm from "./notes/AddNoteForm";
 import NoteItem from "./notes/NoteItem";
 import type { Note, NoteType } from "./notes/types";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/components/theme/ThemeProvider";
 
 const INITIAL_DISPLAY_COUNT = 10;
 
@@ -19,6 +20,7 @@ const ShowNotes = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { session } = useAuth();
+  const { theme } = useTheme();
 
   const { data: notes = [], isLoading } = useQuery({
     queryKey: ['show-notes'],
@@ -103,8 +105,10 @@ const ShowNotes = () => {
   const displayedNotes = showAll ? notes : notes.slice(0, INITIAL_DISPLAY_COUNT);
   const hasMoreNotes = notes.length > INITIAL_DISPLAY_COUNT;
 
+  const bgColor = theme === 'light' ? 'bg-white' : 'bg-black/50';
+
   return (
-    <Card className="w-full border-border">
+    <Card className={`w-full ${bgColor} border-border`}>
       <CardHeader>
         <CardTitle className="flex justify-between items-center">
           Show Notes
