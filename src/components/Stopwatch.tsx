@@ -30,10 +30,9 @@ const Stopwatch = () => {
 
   const bgColor = theme === 'light' ? 'bg-white' : 'bg-black/50';
   const textColor = theme === 'light' ? 'text-black' : 'text-white';
-  const borderColor = theme === 'light' ? 'border-gray-200' : 'border-white/10';
 
   return (
-    <Card className={`${bgColor} border-${borderColor}`}>
+    <Card className={`${bgColor} border-border`}>
       <CardHeader>
         <CardTitle className={`${textColor} text-lg sm:text-xl`}>Stopwatch</CardTitle>
       </CardHeader>
