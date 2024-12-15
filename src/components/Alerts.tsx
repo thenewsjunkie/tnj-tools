@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import AddAlertDialog from "./alerts/AddAlertDialog";
@@ -11,6 +11,46 @@ const Alerts = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isPaused, setIsPaused] = useState(true);
   const { toast } = useToast();
+
+  // Fetch and sync queue state
+  useEffect(() => {
+    const fetchQueueState = async () => {
+      const { data, error } = await supabase
+        .from('system_settings')
+        .select('value')
+        .eq('key', 'queue_state')
+        .single();
+      
+      if (!error && data) {
+        setIsPaused(data.value.isPaused);
+      }
+    };
+
+    fetchQueueState();
+
+    // Subscribe to queue state changes
+    const channel = supabase
+      .channel('system_settings')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'system_settings',
+          filter: 'key=eq.queue_state'
+        },
+        (payload) => {
+          if (payload.new?.value?.isPaused !== undefined) {
+            setIsPaused(payload.new.value.isPaused);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const { data: alerts, refetch } = useQuery({
     queryKey: ['alerts'],
@@ -105,6 +145,21 @@ const Alerts = () => {
 
   const togglePause = async () => {
     const newPausedState = !isPaused;
+    
+    // Update the persistent state in Supabase
+    const { error } = await supabase
+      .from('system_settings')
+      .update({ 
+        value: { isPaused: newPausedState },
+        updated_at: new Date().toISOString()
+      })
+      .eq('key', 'queue_state');
+
+    if (error) {
+      console.error('Error updating queue state:', error);
+      return;
+    }
+
     setIsPaused(newPausedState);
     
     if (!newPausedState) {
