@@ -25,7 +25,7 @@ export const AudioControls = ({
         variant="ghost"
         size="icon"
         onClick={onPlayPause}
-        className="h-8 w-8 p-0"
+        className="h-8 w-8 p-0 text-foreground hover:text-primary transition-colors"
       >
         {isPaused ? 
           <PlayCircle className="h-6 w-6" /> : 
