@@ -89,3 +89,12 @@
 .light .alert-icon {
   @apply text-tnj-dark;
 }
+
+/* Make all links match TNJ TOOLS color */
+.dark a {
+  @apply text-neon-red hover:text-tnj-light transition-colors;
+}
+
+a {
+  @apply text-tnj-dark hover:text-neon-red transition-colors;
+}
