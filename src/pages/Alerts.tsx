@@ -5,7 +5,6 @@ import { AlertDisplay } from "@/components/alerts/AlertDisplay";
 import { useAlertQueue } from "@/hooks/useAlertQueue";
 
 const Alerts = () => {
-  const [showPlayButton, setShowPlayButton] = useState(false);
   const { alertSlug, username } = useParams();
   const completingRef = useRef(false);
   const { currentAlert, handleAlertComplete } = useAlertQueue();
@@ -103,8 +102,6 @@ const Alerts = () => {
   return (
     <AlertDisplay
       currentAlert={displayAlert}
-      showPlayButton={showPlayButton}
-      setShowPlayButton={setShowPlayButton}
       onComplete={handleAlertComplete}
     />
   );
