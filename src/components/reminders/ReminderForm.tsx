@@ -26,6 +26,7 @@ const ReminderForm = ({
   theme,
 }: ReminderFormProps) => {
   const textColor = theme === 'light' ? 'text-black' : 'text-white';
+  const buttonClass = theme === 'light' ? 'hover:bg-gray-100' : 'hover:bg-gray-800';
   
   return (
     <div className="space-y-4">
@@ -42,8 +43,13 @@ const ReminderForm = ({
           onChange={(e) => setNewDateTime(e.target.value)}
           className={`w-auto ${textColor}`}
         />
-        <Button onClick={onAdd} size="icon">
-          <Plus className={`h-4 w-4 ${textColor}`} />
+        <Button 
+          onClick={onAdd} 
+          size="icon"
+          variant="ghost"
+          className={buttonClass}
+        >
+          <Plus className={textColor} />
         </Button>
       </div>
       
