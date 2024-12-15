@@ -36,18 +36,21 @@ const Alerts = () => {
           alert:alerts(*)
         `)
         .in('status', ['pending', 'playing'])
-        .order('created_at', { ascending: true }) // Ensure oldest pending alerts are processed first
-        .limit(10); // Limit to prevent overloading
+        .order('created_at', { ascending: false }) // Changed to descending to show newest first
+        .limit(10);
       
       if (error) throw error;
-      console.log('Queue data fetched:', data); // Debug log
+      console.log('Queue data fetched:', data);
       return data;
     },
     refetchInterval: 1000, // Poll every second
   });
 
   const currentAlert = queueData?.find(item => item.status === 'playing');
-  const pendingAlerts = queueData?.filter(item => item.status === 'pending') || [];
+  const pendingAlerts = queueData?.filter(item => item.status === 'pending').sort((a, b) => {
+    // Secondary sort by created_at timestamp in ascending order for pending alerts
+    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+  }) || [];
   const queueCount = (currentAlert ? 1 : 0) + pendingAlerts.length;
 
   useEffect(() => {
