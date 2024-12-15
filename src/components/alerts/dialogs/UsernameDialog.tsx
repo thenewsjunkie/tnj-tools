@@ -30,6 +30,7 @@ const UsernameDialog = ({ open, onOpenChange, onSubmit }: UsernameDialogProps) =
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
+            className="text-foreground bg-background"
           />
           <Button type="submit" className="w-full">Submit</Button>
         </form>
