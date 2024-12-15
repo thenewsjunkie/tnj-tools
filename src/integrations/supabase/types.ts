@@ -281,6 +281,33 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          approved_at: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          role: string | null
+          status: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          created_at?: string | null
+          email?: string | null
+          id: string
+          role?: string | null
+          status?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          role?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       screen_share_sessions: {
         Row: {
           created_at: string | null

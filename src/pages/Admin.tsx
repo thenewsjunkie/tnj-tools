@@ -1,34 +1,17 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Stopwatch from "@/components/Stopwatch";
 import TNJLinks from "@/components/TNJLinks";
 import ShowNotes from "@/components/ShowNotes";
 import NewsRoundup from "@/components/NewsRoundup";
 import TNJAi from "@/components/AudioChat";
 import Alerts from "@/components/Alerts";
-import { LogOut, Edit2 } from "lucide-react";
+import { Edit2, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { useTheme } from "@/components/theme/ThemeProvider";
 
 const Admin = () => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
   const { theme } = useTheme();
-
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to sign out. Please try again.",
-        variant: "destructive",
-      });
-    } else {
-      navigate("/login");
-    }
-  };
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8">
@@ -51,14 +34,15 @@ const Admin = () => {
           </a>
           <ThemeToggle />
           <h1 className="text-foreground text-xl sm:text-2xl digital">TNJ Tools</h1>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleLogout}
-            className="text-foreground hover:text-neon-red hover:bg-white/10"
-          >
-            <LogOut className="h-5 w-5" />
-          </Button>
+          <Link to="/settings">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-foreground hover:text-primary hover:bg-white/10"
+            >
+              <Settings className="h-5 w-5" />
+            </Button>
+          </Link>
         </div>
       </nav>
       

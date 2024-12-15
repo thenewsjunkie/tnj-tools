@@ -12,6 +12,7 @@ import Login from "./pages/Login";
 import AI from "./pages/AI";
 import Notes from "./pages/Notes";
 import Alerts from "./pages/Alerts";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,11 +26,15 @@ const queryClient = new QueryClient({
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isApproved, setIsApproved] = useState<boolean | null>(null);
 
   useEffect(() => {
     // Check initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(!!session);
+      if (session) {
+        checkApprovalStatus(session.user.id);
+      }
       setIsLoading(false);
     });
 
@@ -38,20 +43,58 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(!!session);
+      if (session) {
+        checkApprovalStatus(session.user.id);
+      }
       setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
+  const checkApprovalStatus = async (userId: string) => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("status")
+      .eq("id", userId)
+      .single();
+
+    if (error) {
+      console.error("Error checking approval status:", error);
+      return;
+    }
+
+    setIsApproved(data.status === "approved");
+  };
+
   // Show nothing while loading
   if (isLoading) {
     return null;
   }
 
-  // Only redirect if we're not loading and there's no session
+  // Redirect if not logged in
   if (!session) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Redirect if not approved
+  if (isApproved === false) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="text-center space-y-4">
+          <h1 className="text-2xl font-semibold">Account Pending Approval</h1>
+          <p className="text-muted-foreground">
+            Your account is pending approval from an administrator.
+          </p>
+          <Button
+            onClick={() => supabase.auth.signOut()}
+            variant="outline"
+          >
+            Sign Out
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return children;
@@ -84,6 +127,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AI />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Settings />
                 </ProtectedRoute>
               }
             />
