@@ -11,7 +11,7 @@ import ImageFullscreen from "./ImageFullscreen";
 
 interface NoteItemProps {
   note: Note;
-  onDelete: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
 const NoteItem = ({ note, onDelete }: NoteItemProps) => {
@@ -39,17 +39,19 @@ const NoteItem = ({ note, onDelete }: NoteItemProps) => {
   return (
     <>
       <div className="relative group">
-        <Card>
+        <Card className="bg-background">
           <CardContent className="p-4">
             {renderNoteContent()}
-            <Button
-              variant="destructive"
-              size="icon"
-              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={() => onDelete(note.id)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            {onDelete && (
+              <Button
+                variant="destructive"
+                size="icon"
+                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => onDelete(note.id)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>

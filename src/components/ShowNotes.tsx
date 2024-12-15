@@ -105,10 +105,8 @@ const ShowNotes = () => {
   const displayedNotes = showAll ? notes : notes.slice(0, INITIAL_DISPLAY_COUNT);
   const hasMoreNotes = notes.length > INITIAL_DISPLAY_COUNT;
 
-  const bgColor = theme === 'light' ? 'bg-white' : 'bg-black/50';
-
   return (
-    <Card className={`w-full ${bgColor} border border-gray-200 dark:border-white/10`}>
+    <Card className="w-full bg-background border border-gray-200 dark:border-white/10">
       <CardHeader>
         <CardTitle className="flex justify-between items-center">
           Show Notes
@@ -123,9 +121,9 @@ const ShowNotes = () => {
                   Add Note
                 </Button>
               </DialogTrigger>
-              <DialogContent className="bg-black dark:border-white/10">
+              <DialogContent className="bg-background dark:border-white/10">
                 <DialogHeader>
-                  <DialogTitle className="text-white">Add New Note</DialogTitle>
+                  <DialogTitle className="text-foreground">Add New Note</DialogTitle>
                 </DialogHeader>
                 <AddNoteForm
                   newNote={newNote}
