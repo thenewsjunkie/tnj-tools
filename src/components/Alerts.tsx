@@ -50,51 +50,70 @@ const Alerts = () => {
 
   useEffect(() => {
     const channel = supabase.channel('alert-queue')
-      .on('broadcast', { event: 'alert_completed' }, () => {
-        refetchQueue();
+      .on('broadcast', { event: 'alert_completed' }, async () => {
+        await refetchQueue();
+        // If we're not paused, automatically start the next alert
+        if (!isPaused) {
+          processNextAlert();
+        }
       })
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [refetchQueue]);
+  }, [refetchQueue, isPaused]);
+
+  const processNextAlert = async () => {
+    if (isPaused || currentAlert) return;
+
+    const nextAlert = pendingAlerts[0];
+    if (!nextAlert) return;
+
+    const { error } = await supabase
+      .from('alert_queue')
+      .update({ status: 'playing' })
+      .eq('id', nextAlert.id);
+
+    if (error) {
+      console.error('Error updating alert status:', error);
+      return;
+    }
+
+    // Broadcast the alert
+    await supabase
+      .channel('alerts')
+      .send({
+        type: 'broadcast',
+        event: 'play_alert',
+        payload: {
+          ...nextAlert.alert,
+          message_text: nextAlert.username 
+            ? `${nextAlert.username} ${nextAlert.alert.message_text}`
+            : nextAlert.alert.message_text
+        }
+      });
+
+    refetchQueue();
+  };
 
   const togglePause = async () => {
-    setIsPaused(!isPaused);
-    if (!isPaused) {
+    const newPausedState = !isPaused;
+    setIsPaused(newPausedState);
+    
+    if (newPausedState) {
       // If we're pausing, stop any currently playing alert
       if (currentAlert) {
         await supabase
           .from('alert_queue')
           .update({ status: 'pending' })
           .eq('id', currentAlert.id);
+        await refetchQueue();
       }
     } else {
-      // If we're unpausing and there's no current alert playing, start the next one
-      if (!currentAlert && pendingAlerts.length > 0) {
-        const nextAlert = pendingAlerts[0];
-        await supabase
-          .from('alert_queue')
-          .update({ status: 'playing' })
-          .eq('id', nextAlert.id);
-
-        // Broadcast the alert
-        await supabase
-          .channel('alerts')
-          .send({
-            type: 'broadcast',
-            event: 'play_alert',
-            payload: {
-              ...nextAlert.alert,
-              message_text: nextAlert.username 
-                ? `${nextAlert.username} ${nextAlert.alert.message_text}`
-                : nextAlert.alert.message_text
-            }
-          });
-      }
+      // If we're unpausing, process the next alert
+      processNextAlert();
     }
-    refetchQueue();
   };
 
   const handleAlertAdded = () => {
