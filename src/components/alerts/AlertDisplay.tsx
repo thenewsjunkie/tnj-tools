@@ -40,26 +40,28 @@ export const AlertDisplay = ({
   }
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center">
-      {currentAlert.media_type.startsWith('video') ? (
-        <VideoAlert 
-          mediaUrl={currentAlert.media_url}
-          onComplete={onComplete}
-        />
-      ) : (
-        <ImageAlert 
-          mediaUrl={currentAlert.media_url}
-          onComplete={onComplete}
-          onError={handleImageError}
-        />
-      )}
-      
-      {currentAlert.message_enabled && currentAlert.message_text && (
-        <AlertMessage 
-          message={currentAlert.message_text}
-          fontSize={currentAlert.font_size}
-        />
-      )}
+    <div className="fixed inset-0 flex flex-col items-center justify-center">
+      <div className="relative">
+        {currentAlert.media_type.startsWith('video') ? (
+          <VideoAlert 
+            mediaUrl={currentAlert.media_url}
+            onComplete={onComplete}
+          />
+        ) : (
+          <ImageAlert 
+            mediaUrl={currentAlert.media_url}
+            onComplete={onComplete}
+            onError={handleImageError}
+          />
+        )}
+        
+        {currentAlert.message_enabled && currentAlert.message_text && (
+          <AlertMessage 
+            message={currentAlert.message_text}
+            fontSize={currentAlert.font_size}
+          />
+        )}
+      </div>
     </div>
   );
 };
