@@ -4,10 +4,10 @@ interface AlertMessageProps {
 }
 
 const AlertMessage = ({ message, fontSize = 24 }: AlertMessageProps) => {
-  // Split the message into username and rest of the message if it contains a space
-  const parts = message.split(' ');
-  const username = parts[0];
-  const restOfMessage = parts.slice(1).join(' ');
+  // Find the last occurrence of a username mention (handles multi-word usernames)
+  const lastSpaceIndex = message.lastIndexOf(' ');
+  const username = lastSpaceIndex === -1 ? message : message.slice(0, lastSpaceIndex);
+  const restOfMessage = lastSpaceIndex === -1 ? '' : message.slice(lastSpaceIndex);
 
   return (
     <div 
@@ -18,7 +18,7 @@ const AlertMessage = ({ message, fontSize = 24 }: AlertMessageProps) => {
       }}
     >
       <span className="text-[#4CDBC4]">{username}</span>
-      {restOfMessage && <span> {restOfMessage}</span>}
+      {restOfMessage && <span>{restOfMessage}</span>}
     </div>
   );
 };
