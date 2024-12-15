@@ -17,7 +17,7 @@ const AlertMessage = ({ message, fontSize = 24 }: AlertMessageProps) => {
         textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)'
       }}
     >
-      <span className="text-[#9b87f5]">{username}</span>
+      <span className="text-[#4CDBC4]">{username}</span>
       {restOfMessage && <span> {restOfMessage}</span>}
     </div>
   );
