@@ -1,6 +1,6 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Play } from "lucide-react";
+import { Play, Volume2, VolumeX } from "lucide-react";
 
 interface AlertDisplayProps {
   currentAlert: {
@@ -22,6 +22,7 @@ export const AlertDisplay = ({
   onComplete,
 }: AlertDisplayProps) => {
   const mediaRef = useRef<HTMLVideoElement | HTMLImageElement>(null);
+  const [isMuted, setIsMuted] = useState(true);
 
   useEffect(() => {
     console.log('[AlertDisplay] Component mounted or alert changed');
@@ -52,10 +53,11 @@ export const AlertDisplay = ({
       const videoElement = mediaRef.current as HTMLVideoElement;
       console.log('[AlertDisplay] Setting up video element');
       
-      // Load and play the video
+      // Load and attempt to play muted first
       videoElement.load();
+      videoElement.muted = true;
       videoElement.play().catch(error => {
-        console.log('[AlertDisplay] Initial autoplay failed:', error);
+        console.log('[AlertDisplay] Initial muted autoplay failed:', error);
         setShowPlayButton(true);
       });
     }
@@ -69,6 +71,14 @@ export const AlertDisplay = ({
         console.error('[AlertDisplay] Manual play failed:', error);
       });
       setShowPlayButton(false);
+    }
+  };
+
+  const toggleMute = () => {
+    if (mediaRef.current && currentAlert?.media_type.startsWith('video')) {
+      const videoElement = mediaRef.current as HTMLVideoElement;
+      videoElement.muted = !videoElement.muted;
+      setIsMuted(!isMuted);
     }
   };
 
@@ -115,20 +125,28 @@ export const AlertDisplay = ({
             onLoadedMetadata={handleVideoLoadedMetadata}
             onError={handleVideoError}
             playsInline
-            muted={false}
+            muted={isMuted}
             controls={false}
             autoPlay
           />
-          {showPlayButton && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+            {showPlayButton && (
+              <Button
+                size="icon"
+                variant="outline"
+                onClick={handleManualPlay}
+              >
+                <Play className="h-4 w-4" />
+              </Button>
+            )}
             <Button
-              className="absolute"
               size="icon"
               variant="outline"
-              onClick={handleManualPlay}
+              onClick={toggleMute}
             >
-              <Play className="h-4 w-4" />
+              {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
             </Button>
-          )}
+          </div>
         </>
       ) : (
         <img
