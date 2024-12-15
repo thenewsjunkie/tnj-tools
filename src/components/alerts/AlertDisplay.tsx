@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Play } from "lucide-react";
 
@@ -24,6 +24,16 @@ export const AlertDisplay = ({
 }: AlertDisplayProps) => {
   const mediaRef = useRef<HTMLVideoElement | HTMLImageElement>(null);
 
+  useEffect(() => {
+    // For images, trigger completion after a delay
+    if (currentAlert?.media_type.startsWith('image')) {
+      const timer = setTimeout(() => {
+        onComplete();
+      }, 5000); // Show image for 5 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [currentAlert, onComplete]);
+
   const handleManualPlay = () => {
     if (mediaRef.current && currentAlert?.media_type.startsWith('video')) {
       const videoElement = mediaRef.current as HTMLVideoElement;
@@ -35,6 +45,7 @@ export const AlertDisplay = ({
   };
 
   const handleVideoEnded = () => {
+    console.log('Video ended, triggering completion');
     onComplete();
   };
 

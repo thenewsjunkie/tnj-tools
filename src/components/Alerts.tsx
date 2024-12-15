@@ -65,10 +65,23 @@ const Alerts = () => {
   }, [refetchQueue, isPaused]);
 
   const processNextAlert = async () => {
-    if (isPaused || currentAlert) return;
+    if (isPaused) {
+      console.log('Queue is paused, not processing next alert');
+      return;
+    }
+
+    if (currentAlert) {
+      console.log('Current alert still playing, not processing next alert');
+      return;
+    }
 
     const nextAlert = pendingAlerts[0];
-    if (!nextAlert) return;
+    if (!nextAlert) {
+      console.log('No pending alerts in queue');
+      return;
+    }
+
+    console.log('Processing next alert:', nextAlert);
 
     const { error } = await supabase
       .from('alert_queue')
@@ -94,23 +107,14 @@ const Alerts = () => {
         }
       });
 
-    refetchQueue();
+    await refetchQueue();
   };
 
   const togglePause = async () => {
     const newPausedState = !isPaused;
     setIsPaused(newPausedState);
     
-    if (newPausedState) {
-      // If we're pausing, stop any currently playing alert
-      if (currentAlert) {
-        await supabase
-          .from('alert_queue')
-          .update({ status: 'pending' })
-          .eq('id', currentAlert.id);
-        await refetchQueue();
-      }
-    } else {
+    if (!newPausedState) {
       // If we're unpausing, process the next alert
       processNextAlert();
     }
