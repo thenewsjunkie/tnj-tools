@@ -104,7 +104,7 @@ const ShowNotes = () => {
   const hasMoreNotes = notes.length > INITIAL_DISPLAY_COUNT;
 
   return (
-    <Card className="w-full">
+    <Card className="w-full border-border">
       <CardHeader>
         <CardTitle className="flex justify-between items-center">
           Show Notes
