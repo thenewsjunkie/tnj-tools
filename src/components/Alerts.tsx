@@ -15,12 +15,17 @@ const Alerts = () => {
   const { data: alerts, refetch } = useQuery({
     queryKey: ['alerts'],
     queryFn: async () => {
+      console.log('Fetching alerts...');
       const { data, error } = await supabase
         .from('alerts')
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching alerts:', error);
+        throw error;
+      }
+      console.log('Fetched alerts:', data);
       return data;
     }
   });
@@ -28,6 +33,7 @@ const Alerts = () => {
   const { data: queueData, refetch: refetchQueue } = useQuery({
     queryKey: ['alert_queue'],
     queryFn: async () => {
+      console.log('Fetching queue...');
       const { data, error } = await supabase
         .from('alert_queue')
         .select(`
@@ -35,9 +41,13 @@ const Alerts = () => {
           alert:alerts(*)
         `)
         .in('status', ['pending', 'playing'])
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: true })
+        .limit(50);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching queue:', error);
+        throw error;
+      }
       console.log('Queue data fetched:', data);
       return data;
     },
