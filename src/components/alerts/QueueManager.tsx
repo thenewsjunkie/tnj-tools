@@ -11,6 +11,14 @@ interface QueueManagerProps {
 
 const QueueManager = ({ currentAlert, queueCount, isPaused, processNextAlert }: QueueManagerProps) => {
   useEffect(() => {
+    // If there's no current alert and the queue isn't paused, try to process the next alert
+    if (!currentAlert && !isPaused) {
+      console.log('No current alert, attempting to process next');
+      processNextAlert();
+    }
+  }, [currentAlert, isPaused, processNextAlert]);
+
+  useEffect(() => {
     const channel = supabase.channel('alert-queue')
       .on('broadcast', { event: 'alert_completed' }, async () => {
         console.log('Alert completed event received');

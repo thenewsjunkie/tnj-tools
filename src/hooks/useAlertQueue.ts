@@ -31,7 +31,10 @@ export const useAlertQueue = () => {
   const queueCount = (currentAlert ? 1 : 0) + pendingAlerts.length;
 
   const handleAlertComplete = async () => {
-    if (!currentAlert) return;
+    if (!currentAlert) {
+      console.log('No current alert to complete');
+      return;
+    }
 
     console.log('Completing alert:', currentAlert.id);
 
@@ -48,25 +51,20 @@ export const useAlertQueue = () => {
       return;
     }
 
-    await supabase
-      .channel('alerts')
-      .send({
-        type: 'broadcast',
-        event: 'alert_completed',
-        payload: { alertId: currentAlert.id }
-      });
-
+    console.log('Alert marked as completed');
     await refetchQueue();
   };
 
   const processNextAlert = async (isPaused: boolean) => {
+    console.log('Processing next alert. Queue paused:', isPaused);
+    
     if (isPaused) {
       console.log('Queue is paused, not processing next alert');
       return;
     }
 
     if (currentAlert) {
-      console.log('Current alert still playing, not processing next alert');
+      console.log('Current alert still playing:', currentAlert.id);
       return;
     }
 
@@ -76,11 +74,13 @@ export const useAlertQueue = () => {
       return;
     }
 
-    console.log('Processing next alert:', nextAlert);
+    console.log('Setting next alert to playing:', nextAlert.id);
 
     const { error } = await supabase
       .from('alert_queue')
-      .update({ status: 'playing' })
+      .update({ 
+        status: 'playing',
+      })
       .eq('id', nextAlert.id);
 
     if (error) {
@@ -88,6 +88,7 @@ export const useAlertQueue = () => {
       return;
     }
 
+    console.log('Alert status updated to playing');
     await refetchQueue();
   };
 
