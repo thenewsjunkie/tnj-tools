@@ -30,6 +30,35 @@ export const useAlertQueue = () => {
   const pendingAlerts = queueData?.filter(item => item.status === 'pending') || [];
   const queueCount = (currentAlert ? 1 : 0) + pendingAlerts.length;
 
+  const handleAlertComplete = async () => {
+    if (!currentAlert) return;
+
+    console.log('Completing alert:', currentAlert.id);
+
+    const { error } = await supabase
+      .from('alert_queue')
+      .update({ 
+        status: 'completed',
+        played_at: new Date().toISOString()
+      })
+      .eq('id', currentAlert.id);
+
+    if (error) {
+      console.error('Error completing alert:', error);
+      return;
+    }
+
+    await supabase
+      .channel('alerts')
+      .send({
+        type: 'broadcast',
+        event: 'alert_completed',
+        payload: { alertId: currentAlert.id }
+      });
+
+    await refetchQueue();
+  };
+
   const processNextAlert = async (isPaused: boolean) => {
     if (isPaused) {
       console.log('Queue is paused, not processing next alert');
@@ -59,19 +88,6 @@ export const useAlertQueue = () => {
       return;
     }
 
-    await supabase
-      .channel('alerts')
-      .send({
-        type: 'broadcast',
-        event: 'play_alert',
-        payload: {
-          ...nextAlert.alert,
-          message_text: nextAlert.username 
-            ? `${nextAlert.username} ${nextAlert.alert.message_text}`
-            : nextAlert.alert.message_text
-        }
-      });
-
     await refetchQueue();
   };
 
@@ -80,6 +96,7 @@ export const useAlertQueue = () => {
     queueCount,
     pendingAlerts,
     processNextAlert,
-    refetchQueue
+    refetchQueue,
+    handleAlertComplete
   };
 };

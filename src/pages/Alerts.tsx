@@ -1,6 +1,4 @@
 import { useEffect, useState, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams } from "react-router-dom";
 import { AlertDisplay } from "@/components/alerts/AlertDisplay";
@@ -60,9 +58,19 @@ const Alerts = () => {
 
   if (!currentAlert) return null;
 
+  const displayAlert = {
+    media_type: currentAlert.alert.media_type,
+    media_url: currentAlert.alert.media_url,
+    message_enabled: currentAlert.alert.message_enabled,
+    message_text: currentAlert.username 
+      ? `${currentAlert.username} ${currentAlert.alert.message_text}`
+      : currentAlert.alert.message_text,
+    font_size: currentAlert.alert.font_size
+  };
+
   return (
     <AlertDisplay
-      currentAlert={currentAlert}
+      currentAlert={displayAlert}
       showPlayButton={showPlayButton}
       setShowPlayButton={setShowPlayButton}
       onComplete={handleAlertComplete}
