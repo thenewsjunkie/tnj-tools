@@ -96,6 +96,7 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
+              className="text-foreground bg-background"
             />
           </div>
           <div className="flex items-center space-x-2">
@@ -113,6 +114,7 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
                   placeholder="Alert Message"
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
+                  className="text-foreground bg-background"
                 />
               </div>
               <div className="space-y-2">
@@ -123,6 +125,7 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
                   max="72"
                   value={fontSize}
                   onChange={(e) => setFontSize(Number(e.target.value))}
+                  className="text-foreground bg-background"
                 />
               </div>
             </>
@@ -133,6 +136,7 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
               accept="image/gif,video/webm"
               required
               disabled={isUploading}
+              className="text-foreground bg-background"
             />
           </div>
           <Button type="submit" className="w-full" disabled={isUploading}>
