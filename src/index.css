@@ -96,7 +96,7 @@
 }
 
 a {
-  @apply text-tnj-dark hover:text-neon-red transition-colors;
+  @apply text-neon-red hover:text-tnj-dark transition-colors;
 }
 
 /* Light mode card styles */
