@@ -4,10 +4,10 @@ interface AlertMessageProps {
 }
 
 const AlertMessage = ({ message, fontSize = 24 }: AlertMessageProps) => {
-  // Find the last occurrence of a username mention (handles multi-word usernames)
-  const lastSpaceIndex = message.lastIndexOf(' ');
-  const username = lastSpaceIndex === -1 ? message : message.slice(0, lastSpaceIndex);
-  const restOfMessage = lastSpaceIndex === -1 ? '' : message.slice(lastSpaceIndex);
+  // Find the username by looking for the word that comes before "just subscribed"
+  const subscribedIndex = message.indexOf(' just');
+  const username = subscribedIndex === -1 ? message : message.slice(0, subscribedIndex);
+  const restOfMessage = subscribedIndex === -1 ? '' : message.slice(subscribedIndex);
 
   return (
     <div 
