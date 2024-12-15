@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Edit2, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import EditAlertDialog from "./EditAlertDialog";
+import UsernameDialog from "./dialogs/UsernameDialog";
 import { useToast } from "@/components/ui/use-toast";
 
 interface AlertButtonProps {
@@ -23,10 +22,9 @@ interface AlertButtonProps {
 const AlertButton = ({ alert, onAlertDeleted }: AlertButtonProps) => {
   const [isNameDialogOpen, setIsNameDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [username, setUsername] = useState("");
   const { toast } = useToast();
 
-  const handleClick = async () => {
+  const handleClick = () => {
     if (alert.message_enabled) {
       setIsNameDialogOpen(true);
     } else {
@@ -34,12 +32,12 @@ const AlertButton = ({ alert, onAlertDeleted }: AlertButtonProps) => {
     }
   };
 
-  const queueAlert = async (name?: string) => {
+  const queueAlert = async (username?: string) => {
     const { error } = await supabase
       .from('alert_queue')
       .insert({
         alert_id: alert.id,
-        username: name,
+        username,
         status: 'pending'
       });
 
@@ -58,12 +56,6 @@ const AlertButton = ({ alert, onAlertDeleted }: AlertButtonProps) => {
     });
 
     setIsNameDialogOpen(false);
-    setUsername("");
-  };
-
-  const handleSubmitName = (e: React.FormEvent) => {
-    e.preventDefault();
-    queueAlert(username);
   };
 
   const handleDelete = async () => {
@@ -116,22 +108,11 @@ const AlertButton = ({ alert, onAlertDeleted }: AlertButtonProps) => {
         <Trash2 className="h-4 w-4" />
       </Button>
 
-      <Dialog open={isNameDialogOpen} onOpenChange={setIsNameDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="text-foreground">Enter Username</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmitName} className="space-y-4">
-            <Input
-              placeholder="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
-            <Button type="submit" className="w-full">Submit</Button>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <UsernameDialog
+        open={isNameDialogOpen}
+        onOpenChange={setIsNameDialogOpen}
+        onSubmit={queueAlert}
+      />
 
       <EditAlertDialog
         alert={alert}
