@@ -55,7 +55,6 @@ export const AlertDisplay = ({
 
   const handleVideoLoadedMetadata = () => {
     console.log('Video metadata loaded');
-    setShowPlayButton(true);
     if (mediaRef.current && currentAlert?.media_type.startsWith('video')) {
       const videoElement = mediaRef.current as HTMLVideoElement;
       // Some browsers require user interaction before playing
@@ -65,6 +64,11 @@ export const AlertDisplay = ({
       });
     }
   };
+
+  if (!currentAlert) {
+    console.log('No alert to display');
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black">

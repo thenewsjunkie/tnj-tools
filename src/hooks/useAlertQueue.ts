@@ -13,8 +13,7 @@ export const useAlertQueue = () => {
           alert:alerts(*)
         `)
         .in('status', ['pending', 'playing'])
-        .order('created_at', { ascending: true })
-        .limit(50);
+        .order('created_at', { ascending: true });
       
       if (error) {
         console.error('Error fetching queue:', error);
@@ -28,7 +27,7 @@ export const useAlertQueue = () => {
 
   const currentAlert = queueData?.find(item => item.status === 'playing');
   const pendingAlerts = queueData?.filter(item => item.status === 'pending') || [];
-  const queueCount = (currentAlert ? 1 : 0) + pendingAlerts.length;
+  const queueCount = pendingAlerts.length;
 
   const handleAlertComplete = async () => {
     if (!currentAlert) {
