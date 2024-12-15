@@ -119,7 +119,7 @@ const AlertButton = ({ alert, onAlertDeleted }: AlertButtonProps) => {
       <Dialog open={isNameDialogOpen} onOpenChange={setIsNameDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Enter Username</DialogTitle>
+            <DialogTitle className="text-foreground">Enter Username</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmitName} className="space-y-4">
             <Input
