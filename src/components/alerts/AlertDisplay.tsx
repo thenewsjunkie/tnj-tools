@@ -40,7 +40,7 @@ export const AlertDisplay = ({
   }
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black">
+    <div className="fixed inset-0 flex items-center justify-center">
       {currentAlert.media_type.startsWith('video') ? (
         <VideoAlert 
           mediaUrl={currentAlert.media_url}
