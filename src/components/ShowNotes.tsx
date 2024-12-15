@@ -117,7 +117,7 @@ const ShowNotes = () => {
               <DialogTrigger asChild>
                 <Button 
                   size="sm"
-                  className="bg-neon-red text-white border-2 border-tnj-dark"
+                  className="bg-neon-red text-white border-2 border-tnj-dark hover:bg-neon-red"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Note
