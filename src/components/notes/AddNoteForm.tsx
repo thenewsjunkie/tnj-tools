@@ -68,14 +68,14 @@ const AddNoteForm = ({ newNote, setNewNote, handleAddNote }: AddNoteFormProps) =
         <Button
           variant={newNote.type === 'text' ? 'default' : 'outline'}
           onClick={() => setNewNote(prev => ({ ...prev, type: 'text' }))}
-          className={newNote.type !== 'text' ? 'dark:border-white/20 dark:text-white/70 dark:hover:bg-white/10' : ''}
+          className={newNote.type !== 'text' ? 'dark:border-white/20 dark:text-white dark:hover:bg-white/10' : ''}
         >
           Text
         </Button>
         <Button
           variant={newNote.type === 'link' ? 'default' : 'outline'}
           onClick={() => setNewNote(prev => ({ ...prev, type: 'link' }))}
-          className={newNote.type !== 'link' ? 'dark:border-white/20 dark:text-white/70 dark:hover:bg-white/10' : ''}
+          className={newNote.type !== 'link' ? 'dark:border-white/20 dark:text-white dark:hover:bg-white/10' : ''}
         >
           <Link className="h-4 w-4 mr-2" />
           Link
@@ -83,7 +83,7 @@ const AddNoteForm = ({ newNote, setNewNote, handleAddNote }: AddNoteFormProps) =
         <Button
           variant={newNote.type === 'image' ? 'default' : 'outline'}
           onClick={() => setNewNote(prev => ({ ...prev, type: 'image' }))}
-          className={newNote.type !== 'image' ? 'dark:border-white/20 dark:text-white/70 dark:hover:bg-white/10' : ''}
+          className={newNote.type !== 'image' ? 'dark:border-white/20 dark:text-white dark:hover:bg-white/10' : ''}
         >
           <Image className="h-4 w-4 mr-2" />
           Image
@@ -91,7 +91,7 @@ const AddNoteForm = ({ newNote, setNewNote, handleAddNote }: AddNoteFormProps) =
         <Button
           variant={newNote.type === 'video' ? 'default' : 'outline'}
           onClick={() => setNewNote(prev => ({ ...prev, type: 'video' }))}
-          className={newNote.type !== 'video' ? 'dark:border-white/20 dark:text-white/70 dark:hover:bg-white/10' : ''}
+          className={newNote.type !== 'video' ? 'dark:border-white/20 dark:text-white dark:hover:bg-white/10' : ''}
         >
           <Video className="h-4 w-4 mr-2" />
           Video
