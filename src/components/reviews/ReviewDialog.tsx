@@ -76,10 +76,13 @@ const ReviewDialog = ({ review, open, onOpenChange }: ReviewDialogProps) => {
   const getCropStyle = () => {
     if (objectFit !== 'cover' || !savedCrop.width || !savedCrop.height) return {};
     
+    const scale = 100 / savedCrop.width;
+    const translateX = -(savedCrop.x * scale);
+    const translateY = -(savedCrop.y * scale);
+    
     return {
-      objectPosition: `${-savedCrop.x}% ${-savedCrop.y}%`,
-      width: `${100 / (savedCrop.width / 100)}%`,
-      height: `${100 / (savedCrop.height / 100)}%`
+      transform: `scale(${scale}) translate(${translateX}%, ${translateY}%)`,
+      transformOrigin: 'top left'
     };
   };
 
