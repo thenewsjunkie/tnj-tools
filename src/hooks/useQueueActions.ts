@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { Json } from "@/integrations/supabase/types";
 
 interface QueueStateValue {
   isPaused: boolean;
@@ -65,7 +66,7 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
       .eq('key', 'queue_state')
       .single();
 
-    const value = settings?.value as QueueStateValue;
+    const value = settings?.value as unknown as QueueStateValue;
     if (value?.isPaused) {
       console.log('[useQueueActions] Queue is paused (database check), not processing next alert');
       return;

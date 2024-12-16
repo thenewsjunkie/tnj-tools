@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQueueData } from "./useQueueData";
 import { supabase } from "@/integrations/supabase/client";
+import { Json } from "@/integrations/supabase/types";
 
 interface QueueStateValue {
   isPaused: boolean;
@@ -24,8 +25,8 @@ export const useQueueState = () => {
         return;
       }
 
-      const value = data?.value as QueueStateValue;
-      if (value && typeof value === 'object') {
+      const value = data?.value as unknown as QueueStateValue;
+      if (value && typeof value === 'object' && 'isPaused' in value) {
         setIsPaused(!!value.isPaused);
       }
     };
@@ -49,7 +50,7 @@ export const useQueueState = () => {
       .from('system_settings')
       .upsert({
         key: 'queue_state',
-        value: { isPaused: newPausedState } as QueueStateValue,
+        value: { isPaused: newPausedState } as unknown as Json,
         updated_at: new Date().toISOString()
       });
 
