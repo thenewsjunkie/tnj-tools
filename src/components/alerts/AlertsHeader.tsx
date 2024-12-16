@@ -11,6 +11,10 @@ interface AlertsHeaderProps {
   openDialog: () => void;
 }
 
+interface QueueStateValue {
+  isPaused: boolean;
+}
+
 const AlertsHeader = ({ isPaused, togglePause, openDialog }: AlertsHeaderProps) => {
   const [isScheduleEnabled, setIsScheduleEnabled] = useState(false);
   const { toast } = useToast();
@@ -41,7 +45,8 @@ const AlertsHeader = ({ isPaused, togglePause, openDialog }: AlertsHeaderProps) 
         .single();
 
       if (!queueError && queueState?.value) {
-        const isPausedValue = typeof queueState.value === 'object' ? queueState.value.isPaused : false;
+        const stateValue = queueState.value as QueueStateValue;
+        const isPausedValue = stateValue?.isPaused ?? false;
         // Only toggle if current state doesn't match system state
         if (isPaused !== isPausedValue) {
           console.log('[AlertsHeader] Syncing with system queue state:', isPausedValue);
@@ -65,7 +70,8 @@ const AlertsHeader = ({ isPaused, togglePause, openDialog }: AlertsHeaderProps) 
         },
         async (payload) => {
           if (payload.new?.value) {
-            const isPausedValue = typeof payload.new.value === 'object' ? payload.new.value.isPaused : false;
+            const stateValue = payload.new.value as QueueStateValue;
+            const isPausedValue = stateValue?.isPaused ?? false;
             console.log('[AlertsHeader] Received queue state update:', isPausedValue);
             // Call togglePause if the current state doesn't match the new state
             if (isPaused !== isPausedValue) {
