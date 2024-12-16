@@ -1,9 +1,10 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Tv, Film, Utensils, Package, Maximize2 } from "lucide-react";
+import { Tv, Film, Utensils, Package, Maximize2, Edit2 } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import ImageFullscreen from "@/components/notes/ImageFullscreen";
+import EditReviewDialog from "./EditReviewDialog";
 import type { Review } from "./types";
 
 interface ReviewDialogProps {
@@ -15,6 +16,7 @@ interface ReviewDialogProps {
 const ReviewDialog = ({ review, open, onOpenChange }: ReviewDialogProps) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [objectFit, setObjectFit] = useState<'contain' | 'cover'>('contain');
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   if (!review) return null;
 
@@ -70,8 +72,16 @@ const ReviewDialog = ({ review, open, onOpenChange }: ReviewDialogProps) => {
 
             <p className="text-foreground">{review.content}</p>
             
-            <div className="text-sm text-muted-foreground">
-              Review: {reviewDate}
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <span>Review: {reviewDate}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsEditDialogOpen(true)}
+                className="hover:bg-accent"
+              >
+                <Edit2 className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </DialogContent>
@@ -84,6 +94,17 @@ const ReviewDialog = ({ review, open, onOpenChange }: ReviewDialogProps) => {
           onClose={() => setIsFullscreen(false)}
         />
       )}
+
+      <EditReviewDialog
+        review={review}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onReviewUpdated={() => {
+          setIsEditDialogOpen(false);
+          onOpenChange(false);
+          window.location.reload();
+        }}
+      />
     </>
   );
 };
