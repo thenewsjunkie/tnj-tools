@@ -28,7 +28,7 @@ const Reviews = ({ showViewAllLink = false, reviews: propReviews }: ReviewsProps
       if (error) throw error;
       return data as Review[];
     },
-    enabled: !propReviews, // Only fetch if reviews weren't passed as props
+    enabled: !propReviews,
   });
 
   const reviews = propReviews || fetchedReviews;
@@ -86,11 +86,11 @@ const Reviews = ({ showViewAllLink = false, reviews: propReviews }: ReviewsProps
                 </div>
                 
                 {review.image_url && (
-                  <div className="relative aspect-[16/9] w-full h-32">
+                  <div className="relative w-full">
                     <img 
                       src={review.image_url} 
                       alt={review.title}
-                      className="rounded-md object-cover w-full h-full"
+                      className="rounded-md w-full h-auto object-contain max-h-40"
                     />
                   </div>
                 )}
