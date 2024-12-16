@@ -10,13 +10,32 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+// Common timezone list
+const timezones = [
+  'UTC',
+  'America/New_York',
+  'America/Chicago',
+  'America/Denver',
+  'America/Los_Angeles',
+  'America/Phoenix',
+  'America/Anchorage',
+  'Pacific/Honolulu',
+  'Europe/London',
+  'Europe/Paris',
+  'Europe/Berlin',
+  'Europe/Moscow',
+  'Asia/Tokyo',
+  'Asia/Shanghai',
+  'Asia/Dubai',
+  'Asia/Singapore',
+  'Australia/Sydney',
+  'Pacific/Auckland'
+];
+
 const Settings = () => {
   const [timezone, setTimezone] = useState("");
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-
-  // Get all IANA timezone names
-  const timezones = Intl.supportedValuesOf('timeZone');
 
   useEffect(() => {
     fetchUserSettings();
