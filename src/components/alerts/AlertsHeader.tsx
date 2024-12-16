@@ -29,7 +29,33 @@ const AlertsHeader = ({ isPaused, togglePause, openDialog }: AlertsHeaderProps) 
     };
 
     fetchScheduleStatus();
-  }, []);
+
+    // Subscribe to system_settings changes
+    const channel = supabase
+      .channel('system_settings_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'system_settings',
+          filter: 'key=eq.queue_state'
+        },
+        async (payload) => {
+          if (payload.new && payload.new.value && payload.new.value.isPaused !== undefined) {
+            // Call togglePause if the current state doesn't match the new state
+            if (isPaused !== payload.new.value.isPaused) {
+              togglePause();
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isPaused, togglePause]);
 
   const toggleSchedule = async () => {
     const newStatus = !isScheduleEnabled;
