@@ -1,5 +1,3 @@
-import { Json } from '../helpers';
-
 export interface NewsRoundupsTable {
   Row: {
     id: string
