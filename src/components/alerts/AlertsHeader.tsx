@@ -55,25 +55,6 @@ const AlertsHeader = ({ isPaused, togglePause, openDialog }: AlertsHeaderProps) 
         console.log('[AlertsHeader] Schedule enabled:', scheduleData.is_enabled);
         setIsScheduleEnabled(scheduleData.is_enabled);
       }
-
-      // Fetch current queue state
-      const { data: queueState, error: queueError } = await supabase
-        .from('system_settings')
-        .select('value')
-        .eq('key', 'queue_state')
-        .single();
-
-      if (!queueError && queueState?.value) {
-        // First cast to unknown, then to QueueStateValue to satisfy TypeScript
-        const stateValue = queueState.value as unknown as QueueStateValue;
-        const isPausedValue = stateValue?.isPaused ?? false;
-        console.log('[AlertsHeader] Current queue state:', isPausedValue);
-        // Only toggle if current state doesn't match system state
-        if (isPaused !== isPausedValue) {
-          console.log('[AlertsHeader] Syncing with system queue state:', isPausedValue);
-          togglePause();
-        }
-      }
     };
 
     fetchInitialState();
@@ -91,14 +72,8 @@ const AlertsHeader = ({ isPaused, togglePause, openDialog }: AlertsHeaderProps) 
         },
         async (payload) => {
           if (payload.new?.value) {
-            // First cast to unknown, then to QueueStateValue to satisfy TypeScript
             const stateValue = payload.new.value as unknown as QueueStateValue;
-            const isPausedValue = stateValue?.isPaused ?? false;
-            console.log('[AlertsHeader] Received queue state update:', isPausedValue);
-            // Call togglePause if the current state doesn't match the new state
-            if (isPaused !== isPausedValue) {
-              togglePause();
-            }
+            console.log('[AlertsHeader] Received queue state update:', stateValue.isPaused);
           }
         }
       )
@@ -107,7 +82,33 @@ const AlertsHeader = ({ isPaused, togglePause, openDialog }: AlertsHeaderProps) 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [isPaused, togglePause]);
+  }, []);
+
+  const handleTogglePause = async () => {
+    console.log('[AlertsHeader] Toggling pause state from:', isPaused);
+    
+    // Update the system settings first
+    const { error } = await supabase
+      .from('system_settings')
+      .update({ 
+        value: { isPaused: !isPaused }
+      })
+      .eq('key', 'queue_state');
+
+    if (error) {
+      console.error('[AlertsHeader] Error updating queue state:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update queue state",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // If database update was successful, call the local state update
+    console.log('[AlertsHeader] Database updated, calling togglePause');
+    togglePause();
+  };
 
   const toggleSchedule = async () => {
     const newStatus = !isScheduleEnabled;
@@ -148,7 +149,7 @@ const AlertsHeader = ({ isPaused, togglePause, openDialog }: AlertsHeaderProps) 
           <Button
             variant="outline"
             size="icon"
-            onClick={togglePause}
+            onClick={handleTogglePause}
             className={isPaused ? "text-neon-red" : "text-neon-red"}
           >
             {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
