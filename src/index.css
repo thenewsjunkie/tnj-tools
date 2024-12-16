@@ -99,6 +99,12 @@
   @apply text-neon-red hover:text-tnj-light transition-colors;
 }
 
+/* Light mode specific link styles for show notes */
+.light .note-card a {
+  @apply text-neon-red hover:text-neon-red visited:text-neon-red transition-colors;
+}
+
+/* Default link styles */
 a {
   @apply text-neon-red hover:text-neon-red transition-colors;
 }
