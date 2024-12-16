@@ -16,19 +16,35 @@ const AlertsHeader = ({ isPaused, togglePause, openDialog }: AlertsHeaderProps) 
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchScheduleStatus = async () => {
-      const { data, error } = await supabase
+    const fetchInitialState = async () => {
+      // Fetch schedule status
+      const { data: scheduleData, error: scheduleError } = await supabase
         .from('alert_schedules')
         .select('is_enabled')
         .limit(1)
         .single();
 
-      if (!error && data) {
-        setIsScheduleEnabled(data.is_enabled);
+      if (!scheduleError && scheduleData) {
+        setIsScheduleEnabled(scheduleData.is_enabled);
+      }
+
+      // Fetch current queue state
+      const { data: queueState, error: queueError } = await supabase
+        .from('system_settings')
+        .select('value')
+        .eq('key', 'queue_state')
+        .single();
+
+      if (!queueError && queueState?.value?.isPaused !== undefined) {
+        // Only toggle if current state doesn't match system state
+        if (isPaused !== queueState.value.isPaused) {
+          console.log('[AlertsHeader] Syncing with system queue state:', queueState.value.isPaused);
+          togglePause();
+        }
       }
     };
 
-    fetchScheduleStatus();
+    fetchInitialState();
 
     // Subscribe to system_settings changes
     const channel = supabase
@@ -43,6 +59,7 @@ const AlertsHeader = ({ isPaused, togglePause, openDialog }: AlertsHeaderProps) 
         },
         async (payload) => {
           if (payload.new && payload.new.value && payload.new.value.isPaused !== undefined) {
+            console.log('[AlertsHeader] Received queue state update:', payload.new.value.isPaused);
             // Call togglePause if the current state doesn't match the new state
             if (isPaused !== payload.new.value.isPaused) {
               togglePause();
