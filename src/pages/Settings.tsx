@@ -51,14 +51,12 @@ const Settings = () => {
 
   useEffect(() => {
     fetchUserSettings();
-    checkAdminStatus();
   }, []);
 
   const fetchUserSettings = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
-        console.error('No session found');
         toast({
           title: "Error",
           description: "You must be logged in to view settings",
@@ -67,19 +65,35 @@ const Settings = () => {
         return;
       }
 
-      const { data: profile, error } = await supabase
+      // First fetch the profile to get the timezone
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('timezone')
+        .select('timezone, role')
         .eq('id', session.user.id)
         .single();
 
-      if (error) {
-        console.error('Error fetching profile:', error);
-        throw error;
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        throw profileError;
       }
 
       if (profile) {
         setTimezone(profile.timezone);
+        
+        // Check if user is admin and fetch pending users if they are
+        if (profile.role === 'admin') {
+          setIsAdmin(true);
+          const { data: pendingProfiles, error: pendingError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('status', 'pending');
+
+          if (pendingError) {
+            console.error('Error fetching pending users:', pendingError);
+          } else {
+            setPendingUsers(pendingProfiles || []);
+          }
+        }
       }
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -91,36 +105,6 @@ const Settings = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const checkAdminStatus = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return;
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', session.user.id)
-      .single();
-
-    if (profile?.role === 'admin') {
-      setIsAdmin(true);
-      fetchPendingUsers();
-    }
-  };
-
-  const fetchPendingUsers = async () => {
-    const { data: pendingProfiles, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('status', 'pending');
-
-    if (error) {
-      console.error('Error fetching pending users:', error);
-      return;
-    }
-
-    setPendingUsers(pendingProfiles);
   };
 
   const updateTimezone = async (newTimezone: string) => {
@@ -177,7 +161,13 @@ const Settings = () => {
         description: "User approved successfully",
       });
       
-      fetchPendingUsers();
+      // Refresh the pending users list
+      const { data: pendingProfiles } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('status', 'pending');
+
+      setPendingUsers(pendingProfiles || []);
     } catch (error) {
       console.error('Error approving user:', error);
       toast({
