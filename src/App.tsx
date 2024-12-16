@@ -57,44 +57,41 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   const checkApprovalStatus = async (userId: string) => {
     try {
-      // First, try to get the existing profile
-      const { data: existingProfile, error: fetchError } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('status')
         .eq('id', userId)
-        .maybeSingle(); // Use maybeSingle() instead of single()
+        .single();
 
-      if (fetchError && fetchError.code !== 'PGRST116') {
-        console.error("Error checking profile:", fetchError);
-        return;
-      }
-
-      // If no profile exists, create one
-      if (!existingProfile) {
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .insert([
-            { 
-              id: userId,
-              status: 'pending',
-              timezone: 'UTC'
-            }
-          ]);
-        
-        if (insertError) {
-          console.error("Error creating profile:", insertError);
-          // Don't return here, continue to set isApproved to false
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No profile found, create one
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert([
+              { 
+                id: userId,
+                status: 'pending',
+                timezone: 'UTC'
+              }
+            ]);
+          
+          if (insertError) {
+            console.error("Error creating profile:", insertError);
+            return;
+          }
+          
+          setIsApproved(false);
+          return;
         }
         
-        setIsApproved(false);
+        console.error("Error checking approval status:", error);
         return;
       }
 
-      // Profile exists, check approval status
-      setIsApproved(existingProfile.status === "approved");
+      setIsApproved(data?.status === "approved");
     } catch (error) {
       console.error("Error in checkApprovalStatus:", error);
-      // Don't modify isApproved state here to prevent lockouts
     }
   };
 
