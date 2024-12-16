@@ -19,18 +19,18 @@ const ReviewDialog = ({ review, open, onOpenChange }: ReviewDialogProps) => {
   const [objectFit, setObjectFit] = useState<'cover' | 'contain'>('cover');
   const [isCropping, setIsCropping] = useState(false);
   const [crop, setCrop] = useState<CropType>({
-    unit: '%',
+    unit: 'px',
     x: 0,
     y: 0,
-    width: 100,
-    height: 100
+    width: 0,
+    height: 0
   });
   const [savedCrop, setSavedCrop] = useState<CropType>({
-    unit: '%',
+    unit: 'px',
     x: 0,
     y: 0,
-    width: 100,
-    height: 100
+    width: 0,
+    height: 0
   });
 
   if (!review) return null;
@@ -73,6 +73,19 @@ const ReviewDialog = ({ review, open, onOpenChange }: ReviewDialogProps) => {
     setObjectFit('cover');
   };
 
+  const getCropStyle = () => {
+    if (objectFit !== 'cover' || !savedCrop.width || !savedCrop.height) return {};
+    
+    const img = new Image();
+    img.src = review.image_url || '';
+    
+    return {
+      objectPosition: `${-savedCrop.x}px ${-savedCrop.y}px`,
+      width: `${img.width}px`,
+      height: `${img.height}px`
+    };
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -89,7 +102,7 @@ const ReviewDialog = ({ review, open, onOpenChange }: ReviewDialogProps) => {
 
             {review.image_url && (
               <div className="relative">
-                <div className="relative aspect-video">
+                <div className="relative aspect-video overflow-hidden">
                   {isCropping ? (
                     <ReactCrop
                       crop={crop}
@@ -108,9 +121,7 @@ const ReviewDialog = ({ review, open, onOpenChange }: ReviewDialogProps) => {
                       src={review.image_url} 
                       alt={review.title}
                       className={`rounded-md w-full h-full ${objectFit === 'cover' ? 'object-cover' : 'object-contain'}`}
-                      style={objectFit === 'cover' ? {
-                        objectPosition: `${savedCrop.x}% ${savedCrop.y}%`
-                      } : undefined}
+                      style={getCropStyle()}
                     />
                   )}
                 </div>
