@@ -8,18 +8,31 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Review, ReviewType } from "@/components/reviews/types";
 import { Tv, Film, Utensils, Package } from "lucide-react";
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from "@/components/ui/pagination";
+
+const ITEMS_PER_PAGE = 50;
 
 const ReviewsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState<ReviewType | "all">("all");
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const { data: reviews = [] } = useQuery({
+  const { data: reviews = [], isLoading } = useQuery({
     queryKey: ['reviews'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('reviews')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(ITEMS_PER_PAGE + 1) // Fetch one extra to check if there's a next page
+        .range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1);
       
       if (error) throw error;
       return data as Review[];
@@ -32,6 +45,9 @@ const ReviewsPage = () => {
     const matchesType = selectedType === "all" || review.type === selectedType;
     return matchesSearch && matchesType;
   });
+
+  const hasNextPage = reviews.length > ITEMS_PER_PAGE;
+  const displayedReviews = hasNextPage ? reviews.slice(0, -1) : reviews;
 
   return (
     <div className="min-h-screen bg-background p-4">
@@ -95,6 +111,28 @@ const ReviewsPage = () => {
           </Select>
         </div>
         <Reviews reviews={filteredReviews} />
+        
+        <Pagination className="mt-8">
+          <PaginationContent>
+            {currentPage > 1 && (
+              <PaginationItem>
+                <PaginationPrevious 
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                />
+              </PaginationItem>
+            )}
+            <PaginationItem>
+              <PaginationLink isActive>{currentPage}</PaginationLink>
+            </PaginationItem>
+            {hasNextPage && (
+              <PaginationItem>
+                <PaginationNext 
+                  onClick={() => setCurrentPage(prev => prev + 1)}
+                />
+              </PaginationItem>
+            )}
+          </PaginationContent>
+        </Pagination>
       </div>
     </div>
   );

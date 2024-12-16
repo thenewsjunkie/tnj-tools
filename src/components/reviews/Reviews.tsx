@@ -65,7 +65,7 @@ const Reviews = ({ showViewAllLink = false, reviews: propReviews }: ReviewsProps
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className="space-y-6">
           {reviews.map((review) => {
             const Icon = icons[review.type];
             
@@ -73,15 +73,31 @@ const Reviews = ({ showViewAllLink = false, reviews: propReviews }: ReviewsProps
               <div
                 key={review.id}
                 onClick={() => handleReviewClick(review)}
-                className="flex items-center gap-4 p-4 rounded-lg border border-gray-200 dark:border-white/10 hover:bg-accent cursor-pointer transition-colors"
+                className="flex flex-col gap-4 p-4 rounded-lg border border-gray-200 dark:border-white/10 hover:bg-accent cursor-pointer transition-colors"
               >
-                <Icon className="h-5 w-5 text-foreground" />
-                <div className="flex-1">
-                  <h3 className="font-medium text-foreground">{review.title}</h3>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Icon className="h-5 w-5 text-foreground" />
+                    <h3 className="font-medium text-foreground">{review.title}</h3>
+                  </div>
+                  <div className="text-yellow-500">
+                    {"★".repeat(review.rating)}{"☆".repeat(5-review.rating)}
+                  </div>
                 </div>
-                <div className="text-yellow-500">
-                  {"★".repeat(review.rating)}{"☆".repeat(5-review.rating)}
-                </div>
+                
+                {review.image_url && (
+                  <div className="relative aspect-video w-full">
+                    <img 
+                      src={review.image_url} 
+                      alt={review.title}
+                      className="rounded-md object-cover w-full h-full"
+                    />
+                  </div>
+                )}
+                
+                <p className="text-sm text-muted-foreground line-clamp-3">
+                  {review.content}
+                </p>
               </div>
             );
           })}
