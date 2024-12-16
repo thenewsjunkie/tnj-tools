@@ -100,7 +100,7 @@ const AddReviewDialog = ({ onReviewAdded }: AddReviewDialogProps) => {
       </DialogTrigger>
       <DialogContent className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <DialogHeader>
-          <DialogTitle className="text-foreground dark:text-black">Add New Review</DialogTitle>
+          <DialogTitle className="text-foreground">Add New Review</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <Select onValueChange={(value: "television" | "movie" | "food" | "product") => setType(value)}>
