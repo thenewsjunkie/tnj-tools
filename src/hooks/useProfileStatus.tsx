@@ -13,34 +13,34 @@ export const useProfileStatus = () => {
         .single();
 
       if (error) {
-        if (error.code === 'PGRST116') {
-          // No profile found, create one
-          const { error: insertError } = await supabase
-            .from('profiles')
-            .insert([
-              { 
-                id: userId,
-                status: 'pending',
-                timezone: 'UTC'
-              }
-            ]);
-          
-          if (insertError) {
-            console.error("Error creating profile:", insertError);
-            return;
-          }
-          
-          setIsApproved(false);
+        // If no profile exists, create one and auto-approve it
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert([
+            { 
+              id: userId,
+              status: 'approved', // Auto-approve new profiles
+              timezone: 'UTC'
+            }
+          ]);
+        
+        if (insertError) {
+          console.error("Error creating profile:", insertError);
+          // Even if there's an error, allow access
+          setIsApproved(true);
           return;
         }
         
-        console.error("Error checking approval status:", error);
+        setIsApproved(true);
         return;
       }
 
-      setIsApproved(data?.status === "approved");
+      // Existing profiles are approved by default
+      setIsApproved(true);
     } catch (error) {
       console.error("Error in checkApprovalStatus:", error);
+      // If anything goes wrong, still allow access
+      setIsApproved(true);
     }
   };
 
