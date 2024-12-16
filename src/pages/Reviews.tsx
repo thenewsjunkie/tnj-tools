@@ -54,7 +54,7 @@ const ReviewsPage = () => {
             placeholder="Search reviews..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1"
+            className="flex-1 dark:text-white"
           />
           <Select
             value={selectedType}
