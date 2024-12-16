@@ -6,7 +6,7 @@ export interface Review {
   title: string;
   rating: number;
   content: string;
-  image_url: string | null;
+  image_urls: string[];
   created_at: string;
   genre: string | null;
 }

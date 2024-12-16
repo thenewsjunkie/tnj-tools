@@ -1,10 +1,11 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Tv, Film, Utensils, Package, Maximize2, Edit2 } from "lucide-react";
+import { Tv, Film, Utensils, Package, Edit2 } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import ImageFullscreen from "@/components/notes/ImageFullscreen";
 import EditReviewDialog from "./EditReviewDialog";
+import ReviewImageCarousel from "./ReviewImageCarousel";
 import type { Review } from "./types";
 
 interface ReviewDialogProps {
@@ -17,6 +18,7 @@ const ReviewDialog = ({ review, open, onOpenChange }: ReviewDialogProps) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [objectFit, setObjectFit] = useState<'contain' | 'cover'>('contain');
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   if (!review) return null;
 
@@ -48,26 +50,13 @@ const ReviewDialog = ({ review, open, onOpenChange }: ReviewDialogProps) => {
               {"★".repeat(review.rating)}{"☆".repeat(5-review.rating)}
             </div>
 
-            {review.image_url && (
-              <div className="relative">
-                <div className="relative aspect-video overflow-hidden">
-                  <img 
-                    src={review.image_url} 
-                    alt={review.title}
-                    className={`rounded-md w-full h-full ${objectFit === 'cover' ? 'object-cover' : 'object-contain'}`}
-                  />
-                </div>
-                <div className="absolute top-2 right-2">
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    className="bg-black/50 hover:bg-black/70"
-                    onClick={toggleImageFit}
-                  >
-                    <Maximize2 className="h-4 w-4 text-white" />
-                  </Button>
-                </div>
-              </div>
+            {review.image_urls?.length > 0 && (
+              <ReviewImageCarousel
+                images={review.image_urls}
+                title={review.title}
+                objectFit={objectFit}
+                onToggleImageFit={toggleImageFit}
+              />
             )}
 
             <p className="text-foreground">{review.content}</p>
@@ -87,9 +76,9 @@ const ReviewDialog = ({ review, open, onOpenChange }: ReviewDialogProps) => {
         </DialogContent>
       </Dialog>
 
-      {isFullscreen && review.image_url && (
+      {isFullscreen && review.image_urls?.[selectedImageIndex] && (
         <ImageFullscreen
-          url={review.image_url}
+          url={review.image_urls[selectedImageIndex]}
           title={review.title}
           onClose={() => setIsFullscreen(false)}
         />

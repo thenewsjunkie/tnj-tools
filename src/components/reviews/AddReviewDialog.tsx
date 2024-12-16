@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Tv, Film, Utensils, Package, Skull, Zap, Rocket, Heart, Mountain } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import ReviewImageUpload from "./ReviewImageUpload";
 
 interface AddReviewDialogProps {
   onReviewAdded: () => void;
@@ -19,14 +20,8 @@ const AddReviewDialog = ({ onReviewAdded }: AddReviewDialogProps) => {
   const [genre, setGenre] = useState<string>();
   const [rating, setRating] = useState<number>();
   const [content, setContent] = useState("");
-  const [image, setImage] = useState<File | null>(null);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
   const { toast } = useToast();
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
-      setImage(e.target.files[0]);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,19 +44,6 @@ const AddReviewDialog = ({ onReviewAdded }: AddReviewDialogProps) => {
     }
 
     try {
-      let imageUrl = null;
-      if (image) {
-        const formData = new FormData();
-        formData.append('file', image);
-
-        const { data, error: uploadError } = await supabase.functions.invoke('upload-show-note-image', {
-          body: formData,
-        });
-
-        if (uploadError) throw uploadError;
-        imageUrl = data.url;
-      }
-
       const { error } = await supabase
         .from('reviews')
         .insert({
@@ -69,7 +51,7 @@ const AddReviewDialog = ({ onReviewAdded }: AddReviewDialogProps) => {
           title,
           rating,
           content,
-          image_url: imageUrl,
+          image_urls: imageUrls,
           genre: type === 'movie' ? genre : null,
         });
 
@@ -86,7 +68,7 @@ const AddReviewDialog = ({ onReviewAdded }: AddReviewDialogProps) => {
       setGenre(undefined);
       setRating(undefined);
       setContent("");
-      setImage(null);
+      setImageUrls([]);
       onReviewAdded();
     } catch (error) {
       toast({
@@ -198,14 +180,11 @@ const AddReviewDialog = ({ onReviewAdded }: AddReviewDialogProps) => {
             </SelectContent>
           </Select>
 
-          <div>
-            <Input
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="text-foreground"
-            />
-          </div>
+          <ReviewImageUpload
+            images={imageUrls}
+            onImagesChange={setImageUrls}
+            title={title}
+          />
 
           <div>
             <Textarea

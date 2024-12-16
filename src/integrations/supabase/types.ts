@@ -314,7 +314,7 @@ export type Database = {
           created_at: string | null
           genre: string | null
           id: string
-          image_url: string | null
+          image_urls: string[] | null
           rating: number
           title: string
           type: Database["public"]["Enums"]["review_type"]
@@ -324,7 +324,7 @@ export type Database = {
           created_at?: string | null
           genre?: string | null
           id?: string
-          image_url?: string | null
+          image_urls?: string[] | null
           rating: number
           title: string
           type: Database["public"]["Enums"]["review_type"]
@@ -334,7 +334,7 @@ export type Database = {
           created_at?: string | null
           genre?: string | null
           id?: string
-          image_url?: string | null
+          image_urls?: string[] | null
           rating?: number
           title?: string
           type?: Database["public"]["Enums"]["review_type"]

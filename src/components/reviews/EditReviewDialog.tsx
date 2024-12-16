@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Tv, Film, Utensils, Package, Skull, Zap, Rocket, Heart, Mountain } from "lucide-react";
+import ReviewImageUpload from "./ReviewImageUpload";
 import type { Review, ReviewType } from "./types";
 
 interface EditReviewDialogProps {
@@ -22,7 +23,7 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
   const [genre, setGenre] = useState(review.genre || undefined);
   const [rating, setRating] = useState(review.rating);
   const [content, setContent] = useState(review.content);
-  const [isUploading, setIsUploading] = useState(false);
+  const [imageUrls, setImageUrls] = useState<string[]>(review.image_urls || []);
   const { toast } = useToast();
 
   const genreOptions = [
@@ -40,8 +41,6 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const fileInput = document.querySelector<HTMLInputElement>('input[type="file"]');
-    const file = fileInput?.files?.[0];
 
     if (type === 'movie' && !genre) {
       toast({
@@ -52,22 +51,7 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
       return;
     }
 
-    setIsUploading(true);
     try {
-      let imageUrl = review.image_url;
-
-      if (file) {
-        const formData = new FormData();
-        formData.append('file', file);
-        
-        const { data, error: uploadError } = await supabase.functions.invoke('upload-show-note-image', {
-          body: formData,
-        });
-
-        if (uploadError) throw uploadError;
-        imageUrl = data.url;
-      }
-
       const { error: updateError } = await supabase
         .from('reviews')
         .update({
@@ -75,7 +59,7 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
           type,
           rating,
           content,
-          image_url: imageUrl,
+          image_urls: imageUrls,
           genre: type === 'movie' ? genre : null,
         })
         .eq('id', review.id);
@@ -96,8 +80,6 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
         description: "Failed to update review",
         variant: "destructive",
       });
-    } finally {
-      setIsUploading(false);
     }
   };
 
@@ -187,18 +169,14 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
             className="min-h-[100px] bg-white dark:bg-white dark:text-black"
           />
 
-          <div className="space-y-2">
-            <label className="text-sm text-muted-foreground dark:text-white">Image (optional)</label>
-            <Input
-              type="file"
-              accept="image/*"
-              className="bg-white dark:bg-white dark:text-black"
-            />
-            <p className="text-xs text-muted-foreground dark:text-white">Leave empty to keep current image</p>
-          </div>
+          <ReviewImageUpload
+            images={imageUrls}
+            onImagesChange={setImageUrls}
+            title={title}
+          />
 
-          <Button type="submit" className="w-full dark:text-black" disabled={isUploading}>
-            {isUploading ? "Updating..." : "Update Review"}
+          <Button type="submit" className="w-full dark:text-black">
+            Update Review
           </Button>
         </form>
       </DialogContent>
