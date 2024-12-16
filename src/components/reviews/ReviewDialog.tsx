@@ -1,9 +1,11 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Tv, Film, Utensils, Package, Maximize2 } from "lucide-react";
+import { Tv, Film, Utensils, Package, Maximize2, Crop } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import ImageFullscreen from "@/components/notes/ImageFullscreen";
+import ReactCrop, { type Crop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 import type { Review } from "./types";
 
 interface ReviewDialogProps {
@@ -15,6 +17,21 @@ interface ReviewDialogProps {
 const ReviewDialog = ({ review, open, onOpenChange }: ReviewDialogProps) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [objectFit, setObjectFit] = useState<'cover' | 'contain'>('cover');
+  const [isCropping, setIsCropping] = useState(false);
+  const [crop, setCrop] = useState<Crop>({
+    unit: '%',
+    x: 0,
+    y: 0,
+    width: 100,
+    height: 100
+  });
+  const [savedCrop, setSavedCrop] = useState<Crop>({
+    unit: '%',
+    x: 0,
+    y: 0,
+    width: 100,
+    height: 100
+  });
 
   if (!review) return null;
 
@@ -29,7 +46,31 @@ const ReviewDialog = ({ review, open, onOpenChange }: ReviewDialogProps) => {
   const reviewDate = format(new Date(review.created_at), "EEEE, MMMM d");
 
   const toggleImageFit = () => {
+    if (isCropping) return;
     setObjectFit(prev => prev === 'cover' ? 'contain' : 'cover');
+  };
+
+  const toggleCropping = () => {
+    if (!isCropping) {
+      setObjectFit('contain');
+    }
+    setIsCropping(!isCropping);
+  };
+
+  const handleCropComplete = (crop: Crop) => {
+    setCrop(crop);
+  };
+
+  const saveCrop = () => {
+    setSavedCrop(crop);
+    setIsCropping(false);
+    setObjectFit('cover');
+  };
+
+  const cancelCrop = () => {
+    setCrop(savedCrop);
+    setIsCropping(false);
+    setObjectFit('cover');
   };
 
   return (
@@ -49,21 +90,70 @@ const ReviewDialog = ({ review, open, onOpenChange }: ReviewDialogProps) => {
             {review.image_url && (
               <div className="relative">
                 <div className="relative aspect-video">
-                  <img 
-                    src={review.image_url} 
-                    alt={review.title}
-                    className={`rounded-md w-full h-full ${objectFit === 'cover' ? 'object-cover' : 'object-contain'}`}
-                  />
+                  {isCropping ? (
+                    <ReactCrop
+                      crop={crop}
+                      onChange={(_, percentCrop) => setCrop(percentCrop)}
+                      onComplete={handleCropComplete}
+                      aspect={16/9}
+                    >
+                      <img 
+                        src={review.image_url} 
+                        alt={review.title}
+                        className="rounded-md w-full h-full"
+                      />
+                    </ReactCrop>
+                  ) : (
+                    <img 
+                      src={review.image_url} 
+                      alt={review.title}
+                      className={`rounded-md w-full h-full ${objectFit === 'cover' ? 'object-cover' : 'object-contain'}`}
+                      style={objectFit === 'cover' ? {
+                        objectPosition: `${savedCrop.x}% ${savedCrop.y}%`
+                      } : undefined}
+                    />
+                  )}
                 </div>
                 <div className="absolute top-2 right-2 flex gap-2">
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    className="bg-black/50 hover:bg-black/70"
-                    onClick={toggleImageFit}
-                  >
-                    <Maximize2 className="h-4 w-4 text-white" />
-                  </Button>
+                  {isCropping ? (
+                    <>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="bg-black/50 hover:bg-black/70 text-white"
+                        onClick={saveCrop}
+                      >
+                        Save
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="bg-black/50 hover:bg-black/70 text-white"
+                        onClick={cancelCrop}
+                      >
+                        Cancel
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="bg-black/50 hover:bg-black/70"
+                        onClick={toggleCropping}
+                      >
+                        <Crop className="h-4 w-4 text-white" />
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="bg-black/50 hover:bg-black/70"
+                        onClick={toggleImageFit}
+                      >
+                        <Maximize2 className="h-4 w-4 text-white" />
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             )}
