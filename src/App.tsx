@@ -88,18 +88,23 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      // More robust check for admin role and approval status
+      // First check if user is admin, regardless of status
       const isAdmin = profile.role?.toLowerCase() === 'admin';
-      const isStatusApproved = profile.status?.toLowerCase() === 'approved';
-      const isUserApproved = isAdmin || isStatusApproved;
+      if (isAdmin) {
+        console.log("[ProtectedRoute] User is admin, granting access");
+        setIsApproved(true);
+        setIsLoading(false);
+        return;
+      }
 
+      // If not admin, check approval status
+      const isApproved = profile.status?.toLowerCase() === 'approved';
       console.log("[ProtectedRoute] User status:", profile.status);
       console.log("[ProtectedRoute] User role:", profile.role);
       console.log("[ProtectedRoute] Is admin:", isAdmin);
-      console.log("[ProtectedRoute] Is status approved:", isStatusApproved);
-      console.log("[ProtectedRoute] Final approval status:", isUserApproved);
+      console.log("[ProtectedRoute] Is approved:", isApproved);
       
-      setIsApproved(isUserApproved);
+      setIsApproved(isApproved);
       setIsLoading(false);
     } catch (error) {
       console.error("[ProtectedRoute] Error in checkApprovalStatus:", error);
