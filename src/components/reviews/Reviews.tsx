@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Tv, Film, Utensils, Package } from "lucide-react";
+import { Tv, Film, Utensils, Package, Link2 } from "lucide-react";
+import { Link } from "react-router-dom";
 import AddReviewDialog from "./AddReviewDialog";
 import ReviewDialog from "./ReviewDialog";
 import type { Review } from "./types";
@@ -41,7 +42,15 @@ const Reviews = () => {
       <CardHeader>
         <CardTitle className="flex justify-between items-center">
           Reviews
-          <AddReviewDialog onReviewAdded={refetch} />
+          <div className="flex items-center gap-2">
+            <Link 
+              to="/reviews" 
+              className="text-foreground hover:text-primary transition-colors"
+            >
+              <Link2 className="h-5 w-5" />
+            </Link>
+            <AddReviewDialog onReviewAdded={refetch} />
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent>

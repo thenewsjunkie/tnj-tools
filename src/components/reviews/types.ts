@@ -9,3 +9,7 @@ export interface Review {
   image_url: string | null;
   created_at: string;
 }
+
+export interface ReviewsProps {
+  reviews?: Review[];
+}
