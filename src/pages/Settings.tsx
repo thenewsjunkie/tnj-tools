@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 // Common timezone list
 const timezones = [
@@ -32,13 +33,25 @@ const timezones = [
   'Pacific/Auckland'
 ];
 
+type Profile = {
+  id: string;
+  email: string;
+  timezone: string;
+  status: string;
+  role: string;
+  created_at: string;
+};
+
 const Settings = () => {
   const [timezone, setTimezone] = useState("");
   const [loading, setLoading] = useState(true);
+  const [pendingUsers, setPendingUsers] = useState<Profile[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchUserSettings();
+    checkAdminStatus();
   }, []);
 
   const fetchUserSettings = async () => {
@@ -54,7 +67,6 @@ const Settings = () => {
         return;
       }
 
-      console.log('Fetching settings for user:', session.user.id);
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('timezone')
@@ -66,7 +78,6 @@ const Settings = () => {
         throw error;
       }
 
-      console.log('Fetched profile:', profile);
       if (profile) {
         setTimezone(profile.timezone);
       }
@@ -82,6 +93,36 @@ const Settings = () => {
     }
   };
 
+  const checkAdminStatus = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return;
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', session.user.id)
+      .single();
+
+    if (profile?.role === 'admin') {
+      setIsAdmin(true);
+      fetchPendingUsers();
+    }
+  };
+
+  const fetchPendingUsers = async () => {
+    const { data: pendingProfiles, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('status', 'pending');
+
+    if (error) {
+      console.error('Error fetching pending users:', error);
+      return;
+    }
+
+    setPendingUsers(pendingProfiles);
+  };
+
   const updateTimezone = async (newTimezone: string) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -94,7 +135,6 @@ const Settings = () => {
         return;
       }
 
-      console.log('Updating timezone to:', newTimezone);
       const { error } = await supabase
         .from('profiles')
         .update({ timezone: newTimezone })
@@ -115,6 +155,34 @@ const Settings = () => {
       toast({
         title: "Error",
         description: "Failed to update timezone",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const approveUser = async (userId: string) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          status: 'approved',
+          approved_at: new Date().toISOString(),
+        })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "User approved successfully",
+      });
+      
+      fetchPendingUsers();
+    } catch (error) {
+      console.error('Error approving user:', error);
+      toast({
+        title: "Error",
+        description: "Failed to approve user",
         variant: "destructive",
       });
     }
@@ -147,6 +215,35 @@ const Settings = () => {
           </Select>
         </CardContent>
       </Card>
+
+      {isAdmin && (
+        <Card>
+          <CardHeader>
+            <CardTitle>User Moderation</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {pendingUsers.length === 0 ? (
+              <p className="text-muted-foreground">No pending users</p>
+            ) : (
+              <div className="space-y-4">
+                {pendingUsers.map((user) => (
+                  <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <p className="font-medium">{user.email}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Joined: {new Date(user.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <Button onClick={() => approveUser(user.id)}>
+                      Approve
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
