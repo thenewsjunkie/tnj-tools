@@ -36,7 +36,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     
     // Check initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("[ProtectedRoute] Initial session check:", session?.user);
+      console.log("[ProtectedRoute] Initial session check:", session?.user?.id);
       setSession(!!session);
       if (session?.user) {
         checkApprovalStatus(session.user.id);
@@ -50,7 +50,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("[ProtectedRoute] Auth state change:", event, session?.user);
+      console.log("[ProtectedRoute] Auth state change:", event, session?.user?.id);
       setSession(!!session);
       if (session?.user) {
         await checkApprovalStatus(session.user.id);
@@ -79,7 +79,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      console.log("[ProtectedRoute] Profile data received:", profile);
+      console.log("[ProtectedRoute] Raw profile data:", profile);
 
       if (!profile) {
         console.error("[ProtectedRoute] No profile found for user:", userId);
@@ -88,8 +88,13 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      // First check if user is admin, regardless of status
+      // Check if user is admin first
       const isAdmin = profile.role?.toLowerCase() === 'admin';
+      console.log("[ProtectedRoute] Is admin check:", {
+        role: profile.role,
+        isAdmin
+      });
+
       if (isAdmin) {
         console.log("[ProtectedRoute] User is admin, granting access");
         setIsApproved(true);
@@ -99,10 +104,10 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
       // If not admin, check approval status
       const isApproved = profile.status?.toLowerCase() === 'approved';
-      console.log("[ProtectedRoute] User status:", profile.status);
-      console.log("[ProtectedRoute] User role:", profile.role);
-      console.log("[ProtectedRoute] Is admin:", isAdmin);
-      console.log("[ProtectedRoute] Is approved:", isApproved);
+      console.log("[ProtectedRoute] Approval check:", {
+        status: profile.status,
+        isApproved
+      });
       
       setIsApproved(isApproved);
       setIsLoading(false);
