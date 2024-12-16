@@ -34,6 +34,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // Check initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Initial session check:", session);
       setSession(!!session);
       if (session) {
         checkApprovalStatus(session.user.id);
@@ -45,6 +46,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state change:", event, session);
       setSession(!!session);
       if (session) {
         checkApprovalStatus(session.user.id);
@@ -57,18 +59,21 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   const checkApprovalStatus = async (userId: string) => {
     try {
+      console.log("Checking approval status for user:", userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('status')
         .eq('id', userId)
-        .maybeSingle(); // Use maybeSingle instead of single to handle null cases better
+        .maybeSingle();
 
       if (error) {
         console.error("Error checking approval status:", error);
         return;
       }
 
+      console.log("Profile data received:", data);
       setIsApproved(data?.status === "approved");
+      console.log("Is approved set to:", data?.status === "approved");
     } catch (error) {
       console.error("Error in checkApprovalStatus:", error);
     }
