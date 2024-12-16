@@ -45,7 +45,8 @@ const AlertsHeader = ({ isPaused, togglePause, openDialog }: AlertsHeaderProps) 
         .single();
 
       if (!queueError && queueState?.value) {
-        const stateValue = queueState.value as QueueStateValue;
+        // First cast to unknown, then to QueueStateValue to satisfy TypeScript
+        const stateValue = queueState.value as unknown as QueueStateValue;
         const isPausedValue = stateValue?.isPaused ?? false;
         // Only toggle if current state doesn't match system state
         if (isPaused !== isPausedValue) {
@@ -70,7 +71,8 @@ const AlertsHeader = ({ isPaused, togglePause, openDialog }: AlertsHeaderProps) 
         },
         async (payload) => {
           if (payload.new?.value) {
-            const stateValue = payload.new.value as QueueStateValue;
+            // First cast to unknown, then to QueueStateValue to satisfy TypeScript
+            const stateValue = payload.new.value as unknown as QueueStateValue;
             const isPausedValue = stateValue?.isPaused ?? false;
             console.log('[AlertsHeader] Received queue state update:', isPausedValue);
             // Call togglePause if the current state doesn't match the new state
