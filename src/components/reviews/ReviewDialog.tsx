@@ -89,7 +89,7 @@ const ReviewDialog = ({ review, open, onOpenChange }: ReviewDialogProps) => {
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="dark:bg-background/95 dark:backdrop-blur dark:supports-[backdrop-filter]:bg-background/60 bg-white">
+        <DialogContent className="dark:bg-background/95 dark:backdrop-blur dark:supports-[backdrop-filter]:bg-background/60 bg-white max-h-[90vh] overflow-y-auto">
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <Icon className="h-5 w-5 text-foreground" />
@@ -102,7 +102,7 @@ const ReviewDialog = ({ review, open, onOpenChange }: ReviewDialogProps) => {
 
             {review.image_url && (
               <div className="relative">
-                <div className="relative aspect-video overflow-hidden">
+                <div className={`relative ${isCropping ? 'max-h-[60vh] overflow-y-auto' : 'aspect-video overflow-hidden'}`}>
                   {isCropping ? (
                     <ReactCrop
                       crop={crop}
@@ -113,7 +113,7 @@ const ReviewDialog = ({ review, open, onOpenChange }: ReviewDialogProps) => {
                       <img 
                         src={review.image_url} 
                         alt={review.title}
-                        className="rounded-md w-full h-full"
+                        className="rounded-md w-full"
                       />
                     </ReactCrop>
                   ) : (
