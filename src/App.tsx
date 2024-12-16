@@ -61,14 +61,14 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         .from('profiles')
         .select('status')
         .eq('id', userId)
-        .single();
+        .limit(1);
 
       if (error) {
         console.error("Error checking approval status:", error);
         return;
       }
 
-      setIsApproved(data?.status === "approved");
+      setIsApproved(data?.[0]?.status === "approved");
     } catch (error) {
       console.error("Error in checkApprovalStatus:", error);
     }
