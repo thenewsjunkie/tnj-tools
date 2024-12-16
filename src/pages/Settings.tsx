@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Select,
@@ -44,16 +44,32 @@ const Settings = () => {
   const fetchUserSettings = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
+      if (!session?.user) {
+        console.error('No session found');
+        toast({
+          title: "Error",
+          description: "You must be logged in to view settings",
+          variant: "destructive",
+        });
+        return;
+      }
 
+      console.log('Fetching settings for user:', session.user.id);
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('timezone')
         .eq('id', session.user.id)
         .single();
 
-      if (error) throw error;
-      if (profile) setTimezone(profile.timezone);
+      if (error) {
+        console.error('Error fetching profile:', error);
+        throw error;
+      }
+
+      console.log('Fetched profile:', profile);
+      if (profile) {
+        setTimezone(profile.timezone);
+      }
     } catch (error) {
       console.error('Error fetching settings:', error);
       toast({
@@ -69,14 +85,25 @@ const Settings = () => {
   const updateTimezone = async (newTimezone: string) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
+      if (!session?.user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to update settings",
+          variant: "destructive",
+        });
+        return;
+      }
 
+      console.log('Updating timezone to:', newTimezone);
       const { error } = await supabase
         .from('profiles')
         .update({ timezone: newTimezone })
         .eq('id', session.user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating timezone:', error);
+        throw error;
+      }
 
       setTimezone(newTimezone);
       toast({
