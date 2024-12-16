@@ -47,7 +47,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     return <Navigate to="/login" replace />;
   }
 
-  // Redirect if not approved
+  // Only show approval pending screen if explicitly not approved
   if (isApproved === false) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -67,5 +67,6 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
+  // Allow access if approved or if approval status is unknown (null)
   return children;
 };

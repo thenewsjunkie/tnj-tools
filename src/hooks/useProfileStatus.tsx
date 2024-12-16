@@ -13,34 +13,34 @@ export const useProfileStatus = () => {
         .single();
 
       if (error) {
-        // If no profile exists, create one and auto-approve it
+        // If no profile exists, create one with pending status
         const { error: insertError } = await supabase
           .from('profiles')
           .insert([
             { 
               id: userId,
-              status: 'approved', // Auto-approve new profiles
+              status: 'pending',
               timezone: 'UTC'
             }
           ]);
         
         if (insertError) {
           console.error("Error creating profile:", insertError);
-          // Even if there's an error, allow access
-          setIsApproved(true);
+          // Don't lock out the user if there's an error
+          setIsApproved(null);
           return;
         }
         
-        setIsApproved(true);
+        setIsApproved(false);
         return;
       }
 
-      // Existing profiles are approved by default
-      setIsApproved(true);
+      // Check if the user is approved
+      setIsApproved(data.status === 'approved');
     } catch (error) {
       console.error("Error in checkApprovalStatus:", error);
-      // If anything goes wrong, still allow access
-      setIsApproved(true);
+      // Don't lock out the user if there's an error
+      setIsApproved(null);
     }
   };
 
