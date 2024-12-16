@@ -2,12 +2,17 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Tv, Film, Utensils, Package } from "lucide-react";
+import { Tv, Film, Utensils, Package, ExternalLink } from "lucide-react";
+import { Link } from "react-router-dom";
 import AddReviewDialog from "./AddReviewDialog";
 import ReviewDialog from "./ReviewDialog";
 import type { Review } from "./types";
 
-const Reviews = () => {
+interface ReviewsProps {
+  showViewAllLink?: boolean;
+}
+
+const Reviews = ({ showViewAllLink = false }: ReviewsProps) => {
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -40,7 +45,18 @@ const Reviews = () => {
     <Card className="w-full bg-background border border-gray-200 dark:border-white/10">
       <CardHeader>
         <CardTitle className="flex justify-between items-center">
-          Reviews
+          <div className="flex items-center gap-4">
+            Reviews
+            {showViewAllLink && (
+              <Link 
+                to="/reviews" 
+                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                <ExternalLink className="h-4 w-4" />
+                View All
+              </Link>
+            )}
+          </div>
           <AddReviewDialog onReviewAdded={refetch} />
         </CardTitle>
       </CardHeader>
