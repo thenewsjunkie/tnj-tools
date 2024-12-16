@@ -44,6 +44,36 @@ export type Database = {
           },
         ]
       }
+      alert_schedule_logs: {
+        Row: {
+          check_day: number | null
+          check_time: string | null
+          execution_time: string | null
+          id: string
+          is_schedule_enabled: boolean | null
+          message: string | null
+          queue_state: string | null
+        }
+        Insert: {
+          check_day?: number | null
+          check_time?: string | null
+          execution_time?: string | null
+          id?: string
+          is_schedule_enabled?: boolean | null
+          message?: string | null
+          queue_state?: string | null
+        }
+        Update: {
+          check_day?: number | null
+          check_time?: string | null
+          execution_time?: string | null
+          id?: string
+          is_schedule_enabled?: boolean | null
+          message?: string | null
+          queue_state?: string | null
+        }
+        Relationships: []
+      }
       alert_schedules: {
         Row: {
           created_at: string | null
