@@ -44,57 +44,6 @@ export type Database = {
           },
         ]
       }
-      alert_schedule_logs: {
-        Row: {
-          check_day: number | null
-          check_time: string | null
-          execution_time: string | null
-          id: string
-          is_schedule_enabled: boolean | null
-          message: string | null
-          queue_state: string | null
-        }
-        Insert: {
-          check_day?: number | null
-          check_time?: string | null
-          execution_time?: string | null
-          id?: string
-          is_schedule_enabled?: boolean | null
-          message?: string | null
-          queue_state?: string | null
-        }
-        Update: {
-          check_day?: number | null
-          check_time?: string | null
-          execution_time?: string | null
-          id?: string
-          is_schedule_enabled?: boolean | null
-          message?: string | null
-          queue_state?: string | null
-        }
-        Relationships: []
-      }
-      alert_schedules: {
-        Row: {
-          created_at: string | null
-          id: string
-          is_enabled: boolean | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          is_enabled?: boolean | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          is_enabled?: boolean | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       alerts: {
         Row: {
           created_at: string
@@ -553,10 +502,6 @@ export type Database = {
           viewer_connected: boolean | null
           viewer_device_id: string | null
         }
-      }
-      handle_alert_schedule: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
       }
     }
     Enums: {
