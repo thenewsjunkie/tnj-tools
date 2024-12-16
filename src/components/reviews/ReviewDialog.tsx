@@ -22,7 +22,7 @@ const ReviewDialog = ({ review, open, onOpenChange }: ReviewDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <DialogContent className="dark:bg-background/95 dark:backdrop-blur dark:supports-[backdrop-filter]:bg-background/60 bg-white">
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <Icon className="h-5 w-5 text-foreground" />
