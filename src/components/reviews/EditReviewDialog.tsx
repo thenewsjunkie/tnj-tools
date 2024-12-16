@@ -105,41 +105,49 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <DialogHeader>
-          <DialogTitle>Edit Review</DialogTitle>
+          <DialogTitle className="dark:text-black">Edit Review</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <Select value={type} onValueChange={(value: ReviewType) => setType(value)}>
-            <SelectTrigger>
+            <SelectTrigger className="bg-white dark:bg-white dark:text-black">
               <SelectValue placeholder="Select type" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="television" className="flex items-center gap-2">
-                <Tv className="h-4 w-4" />
-                <span>Television Series</span>
+            <SelectContent className="bg-white dark:bg-white">
+              <SelectItem value="television" className="text-black dark:text-black">
+                <div className="flex items-center gap-2">
+                  <Tv className="h-4 w-4" />
+                  <span>Television Series</span>
+                </div>
               </SelectItem>
-              <SelectItem value="movie" className="flex items-center gap-2">
-                <Film className="h-4 w-4" />
-                <span>Movie</span>
+              <SelectItem value="movie" className="text-black dark:text-black">
+                <div className="flex items-center gap-2">
+                  <Film className="h-4 w-4" />
+                  <span>Movie</span>
+                </div>
               </SelectItem>
-              <SelectItem value="food" className="flex items-center gap-2">
-                <Utensils className="h-4 w-4" />
-                <span>Food</span>
+              <SelectItem value="food" className="text-black dark:text-black">
+                <div className="flex items-center gap-2">
+                  <Utensils className="h-4 w-4" />
+                  <span>Food</span>
+                </div>
               </SelectItem>
-              <SelectItem value="product" className="flex items-center gap-2">
-                <Package className="h-4 w-4" />
-                <span>Product</span>
+              <SelectItem value="product" className="text-black dark:text-black">
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  <span>Product</span>
+                </div>
               </SelectItem>
             </SelectContent>
           </Select>
 
           {type === 'movie' && (
             <Select value={genre} onValueChange={setGenre}>
-              <SelectTrigger>
+              <SelectTrigger className="bg-white dark:bg-white dark:text-black">
                 <SelectValue placeholder="Select movie genre" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white dark:bg-white">
                 {genreOptions.map(({ value, icon: Icon }) => (
-                  <SelectItem key={value} value={value}>
+                  <SelectItem key={value} value={value} className="text-black dark:text-black">
                     <div className="flex items-center gap-2">
                       <Icon className="h-4 w-4" />
                       <span>{value}</span>
@@ -155,10 +163,11 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
+            className="bg-white dark:bg-white dark:text-black"
           />
 
           <div className="space-y-2">
-            <label className="text-sm text-muted-foreground">Rating</label>
+            <label className="text-sm text-muted-foreground dark:text-white">Rating</label>
             <Input
               type="number"
               min="1"
@@ -166,6 +175,7 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
               value={rating}
               onChange={(e) => setRating(Number(e.target.value))}
               required
+              className="bg-white dark:bg-white dark:text-black"
             />
           </div>
 
@@ -174,16 +184,17 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
             value={content}
             onChange={(e) => setContent(e.target.value)}
             required
-            className="min-h-[100px]"
+            className="min-h-[100px] bg-white dark:bg-white dark:text-black"
           />
 
           <div className="space-y-2">
-            <label className="text-sm text-muted-foreground">Image (optional)</label>
+            <label className="text-sm text-muted-foreground dark:text-white">Image (optional)</label>
             <Input
               type="file"
               accept="image/*"
+              className="bg-white dark:bg-white dark:text-black"
             />
-            <p className="text-xs text-muted-foreground">Leave empty to keep current image</p>
+            <p className="text-xs text-muted-foreground dark:text-white">Leave empty to keep current image</p>
           </div>
 
           <Button type="submit" className="w-full dark:text-black" disabled={isUploading}>
