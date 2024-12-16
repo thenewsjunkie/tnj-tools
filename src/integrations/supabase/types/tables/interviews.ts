@@ -1,3 +1,5 @@
+import { Json } from '../helpers';
+
 export interface InterviewRequestsTable {
   Row: {
     id: string
