@@ -21,10 +21,18 @@ const AlertsHeader = ({ isPaused, togglePause, openDialog }: AlertsHeaderProps) 
 
   useEffect(() => {
     const fetchInitialState = async () => {
-      // Log current time in EST
+      // Log various time representations
       const now = new Date();
+      console.log('[AlertsHeader] Current UTC time:', now.toISOString());
+      console.log('[AlertsHeader] Current local time:', now.toString());
+      
       const estTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
-      console.log('[AlertsHeader] Current EST time:', estTime.toLocaleTimeString());
+      console.log('[AlertsHeader] Current EST time:', {
+        full: estTime.toString(),
+        time: estTime.toLocaleTimeString(),
+        hours: estTime.getHours(),
+        minutes: estTime.getMinutes()
+      });
       
       // Fetch schedule status
       const { data: scheduleData, error: scheduleError } = await supabase
@@ -34,6 +42,7 @@ const AlertsHeader = ({ isPaused, togglePause, openDialog }: AlertsHeaderProps) 
         .single();
 
       if (!scheduleError && scheduleData) {
+        console.log('[AlertsHeader] Schedule enabled:', scheduleData.is_enabled);
         setIsScheduleEnabled(scheduleData.is_enabled);
       }
 
@@ -48,6 +57,7 @@ const AlertsHeader = ({ isPaused, togglePause, openDialog }: AlertsHeaderProps) 
         // First cast to unknown, then to QueueStateValue to satisfy TypeScript
         const stateValue = queueState.value as unknown as QueueStateValue;
         const isPausedValue = stateValue?.isPaused ?? false;
+        console.log('[AlertsHeader] Current queue state:', isPausedValue);
         // Only toggle if current state doesn't match system state
         if (isPaused !== isPausedValue) {
           console.log('[AlertsHeader] Syncing with system queue state:', isPausedValue);
