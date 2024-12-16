@@ -8,6 +8,7 @@ export interface Review {
   content: string;
   image_url: string | null;
   created_at: string;
+  genre: string | null;
 }
 
 export interface ReviewsProps {

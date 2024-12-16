@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Tv, Film, Utensils, Package } from "lucide-react";
+import { Tv, Film, Utensils, Package, Skull, Zap, Rocket, Heart, Mountains } from "lucide-react";
 import type { Review, ReviewType } from "./types";
 
 interface EditReviewDialogProps {
@@ -19,45 +19,53 @@ interface EditReviewDialogProps {
 const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditReviewDialogProps) => {
   const [title, setTitle] = useState(review.title);
   const [type, setType] = useState<ReviewType>(review.type);
+  const [genre, setGenre] = useState(review.genre || undefined);
   const [rating, setRating] = useState(review.rating);
   const [content, setContent] = useState(review.content);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
+
+  const genreOptions = [
+    { value: 'Horror', icon: Skull },
+    { value: 'Action', icon: Zap },
+    { value: 'Sci Fi', icon: Rocket },
+    { value: 'Romantic Comedy', icon: Heart },
+    { value: 'Adventure', icon: Mountains },
+    { value: 'Comedy', icon: Heart },
+    { value: 'Drama', icon: Film },
+    { value: 'Animation', icon: Film },
+    { value: 'Thriller', icon: Skull },
+    { value: 'Other', icon: Film },
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const fileInput = document.querySelector<HTMLInputElement>('input[type="file"]');
     const file = fileInput?.files?.[0];
 
+    if (type === 'movie' && !genre) {
+      toast({
+        title: "Error",
+        description: "Please select a genre for the movie",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsUploading(true);
     try {
       let imageUrl = review.image_url;
 
       if (file) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        const formData = new FormData();
+        formData.append('file', file);
         
-        const { error: uploadError, data } = await supabase.storage
-          .from('show_notes_images')
-          .upload(fileName, file);
+        const { data, error: uploadError } = await supabase.functions.invoke('upload-show-note-image', {
+          body: formData,
+        });
 
         if (uploadError) throw uploadError;
-
-        const { data: publicUrl } = supabase.storage
-          .from('show_notes_images')
-          .getPublicUrl(fileName);
-
-        imageUrl = publicUrl.publicUrl;
-
-        // Delete old image if it exists
-        if (review.image_url) {
-          const oldFileName = review.image_url.split('/').pop();
-          if (oldFileName) {
-            await supabase.storage
-              .from('show_notes_images')
-              .remove([oldFileName]);
-          }
-        }
+        imageUrl = data.url;
       }
 
       const { error: updateError } = await supabase
@@ -68,6 +76,7 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
           rating,
           content,
           image_url: imageUrl,
+          genre: type === 'movie' ? genre : null,
         })
         .eq('id', review.id);
 
@@ -122,6 +131,24 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
               </SelectItem>
             </SelectContent>
           </Select>
+
+          {type === 'movie' && (
+            <Select value={genre} onValueChange={setGenre}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select movie genre" />
+              </SelectTrigger>
+              <SelectContent>
+                {genreOptions.map(({ value, icon: Icon }) => (
+                  <SelectItem key={value} value={value}>
+                    <div className="flex items-center gap-2">
+                      <Icon className="h-4 w-4" />
+                      <span>{value}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
 
           <Input
             placeholder="Title"

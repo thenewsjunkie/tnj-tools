@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Tv, Film, Utensils, Package } from "lucide-react";
+import { Plus, Tv, Film, Utensils, Package, Skull, Zap, Rocket, Heart, Mountains } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -16,6 +16,7 @@ const AddReviewDialog = ({ onReviewAdded }: AddReviewDialogProps) => {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [type, setType] = useState<"television" | "movie" | "food" | "product">();
+  const [genre, setGenre] = useState<string>();
   const [rating, setRating] = useState<number>();
   const [content, setContent] = useState("");
   const [image, setImage] = useState<File | null>(null);
@@ -33,6 +34,15 @@ const AddReviewDialog = ({ onReviewAdded }: AddReviewDialogProps) => {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (type === 'movie' && !genre) {
+      toast({
+        title: "Error",
+        description: "Please select a genre for the movie",
         variant: "destructive",
       });
       return;
@@ -60,6 +70,7 @@ const AddReviewDialog = ({ onReviewAdded }: AddReviewDialogProps) => {
           rating,
           content,
           image_url: imageUrl,
+          genre: type === 'movie' ? genre : null,
         });
 
       if (error) throw error;
@@ -72,6 +83,7 @@ const AddReviewDialog = ({ onReviewAdded }: AddReviewDialogProps) => {
       setOpen(false);
       setTitle("");
       setType(undefined);
+      setGenre(undefined);
       setRating(undefined);
       setContent("");
       setImage(null);
@@ -86,6 +98,19 @@ const AddReviewDialog = ({ onReviewAdded }: AddReviewDialogProps) => {
   };
 
   const remainingChars = 140 - content.length;
+
+  const genreOptions = [
+    { value: 'Horror', icon: Skull },
+    { value: 'Action', icon: Zap },
+    { value: 'Sci Fi', icon: Rocket },
+    { value: 'Romantic Comedy', icon: Heart },
+    { value: 'Adventure', icon: Mountains },
+    { value: 'Comedy', icon: Heart },
+    { value: 'Drama', icon: Film },
+    { value: 'Animation', icon: Film },
+    { value: 'Thriller', icon: Skull },
+    { value: 'Other', icon: Film },
+  ];
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -134,6 +159,24 @@ const AddReviewDialog = ({ onReviewAdded }: AddReviewDialogProps) => {
               </SelectItem>
             </SelectContent>
           </Select>
+
+          {type === 'movie' && (
+            <Select onValueChange={setGenre}>
+              <SelectTrigger className="bg-white dark:bg-white dark:text-black">
+                <SelectValue placeholder="Select movie genre" />
+              </SelectTrigger>
+              <SelectContent className="bg-white dark:bg-white">
+                {genreOptions.map(({ value, icon: Icon }) => (
+                  <SelectItem key={value} value={value} className="text-black dark:text-black">
+                    <div className="flex items-center gap-2">
+                      <Icon className="h-4 w-4" />
+                      <span>{value}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
 
           <Input
             placeholder="Title"

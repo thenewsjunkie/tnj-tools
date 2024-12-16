@@ -312,6 +312,7 @@ export type Database = {
         Row: {
           content: string
           created_at: string | null
+          genre: string | null
           id: string
           image_url: string | null
           rating: number
@@ -321,6 +322,7 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string | null
+          genre?: string | null
           id?: string
           image_url?: string | null
           rating: number
@@ -330,6 +332,7 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string | null
+          genre?: string | null
           id?: string
           image_url?: string | null
           rating?: number
