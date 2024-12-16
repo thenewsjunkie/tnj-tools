@@ -1,9 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Plus, Link, Pause, Play, Clock } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { Plus, Link, Pause, Play } from "lucide-react";
 
 interface AlertsHeaderProps {
   isPaused: boolean;
@@ -11,169 +7,38 @@ interface AlertsHeaderProps {
   openDialog: () => void;
 }
 
-interface QueueStateValue {
-  isPaused: boolean;
-}
-
-const AlertsHeader = ({ isPaused, togglePause, openDialog }: AlertsHeaderProps) => {
-  const [isScheduleEnabled, setIsScheduleEnabled] = useState(false);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    const fetchInitialState = async () => {
-      // Log various time representations
-      const now = new Date();
-      console.log('[AlertsHeader] Current UTC time:', now.toISOString());
-      console.log('[AlertsHeader] Current local time:', now.toString());
-      
-      // Create EST time using proper timezone string
-      const estFormatter = new Intl.DateTimeFormat('en-US', {
-        timeZone: 'America/New_York',
-        year: 'numeric',
-        month: 'numeric',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric',
-        second: 'numeric',
-        hour12: true
-      });
-      
-      console.log('[AlertsHeader] Current EST time:', {
-        formatted: estFormatter.format(now),
-        hour: new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' })).getHours(),
-        minute: new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' })).getMinutes()
-      });
-      
-      // Fetch schedule status
-      const { data: scheduleData, error: scheduleError } = await supabase
-        .from('alert_schedules')
-        .select('is_enabled')
-        .limit(1)
-        .single();
-
-      if (!scheduleError && scheduleData) {
-        console.log('[AlertsHeader] Schedule enabled:', scheduleData.is_enabled);
-        setIsScheduleEnabled(scheduleData.is_enabled);
-      }
-    };
-
-    fetchInitialState();
-
-    // Subscribe to system_settings changes
-    const channel = supabase
-      .channel('system_settings_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'system_settings',
-          filter: 'key=eq.queue_state'
-        },
-        async (payload) => {
-          if (payload.new?.value) {
-            const stateValue = payload.new.value as unknown as QueueStateValue;
-            console.log('[AlertsHeader] Received queue state update:', stateValue.isPaused);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  const handleTogglePause = async () => {
-    console.log('[AlertsHeader] Toggling pause state from:', isPaused);
-    
-    // Update the system settings first
-    const { error } = await supabase
-      .from('system_settings')
-      .update({ 
-        value: { isPaused: !isPaused }
-      })
-      .eq('key', 'queue_state');
-
-    if (error) {
-      console.error('[AlertsHeader] Error updating queue state:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update queue state",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // If database update was successful, call the local state update
-    console.log('[AlertsHeader] Database updated, calling togglePause');
-    togglePause();
-  };
-
-  const toggleSchedule = async () => {
-    const newStatus = !isScheduleEnabled;
-    const { error } = await supabase
-      .from('alert_schedules')
-      .update({ is_enabled: newStatus })
-      .eq('id', (await supabase.from('alert_schedules').select('id').limit(1).single()).data?.id);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update schedule status",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsScheduleEnabled(newStatus);
-    toast({
-      title: "Success",
-      description: `Schedule ${newStatus ? 'enabled' : 'disabled'}`,
-    });
-  };
-
-  return (
-    <div className="flex flex-col space-y-1.5 p-6">
-      <div className="flex justify-between items-center">
-        <h3 className="text-2xl font-semibold leading-none tracking-tight">Alerts</h3>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 mr-2">
-            <Switch
-              checked={isScheduleEnabled}
-              onCheckedChange={toggleSchedule}
-              className="data-[state=checked]:bg-neon-red"
-            />
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </div>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={handleTogglePause}
-            className={isPaused ? "text-neon-red" : "text-neon-red"}
-          >
-            {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
-          </Button>
-          <a
-            href="/alerts"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="alert-icon hover:text-neon-red hover:bg-white/10 rounded-md p-2"
-          >
-            <Link className="h-4 w-4" />
-          </a>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={openDialog}
-            className="alert-icon hover:text-neon-red hover:bg-white/10"
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div>
+const AlertsHeader = ({ isPaused, togglePause, openDialog }: AlertsHeaderProps) => (
+  <div className="flex flex-col space-y-1.5 p-6">
+    <div className="flex justify-between items-center">
+      <h3 className="text-2xl font-semibold leading-none tracking-tight">Alerts</h3>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={togglePause}
+          className={isPaused ? "text-neon-red" : "text-neon-red"}
+        >
+          {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+        </Button>
+        <a
+          href="/alerts"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="alert-icon hover:text-neon-red hover:bg-white/10 rounded-md p-2"
+        >
+          <Link className="h-4 w-4" />
+        </a>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={openDialog}
+          className="alert-icon hover:text-neon-red hover:bg-white/10"
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
       </div>
     </div>
-  );
-};
+  </div>
+);
 
 export default AlertsHeader;

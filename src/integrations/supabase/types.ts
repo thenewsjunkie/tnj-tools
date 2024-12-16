@@ -44,27 +44,6 @@ export type Database = {
           },
         ]
       }
-      alert_schedules: {
-        Row: {
-          created_at: string | null
-          id: string
-          is_enabled: boolean | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          is_enabled?: boolean | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          is_enabled?: boolean | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       alerts: {
         Row: {
           created_at: string
@@ -310,7 +289,6 @@ export type Database = {
           id: string
           role: string | null
           status: string | null
-          timezone: string
         }
         Insert: {
           approved_at?: string | null
@@ -319,7 +297,6 @@ export type Database = {
           id: string
           role?: string | null
           status?: string | null
-          timezone?: string
         }
         Update: {
           approved_at?: string | null
@@ -328,7 +305,6 @@ export type Database = {
           id?: string
           role?: string | null
           status?: string | null
-          timezone?: string
         }
         Relationships: []
       }
@@ -523,10 +499,6 @@ export type Database = {
           viewer_connected: boolean | null
           viewer_device_id: string | null
         }
-      }
-      handle_alert_schedule: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
       }
     }
     Enums: {

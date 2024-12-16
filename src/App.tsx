@@ -56,22 +56,18 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const checkApprovalStatus = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('status')
-        .eq('id', userId)
-        .single();
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("status")
+      .eq("id", userId)
+      .single();
 
-      if (error) {
-        console.error('Error checking approval status:', error);
-        return;
-      }
-
-      setIsApproved(data?.status === "approved");
-    } catch (error) {
-      console.error('Error in checkApprovalStatus:', error);
+    if (error) {
+      console.error("Error checking approval status:", error);
+      return;
     }
+
+    setIsApproved(data.status === "approved");
   };
 
   // Show nothing while loading
