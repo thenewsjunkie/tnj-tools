@@ -64,6 +64,27 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         .single();
 
       if (error) {
+        if (error.code === 'PGRST116') {
+          // No profile found, create one
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert([
+              { 
+                id: userId,
+                status: 'pending',
+                timezone: 'UTC'
+              }
+            ]);
+          
+          if (insertError) {
+            console.error("Error creating profile:", insertError);
+            return;
+          }
+          
+          setIsApproved(false);
+          return;
+        }
+        
         console.error("Error checking approval status:", error);
         return;
       }
