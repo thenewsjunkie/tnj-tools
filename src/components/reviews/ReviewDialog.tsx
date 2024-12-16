@@ -14,7 +14,7 @@ interface ReviewDialogProps {
 
 const ReviewDialog = ({ review, open, onOpenChange }: ReviewDialogProps) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [objectFit, setObjectFit] = useState<'cover' | 'contain'>('cover');
+  const [objectFit, setObjectFit] = useState<'contain' | 'cover'>('contain');
 
   if (!review) return null;
 
