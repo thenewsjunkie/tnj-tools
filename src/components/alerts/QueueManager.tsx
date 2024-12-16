@@ -8,17 +8,24 @@ interface QueueManagerProps {
 }
 
 const QueueManager = ({ currentAlert, queueCount, isPaused, processNextAlert }: QueueManagerProps) => {
-  if (!currentAlert) return null;
+  // Always show if there are alerts in queue, even when paused
+  if (!currentAlert && queueCount === 0) return null;
 
   return (
     <div className="px-6 pb-4">
       <Alert>
-        <AlertTitle>Current Alert: {currentAlert.alert.title}</AlertTitle>
-        {currentAlert.alert.message_enabled && currentAlert.username && (
-          <AlertDescription>
-            {currentAlert.username} {currentAlert.alert.message_text}
-          </AlertDescription>
-        )}
+        {currentAlert ? (
+          <>
+            <AlertTitle>Current Alert: {currentAlert.alert.title}</AlertTitle>
+            {currentAlert.alert.message_enabled && currentAlert.username && (
+              <AlertDescription>
+                {currentAlert.username} {currentAlert.alert.message_text}
+              </AlertDescription>
+            )}
+          </>
+        ) : isPaused && queueCount > 0 ? (
+          <AlertTitle>Queue Paused</AlertTitle>
+        ) : null}
         <AlertDescription className="mt-2 text-sm text-muted-foreground">
           Queue: {queueCount} alert{queueCount !== 1 ? 's' : ''}
         </AlertDescription>
