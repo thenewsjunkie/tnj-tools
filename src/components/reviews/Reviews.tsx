@@ -109,10 +109,10 @@ const Reviews = ({ showViewAllLink = false, reviews: propReviews, simpleView = f
                     </div>
                   </div>
                   
-                  {review.image_url && (
+                  {review.image_urls && review.image_urls.length > 0 && (
                     <div className="relative w-full">
                       <img 
-                        src={review.image_url} 
+                        src={review.image_urls[0]} 
                         alt={review.title}
                         className="rounded-md w-full h-auto object-contain max-h-40"
                       />
