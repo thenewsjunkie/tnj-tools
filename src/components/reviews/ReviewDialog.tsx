@@ -19,18 +19,18 @@ const ReviewDialog = ({ review, open, onOpenChange }: ReviewDialogProps) => {
   const [objectFit, setObjectFit] = useState<'cover' | 'contain'>('cover');
   const [isCropping, setIsCropping] = useState(false);
   const [crop, setCrop] = useState<CropType>({
-    unit: 'px',
+    unit: '%',
     x: 0,
     y: 0,
-    width: 0,
-    height: 0
+    width: 100,
+    height: 100
   });
   const [savedCrop, setSavedCrop] = useState<CropType>({
-    unit: 'px',
+    unit: '%',
     x: 0,
     y: 0,
-    width: 0,
-    height: 0
+    width: 100,
+    height: 100
   });
 
   if (!review) return null;
@@ -76,13 +76,10 @@ const ReviewDialog = ({ review, open, onOpenChange }: ReviewDialogProps) => {
   const getCropStyle = () => {
     if (objectFit !== 'cover' || !savedCrop.width || !savedCrop.height) return {};
     
-    const img = new Image();
-    img.src = review.image_url || '';
-    
     return {
-      objectPosition: `${-savedCrop.x}px ${-savedCrop.y}px`,
-      width: `${img.width}px`,
-      height: `${img.height}px`
+      objectPosition: `${-savedCrop.x}% ${-savedCrop.y}%`,
+      width: `${100 / (savedCrop.width / 100)}%`,
+      height: `${100 / (savedCrop.height / 100)}%`
     };
   };
 
