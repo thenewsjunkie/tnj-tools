@@ -186,7 +186,7 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
             <p className="text-xs text-muted-foreground">Leave empty to keep current image</p>
           </div>
 
-          <Button type="submit" className="w-full" disabled={isUploading}>
+          <Button type="submit" className="w-full dark:text-black" disabled={isUploading}>
             {isUploading ? "Updating..." : "Update Review"}
           </Button>
         </form>
