@@ -104,29 +104,29 @@ const AddReviewDialog = ({ onReviewAdded }: AddReviewDialogProps) => {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <Select onValueChange={(value: "television" | "movie" | "food" | "product") => setType(value)}>
-            <SelectTrigger>
+            <SelectTrigger className="bg-white dark:bg-white dark:text-black">
               <SelectValue placeholder="Select review type" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="television">
+            <SelectContent className="bg-white dark:bg-white">
+              <SelectItem value="television" className="text-black dark:text-black">
                 <div className="flex items-center gap-2">
                   <Tv className="h-4 w-4" />
                   <span>Television Series</span>
                 </div>
               </SelectItem>
-              <SelectItem value="movie">
+              <SelectItem value="movie" className="text-black dark:text-black">
                 <div className="flex items-center gap-2">
                   <Film className="h-4 w-4" />
                   <span>Movie</span>
                 </div>
               </SelectItem>
-              <SelectItem value="food">
+              <SelectItem value="food" className="text-black dark:text-black">
                 <div className="flex items-center gap-2">
                   <Utensils className="h-4 w-4" />
                   <span>Food</span>
                 </div>
               </SelectItem>
-              <SelectItem value="product">
+              <SelectItem value="product" className="text-black dark:text-black">
                 <div className="flex items-center gap-2">
                   <Package className="h-4 w-4" />
                   <span>Product</span>
@@ -143,12 +143,12 @@ const AddReviewDialog = ({ onReviewAdded }: AddReviewDialogProps) => {
           />
 
           <Select onValueChange={(value) => setRating(parseInt(value))}>
-            <SelectTrigger>
+            <SelectTrigger className="bg-white dark:bg-white dark:text-black">
               <SelectValue placeholder="Rating" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white dark:bg-white">
               {[1, 2, 3, 4, 5].map((star) => (
-                <SelectItem key={star} value={star.toString()}>
+                <SelectItem key={star} value={star.toString()} className="text-black dark:text-black">
                   {"★".repeat(star)}{"☆".repeat(5-star)}
                 </SelectItem>
               ))}
