@@ -17,6 +17,11 @@ const AlertsHeader = ({ isPaused, togglePause, openDialog }: AlertsHeaderProps) 
 
   useEffect(() => {
     const fetchInitialState = async () => {
+      // Log current time in EST
+      const now = new Date();
+      const estTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+      console.log('[AlertsHeader] Current EST time:', estTime.toLocaleTimeString());
+      
       // Fetch schedule status
       const { data: scheduleData, error: scheduleError } = await supabase
         .from('alert_schedules')
@@ -35,10 +40,11 @@ const AlertsHeader = ({ isPaused, togglePause, openDialog }: AlertsHeaderProps) 
         .eq('key', 'queue_state')
         .single();
 
-      if (!queueError && queueState?.value?.isPaused !== undefined) {
+      if (!queueError && queueState?.value) {
+        const isPausedValue = typeof queueState.value === 'object' ? queueState.value.isPaused : false;
         // Only toggle if current state doesn't match system state
-        if (isPaused !== queueState.value.isPaused) {
-          console.log('[AlertsHeader] Syncing with system queue state:', queueState.value.isPaused);
+        if (isPaused !== isPausedValue) {
+          console.log('[AlertsHeader] Syncing with system queue state:', isPausedValue);
           togglePause();
         }
       }
@@ -58,10 +64,11 @@ const AlertsHeader = ({ isPaused, togglePause, openDialog }: AlertsHeaderProps) 
           filter: 'key=eq.queue_state'
         },
         async (payload) => {
-          if (payload.new && payload.new.value && payload.new.value.isPaused !== undefined) {
-            console.log('[AlertsHeader] Received queue state update:', payload.new.value.isPaused);
+          if (payload.new?.value) {
+            const isPausedValue = typeof payload.new.value === 'object' ? payload.new.value.isPaused : false;
+            console.log('[AlertsHeader] Received queue state update:', isPausedValue);
             // Call togglePause if the current state doesn't match the new state
-            if (isPaused !== payload.new.value.isPaused) {
+            if (isPaused !== isPausedValue) {
               togglePause();
             }
           }
