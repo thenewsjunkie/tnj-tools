@@ -25,6 +25,9 @@ import {
   ScreenShareSessionsTable,
   TnjLinksTable,
 } from './tables/system';
+import { InterviewRequestsTable } from './tables/interviews';
+import { DatabaseFunctions } from './functions';
+import { DatabaseEnums } from './enums';
 
 export interface Database {
   public: {

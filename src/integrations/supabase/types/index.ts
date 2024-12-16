@@ -5,6 +5,7 @@ export * from './tables/code';
 export * from './tables/content';
 export * from './tables/users';
 export * from './tables/system';
+export * from './tables/interviews';
 export * from './functions';
 export * from './enums';
 export * from './helpers';
