@@ -1,228 +1,106 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Shield,
-  ShieldX,
-  LogOut,
-  ArrowLeft,
-  CheckCircle2,
-  XCircle,
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
-
-type Profile = {
-  id: string;
-  email: string;
-  created_at: string;
-  approved_at: string | null;
-  status: string;
-  role: string;
-};
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Settings = () => {
-  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [timezone, setTimezone] = useState("");
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const navigate = useNavigate();
+
+  // Get all IANA timezone names
+  const timezones = Intl.supportedValuesOf('timeZone');
 
   useEffect(() => {
-    fetchProfiles();
+    fetchUserSettings();
   }, []);
 
-  const fetchProfiles = async () => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .order("created_at", { ascending: false });
+  const fetchUserSettings = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
 
-    if (error) {
-      console.error("Error fetching profiles:", error);
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('timezone')
+        .eq('id', session.user.id)
+        .single();
+
+      if (error) throw error;
+      if (profile) setTimezone(profile.timezone);
+    } catch (error) {
+      console.error('Error fetching settings:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch user profiles",
+        description: "Failed to load settings",
         variant: "destructive",
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    setProfiles(data || []);
   };
 
-  const handleApprove = async (userId: string) => {
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        status: "approved",
-        approved_at: new Date().toISOString(),
-      })
-      .eq("id", userId);
+  const updateTimezone = async (newTimezone: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
 
-    if (error) {
-      console.error("Error approving user:", error);
+      const { error } = await supabase
+        .from('profiles')
+        .update({ timezone: newTimezone })
+        .eq('id', session.user.id);
+
+      if (error) throw error;
+
+      setTimezone(newTimezone);
+      toast({
+        title: "Success",
+        description: "Timezone updated successfully",
+      });
+    } catch (error) {
+      console.error('Error updating timezone:', error);
       toast({
         title: "Error",
-        description: "Failed to approve user",
+        description: "Failed to update timezone",
         variant: "destructive",
       });
-      return;
-    }
-
-    toast({
-      title: "Success",
-      description: "User has been approved",
-    });
-    fetchProfiles();
-  };
-
-  const handleDeny = async (userId: string) => {
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        status: "denied",
-      })
-      .eq("id", userId);
-
-    if (error) {
-      console.error("Error denying user:", error);
-      toast({
-        title: "Error",
-        description: "Failed to deny user",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    toast({
-      title: "Success",
-      description: "User has been denied",
-    });
-    fetchProfiles();
-  };
-
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to sign out. Please try again.",
-        variant: "destructive",
-      });
-    } else {
-      navigate("/login");
     }
   };
+
+  if (loading) {
+    return <div className="p-4">Loading...</div>;
+  }
 
   return (
-    <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8">
-      <nav className="flex justify-between items-center mb-8">
-        <Link
-          to="/admin"
-          className="text-foreground hover:text-primary transition-colors flex items-center gap-2"
-        >
-          <ArrowLeft className="h-5 w-5" />
-          Back to Admin
-        </Link>
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            onClick={handleLogout}
-            className="text-foreground hover:text-destructive hover:bg-destructive/10"
-          >
-            <LogOut className="h-5 w-5 mr-2" />
-            Logout
-          </Button>
-        </div>
-      </nav>
-
-      <div className="max-w-5xl mx-auto space-y-8">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <h2 className="text-2xl font-semibold tracking-tight">Settings</h2>
-            <p className="text-sm text-muted-foreground">
-              Manage user access and application settings
-            </p>
-          </div>
-        </div>
-
-        <div className="border rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <Shield className="h-5 w-5" />
-            <h3 className="text-lg font-semibold">User Moderation</h3>
-          </div>
-
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Joined</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {profiles.map((profile) => (
-                  <TableRow key={profile.id}>
-                    <TableCell>{profile.email}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {profile.status === "approved" ? (
-                          <CheckCircle2 className="h-4 w-4 text-green-500" />
-                        ) : profile.status === "denied" ? (
-                          <XCircle className="h-4 w-4 text-red-500" />
-                        ) : (
-                          <Shield className="h-4 w-4 text-yellow-500" />
-                        )}
-                        {profile.status}
-                      </div>
-                    </TableCell>
-                    <TableCell>{profile.role}</TableCell>
-                    <TableCell>
-                      {format(new Date(profile.created_at), "MMM d, yyyy")}
-                    </TableCell>
-                    <TableCell>
-                      {profile.status === "pending" && (
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleApprove(profile.id)}
-                            className="text-green-500 hover:text-green-600 hover:bg-green-50"
-                          >
-                            <CheckCircle2 className="h-4 w-4 mr-1" />
-                            Approve
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleDeny(profile.id)}
-                            className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                          >
-                            <ShieldX className="h-4 w-4 mr-1" />
-                            Deny
-                          </Button>
-                        </div>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
-      </div>
+    <div className="container mx-auto p-4 space-y-4">
+      <h1 className="text-2xl font-bold mb-6">Settings</h1>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Time Zone</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Select value={timezone} onValueChange={updateTimezone}>
+            <SelectTrigger className="w-full md:w-[300px]">
+              <SelectValue placeholder="Select your timezone" />
+            </SelectTrigger>
+            <SelectContent>
+              {timezones.map((tz) => (
+                <SelectItem key={tz} value={tz}>
+                  {tz}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
     </div>
   );
 };
