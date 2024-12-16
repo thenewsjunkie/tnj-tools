@@ -37,10 +37,10 @@ const ReviewsPage = () => {
     <div className="min-h-screen bg-background p-4">
       <nav className="flex justify-between items-center mb-8 max-w-7xl mx-auto">
         <Link 
-          to="/" 
+          to="/admin" 
           className="text-foreground hover:text-neon-red transition-colors"
         >
-          ← Home
+          ← Admin
         </Link>
         <div className="flex items-center gap-4">
           <ThemeToggle />
