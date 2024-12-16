@@ -1,5 +1,6 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Tv, Film, Utensils, Package } from "lucide-react";
+import { format } from "date-fns";
 import type { Review } from "./types";
 
 interface ReviewDialogProps {
@@ -19,6 +20,7 @@ const ReviewDialog = ({ review, open, onOpenChange }: ReviewDialogProps) => {
   };
 
   const Icon = icons[review.type];
+  const reviewDate = format(new Date(review.created_at), "EEEE, MMMM d");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -44,6 +46,10 @@ const ReviewDialog = ({ review, open, onOpenChange }: ReviewDialogProps) => {
           )}
 
           <p className="text-foreground">{review.content}</p>
+          
+          <div className="text-sm text-muted-foreground">
+            Review: {reviewDate}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
