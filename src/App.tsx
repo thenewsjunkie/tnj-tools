@@ -32,13 +32,16 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [isApproved, setIsApproved] = useState<boolean | null>(null);
 
   useEffect(() => {
+    console.log('[ProtectedRoute] Component mounted');
+    
     // Check initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Initial session check:", session);
+      console.log("[ProtectedRoute] Initial session check:", session?.user);
       setSession(!!session);
-      if (session) {
+      if (session?.user) {
         checkApprovalStatus(session.user.id);
       } else {
+        console.log("[ProtectedRoute] No session found");
         setIsLoading(false);
       }
     });
@@ -47,12 +50,14 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state change:", event, session);
+      console.log("[ProtectedRoute] Auth state change:", event, session?.user);
       setSession(!!session);
-      if (session) {
+      if (session?.user) {
         await checkApprovalStatus(session.user.id);
+      } else {
+        console.log("[ProtectedRoute] No session in auth change");
+        setIsLoading(false);
       }
-      setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
@@ -60,42 +65,58 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   const checkApprovalStatus = async (userId: string) => {
     try {
-      console.log("Checking approval status for user:", userId);
-      const { data, error } = await supabase
+      console.log("[ProtectedRoute] Checking approval status for user:", userId);
+      
+      const { data: profile, error } = await supabase
         .from('profiles')
         .select('status, role')
         .eq('id', userId)
         .maybeSingle();
 
       if (error) {
-        console.error("Error checking approval status:", error);
+        console.error("[ProtectedRoute] Error checking approval status:", error);
+        setIsLoading(false);
         return;
       }
 
-      console.log("Profile data received:", data);
-      // Consider both admin role and approved status
-      const isUserApproved = data?.status === "approved" || data?.role === "admin";
+      console.log("[ProtectedRoute] Profile data received:", profile);
+
+      if (!profile) {
+        console.error("[ProtectedRoute] No profile found for user:", userId);
+        setIsApproved(false);
+        setIsLoading(false);
+        return;
+      }
+
+      // Check if user is either approved or an admin
+      const isUserApproved = profile.status === "approved" || profile.role === "admin";
+      console.log("[ProtectedRoute] User status:", profile.status);
+      console.log("[ProtectedRoute] User role:", profile.role);
+      console.log("[ProtectedRoute] Is approved:", isUserApproved);
+      
       setIsApproved(isUserApproved);
-      console.log("Is approved set to:", isUserApproved);
       setIsLoading(false);
     } catch (error) {
-      console.error("Error in checkApprovalStatus:", error);
+      console.error("[ProtectedRoute] Error in checkApprovalStatus:", error);
       setIsLoading(false);
     }
   };
 
   // Show nothing while loading
   if (isLoading) {
+    console.log("[ProtectedRoute] Still loading...");
     return null;
   }
 
   // Redirect if not logged in
   if (!session) {
+    console.log("[ProtectedRoute] No session, redirecting to login");
     return <Navigate to="/login" replace />;
   }
 
   // Redirect if not approved
   if (isApproved === false) {
+    console.log("[ProtectedRoute] User not approved, showing pending message");
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="text-center space-y-4">
