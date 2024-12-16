@@ -1,12 +1,32 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+import { Json } from './helpers';
+import {
+  AlertQueueTable,
+  AlertsTable,
+} from './tables/alerts';
+import {
+  AudioConversationsTable,
+  CallSessionsTable,
+} from './tables/conversations';
+import {
+  CodeImplementationsTable,
+  CodeVersionsTable,
+} from './tables/code';
+import {
+  NewsRoundupsTable,
+  NewsSourcesTable,
+  ShowNotesTable,
+} from './tables/content';
+import {
+  ProfilesTable,
+  ReviewsTable,
+} from './tables/users';
+import {
+  SystemSettingsTable,
+  ScreenShareSessionsTable,
+  TnjLinksTable,
+} from './tables/system';
 
-export type Database = {
+export interface Database {
   public: {
     Tables: {
       alert_queue: AlertQueueTable
