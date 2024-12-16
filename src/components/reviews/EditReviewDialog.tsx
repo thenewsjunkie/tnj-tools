@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Tv, Film, Utensils, Package, Skull, Zap, Rocket, Heart, Mountain } from "lucide-react";
+import { Tv, Film, Utensils, Package, Skull, Zap, Rocket, Heart, Mountain, Trash2 } from "lucide-react";
 import ReviewImageUpload from "./ReviewImageUpload";
 import type { Review, ReviewType } from "./types";
 
@@ -38,6 +38,32 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
     { value: 'Thriller', icon: Skull },
     { value: 'Other', icon: Film },
   ];
+
+  const handleDelete = async () => {
+    try {
+      const { error: deleteError } = await supabase
+        .from('reviews')
+        .delete()
+        .eq('id', review.id);
+
+      if (deleteError) throw deleteError;
+
+      toast({
+        title: "Success",
+        description: "Review deleted successfully",
+      });
+      
+      onReviewUpdated();
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete review",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -175,9 +201,19 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
             title={title}
           />
 
-          <Button type="submit" className="w-full dark:text-black">
-            Update Review
-          </Button>
+          <div className="flex gap-2">
+            <Button type="submit" className="flex-1 light:text-black dark:text-black">
+              Update Review
+            </Button>
+            <Button 
+              type="button" 
+              variant="destructive"
+              onClick={handleDelete}
+              className="px-3"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         </form>
       </DialogContent>
     </Dialog>
