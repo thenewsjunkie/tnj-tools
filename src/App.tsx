@@ -61,7 +61,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         .from('profiles')
         .select('status')
         .eq('id', userId)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single to handle null cases better
 
       if (error) {
         console.error("Error checking approval status:", error);
