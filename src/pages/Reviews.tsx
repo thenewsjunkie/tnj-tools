@@ -94,7 +94,7 @@ const ReviewsPage = () => {
             </SelectContent>
           </Select>
         </div>
-        <Reviews />
+        <Reviews reviews={filteredReviews} />
       </div>
     </div>
   );

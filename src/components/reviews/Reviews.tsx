@@ -10,13 +10,14 @@ import type { Review } from "./types";
 
 interface ReviewsProps {
   showViewAllLink?: boolean;
+  reviews?: Review[];
 }
 
-const Reviews = ({ showViewAllLink = false }: ReviewsProps) => {
+const Reviews = ({ showViewAllLink = false, reviews: propReviews }: ReviewsProps) => {
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const { data: reviews = [], refetch } = useQuery({
+  const { data: fetchedReviews = [], refetch } = useQuery({
     queryKey: ['reviews'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -27,7 +28,10 @@ const Reviews = ({ showViewAllLink = false }: ReviewsProps) => {
       if (error) throw error;
       return data as Review[];
     },
+    enabled: !propReviews, // Only fetch if reviews weren't passed as props
   });
+
+  const reviews = propReviews || fetchedReviews;
 
   const icons = {
     television: Tv,
