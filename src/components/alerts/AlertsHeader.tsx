@@ -26,12 +26,22 @@ const AlertsHeader = ({ isPaused, togglePause, openDialog }: AlertsHeaderProps) 
       console.log('[AlertsHeader] Current UTC time:', now.toISOString());
       console.log('[AlertsHeader] Current local time:', now.toString());
       
-      const estTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+      // Create EST time using proper timezone string
+      const estFormatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/New_York',
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric',
+        hour12: true
+      });
+      
       console.log('[AlertsHeader] Current EST time:', {
-        full: estTime.toString(),
-        time: estTime.toLocaleTimeString(),
-        hours: estTime.getHours(),
-        minutes: estTime.getMinutes()
+        formatted: estFormatter.format(now),
+        hour: new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' })).getHours(),
+        minute: new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' })).getMinutes()
       });
       
       // Fetch schedule status
