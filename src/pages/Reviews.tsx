@@ -60,32 +60,32 @@ const ReviewsPage = () => {
             value={selectedType}
             onValueChange={(value: ReviewType | "all") => setSelectedType(value)}
           >
-            <SelectTrigger className="w-[180px] bg-white dark:bg-white dark:text-black">
+            <SelectTrigger className="w-[180px] dark:bg-black dark:text-white">
               <SelectValue placeholder="Filter by type" />
             </SelectTrigger>
-            <SelectContent className="bg-white dark:bg-white">
-              <SelectItem value="all" className="text-black dark:text-black">
+            <SelectContent className="dark:bg-black dark:border-white/10">
+              <SelectItem value="all" className="dark:text-white dark:focus:bg-white/10">
                 All Types
               </SelectItem>
-              <SelectItem value="television" className="text-black dark:text-black">
+              <SelectItem value="television" className="dark:text-white dark:focus:bg-white/10">
                 <div className="flex items-center gap-2">
                   <Tv className="h-4 w-4" />
                   <span>Television Series</span>
                 </div>
               </SelectItem>
-              <SelectItem value="movie" className="text-black dark:text-black">
+              <SelectItem value="movie" className="dark:text-white dark:focus:bg-white/10">
                 <div className="flex items-center gap-2">
                   <Film className="h-4 w-4" />
                   <span>Movie</span>
                 </div>
               </SelectItem>
-              <SelectItem value="food" className="text-black dark:text-black">
+              <SelectItem value="food" className="dark:text-white dark:focus:bg-white/10">
                 <div className="flex items-center gap-2">
                   <Utensils className="h-4 w-4" />
                   <span>Food</span>
                 </div>
               </SelectItem>
-              <SelectItem value="product" className="text-black dark:text-black">
+              <SelectItem value="product" className="dark:text-white dark:focus:bg-white/10">
                 <div className="flex items-center gap-2">
                   <Package className="h-4 w-4" />
                   <span>Product</span>
