@@ -11,9 +11,10 @@ import type { Review } from "./types";
 interface ReviewsProps {
   showViewAllLink?: boolean;
   reviews?: Review[];
+  simpleView?: boolean;
 }
 
-const Reviews = ({ showViewAllLink = false, reviews: propReviews }: ReviewsProps) => {
+const Reviews = ({ showViewAllLink = false, reviews: propReviews, simpleView = false }: ReviewsProps) => {
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -65,43 +66,67 @@ const Reviews = ({ showViewAllLink = false, reviews: propReviews }: ReviewsProps
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {reviews.map((review) => {
-            const Icon = icons[review.type];
-            
-            return (
-              <div
-                key={review.id}
-                onClick={() => handleReviewClick(review)}
-                className="flex flex-col gap-2 p-3 rounded-lg border border-gray-200 dark:border-white/10 hover:bg-accent cursor-pointer transition-colors"
-              >
-                <div className="flex items-center justify-between">
+        {simpleView ? (
+          <div className="space-y-2">
+            {reviews.map((review) => {
+              const Icon = icons[review.type];
+              
+              return (
+                <div
+                  key={review.id}
+                  onClick={() => handleReviewClick(review)}
+                  className="flex items-center justify-between p-2 rounded-lg border border-gray-200 dark:border-white/10 hover:bg-accent cursor-pointer transition-colors"
+                >
                   <div className="flex items-center gap-2">
                     <Icon className="h-4 w-4 text-foreground" />
-                    <h3 className="font-medium text-sm text-foreground truncate">{review.title}</h3>
+                    <h3 className="font-medium text-sm text-foreground">{review.title}</h3>
                   </div>
                   <div className="text-yellow-500 text-sm">
                     {"★".repeat(review.rating)}{"☆".repeat(5-review.rating)}
                   </div>
                 </div>
-                
-                {review.image_url && (
-                  <div className="relative w-full">
-                    <img 
-                      src={review.image_url} 
-                      alt={review.title}
-                      className="rounded-md w-full h-auto object-contain max-h-40"
-                    />
+              );
+            })}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {reviews.map((review) => {
+              const Icon = icons[review.type];
+              
+              return (
+                <div
+                  key={review.id}
+                  onClick={() => handleReviewClick(review)}
+                  className="flex flex-col gap-2 p-3 rounded-lg border border-gray-200 dark:border-white/10 hover:bg-accent cursor-pointer transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Icon className="h-4 w-4 text-foreground" />
+                      <h3 className="font-medium text-sm text-foreground truncate">{review.title}</h3>
+                    </div>
+                    <div className="text-yellow-500 text-sm">
+                      {"★".repeat(review.rating)}{"☆".repeat(5-review.rating)}
+                    </div>
                   </div>
-                )}
-                
-                <p className="text-xs text-muted-foreground line-clamp-2">
-                  {review.content}
-                </p>
-              </div>
-            );
-          })}
-        </div>
+                  
+                  {review.image_url && (
+                    <div className="relative w-full">
+                      <img 
+                        src={review.image_url} 
+                        alt={review.title}
+                        className="rounded-md w-full h-auto object-contain max-h-40"
+                      />
+                    </div>
+                  )}
+                  
+                  <p className="text-xs text-muted-foreground line-clamp-2">
+                    {review.content}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </CardContent>
 
       <ReviewDialog
