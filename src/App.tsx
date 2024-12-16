@@ -38,18 +38,19 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       setSession(!!session);
       if (session) {
         checkApprovalStatus(session.user.id);
+      } else {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     });
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state change:", event, session);
       setSession(!!session);
       if (session) {
-        checkApprovalStatus(session.user.id);
+        await checkApprovalStatus(session.user.id);
       }
       setIsLoading(false);
     });
@@ -62,7 +63,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       console.log("Checking approval status for user:", userId);
       const { data, error } = await supabase
         .from('profiles')
-        .select('status')
+        .select('status, role')
         .eq('id', userId)
         .maybeSingle();
 
@@ -72,10 +73,14 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       }
 
       console.log("Profile data received:", data);
-      setIsApproved(data?.status === "approved");
-      console.log("Is approved set to:", data?.status === "approved");
+      // Consider both admin role and approved status
+      const isUserApproved = data?.status === "approved" || data?.role === "admin";
+      setIsApproved(isUserApproved);
+      console.log("Is approved set to:", isUserApproved);
+      setIsLoading(false);
     } catch (error) {
       console.error("Error in checkApprovalStatus:", error);
+      setIsLoading(false);
     }
   };
 
