@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Tv, Film, Utensils, Package, Skull, Zap, Rocket, Heart, Mountains } from "lucide-react";
+import { Tv, Film, Utensils, Package, Skull, Zap, Rocket, Heart, Mountain } from "lucide-react";
 import type { Review, ReviewType } from "./types";
 
 interface EditReviewDialogProps {
@@ -30,7 +30,7 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
     { value: 'Action', icon: Zap },
     { value: 'Sci Fi', icon: Rocket },
     { value: 'Romantic Comedy', icon: Heart },
-    { value: 'Adventure', icon: Mountains },
+    { value: 'Adventure', icon: Mountain },
     { value: 'Comedy', icon: Heart },
     { value: 'Drama', icon: Film },
     { value: 'Animation', icon: Film },

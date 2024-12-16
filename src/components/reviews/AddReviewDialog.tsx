@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Tv, Film, Utensils, Package, Skull, Zap, Rocket, Heart, Mountains } from "lucide-react";
+import { Plus, Tv, Film, Utensils, Package, Skull, Zap, Rocket, Heart, Mountain } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -104,7 +104,7 @@ const AddReviewDialog = ({ onReviewAdded }: AddReviewDialogProps) => {
     { value: 'Action', icon: Zap },
     { value: 'Sci Fi', icon: Rocket },
     { value: 'Romantic Comedy', icon: Heart },
-    { value: 'Adventure', icon: Mountains },
+    { value: 'Adventure', icon: Mountain },
     { value: 'Comedy', icon: Heart },
     { value: 'Drama', icon: Film },
     { value: 'Animation', icon: Film },
