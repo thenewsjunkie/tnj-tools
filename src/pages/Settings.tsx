@@ -1,239 +1,228 @@
 import { useEffect, useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
-// Common timezone list
-const timezones = [
-  'UTC',
-  'America/New_York',
-  'America/Chicago',
-  'America/Denver',
-  'America/Los_Angeles',
-  'America/Phoenix',
-  'America/Anchorage',
-  'Pacific/Honolulu',
-  'Europe/London',
-  'Europe/Paris',
-  'Europe/Berlin',
-  'Europe/Moscow',
-  'Asia/Tokyo',
-  'Asia/Shanghai',
-  'Asia/Dubai',
-  'Asia/Singapore',
-  'Australia/Sydney',
-  'Pacific/Auckland'
-];
+import { useToast } from "@/components/ui/use-toast";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Shield,
+  ShieldX,
+  LogOut,
+  ArrowLeft,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
 
 type Profile = {
   id: string;
   email: string;
-  timezone: string;
+  created_at: string;
+  approved_at: string | null;
   status: string;
   role: string;
-  created_at: string;
 };
 
 const Settings = () => {
-  const [timezone, setTimezone] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [pendingUsers, setPendingUsers] = useState<Profile[]>([]);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetchUserSettings();
+    fetchProfiles();
   }, []);
 
-  const fetchUserSettings = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        toast({
-          title: "Error",
-          description: "You must be logged in to view settings",
-          variant: "destructive",
-        });
-        return;
-      }
+  const fetchProfiles = async () => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-      // First fetch the profile to get the timezone
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('timezone, role')
-        .eq('id', session.user.id)
-        .single();
-
-      if (profileError) {
-        console.error('Error fetching profile:', profileError);
-        throw profileError;
-      }
-
-      if (profile) {
-        setTimezone(profile.timezone);
-        
-        // Check if user is admin and fetch pending users if they are
-        if (profile.role === 'admin') {
-          setIsAdmin(true);
-          const { data: pendingProfiles, error: pendingError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('status', 'pending');
-
-          if (pendingError) {
-            console.error('Error fetching pending users:', pendingError);
-          } else {
-            setPendingUsers(pendingProfiles || []);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching settings:', error);
+    if (error) {
+      console.error("Error fetching profiles:", error);
       toast({
         title: "Error",
-        description: "Failed to load settings",
+        description: "Failed to fetch user profiles",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
+      return;
     }
+
+    setProfiles(data || []);
   };
 
-  const updateTimezone = async (newTimezone: string) => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        toast({
-          title: "Error",
-          description: "You must be logged in to update settings",
-          variant: "destructive",
-        });
-        return;
-      }
+  const handleApprove = async (userId: string) => {
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        status: "approved",
+        approved_at: new Date().toISOString(),
+      })
+      .eq("id", userId);
 
-      const { error } = await supabase
-        .from('profiles')
-        .update({ timezone: newTimezone })
-        .eq('id', session.user.id);
-
-      if (error) {
-        console.error('Error updating timezone:', error);
-        throw error;
-      }
-
-      setTimezone(newTimezone);
-      toast({
-        title: "Success",
-        description: "Timezone updated successfully",
-      });
-    } catch (error) {
-      console.error('Error updating timezone:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update timezone",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const approveUser = async (userId: string) => {
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          status: 'approved',
-          approved_at: new Date().toISOString(),
-        })
-        .eq('id', userId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "User approved successfully",
-      });
-      
-      // Refresh the pending users list
-      const { data: pendingProfiles } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('status', 'pending');
-
-      setPendingUsers(pendingProfiles || []);
-    } catch (error) {
-      console.error('Error approving user:', error);
+    if (error) {
+      console.error("Error approving user:", error);
       toast({
         title: "Error",
         description: "Failed to approve user",
         variant: "destructive",
       });
+      return;
+    }
+
+    toast({
+      title: "Success",
+      description: "User has been approved",
+    });
+    fetchProfiles();
+  };
+
+  const handleDeny = async (userId: string) => {
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        status: "denied",
+      })
+      .eq("id", userId);
+
+    if (error) {
+      console.error("Error denying user:", error);
+      toast({
+        title: "Error",
+        description: "Failed to deny user",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Success",
+      description: "User has been denied",
+    });
+    fetchProfiles();
+  };
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      });
+    } else {
+      navigate("/login");
     }
   };
 
-  if (loading) {
-    return <div className="p-4">Loading...</div>;
-  }
-
   return (
-    <div className="container mx-auto p-4 space-y-4">
-      <h1 className="text-2xl font-bold mb-6">Settings</h1>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Time Zone</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Select value={timezone} onValueChange={updateTimezone}>
-            <SelectTrigger className="w-full md:w-[300px]">
-              <SelectValue placeholder="Select your timezone" />
-            </SelectTrigger>
-            <SelectContent>
-              {timezones.map((tz) => (
-                <SelectItem key={tz} value={tz}>
-                  {tz}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
+    <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8">
+      <nav className="flex justify-between items-center mb-8">
+        <Link
+          to="/admin"
+          className="text-foreground hover:text-primary transition-colors flex items-center gap-2"
+        >
+          <ArrowLeft className="h-5 w-5" />
+          Back to Admin
+        </Link>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            onClick={handleLogout}
+            className="text-foreground hover:text-destructive hover:bg-destructive/10"
+          >
+            <LogOut className="h-5 w-5 mr-2" />
+            Logout
+          </Button>
+        </div>
+      </nav>
 
-      {isAdmin && (
-        <Card>
-          <CardHeader>
-            <CardTitle>User Moderation</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {pendingUsers.length === 0 ? (
-              <p className="text-muted-foreground">No pending users</p>
-            ) : (
-              <div className="space-y-4">
-                {pendingUsers.map((user) => (
-                  <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <p className="font-medium">{user.email}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Joined: {new Date(user.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <Button onClick={() => approveUser(user.id)}>
-                      Approve
-                    </Button>
-                  </div>
+      <div className="max-w-5xl mx-auto space-y-8">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <h2 className="text-2xl font-semibold tracking-tight">Settings</h2>
+            <p className="text-sm text-muted-foreground">
+              Manage user access and application settings
+            </p>
+          </div>
+        </div>
+
+        <div className="border rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Shield className="h-5 w-5" />
+            <h3 className="text-lg font-semibold">User Moderation</h3>
+          </div>
+
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Joined</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {profiles.map((profile) => (
+                  <TableRow key={profile.id}>
+                    <TableCell>{profile.email}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {profile.status === "approved" ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        ) : profile.status === "denied" ? (
+                          <XCircle className="h-4 w-4 text-red-500" />
+                        ) : (
+                          <Shield className="h-4 w-4 text-yellow-500" />
+                        )}
+                        {profile.status}
+                      </div>
+                    </TableCell>
+                    <TableCell>{profile.role}</TableCell>
+                    <TableCell>
+                      {format(new Date(profile.created_at), "MMM d, yyyy")}
+                    </TableCell>
+                    <TableCell>
+                      {profile.status === "pending" && (
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleApprove(profile.id)}
+                            className="text-green-500 hover:text-green-600 hover:bg-green-50"
+                          >
+                            <CheckCircle2 className="h-4 w-4 mr-1" />
+                            Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDeny(profile.id)}
+                            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                          >
+                            <ShieldX className="h-4 w-4 mr-1" />
+                            Deny
+                          </Button>
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
