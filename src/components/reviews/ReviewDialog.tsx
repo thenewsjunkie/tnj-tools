@@ -1,10 +1,10 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Tv, Film, Utensils, Package, Maximize2, Crop } from "lucide-react";
+import { Tv, Film, Utensils, Package, Maximize2, CropIcon } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import ImageFullscreen from "@/components/notes/ImageFullscreen";
-import ReactCrop, { type Crop } from 'react-image-crop';
+import ReactCrop, { type Crop as CropType } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import type { Review } from "./types";
 
@@ -18,14 +18,14 @@ const ReviewDialog = ({ review, open, onOpenChange }: ReviewDialogProps) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [objectFit, setObjectFit] = useState<'cover' | 'contain'>('cover');
   const [isCropping, setIsCropping] = useState(false);
-  const [crop, setCrop] = useState<Crop>({
+  const [crop, setCrop] = useState<CropType>({
     unit: '%',
     x: 0,
     y: 0,
     width: 100,
     height: 100
   });
-  const [savedCrop, setSavedCrop] = useState<Crop>({
+  const [savedCrop, setSavedCrop] = useState<CropType>({
     unit: '%',
     x: 0,
     y: 0,
@@ -57,7 +57,7 @@ const ReviewDialog = ({ review, open, onOpenChange }: ReviewDialogProps) => {
     setIsCropping(!isCropping);
   };
 
-  const handleCropComplete = (crop: Crop) => {
+  const handleCropComplete = (crop: CropType) => {
     setCrop(crop);
   };
 
@@ -142,7 +142,7 @@ const ReviewDialog = ({ review, open, onOpenChange }: ReviewDialogProps) => {
                         className="bg-black/50 hover:bg-black/70"
                         onClick={toggleCropping}
                       >
-                        <Crop className="h-4 w-4 text-white" />
+                        <CropIcon className="h-4 w-4 text-white" />
                       </Button>
                       <Button
                         variant="secondary"
