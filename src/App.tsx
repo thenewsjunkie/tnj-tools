@@ -61,12 +61,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         .from('profiles')
         .select('status')
         .eq('id', userId)
-        .single()
-        .headers({
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'apikey': supabase.supabaseKey
-        });
+        .single();
 
       if (error) {
         console.error('Error checking approval status:', error);
