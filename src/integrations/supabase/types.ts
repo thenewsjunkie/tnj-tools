@@ -308,6 +308,36 @@ export type Database = {
         }
         Relationships: []
       }
+      reviews: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          image_url: string | null
+          rating: number
+          title: string
+          type: Database["public"]["Enums"]["review_type"]
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          rating: number
+          title: string
+          type: Database["public"]["Enums"]["review_type"]
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          rating?: number
+          title?: string
+          type?: Database["public"]["Enums"]["review_type"]
+        }
+        Relationships: []
+      }
       screen_share_sessions: {
         Row: {
           created_at: string | null
@@ -470,6 +500,7 @@ export type Database = {
     }
     Enums: {
       call_status: "waiting" | "connected" | "ended"
+      review_type: "television" | "movie" | "food" | "product"
     }
     CompositeTypes: {
       [_ in never]: never

@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import Stopwatch from "@/components/Stopwatch";
 import TNJLinks from "@/components/TNJLinks";
 import ShowNotes from "@/components/ShowNotes";
+import Reviews from "@/components/reviews/Reviews";
 import NewsRoundup from "@/components/NewsRoundup";
 import TNJAi from "@/components/AudioChat";
 import Alerts from "@/components/Alerts";
@@ -51,8 +52,9 @@ const Admin = () => {
           <TNJAi />
           <Alerts />
         </div>
-        <div className="w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
           <ShowNotes />
+          <Reviews />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
           <div className="md:col-span-2">
