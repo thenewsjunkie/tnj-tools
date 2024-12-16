@@ -176,7 +176,7 @@ const AddReviewDialog = ({ onReviewAdded }: AddReviewDialogProps) => {
             </p>
           </div>
 
-          <Button type="submit" className="w-full">
+          <Button type="submit" className="w-full dark:text-white text-black">
             Add Review
           </Button>
         </form>
