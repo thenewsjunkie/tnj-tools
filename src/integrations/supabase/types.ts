@@ -289,7 +289,6 @@ export type Database = {
           id: string
           role: string | null
           status: string | null
-          timezone: string
         }
         Insert: {
           approved_at?: string | null
@@ -298,7 +297,6 @@ export type Database = {
           id: string
           role?: string | null
           status?: string | null
-          timezone?: string
         }
         Update: {
           approved_at?: string | null
@@ -307,7 +305,6 @@ export type Database = {
           id?: string
           role?: string | null
           status?: string | null
-          timezone?: string
         }
         Relationships: []
       }
