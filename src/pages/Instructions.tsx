@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Edit2, Save } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -11,7 +11,7 @@ import TextNote from "@/components/notes/note-types/TextNote";
 
 const Instructions = () => {
   const [isEditing, setIsEditing] = useState(false);
-  const [content, setContent] = useState("");
+  const [editContent, setEditContent] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -24,10 +24,17 @@ const Instructions = () => {
         .single();
 
       if (error) throw error;
-      setContent(data.content);
       return data;
     },
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
+
+  // Update edit content when instructions data changes
+  useEffect(() => {
+    if (instructions?.content) {
+      setEditContent(instructions.content);
+    }
+  }, [instructions?.content]);
 
   const updateInstructions = useMutation({
     mutationFn: async (newContent: string) => {
@@ -56,11 +63,20 @@ const Instructions = () => {
   });
 
   const handleSave = () => {
-    updateInstructions.mutate(content);
+    updateInstructions.mutate(editContent);
+  };
+
+  const handleCancel = () => {
+    setEditContent(instructions?.content || "");
+    setIsEditing(false);
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8">
+        <div className="max-w-4xl mx-auto">Loading...</div>
+      </div>
+    );
   }
 
   return (
@@ -100,8 +116,8 @@ const Instructions = () => {
             {isEditing ? (
               <div className="space-y-4">
                 <Textarea
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
                   placeholder="Enter instructions here..."
                   className="min-h-[400px]"
                 />
@@ -110,20 +126,20 @@ const Instructions = () => {
                     <Save className="h-4 w-4" />
                     Save
                   </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setIsEditing(false);
-                      setContent(instructions?.content || "");
-                    }}
-                  >
+                  <Button variant="outline" onClick={handleCancel}>
                     Cancel
                   </Button>
                 </div>
               </div>
             ) : (
               <div className="prose prose-sm dark:prose-invert max-w-none">
-                <TextNote content={content} />
+                {instructions?.content ? (
+                  <TextNote content={instructions.content} />
+                ) : (
+                  <p className="text-muted-foreground italic">
+                    No instructions have been added yet.
+                  </p>
+                )}
               </div>
             )}
           </CardContent>
