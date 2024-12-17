@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { LogOut, ArrowLeft } from "lucide-react";
+import { LogOut, ArrowLeft, BookOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { UserModerationPanel } from "@/components/settings/UserModerationPanel";
@@ -34,6 +34,15 @@ const Settings = () => {
           Back to Admin
         </Link>
         <div className="flex items-center gap-4">
+          <Link to="/instructions">
+            <Button
+              variant="ghost"
+              className="text-foreground hover:text-primary hover:bg-white/10 flex items-center gap-2"
+            >
+              <BookOpen className="h-5 w-5" />
+              Instructions
+            </Button>
+          </Link>
           <Button
             variant="ghost"
             onClick={handleLogout}

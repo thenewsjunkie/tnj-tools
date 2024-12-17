@@ -15,6 +15,7 @@ import Notes from "./pages/Notes";
 import Reviews from "./pages/Reviews";
 import Alerts from "./pages/Alerts";
 import Settings from "./pages/Settings";
+import Instructions from "./pages/Instructions";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -62,6 +63,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Settings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/instructions"
+              element={
+                <ProtectedRoute>
+                  <Instructions />
                 </ProtectedRoute>
               }
             />

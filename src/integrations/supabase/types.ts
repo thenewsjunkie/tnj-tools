@@ -203,6 +203,27 @@ export type Database = {
         }
         Relationships: []
       }
+      instructions: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       interview_requests: {
         Row: {
           conversation_history: Json | null
