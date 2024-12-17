@@ -102,6 +102,10 @@ const Alerts = () => {
         ))}
       </div>
 
+      <div className="absolute bottom-3 left-4 text-xs text-muted-foreground">
+        Queue Status: {isPaused ? 'Pause' : 'Play'}
+      </div>
+
       <div className="absolute bottom-3 right-4 text-xs text-muted-foreground">
         Total Alerts Sent: {totalAlertsSent}
       </div>
