@@ -50,6 +50,7 @@ export const useQueueState = () => {
           console.log('[useQueueState] Received database queue state update:', payload);
           const value = payload.new.value as unknown as QueueStateValue;
           if (value && typeof value === 'object' && 'isPaused' in value) {
+            console.log('[useQueueState] Updating pause state to:', value.isPaused);
             setIsPaused(!!value.isPaused);
           }
         }
@@ -111,11 +112,12 @@ export const useQueueState = () => {
       event: 'queue_state_change',
       payload: { isPaused: newPausedState }
     });
+    
+    console.log('[useQueueState] Queue state change broadcasted');
 
     // Clean up channel
     await supabase.removeChannel(channel);
 
-    console.log('[useQueueState] Pause state updated to:', newPausedState);
     return newPausedState;
   };
 
