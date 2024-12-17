@@ -36,35 +36,17 @@ export const useQueueState = () => {
     // Load initial state
     loadPauseState();
 
-    // Set up realtime subscription
-    const channel = supabase.channel('queue-state-changes')
+    // Set up realtime subscription using broadcast channel for immediate updates
+    const channel = supabase.channel('queue-state')
       .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'system_settings',
-          filter: 'key=queue_state'
-        },
-        async (payload) => {
-          console.log('[useQueueState] Received queue state update:', payload);
-          
-          // Fetch the latest state directly to ensure consistency
-          const { data, error } = await supabase
-            .from('system_settings')
-            .select('value')
-            .eq('key', 'queue_state')
-            .single();
-            
-          if (error) {
-            console.error('[useQueueState] Error fetching updated state:', error);
-            return;
-          }
-
-          const value = data?.value as unknown as QueueStateValue;
-          if (value && typeof value === 'object' && 'isPaused' in value) {
-            console.log('[useQueueState] Updating pause state to:', value.isPaused);
-            setIsPaused(!!value.isPaused);
+        'broadcast',
+        { event: 'queue_state_change' },
+        (payload) => {
+          console.log('[useQueueState] Received broadcast queue state update:', payload);
+          if (payload.payload && typeof payload.payload === 'object' && 'isPaused' in payload.payload) {
+            const newState = !!payload.payload.isPaused;
+            console.log('[useQueueState] Updating pause state to:', newState);
+            setIsPaused(newState);
           }
         }
       )
@@ -100,6 +82,13 @@ export const useQueueState = () => {
       setIsPaused(isPaused);
       return isPaused;
     }
+
+    // Broadcast the state change
+    await supabase.channel('queue-state').send({
+      type: 'broadcast',
+      event: 'queue_state_change',
+      payload: { isPaused: newPausedState }
+    });
 
     console.log('[useQueueState] Pause state updated to:', newPausedState);
     return newPausedState;

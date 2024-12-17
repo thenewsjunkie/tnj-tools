@@ -41,6 +41,13 @@ const QueueControlHandler = ({ action }: QueueControlHandlerProps) => {
           return;
         }
 
+        // Broadcast the state change
+        await supabase.channel('queue-state').send({
+          type: 'broadcast',
+          event: 'queue_state_change',
+          payload: { isPaused: shouldPause }
+        });
+
         console.log('[QueueControlHandler] Queue state updated to:', shouldPause ? 'paused' : 'playing');
         
         toast({
