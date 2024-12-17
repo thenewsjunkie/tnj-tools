@@ -17,6 +17,7 @@ interface ReviewsProps {
 const Reviews = ({ showViewAllLink = false, reviews: propReviews, simpleView = false }: ReviewsProps) => {
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [totalReviews, setTotalReviews] = useState(0);
 
   const { data: fetchedReviews = [], refetch } = useQuery({
     queryKey: ['reviews'],
@@ -29,8 +30,41 @@ const Reviews = ({ showViewAllLink = false, reviews: propReviews, simpleView = f
       if (error) throw error;
       return data as Review[];
     },
-    enabled: !propReviews,
   });
+
+  // Fetch total reviews count
+  useState(() => {
+    const fetchTotalReviews = async () => {
+      const { count, error } = await supabase
+        .from('reviews')
+        .select('*', { count: 'exact', head: true });
+      
+      if (!error && count !== null) {
+        setTotalReviews(count);
+      }
+    };
+
+    fetchTotalReviews();
+
+    // Subscribe to changes in reviews table
+    const channel = supabase.channel('reviews-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'reviews'
+        },
+        () => {
+          fetchTotalReviews();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const reviews = propReviews || fetchedReviews;
 
@@ -47,7 +81,7 @@ const Reviews = ({ showViewAllLink = false, reviews: propReviews, simpleView = f
   };
 
   return (
-    <Card className="w-full bg-background border border-gray-200 dark:border-white/10">
+    <Card className="w-full bg-background border border-gray-200 dark:border-white/10 relative pb-8">
       <CardHeader>
         <CardTitle className="flex justify-between items-center">
           <div className="flex items-center gap-4">
@@ -128,6 +162,10 @@ const Reviews = ({ showViewAllLink = false, reviews: propReviews, simpleView = f
           </div>
         )}
       </CardContent>
+
+      <div className="absolute bottom-3 right-4 text-xs text-muted-foreground">
+        Total Reviews: {totalReviews}
+      </div>
 
       <ReviewDialog
         review={selectedReview}
