@@ -26,7 +26,9 @@ const GlobalQueueManager = () => {
         .on('broadcast', { event: 'alert_completed' }, async () => {
           console.log('[GlobalQueueManager] Alert completed event received');
           if (!isPaused) {
-            await new Promise(resolve => setTimeout(resolve, 500)); // Small delay to ensure state is updated
+            // Add a small delay to ensure state is updated
+            await new Promise(resolve => setTimeout(resolve, 100));
+            console.log('[GlobalQueueManager] Processing next alert after completion');
             processNextAlert(isPaused);
           }
         })
@@ -44,6 +46,14 @@ const GlobalQueueManager = () => {
       }
     };
   }, [processNextAlert, isPaused, currentAlert]);
+
+  // Also process next alert when pause state changes to false
+  useEffect(() => {
+    if (!isPaused && !currentAlert) {
+      console.log('[GlobalQueueManager] Queue unpaused, processing next alert');
+      processNextAlert(isPaused);
+    }
+  }, [isPaused]);
 
   return null;
 };
