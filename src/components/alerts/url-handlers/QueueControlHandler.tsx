@@ -22,6 +22,8 @@ const QueueControlHandler = ({ action }: QueueControlHandlerProps) => {
       
       // Only toggle if current state doesn't match desired state
       if (shouldPause !== isPaused) {
+        console.log('[QueueControlHandler] Updating queue state to:', shouldPause ? 'paused' : 'playing');
+        
         // Update system_settings directly
         const { error } = await supabase
           .from('system_settings')
@@ -42,13 +44,15 @@ const QueueControlHandler = ({ action }: QueueControlHandlerProps) => {
         }
 
         // Broadcast the state change
-        await supabase.channel('queue-state').send({
+        const channel = supabase.channel('queue-state');
+        await channel.subscribe();
+        await channel.send({
           type: 'broadcast',
           event: 'queue_state_change',
           payload: { isPaused: shouldPause }
         });
 
-        console.log('[QueueControlHandler] Queue state updated to:', shouldPause ? 'paused' : 'playing');
+        console.log('[QueueControlHandler] Queue state updated and broadcasted');
         
         toast({
           title: `Queue ${shouldPause ? 'Paused' : 'Playing'}`,

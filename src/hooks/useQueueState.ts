@@ -36,8 +36,24 @@ export const useQueueState = () => {
     // Load initial state
     loadPauseState();
 
-    // Set up realtime subscription using broadcast channel for immediate updates
+    // Set up realtime subscription for both database changes and broadcast channel
     const channel = supabase.channel('queue-state')
+      .on(
+        'postgres_changes',
+        { 
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'system_settings',
+          filter: 'key=eq.queue_state'
+        },
+        (payload) => {
+          console.log('[useQueueState] Received database queue state update:', payload);
+          const value = payload.new.value as unknown as QueueStateValue;
+          if (value && typeof value === 'object' && 'isPaused' in value) {
+            setIsPaused(!!value.isPaused);
+          }
+        }
+      )
       .on(
         'broadcast',
         { event: 'queue_state_change' },
@@ -97,7 +113,7 @@ export const useQueueState = () => {
   // Calculate derived state from queue data
   const currentAlert = queueData?.find(item => item.status === 'playing');
   const pendingAlerts = queueData?.filter(item => item.status === 'pending') || [];
-  const queueCount = (queueData || []).length;
+  const queueCount = pendingAlerts.length;
 
   return {
     isPaused,

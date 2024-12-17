@@ -1,4 +1,5 @@
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { PauseCircle } from "lucide-react";
 
 interface QueueManagerProps {
   currentAlert: any;
@@ -8,12 +9,18 @@ interface QueueManagerProps {
 }
 
 const QueueManager = ({ currentAlert, queueCount, isPaused, processNextAlert }: QueueManagerProps) => {
-  // Always show if there are alerts in queue, even when paused
-  if (!currentAlert && queueCount === 0) return null;
+  // Always show if there are alerts in queue or if paused
+  if (!currentAlert && queueCount === 0 && !isPaused) return null;
 
   return (
     <div className="px-6 pb-4">
       <Alert>
+        {isPaused && (
+          <div className="flex items-center gap-2 mb-2">
+            <PauseCircle className="h-4 w-4 text-neon-red" />
+            <AlertTitle className="text-neon-red">Queue Paused</AlertTitle>
+          </div>
+        )}
         {currentAlert ? (
           <>
             <AlertTitle>Current Alert: {currentAlert.alert.title}</AlertTitle>
@@ -23,8 +30,6 @@ const QueueManager = ({ currentAlert, queueCount, isPaused, processNextAlert }: 
               </AlertDescription>
             )}
           </>
-        ) : isPaused && queueCount > 0 ? (
-          <AlertTitle>Queue Paused</AlertTitle>
         ) : null}
         <AlertDescription className="mt-2 text-sm text-muted-foreground">
           Queue: {queueCount} alert{queueCount !== 1 ? 's' : ''}
