@@ -13,7 +13,7 @@ export const useQueueState = () => {
 
   // Load initial pause state and subscribe to changes
   useEffect(() => {
-    console.log('[useQueueState] Loading initial pause state');
+    console.log('[useQueueState] Setting up queue state subscription');
     
     const loadPauseState = async () => {
       const { data, error } = await supabase
@@ -36,7 +36,7 @@ export const useQueueState = () => {
 
     loadPauseState();
 
-    // Subscribe to changes in system_settings
+    // Subscribe to ALL changes in system_settings table for queue_state
     const channel = supabase.channel('queue-state-changes')
       .on(
         'postgres_changes',
@@ -47,7 +47,7 @@ export const useQueueState = () => {
           filter: 'key=queue_state'
         },
         (payload) => {
-          console.log('[useQueueState] Received queue state update payload:', payload);
+          console.log('[useQueueState] Received queue state update:', payload);
           const value = (payload.new as { value: Json }).value as unknown as QueueStateValue;
           if (value && typeof value === 'object' && 'isPaused' in value) {
             console.log('[useQueueState] Updating pause state to:', value.isPaused);
