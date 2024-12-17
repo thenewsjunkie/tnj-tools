@@ -3,11 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useParams } from "react-router-dom";
 import { AlertDisplay } from "@/components/alerts/AlertDisplay";
 import { useAlertQueue } from "@/hooks/useAlertQueue";
+import { useQueueState } from "@/hooks/useQueueState";
 
 const Alerts = () => {
-  const { alertSlug, username } = useParams();
+  const { alertSlug, username, action } = useParams();
   const completingRef = useRef(false);
   const { currentAlert, handleAlertComplete } = useAlertQueue();
+  const { togglePause } = useQueueState();
 
   // Function to convert title to slug
   const titleToSlug = (title: string) => {
@@ -21,13 +23,36 @@ const Alerts = () => {
     ).join(' ');
   };
 
+  // Effect to handle queue control via URL
+  useEffect(() => {
+    const handleQueueControl = async () => {
+      if (!action || !action.match(/^(play|stop)$/)) return;
+
+      console.log('[Alerts Page] Queue control action:', action);
+      
+      const shouldPause = action === 'stop';
+      const newState = await togglePause();
+      
+      // If the current state doesn't match what we want, toggle it
+      if (newState === shouldPause) {
+        console.log('[Alerts Page] Queue state already matches desired state');
+        return;
+      }
+      
+      await togglePause();
+      console.log('[Alerts Page] Queue state updated to:', action === 'stop' ? 'paused' : 'playing');
+    };
+
+    handleQueueControl();
+  }, [action, togglePause]);
+
   // Effect to handle URL-based alert triggering
   useEffect(() => {
     console.log('[Alerts Page] Component mounted. Alert slug:', alertSlug, 'Username:', username);
     
     const triggerAlertFromUrl = async () => {
-      if (!alertSlug || completingRef.current) {
-        console.log('[Alerts Page] No alert slug or already completing, skipping trigger');
+      if (!alertSlug || completingRef.current || alertSlug === 'queue') {
+        console.log('[Alerts Page] No alert slug, already completing, or queue control URL');
         return;
       }
 
