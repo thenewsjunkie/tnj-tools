@@ -121,11 +121,18 @@ const Instructions = () => {
                   className="min-h-[400px]"
                 />
                 <div className="flex gap-2">
-                  <Button onClick={handleSave} className="flex items-center gap-2">
+                  <Button 
+                    onClick={handleSave} 
+                    className="flex items-center gap-2 bg-neon-red hover:bg-neon-red/90 text-white dark:bg-primary dark:hover:bg-primary/90"
+                  >
                     <Save className="h-4 w-4" />
                     Save
                   </Button>
-                  <Button variant="outline" onClick={handleCancel}>
+                  <Button 
+                    variant="outline" 
+                    onClick={handleCancel}
+                    className="text-gray-700 border-gray-300 hover:bg-gray-100 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-800"
+                  >
                     Cancel
                   </Button>
                 </div>
