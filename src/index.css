@@ -114,6 +114,11 @@ a {
   @apply border border-gray-200;
 }
 
+/* Dark mode textarea styles */
+.dark textarea {
+  @apply text-white bg-black/50;
+}
+
 /* Preload font for OBS */
 .alert-message-font {
   font-family: 'Radiate Sans Extra Bold', system-ui, -apple-system, sans-serif !important;
