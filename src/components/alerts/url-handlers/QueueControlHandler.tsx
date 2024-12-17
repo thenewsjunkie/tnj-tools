@@ -14,11 +14,11 @@ const QueueControlHandler = ({ action }: QueueControlHandlerProps) => {
 
   useEffect(() => {
     const handleQueueControl = async () => {
-      if (!action || !action.match(/^(play|stop)$/)) return;
+      if (!action || !action.match(/^(play|pause)$/)) return;
 
       console.log('[QueueControlHandler] Queue control action:', action);
       
-      const shouldPause = action === 'stop';
+      const shouldPause = action === 'pause';
       
       // Only toggle if current state doesn't match desired state
       if (shouldPause !== isPaused) {
