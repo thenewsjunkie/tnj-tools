@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQueueData } from "./useQueueData";
 import { supabase } from "@/integrations/supabase/client";
 import { Json } from "@/integrations/supabase/types";
 
@@ -8,6 +9,7 @@ interface QueueStateValue {
 
 export const useQueueState = () => {
   const [isPaused, setIsPaused] = useState(false);
+  const { queueData } = useQueueData();
 
   // Load initial pause state
   useEffect(() => {
@@ -85,8 +87,16 @@ export const useQueueState = () => {
     return newPausedState;
   };
 
+  // Calculate derived state from queue data
+  const currentAlert = queueData?.find(item => item.status === 'playing');
+  const pendingAlerts = queueData?.filter(item => item.status === 'pending') || [];
+  const queueCount = (queueData || []).length;
+
   return {
     isPaused,
-    togglePause
+    togglePause,
+    currentAlert,
+    pendingAlerts,
+    queueCount
   };
 };
