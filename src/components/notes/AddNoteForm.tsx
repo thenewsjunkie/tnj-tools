@@ -68,14 +68,22 @@ const AddNoteForm = ({ newNote, setNewNote, handleAddNote }: AddNoteFormProps) =
         <Button
           variant={newNote.type === 'text' ? 'default' : 'outline'}
           onClick={() => setNewNote(prev => ({ ...prev, type: 'text' }))}
-          className={newNote.type !== 'text' ? 'dark:border-white/20 dark:text-white dark:hover:bg-white/10' : ''}
+          className={`${
+            newNote.type === 'text' 
+              ? 'bg-neon-red hover:bg-neon-red/90 text-white' 
+              : 'hover:bg-accent'
+          }`}
         >
           Text
         </Button>
         <Button
           variant={newNote.type === 'link' ? 'default' : 'outline'}
           onClick={() => setNewNote(prev => ({ ...prev, type: 'link' }))}
-          className={newNote.type !== 'link' ? 'dark:border-white/20 dark:text-white dark:hover:bg-white/10' : ''}
+          className={`${
+            newNote.type === 'link'
+              ? 'bg-neon-red hover:bg-neon-red/90 text-white'
+              : 'hover:bg-accent'
+          }`}
         >
           <Link className="h-4 w-4 mr-2" />
           Link
@@ -83,7 +91,11 @@ const AddNoteForm = ({ newNote, setNewNote, handleAddNote }: AddNoteFormProps) =
         <Button
           variant={newNote.type === 'image' ? 'default' : 'outline'}
           onClick={() => setNewNote(prev => ({ ...prev, type: 'image' }))}
-          className={newNote.type !== 'image' ? 'dark:border-white/20 dark:text-white dark:hover:bg-white/10' : ''}
+          className={`${
+            newNote.type === 'image'
+              ? 'bg-neon-red hover:bg-neon-red/90 text-white'
+              : 'hover:bg-accent'
+          }`}
         >
           <Image className="h-4 w-4 mr-2" />
           Image
@@ -91,7 +103,11 @@ const AddNoteForm = ({ newNote, setNewNote, handleAddNote }: AddNoteFormProps) =
         <Button
           variant={newNote.type === 'video' ? 'default' : 'outline'}
           onClick={() => setNewNote(prev => ({ ...prev, type: 'video' }))}
-          className={newNote.type !== 'video' ? 'dark:border-white/20 dark:text-white dark:hover:bg-white/10' : ''}
+          className={`${
+            newNote.type === 'video'
+              ? 'bg-neon-red hover:bg-neon-red/90 text-white'
+              : 'hover:bg-accent'
+          }`}
         >
           <Video className="h-4 w-4 mr-2" />
           Video
@@ -124,7 +140,7 @@ const AddNoteForm = ({ newNote, setNewNote, handleAddNote }: AddNoteFormProps) =
             disabled={isUploading}
             className="dark:text-white dark:file:bg-white/10 dark:file:text-white dark:file:border-white/20"
           />
-          {isUploading && <p className="text-sm text-white/70">Uploading...</p>}
+          {isUploading && <p className="text-sm text-muted-foreground">Uploading...</p>}
           {newNote.url && (
             <div className="relative aspect-video">
               <img 
@@ -163,7 +179,11 @@ const AddNoteForm = ({ newNote, setNewNote, handleAddNote }: AddNoteFormProps) =
         />
       )}
 
-      <Button onClick={() => handleAddNote(newNote)} className="w-full" disabled={isUploading}>
+      <Button 
+        onClick={() => handleAddNote(newNote)} 
+        className="w-full bg-neon-red hover:bg-neon-red/90 text-white" 
+        disabled={isUploading}
+      >
         Add Note
       </Button>
     </div>
