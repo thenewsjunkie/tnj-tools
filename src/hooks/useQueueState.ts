@@ -99,14 +99,21 @@ export const useQueueState = () => {
       return isPaused;
     }
 
-    // Broadcast the state change
+    // Create and subscribe to channel
     const channel = supabase.channel('queue-state');
+    
+    // Subscribe first
     await channel.subscribe();
+    
+    // Then broadcast the state change
     await channel.send({
       type: 'broadcast',
       event: 'queue_state_change',
       payload: { isPaused: newPausedState }
     });
+
+    // Clean up channel
+    await supabase.removeChannel(channel);
 
     console.log('[useQueueState] Pause state updated to:', newPausedState);
     return newPausedState;
