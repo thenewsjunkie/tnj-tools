@@ -78,7 +78,7 @@ const Alerts = () => {
   const bgColor = theme === 'light' ? 'bg-white' : 'bg-black/50';
 
   return (
-    <div className={`rounded-lg ${bgColor} text-card-foreground shadow-sm border border-gray-200 dark:border-white/10 relative`}>
+    <div className={`rounded-lg ${bgColor} text-card-foreground shadow-sm border border-gray-200 dark:border-white/10 relative pb-8`}>
       <AlertsHeader 
         isPaused={isPaused}
         togglePause={handleTogglePause}
@@ -102,7 +102,7 @@ const Alerts = () => {
         ))}
       </div>
 
-      <div className="absolute bottom-2 right-4 text-xs text-muted-foreground">
+      <div className="absolute bottom-3 right-4 text-xs text-muted-foreground">
         Total Alerts Sent: {totalAlertsSent}
       </div>
 
