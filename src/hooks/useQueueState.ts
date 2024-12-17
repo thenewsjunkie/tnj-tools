@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useQueueData } from "./useQueueData";
 import { supabase } from "@/integrations/supabase/client";
 import { Json } from "@/integrations/supabase/types";
 
@@ -8,12 +7,12 @@ interface QueueStateValue {
 }
 
 export const useQueueState = () => {
-  const { queueData } = useQueueData();
   const [isPaused, setIsPaused] = useState(false);
 
-  // Load initial pause state from system_settings
+  // Load initial pause state
   useEffect(() => {
     const loadPauseState = async () => {
+      console.log('[useQueueState] Loading initial pause state');
       const { data, error } = await supabase
         .from('system_settings')
         .select('value')
@@ -27,22 +26,43 @@ export const useQueueState = () => {
 
       const value = data?.value as unknown as QueueStateValue;
       if (value && typeof value === 'object' && 'isPaused' in value) {
+        console.log('[useQueueState] Setting initial pause state:', value.isPaused);
         setIsPaused(!!value.isPaused);
       }
     };
 
     loadPauseState();
-  }, []);
 
-  const currentAlert = queueData?.find(item => item.status === 'playing');
-  const pendingAlerts = queueData?.filter(item => item.status === 'pending') || [];
-  const queueCount = (queueData || []).length;
+    // Subscribe to changes in system_settings
+    const channel = supabase.channel('queue-state-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'system_settings',
+          filter: 'key=queue_state'
+        },
+        (payload) => {
+          const value = (payload.new as { value: Json }).value as unknown as QueueStateValue;
+          if (value && typeof value === 'object' && 'isPaused' in value) {
+            console.log('[useQueueState] Received queue state update:', value.isPaused);
+            setIsPaused(!!value.isPaused);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const togglePause = async () => {
     console.log('[useQueueState] Toggling pause state from:', isPaused);
     const newPausedState = !isPaused;
 
-    // Update local state
+    // Update local state immediately for responsive UI
     setIsPaused(newPausedState);
 
     // Persist to database
@@ -66,9 +86,6 @@ export const useQueueState = () => {
   };
 
   return {
-    currentAlert,
-    pendingAlerts,
-    queueCount,
     isPaused,
     togglePause
   };

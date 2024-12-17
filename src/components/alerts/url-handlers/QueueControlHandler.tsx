@@ -1,12 +1,14 @@
 import { useEffect } from "react";
 import { useQueueState } from "@/hooks/useQueueState";
+import { useToast } from "@/components/ui/use-toast";
 
 interface QueueControlHandlerProps {
   action?: string;
 }
 
 const QueueControlHandler = ({ action }: QueueControlHandlerProps) => {
-  const { togglePause } = useQueueState();
+  const { togglePause, isPaused } = useQueueState();
+  const { toast } = useToast();
 
   useEffect(() => {
     const handleQueueControl = async () => {
@@ -15,20 +17,23 @@ const QueueControlHandler = ({ action }: QueueControlHandlerProps) => {
       console.log('[QueueControlHandler] Queue control action:', action);
       
       const shouldPause = action === 'stop';
-      const newState = await togglePause();
       
-      // If the current state doesn't match what we want, toggle it
-      if (newState === shouldPause) {
+      // Only toggle if current state doesn't match desired state
+      if (shouldPause !== isPaused) {
+        const newState = await togglePause();
+        console.log('[QueueControlHandler] Queue state updated to:', newState ? 'paused' : 'playing');
+        
+        toast({
+          title: `Queue ${newState ? 'Paused' : 'Playing'}`,
+          description: `Alert queue has been ${newState ? 'paused' : 'resumed'} via URL control`,
+        });
+      } else {
         console.log('[QueueControlHandler] Queue state already matches desired state');
-        return;
       }
-      
-      await togglePause();
-      console.log('[QueueControlHandler] Queue state updated to:', action === 'stop' ? 'paused' : 'playing');
     };
 
     handleQueueControl();
-  }, [action, togglePause]);
+  }, [action, togglePause, isPaused, toast]);
 
   return null;
 };
