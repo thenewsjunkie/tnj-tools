@@ -36,7 +36,7 @@ export const useQueueState = () => {
     // Load initial state
     loadPauseState();
 
-    // Set up realtime subscription for both database changes and broadcast channel
+    // Set up realtime subscription for database changes only
     const channel = supabase.channel('queue-state')
       .on(
         'postgres_changes',
@@ -52,18 +52,6 @@ export const useQueueState = () => {
           if (value && typeof value === 'object' && 'isPaused' in value) {
             console.log('[useQueueState] Updating pause state to:', value.isPaused);
             setIsPaused(!!value.isPaused);
-          }
-        }
-      )
-      .on(
-        'broadcast',
-        { event: 'queue_state_change' },
-        (payload) => {
-          console.log('[useQueueState] Received broadcast queue state update:', payload);
-          if (payload.payload && typeof payload.payload === 'object' && 'isPaused' in payload.payload) {
-            const newState = !!payload.payload.isPaused;
-            console.log('[useQueueState] Updating pause state to:', newState);
-            setIsPaused(newState);
           }
         }
       )
@@ -99,24 +87,6 @@ export const useQueueState = () => {
       setIsPaused(isPaused);
       return isPaused;
     }
-
-    // Create and subscribe to channel
-    const channel = supabase.channel('queue-state');
-    
-    // Subscribe first
-    await channel.subscribe();
-    
-    // Then broadcast the state change
-    await channel.send({
-      type: 'broadcast',
-      event: 'queue_state_change',
-      payload: { isPaused: newPausedState }
-    });
-    
-    console.log('[useQueueState] Queue state change broadcasted');
-
-    // Clean up channel
-    await supabase.removeChannel(channel);
 
     return newPausedState;
   };

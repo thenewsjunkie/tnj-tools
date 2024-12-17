@@ -22,7 +22,10 @@ export const useQueueData = () => {
       console.log('[useQueueData] Queue data fetched:', data);
       return data;
     },
-    refetchInterval: 1000,
+    // Only refetch every 5 seconds instead of every second
+    refetchInterval: 5000,
+    // Don't refetch in the background when the window is not focused
+    refetchIntervalInBackground: false,
   });
 
   return { queueData, refetch };
