@@ -42,7 +42,7 @@ const Alerts = () => {
           event: 'UPDATE',
           schema: 'public',
           table: 'alert_queue',
-          filter: 'status=completed'
+          filter: 'status=eq.completed'
         },
         () => {
           fetchTotalAlerts();
@@ -103,7 +103,7 @@ const Alerts = () => {
       </div>
 
       <div className="absolute bottom-3 left-4 text-xs text-muted-foreground">
-        Queue Status: {isPaused ? 'Pause' : 'Play'}
+        Queue Status: {isPaused ? 'Paused' : 'Playing'}
       </div>
 
       <div className="absolute bottom-3 right-4 text-xs text-muted-foreground">
