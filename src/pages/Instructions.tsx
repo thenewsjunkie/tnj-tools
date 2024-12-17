@@ -86,7 +86,7 @@ const Instructions = () => {
             <Button
               onClick={() => setIsEditing(true)}
               variant="outline"
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 border-primary text-primary hover:bg-primary/10"
             >
               <Edit2 className="h-4 w-4" />
               Edit
