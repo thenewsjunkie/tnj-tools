@@ -2,12 +2,15 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Tv, Film, Utensils, Package, Skull, Zap, Rocket, Heart, Mountain } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import ReviewImageUpload from "./ReviewImageUpload";
+import ReviewTypeSelect from "./ReviewTypeSelect";
+import MovieGenreSelect from "./MovieGenreSelect";
+import RatingSelect from "./RatingSelect";
+import type { ReviewType } from "./types";
 
 interface AddReviewDialogProps {
   onReviewAdded: () => void;
@@ -16,7 +19,7 @@ interface AddReviewDialogProps {
 const AddReviewDialog = ({ onReviewAdded }: AddReviewDialogProps) => {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
-  const [type, setType] = useState<"television" | "movie" | "food" | "product">();
+  const [type, setType] = useState<ReviewType>();
   const [genre, setGenre] = useState<string>();
   const [rating, setRating] = useState<number>();
   const [content, setContent] = useState("");
@@ -81,19 +84,6 @@ const AddReviewDialog = ({ onReviewAdded }: AddReviewDialogProps) => {
 
   const remainingChars = 140 - content.length;
 
-  const genreOptions = [
-    { value: 'Horror', icon: Skull },
-    { value: 'Action', icon: Zap },
-    { value: 'Sci Fi', icon: Rocket },
-    { value: 'Romantic Comedy', icon: Heart },
-    { value: 'Adventure', icon: Mountain },
-    { value: 'Comedy', icon: Heart },
-    { value: 'Drama', icon: Film },
-    { value: 'Animation', icon: Film },
-    { value: 'Thriller', icon: Skull },
-    { value: 'Other', icon: Film },
-  ];
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -110,54 +100,10 @@ const AddReviewDialog = ({ onReviewAdded }: AddReviewDialogProps) => {
           <DialogTitle className="text-foreground">Add New Review</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          <Select onValueChange={(value: "television" | "movie" | "food" | "product") => setType(value)}>
-            <SelectTrigger className="bg-white dark:bg-white dark:text-black">
-              <SelectValue placeholder="Select review type" />
-            </SelectTrigger>
-            <SelectContent className="bg-white dark:bg-white">
-              <SelectItem value="television" className="text-black dark:text-black">
-                <div className="flex items-center gap-2">
-                  <Tv className="h-4 w-4" />
-                  <span>Television Series</span>
-                </div>
-              </SelectItem>
-              <SelectItem value="movie" className="text-black dark:text-black">
-                <div className="flex items-center gap-2">
-                  <Film className="h-4 w-4" />
-                  <span>Movie</span>
-                </div>
-              </SelectItem>
-              <SelectItem value="food" className="text-black dark:text-black">
-                <div className="flex items-center gap-2">
-                  <Utensils className="h-4 w-4" />
-                  <span>Food</span>
-                </div>
-              </SelectItem>
-              <SelectItem value="product" className="text-black dark:text-black">
-                <div className="flex items-center gap-2">
-                  <Package className="h-4 w-4" />
-                  <span>Product</span>
-                </div>
-              </SelectItem>
-            </SelectContent>
-          </Select>
+          <ReviewTypeSelect onValueChange={setType} />
 
           {type === 'movie' && (
-            <Select onValueChange={setGenre}>
-              <SelectTrigger className="bg-white dark:bg-white dark:text-black">
-                <SelectValue placeholder="Select movie genre" />
-              </SelectTrigger>
-              <SelectContent className="bg-white dark:bg-white">
-                {genreOptions.map(({ value, icon: Icon }) => (
-                  <SelectItem key={value} value={value} className="text-black dark:text-black">
-                    <div className="flex items-center gap-2">
-                      <Icon className="h-4 w-4" />
-                      <span>{value}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <MovieGenreSelect onValueChange={setGenre} />
           )}
 
           <Input
@@ -167,18 +113,7 @@ const AddReviewDialog = ({ onReviewAdded }: AddReviewDialogProps) => {
             className="text-foreground"
           />
 
-          <Select onValueChange={(value) => setRating(parseInt(value))}>
-            <SelectTrigger className="bg-white dark:bg-white dark:text-black">
-              <SelectValue placeholder="Rating" />
-            </SelectTrigger>
-            <SelectContent className="bg-white dark:bg-white">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <SelectItem key={star} value={star.toString()} className="text-black dark:text-black">
-                  {"★".repeat(star)}{"☆".repeat(5-star)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <RatingSelect onValueChange={setRating} />
 
           <ReviewImageUpload
             images={imageUrls}
