@@ -1,15 +1,18 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft, Edit2, Save } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
+import { Card, CardContent } from "@/components/ui/card";
 
 const Instructions = () => {
+  const [isEditing, setIsEditing] = useState(false);
   const [content, setContent] = useState("");
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: instructions, isLoading } = useQuery({
     queryKey: ["instructions"],
@@ -25,25 +28,34 @@ const Instructions = () => {
     },
   });
 
-  const handleSave = async () => {
-    const { error } = await supabase
-      .from("instructions")
-      .update({ content })
-      .eq("id", instructions?.id);
+  const updateInstructions = useMutation({
+    mutationFn: async (newContent: string) => {
+      const { error } = await supabase
+        .from("instructions")
+        .update({ content: newContent })
+        .eq("id", instructions?.id);
 
-    if (error) {
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["instructions"] });
+      toast({
+        title: "Success",
+        description: "Instructions saved successfully",
+      });
+      setIsEditing(false);
+    },
+    onError: () => {
       toast({
         title: "Error",
         description: "Failed to save instructions",
         variant: "destructive",
       });
-      return;
-    }
+    },
+  });
 
-    toast({
-      title: "Success",
-      description: "Instructions saved successfully",
-    });
+  const handleSave = () => {
+    updateInstructions.mutate(content);
   };
 
   if (isLoading) {
@@ -67,20 +79,60 @@ const Instructions = () => {
           <div className="space-y-1">
             <h2 className="text-2xl font-semibold tracking-tight">Instructions</h2>
             <p className="text-sm text-muted-foreground">
-              Add instructions for users of the website
+              Website usage instructions and guidelines
             </p>
           </div>
+          {!isEditing && (
+            <Button
+              onClick={() => setIsEditing(true)}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Edit2 className="h-4 w-4" />
+              Edit
+            </Button>
+          )}
         </div>
 
-        <div className="space-y-4">
-          <Textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Enter instructions here..."
-            className="min-h-[400px]"
-          />
-          <Button onClick={handleSave}>Save Instructions</Button>
-        </div>
+        <Card>
+          <CardContent className="pt-6">
+            {isEditing ? (
+              <div className="space-y-4">
+                <Textarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder="Enter instructions here..."
+                  className="min-h-[400px]"
+                />
+                <div className="flex gap-2">
+                  <Button onClick={handleSave} className="flex items-center gap-2">
+                    <Save className="h-4 w-4" />
+                    Save
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsEditing(false);
+                      setContent(instructions?.content || "");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="prose prose-sm dark:prose-invert max-w-none">
+                {content ? (
+                  <pre className="whitespace-pre-wrap font-sans">{content}</pre>
+                ) : (
+                  <p className="text-muted-foreground italic">
+                    No instructions have been added yet.
+                  </p>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
