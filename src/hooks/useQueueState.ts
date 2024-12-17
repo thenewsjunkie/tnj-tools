@@ -41,22 +41,26 @@ export const useQueueState = () => {
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*',
           schema: 'public',
           table: 'system_settings',
           filter: 'key=queue_state'
         },
         (payload) => {
+          console.log('[useQueueState] Received queue state update payload:', payload);
           const value = (payload.new as { value: Json }).value as unknown as QueueStateValue;
           if (value && typeof value === 'object' && 'isPaused' in value) {
-            console.log('[useQueueState] Received queue state update:', value.isPaused);
+            console.log('[useQueueState] Updating pause state to:', value.isPaused);
             setIsPaused(!!value.isPaused);
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[useQueueState] Subscription status:', status);
+      });
 
     return () => {
+      console.log('[useQueueState] Cleaning up subscription');
       supabase.removeChannel(channel);
     };
   }, []);
