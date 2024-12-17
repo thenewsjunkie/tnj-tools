@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
+import TextNote from "@/components/notes/note-types/TextNote";
 
 const Instructions = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -122,13 +123,7 @@ const Instructions = () => {
               </div>
             ) : (
               <div className="prose prose-sm dark:prose-invert max-w-none">
-                {content ? (
-                  <pre className="whitespace-pre-wrap font-sans">{content}</pre>
-                ) : (
-                  <p className="text-muted-foreground italic">
-                    No instructions have been added yet.
-                  </p>
-                )}
+                <TextNote content={content} />
               </div>
             )}
           </CardContent>
