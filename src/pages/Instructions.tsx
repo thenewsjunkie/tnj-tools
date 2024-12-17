@@ -29,7 +29,6 @@ const Instructions = () => {
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
-  // Update edit content when instructions data changes
   useEffect(() => {
     if (instructions?.content) {
       setEditContent(instructions.content);
@@ -103,7 +102,7 @@ const Instructions = () => {
             <Button
               onClick={() => setIsEditing(true)}
               variant="outline"
-              className="flex items-center gap-2 border-primary text-primary hover:bg-primary/10"
+              className="flex items-center gap-2 border-neon-red text-neon-red hover:bg-neon-red/10 dark:border-primary dark:text-primary dark:hover:bg-primary/10"
             >
               <Edit2 className="h-4 w-4" />
               Edit
