@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,7 +33,7 @@ const Reviews = ({ showViewAllLink = false, reviews: propReviews, simpleView = f
   });
 
   // Fetch total reviews count
-  useState(() => {
+  useEffect(() => {
     const fetchTotalReviews = async () => {
       const { count, error } = await supabase
         .from('reviews')
