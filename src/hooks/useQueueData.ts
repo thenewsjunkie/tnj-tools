@@ -22,12 +22,9 @@ export const useQueueData = () => {
       console.log('[useQueueData] Queue data fetched:', data);
       return data;
     },
-    // Increase refetch interval to reduce unnecessary fetches
-    refetchInterval: 2000,
-    // Don't refetch in the background when window is not focused
+    refetchInterval: 5000, // Reduce polling frequency
     refetchIntervalInBackground: false,
-    // Add stale time to prevent unnecessary refetches
-    staleTime: 1000,
+    staleTime: 2000, // Increase stale time to reduce refetches
   });
 
   return { queueData, refetch };

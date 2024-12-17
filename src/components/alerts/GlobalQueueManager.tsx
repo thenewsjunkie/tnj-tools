@@ -23,11 +23,9 @@ const GlobalQueueManager = () => {
       console.log('[GlobalQueueManager] Setting up realtime subscription');
       
       channelRef.current = supabase.channel('alert-queue')
-        .on('broadcast', { event: 'alert_completed' }, async () => {
+        .on('broadcast', { event: 'alert_completed' }, () => {
           console.log('[GlobalQueueManager] Alert completed event received');
           if (!isPaused) {
-            // Add a small delay to ensure state is updated
-            await new Promise(resolve => setTimeout(resolve, 100));
             console.log('[GlobalQueueManager] Processing next alert after completion');
             processNextAlert(isPaused);
           }
@@ -45,15 +43,7 @@ const GlobalQueueManager = () => {
         channelRef.current = null;
       }
     };
-  }, [processNextAlert, isPaused, currentAlert]);
-
-  // Also process next alert when pause state changes to false
-  useEffect(() => {
-    if (!isPaused && !currentAlert) {
-      console.log('[GlobalQueueManager] Queue unpaused, processing next alert');
-      processNextAlert(isPaused);
-    }
-  }, [isPaused]);
+  }, [isPaused, currentAlert]);
 
   return null;
 };
