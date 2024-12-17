@@ -26,6 +26,7 @@ const GlobalQueueManager = () => {
         .on('broadcast', { event: 'alert_completed' }, async () => {
           console.log('[GlobalQueueManager] Alert completed event received');
           if (!isPaused) {
+            await new Promise(resolve => setTimeout(resolve, 500)); // Small delay to ensure state is updated
             processNextAlert(isPaused);
           }
         })
@@ -34,6 +35,7 @@ const GlobalQueueManager = () => {
         });
     }
 
+    // Cleanup function
     return () => {
       if (channelRef.current) {
         console.log('[GlobalQueueManager] Cleaning up realtime subscription');

@@ -28,16 +28,25 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
     }
 
     console.log('[useQueueActions] Alert marked as completed');
-    await refetchQueue();
-
-    // Broadcast completion event
+    
+    // Create and subscribe to channel before broadcasting
     const channel = supabase.channel('alert-queue');
     await channel.subscribe();
+    
+    // Broadcast completion event
     await channel.send({
       type: 'broadcast',
       event: 'alert_completed',
       payload: { alert_id: currentAlert.id }
     });
+
+    console.log('[useQueueActions] Alert completion broadcasted');
+    
+    // Clean up channel after broadcasting
+    await supabase.removeChannel(channel);
+    
+    // Refetch queue to update UI
+    await refetchQueue();
   };
 
   const processNextAlert = async (isPaused: boolean, currentAlert: any, pendingAlerts: any[]) => {
