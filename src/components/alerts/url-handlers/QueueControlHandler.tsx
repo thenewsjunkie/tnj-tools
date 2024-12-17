@@ -43,17 +43,22 @@ const QueueControlHandler = ({ action }: QueueControlHandlerProps) => {
           return;
         }
 
-        // Broadcast the state change
+        // Set up and subscribe to the channel before broadcasting
         const channel = supabase.channel('queue-state');
-        await channel.subscribe();
-        await channel.send({
-          type: 'broadcast',
-          event: 'queue_state_change',
-          payload: { isPaused: shouldPause }
+        await channel.subscribe(async (status) => {
+          console.log('[QueueControlHandler] Channel subscription status:', status);
+          
+          if (status === 'SUBSCRIBED') {
+            // Only broadcast after successful subscription
+            await channel.send({
+              type: 'broadcast',
+              event: 'queue_state_change',
+              payload: { isPaused: shouldPause }
+            });
+            console.log('[QueueControlHandler] Queue state change broadcasted');
+          }
         });
 
-        console.log('[QueueControlHandler] Queue state updated and broadcasted');
-        
         toast({
           title: `Queue ${shouldPause ? 'Paused' : 'Playing'}`,
           description: `Alert queue has been ${shouldPause ? 'paused' : 'resumed'} via URL control`,

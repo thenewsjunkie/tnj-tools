@@ -100,7 +100,9 @@ export const useQueueState = () => {
     }
 
     // Broadcast the state change
-    await supabase.channel('queue-state').send({
+    const channel = supabase.channel('queue-state');
+    await channel.subscribe();
+    await channel.send({
       type: 'broadcast',
       event: 'queue_state_change',
       payload: { isPaused: newPausedState }
