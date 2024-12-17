@@ -11,10 +11,11 @@ export const useQueueState = () => {
   const [isPaused, setIsPaused] = useState(false);
   const { queueData } = useQueueData();
 
-  // Load initial pause state
+  // Load initial pause state and subscribe to changes
   useEffect(() => {
+    console.log('[useQueueState] Loading initial pause state');
+    
     const loadPauseState = async () => {
-      console.log('[useQueueState] Loading initial pause state');
       const { data, error } = await supabase
         .from('system_settings')
         .select('value')
