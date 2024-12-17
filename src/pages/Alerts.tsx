@@ -21,7 +21,8 @@ const Alerts = () => {
     return (
       <>
         <QueueControlHandler action={action} />
-        <AlertTriggerHandler alertSlug={alertSlug} username={username} />
+        {/* Only render AlertTriggerHandler if we're not on a queue control URL */}
+        {!action && <AlertTriggerHandler alertSlug={alertSlug} username={username} />}
       </>
     );
   }
@@ -41,7 +42,7 @@ const Alerts = () => {
   return (
     <>
       <QueueControlHandler action={action} />
-      <AlertTriggerHandler alertSlug={alertSlug} username={username} />
+      {!action && <AlertTriggerHandler alertSlug={alertSlug} username={username} />}
       <AlertDisplay
         currentAlert={displayAlert}
         onComplete={handleAlertComplete}
