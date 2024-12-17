@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQueueData } from "./useQueueData";
 import { supabase } from "@/integrations/supabase/client";
 import { Json } from "@/integrations/supabase/types";
+import { RealtimeChannel } from "@supabase/supabase-js";
 
 interface QueueStateValue {
   isPaused: boolean;
@@ -10,6 +11,7 @@ interface QueueStateValue {
 export const useQueueState = () => {
   const [isPaused, setIsPaused] = useState(false);
   const { queueData } = useQueueData();
+  const channelRef = useRef<RealtimeChannel | null>(null);
 
   useEffect(() => {
     console.log('[useQueueState] Setting up queue state subscription');
@@ -36,32 +38,37 @@ export const useQueueState = () => {
     // Load initial state
     loadPauseState();
 
-    // Set up realtime subscription for database changes only
-    const channel = supabase.channel('queue-state')
-      .on(
-        'postgres_changes',
-        { 
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'system_settings',
-          filter: 'key=eq.queue_state'
-        },
-        (payload) => {
-          console.log('[useQueueState] Received database queue state update:', payload);
-          const value = payload.new.value as unknown as QueueStateValue;
-          if (value && typeof value === 'object' && 'isPaused' in value) {
-            console.log('[useQueueState] Updating pause state to:', value.isPaused);
-            setIsPaused(!!value.isPaused);
+    // Only set up subscription if we don't already have one
+    if (!channelRef.current) {
+      channelRef.current = supabase.channel('queue-state')
+        .on(
+          'postgres_changes',
+          { 
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'system_settings',
+            filter: 'key=eq.queue_state'
+          },
+          (payload) => {
+            console.log('[useQueueState] Received database queue state update:', payload);
+            const value = payload.new.value as unknown as QueueStateValue;
+            if (value && typeof value === 'object' && 'isPaused' in value) {
+              console.log('[useQueueState] Updating pause state to:', value.isPaused);
+              setIsPaused(!!value.isPaused);
+            }
           }
-        }
-      )
-      .subscribe((status) => {
-        console.log('[useQueueState] Subscription status:', status);
-      });
+        )
+        .subscribe((status) => {
+          console.log('[useQueueState] Subscription status:', status);
+        });
+    }
 
     return () => {
-      console.log('[useQueueState] Cleaning up subscription');
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        console.log('[useQueueState] Cleaning up subscription');
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
   }, []);
 
