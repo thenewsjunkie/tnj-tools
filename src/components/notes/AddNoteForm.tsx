@@ -71,7 +71,7 @@ const AddNoteForm = ({ newNote, setNewNote, handleAddNote }: AddNoteFormProps) =
           className={`${
             newNote.type === 'text' 
               ? 'bg-neon-red hover:bg-neon-red/90 text-white' 
-              : 'hover:bg-accent'
+              : 'text-foreground hover:bg-accent dark:border-white/20 dark:hover:bg-white/10'
           }`}
         >
           Text
@@ -82,7 +82,7 @@ const AddNoteForm = ({ newNote, setNewNote, handleAddNote }: AddNoteFormProps) =
           className={`${
             newNote.type === 'link'
               ? 'bg-neon-red hover:bg-neon-red/90 text-white'
-              : 'hover:bg-accent'
+              : 'text-foreground hover:bg-accent dark:border-white/20 dark:hover:bg-white/10'
           }`}
         >
           <Link className="h-4 w-4 mr-2" />
@@ -94,7 +94,7 @@ const AddNoteForm = ({ newNote, setNewNote, handleAddNote }: AddNoteFormProps) =
           className={`${
             newNote.type === 'image'
               ? 'bg-neon-red hover:bg-neon-red/90 text-white'
-              : 'hover:bg-accent'
+              : 'text-foreground hover:bg-accent dark:border-white/20 dark:hover:bg-white/10'
           }`}
         >
           <Image className="h-4 w-4 mr-2" />
@@ -106,7 +106,7 @@ const AddNoteForm = ({ newNote, setNewNote, handleAddNote }: AddNoteFormProps) =
           className={`${
             newNote.type === 'video'
               ? 'bg-neon-red hover:bg-neon-red/90 text-white'
-              : 'hover:bg-accent'
+              : 'text-foreground hover:bg-accent dark:border-white/20 dark:hover:bg-white/10'
           }`}
         >
           <Video className="h-4 w-4 mr-2" />
