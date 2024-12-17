@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Tv, Film, Utensils, Package, ExternalLink } from "lucide-react";
-import { Link } from "react-router-dom";
-import AddReviewDialog from "./AddReviewDialog";
 import ReviewDialog from "./ReviewDialog";
+import ReviewList from "./ReviewList";
+import ReviewHeader from "./ReviewHeader";
 import type { Review } from "./types";
 
 interface ReviewsProps {
@@ -32,7 +31,6 @@ const Reviews = ({ showViewAllLink = false, reviews: propReviews, simpleView = f
     },
   });
 
-  // Fetch total reviews count
   useEffect(() => {
     const fetchTotalReviews = async () => {
       const { count, error } = await supabase
@@ -46,7 +44,6 @@ const Reviews = ({ showViewAllLink = false, reviews: propReviews, simpleView = f
 
     fetchTotalReviews();
 
-    // Subscribe to changes in reviews table
     const channel = supabase.channel('reviews-changes')
       .on(
         'postgres_changes',
@@ -68,13 +65,6 @@ const Reviews = ({ showViewAllLink = false, reviews: propReviews, simpleView = f
 
   const reviews = propReviews || fetchedReviews;
 
-  const icons = {
-    television: Tv,
-    movie: Film,
-    food: Utensils,
-    product: Package,
-  };
-
   const handleReviewClick = (review: Review) => {
     setSelectedReview(review);
     setDialogOpen(true);
@@ -83,84 +73,14 @@ const Reviews = ({ showViewAllLink = false, reviews: propReviews, simpleView = f
   return (
     <Card className="w-full bg-background border border-gray-200 dark:border-white/10 relative pb-8">
       <CardHeader>
-        <CardTitle className="flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            Reviews
-            {showViewAllLink && (
-              <Link 
-                to="/reviews" 
-                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                <ExternalLink className="h-4 w-4" />
-                View All
-              </Link>
-            )}
-          </div>
-          <AddReviewDialog onReviewAdded={refetch} />
-        </CardTitle>
+        <ReviewHeader showViewAllLink={showViewAllLink} onReviewAdded={refetch} />
       </CardHeader>
       <CardContent>
-        {simpleView ? (
-          <div className="space-y-2">
-            {reviews.map((review) => {
-              const Icon = icons[review.type];
-              
-              return (
-                <div
-                  key={review.id}
-                  onClick={() => handleReviewClick(review)}
-                  className="flex items-center justify-between p-2 rounded-lg border border-gray-200 dark:border-white/10 hover:bg-accent cursor-pointer transition-colors"
-                >
-                  <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
-                    <Icon className="h-4 w-4 text-foreground flex-shrink-0" />
-                    <h3 className="font-medium text-sm text-foreground truncate">{review.title}</h3>
-                  </div>
-                  <div className="text-yellow-500 text-sm flex-shrink-0">
-                    {"★".repeat(review.rating)}{"☆".repeat(5-review.rating)}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {reviews.map((review) => {
-              const Icon = icons[review.type];
-              
-              return (
-                <div
-                  key={review.id}
-                  onClick={() => handleReviewClick(review)}
-                  className="flex flex-col gap-2 p-3 rounded-lg border border-gray-200 dark:border-white/10 hover:bg-accent cursor-pointer transition-colors"
-                >
-                  <div className="flex items-center justify-between min-w-0">
-                    <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
-                      <Icon className="h-4 w-4 text-foreground flex-shrink-0" />
-                      <h3 className="font-medium text-sm text-foreground truncate">{review.title}</h3>
-                    </div>
-                    <div className="text-yellow-500 text-sm flex-shrink-0">
-                      {"★".repeat(review.rating)}{"☆".repeat(5-review.rating)}
-                    </div>
-                  </div>
-                  
-                  {review.image_urls && review.image_urls.length > 0 && (
-                    <div className="relative w-full">
-                      <img 
-                        src={review.image_urls[0]} 
-                        alt={review.title}
-                        className="rounded-md w-full h-auto object-contain max-h-40"
-                      />
-                    </div>
-                  )}
-                  
-                  <p className="text-xs text-muted-foreground line-clamp-2">
-                    {review.content}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        )}
+        <ReviewList
+          reviews={reviews}
+          onReviewClick={handleReviewClick}
+          simpleView={simpleView}
+        />
       </CardContent>
 
       <div className="absolute bottom-3 right-4 text-xs text-muted-foreground">
