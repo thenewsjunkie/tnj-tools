@@ -21,23 +21,23 @@ export const UsersTable = ({ profiles, onApprove, onDeny }: UsersTableProps) => 
   <div className="rounded-md border">
     <Table>
       <TableHeader>
-        <TableRow>
-          <TableHead>Email</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Role</TableHead>
-          <TableHead>Joined</TableHead>
-          <TableHead>Actions</TableHead>
+        <TableRow className="dark:bg-gray-900">
+          <TableHead className="dark:text-gray-200">Email</TableHead>
+          <TableHead className="dark:text-gray-200">Status</TableHead>
+          <TableHead className="dark:text-gray-200">Role</TableHead>
+          <TableHead className="dark:text-gray-200">Joined</TableHead>
+          <TableHead className="dark:text-gray-200">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {profiles.map((profile) => (
-          <TableRow key={profile.id}>
-            <TableCell>{profile.email}</TableCell>
-            <TableCell>
+          <TableRow key={profile.id} className="dark:bg-gray-800/50">
+            <TableCell className="dark:text-gray-200">{profile.email}</TableCell>
+            <TableCell className="dark:text-gray-200">
               <UserStatusBadge status={profile.status} />
             </TableCell>
-            <TableCell>{profile.role}</TableCell>
-            <TableCell>
+            <TableCell className="dark:text-gray-200">{profile.role}</TableCell>
+            <TableCell className="dark:text-gray-200">
               {format(new Date(profile.created_at), "MMM d, yyyy")}
             </TableCell>
             <TableCell>
