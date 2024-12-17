@@ -49,7 +49,11 @@ export const UserModerationPanel = () => {
         .order('created_at', { ascending: false })
         .range(start, end);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching profiles:', error);
+        throw error;
+      }
+
       return { profiles: data as Profile[], total: count || 0 };
     },
   });
