@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const ChatSettings = () => {
   const [youtubeVideoId, setYoutubeVideoId] = useState("");
@@ -18,38 +19,30 @@ const ChatSettings = () => {
       
       // Start Twitch bot
       console.log("[ChatSettings] Starting Twitch bot...");
-      const twitchResponse = await fetch("/functions/v1/twitch-bot", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "start" }),
+      const { data: twitchData, error: twitchError } = await supabase.functions.invoke('twitch-bot', {
+        body: { action: "start" }
       });
 
-      console.log("[ChatSettings] Twitch bot response status:", twitchResponse.status);
-      const twitchData = await twitchResponse.text();
       console.log("[ChatSettings] Twitch bot response:", twitchData);
 
-      if (!twitchResponse.ok) {
-        throw new Error(`Failed to start Twitch bot: ${twitchData}`);
+      if (twitchError) {
+        throw new Error(`Failed to start Twitch bot: ${twitchError.message}`);
       }
 
       // Start YouTube bot if video ID is provided
       if (youtubeVideoId) {
         console.log("[ChatSettings] Starting YouTube bot for video:", youtubeVideoId);
-        const youtubeResponse = await fetch("/functions/v1/youtube-bot", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
+        const { data: youtubeData, error: youtubeError } = await supabase.functions.invoke('youtube-bot', {
+          body: { 
             action: "start",
             videoId: youtubeVideoId
-          }),
+          }
         });
 
-        console.log("[ChatSettings] YouTube bot response status:", youtubeResponse.status);
-        const youtubeData = await youtubeResponse.text();
         console.log("[ChatSettings] YouTube bot response:", youtubeData);
 
-        if (!youtubeResponse.ok) {
-          throw new Error(`Failed to start YouTube bot: ${youtubeData}`);
+        if (youtubeError) {
+          throw new Error(`Failed to start YouTube bot: ${youtubeError.message}`);
         }
       }
 
@@ -76,37 +69,29 @@ const ChatSettings = () => {
       
       // Stop Twitch bot
       console.log("[ChatSettings] Stopping Twitch bot...");
-      const twitchResponse = await fetch("/functions/v1/twitch-bot", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "stop" }),
+      const { data: twitchData, error: twitchError } = await supabase.functions.invoke('twitch-bot', {
+        body: { action: "stop" }
       });
 
-      console.log("[ChatSettings] Twitch bot stop response status:", twitchResponse.status);
-      const twitchData = await twitchResponse.text();
       console.log("[ChatSettings] Twitch bot stop response:", twitchData);
 
-      if (!twitchResponse.ok) {
-        throw new Error(`Failed to stop Twitch bot: ${twitchData}`);
+      if (twitchError) {
+        throw new Error(`Failed to stop Twitch bot: ${twitchError.message}`);
       }
 
       // Stop YouTube bot
       console.log("[ChatSettings] Stopping YouTube bot...");
-      const youtubeResponse = await fetch("/functions/v1/youtube-bot", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+      const { data: youtubeData, error: youtubeError } = await supabase.functions.invoke('youtube-bot', {
+        body: { 
           action: "stop",
           videoId: youtubeVideoId
-        }),
+        }
       });
 
-      console.log("[ChatSettings] YouTube bot stop response status:", youtubeResponse.status);
-      const youtubeData = await youtubeResponse.text();
       console.log("[ChatSettings] YouTube bot stop response:", youtubeData);
 
-      if (!youtubeResponse.ok) {
-        throw new Error(`Failed to stop YouTube bot: ${youtubeData}`);
+      if (youtubeError) {
+        throw new Error(`Failed to stop YouTube bot: ${youtubeError.message}`);
       }
 
       toast({
