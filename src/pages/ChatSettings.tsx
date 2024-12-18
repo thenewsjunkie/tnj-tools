@@ -94,34 +94,34 @@ const ChatSettings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-black text-white p-4">
+      <div className="max-w-2xl mx-auto space-y-8">
         <Link
           to="/chat"
-          className="text-foreground hover:text-primary transition-colors flex items-center gap-2 mb-8"
+          className="text-red-500 hover:text-red-400 transition-colors flex items-center gap-2"
         >
           <ArrowLeft className="h-5 w-5" />
           Back to Chat
         </Link>
 
-        <h1 className="text-2xl font-bold mb-8">Chat Settings</h1>
+        <h1 className="text-2xl font-bold">Chat Settings</h1>
 
         <div className="space-y-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium">YouTube Video ID (optional)</label>
+            <label className="text-sm font-medium text-gray-200">YouTube Video ID (optional)</label>
             <Input
               type="text"
               placeholder="YouTube Video ID"
               value={youtubeVideoId}
               onChange={(e) => setYoutubeVideoId(e.target.value)}
-              className="bg-transparent border-white/20 max-w-xs"
+              className="bg-gray-900 border-gray-700 text-white placeholder-gray-400 max-w-xs"
             />
           </div>
 
           <div className="flex gap-4">
             <Button
               variant="outline"
-              className="border-white/20"
+              className="border-gray-700 hover:bg-gray-800 text-white"
               onClick={startBots}
               disabled={isLoading}
             >
@@ -130,7 +130,7 @@ const ChatSettings = () => {
             </Button>
             <Button
               variant="outline"
-              className="border-white/20"
+              className="border-gray-700 hover:bg-gray-800 text-white"
               onClick={stopBots}
               disabled={isLoading}
             >
