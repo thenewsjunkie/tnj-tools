@@ -42,13 +42,14 @@ export class TwitchBot {
       const { access_token } = await tokenResponse.json();
       console.log("[TwitchBot] Successfully obtained OAuth token");
       
-      // Updated WebSocket URL to include the port in the URL itself
       this.ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443/");
 
       this.ws.onopen = () => {
         console.log("[TwitchBot] WebSocket connection established");
         this.isConnected = true;
-        this.authenticate(access_token);
+        // Use a bot username instead of channel name for the NICK command
+        const botUsername = "justinfan" + Math.floor(Math.random() * 100000);
+        this.authenticate(access_token, botUsername);
       };
 
       this.ws.onmessage = async (event) => {
@@ -105,11 +106,11 @@ export class TwitchBot {
     }
   }
 
-  private authenticate(accessToken: string) {
+  private authenticate(accessToken: string, username: string) {
     console.log("[TwitchBot] Sending authentication commands...");
     this.ws?.send("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership");
     this.ws?.send(`PASS oauth:${accessToken}`);
-    this.ws?.send(`NICK ${this.channel}`);
+    this.ws?.send(`NICK ${username}`);
     this.ws?.send(`JOIN #${this.channel}`);
     
     this.reconnectAttempts = 0;
