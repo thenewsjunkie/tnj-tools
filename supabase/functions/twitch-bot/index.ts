@@ -11,10 +11,10 @@ const corsHeaders = {
 let bot: TwitchBot | null = null;
 
 serve(async (req) => {
-  console.log("Received request:", req.method, req.url);
+  console.log("[Edge Function] Request received:", req.method, req.url);
   
   if (req.method === "OPTIONS") {
-    console.log("Handling OPTIONS request");
+    console.log("[Edge Function] Handling OPTIONS request");
     return new Response(null, { headers: corsHeaders });
   }
 
@@ -23,21 +23,23 @@ serve(async (req) => {
     const clientId = Deno.env.get("TWITCH_CLIENT_ID");
     const clientSecret = Deno.env.get("TWITCH_CLIENT_SECRET");
 
-    console.log("Environment variables check:", {
-      hasChannelName: !!channelName,
-      hasClientId: !!clientId,
-      hasClientSecret: !!clientSecret
+    console.log("[Edge Function] Environment variables loaded:", {
+      channelName: channelName ? "✓" : "✗",
+      clientId: clientId ? "✓" : "✗",
+      clientSecret: clientSecret ? "✓" : "✗",
+      actualChannelName: channelName,
+      actualClientId: clientId ? `${clientId.slice(0, 4)}...` : null
     });
 
     if (!channelName || !clientId || !clientSecret) {
-      console.error("Missing required environment variables");
+      console.error("[Edge Function] Missing required environment variables");
       throw new Error("Missing required environment variables");
     }
 
     // If it's a GET request, return the bot status
     if (req.method === "GET") {
       const status = bot ? bot.getStatus() : "Not initialized";
-      console.log("Returning bot status:", status);
+      console.log("[Edge Function] GET request - Returning bot status:", status);
       return new Response(
         JSON.stringify({ status, channelName }),
         {
@@ -47,20 +49,19 @@ serve(async (req) => {
       );
     }
 
-    console.log("Starting Twitch bot with config:", {
+    console.log("[Edge Function] Starting Twitch bot with config:", {
       channelName,
-      clientId: "***" + clientId.slice(-4),
-      clientSecret: "***" + clientSecret.slice(-4)
+      clientIdPrefix: clientId ? clientId.slice(0, 4) : null
     });
 
     // Create new bot instance if it doesn't exist
     if (!bot) {
-      console.log("Creating new bot instance");
+      console.log("[Edge Function] Creating new bot instance");
       bot = new TwitchBot({ channelName, clientId, clientSecret });
       await bot.connect();
-      console.log("Bot connection initiated");
+      console.log("[Edge Function] Bot connection initiated");
     } else {
-      console.log("Bot instance already exists");
+      console.log("[Edge Function] Bot instance already exists");
     }
 
     return new Response(
@@ -75,7 +76,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error("Error in edge function:", error);
+    console.error("[Edge Function] Error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
