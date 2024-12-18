@@ -12,7 +12,7 @@ export class TwitchBot {
   private isConnected: boolean = false;
 
   constructor(config: BotConfig) {
-    this.channelName = config.channelName.toLowerCase();
+    this.channelName = config.channel.toLowerCase();
     this.clientId = config.clientId;
     this.clientSecret = config.clientSecret;
     console.log("[TwitchBot] Constructor called with channel:", this.channelName);
@@ -73,6 +73,15 @@ export class TwitchBot {
       console.error("[TwitchBot] Error in connect method:", error);
       this.isConnected = false;
       throw error;
+    }
+  }
+
+  async disconnect() {
+    console.log("[TwitchBot] Disconnecting...");
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
+      this.isConnected = false;
     }
   }
 

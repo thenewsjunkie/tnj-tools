@@ -19,14 +19,15 @@ serve(async (req) => {
     );
 
     const body = await req.json();
-    console.log("Received webhook:", body);
+    console.log("[ChatWebhooks] Received webhook:", body);
 
     // Process YouTube events
     if (body.platform === "youtube") {
       const { type, data } = body;
+      console.log("[ChatWebhooks] Processing YouTube event:", { type, data });
       
       if (type === "chat") {
-        await supabase.from("chat_messages").insert({
+        const { error } = await supabase.from("chat_messages").insert({
           source: "youtube",
           username: data.author.name,
           message: data.message,
@@ -37,37 +38,58 @@ serve(async (req) => {
             : null,
           metadata: data,
         });
+
+        if (error) {
+          console.error("[ChatWebhooks] Error inserting YouTube message:", error);
+          throw error;
+        }
       } else if (type === "subscription") {
-        await supabase.from("chat_messages").insert({
+        const { error } = await supabase.from("chat_messages").insert({
           source: "youtube",
           username: data.username,
           message: `${data.username} just subscribed!`,
           message_type: "subscription",
           metadata: data,
         });
+
+        if (error) {
+          console.error("[ChatWebhooks] Error inserting YouTube subscription:", error);
+          throw error;
+        }
       }
     }
 
     // Process Twitch events
     if (body.platform === "twitch") {
       const { type, data } = body;
+      console.log("[ChatWebhooks] Processing Twitch event:", { type, data });
 
       if (type === "chat") {
-        await supabase.from("chat_messages").insert({
+        const { error } = await supabase.from("chat_messages").insert({
           source: "twitch",
           username: data.username,
           message: data.message,
           message_type: "chat",
           metadata: data,
         });
+
+        if (error) {
+          console.error("[ChatWebhooks] Error inserting Twitch message:", error);
+          throw error;
+        }
       } else if (type === "subscription") {
-        await supabase.from("chat_messages").insert({
+        const { error } = await supabase.from("chat_messages").insert({
           source: "twitch",
           username: data.username,
           message: `${data.username} just subscribed!`,
           message_type: "subscription",
           metadata: data,
         });
+
+        if (error) {
+          console.error("[ChatWebhooks] Error inserting Twitch subscription:", error);
+          throw error;
+        }
       }
     }
 
@@ -76,9 +98,9 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    console.error("Error processing webhook:", error);
+    console.error("[ChatWebhooks] Error processing webhook:", error);
     return new Response(
-      JSON.stringify({ error: "Internal Server Error" }),
+      JSON.stringify({ error: error.message }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,

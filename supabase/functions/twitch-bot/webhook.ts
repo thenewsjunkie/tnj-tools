@@ -1,6 +1,6 @@
 import { TwitchMessage } from "./types.ts";
 
-const corsHeaders = {
+export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
@@ -9,7 +9,7 @@ const corsHeaders = {
 export async function forwardToWebhook(message: TwitchMessage) {
   try {
     const webhookUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/chat-webhooks`;
-    console.log("Forwarding Twitch message to webhook:", message);
+    console.log("[Webhook] Forwarding Twitch message to webhook:", message);
     
     const response = await fetch(webhookUrl, {
       method: "POST",
@@ -33,9 +33,9 @@ export async function forwardToWebhook(message: TwitchMessage) {
     }
     
     const responseData = await response.text();
-    console.log("Webhook response:", responseData);
+    console.log("[Webhook] Response:", responseData);
   } catch (error) {
-    console.error("Error forwarding message:", error);
-    throw error; // Propagate error to caller for proper handling
+    console.error("[Webhook] Error forwarding message:", error);
+    throw error;
   }
 }
