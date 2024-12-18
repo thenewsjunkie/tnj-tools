@@ -18,7 +18,6 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
   };
 
   const renderMessage = (text: string) => {
-    // Regular expression to match URLs
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     const parts = text.split(urlRegex);
 
@@ -43,16 +42,16 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
   return (
     <div
       className={cn(
-        "flex items-center gap-2 px-2 py-0.5 bg-black/50 backdrop-blur-sm",
+        "flex items-center gap-2 px-2 py-1 bg-black/50 backdrop-blur-sm w-full",
         isPinned
           ? "bg-yellow-500/20 border border-yellow-500/50"
           : message.message_type === "superchat"
           ? "bg-green-500/20 border border-green-500/50"
-          : "hover:bg-white/10"
+          : "hover:bg-white/5 transition-colors"
       )}
     >
       {renderIcon()}
-      <div className="flex items-center gap-2 min-w-0 flex-1">
+      <div className="flex items-center gap-2 min-w-0 w-full">
         <span className="font-bold text-sm whitespace-nowrap text-white">
           {message.username}:
         </span>
@@ -61,7 +60,9 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
             ${message.superchat_amount}
           </span>
         )}
-        <p className="text-sm text-white/90">{renderMessage(message.message)}</p>
+        <p className="text-sm text-white/90 break-words flex-1">
+          {renderMessage(message.message)}
+        </p>
       </div>
     </div>
   );

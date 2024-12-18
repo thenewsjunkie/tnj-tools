@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import ChatMessageComponent from "@/components/chat/ChatMessage";
 import ChatStatusIndicator from "@/components/chat/ChatStatusIndicator";
 import { Tables } from "@/integrations/supabase/types";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type ChatMessageType = Tables<"chat_messages">;
 
@@ -15,10 +16,8 @@ const Chat = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [pinnedMessage, setPinnedMessage] = useState<ChatMessageType | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Initial fetch of messages
     const fetchMessages = async () => {
       const { data, error } = await supabase
         .from("chat_messages")
@@ -32,11 +31,11 @@ const Chat = () => {
       }
 
       setMessages(data);
+      scrollToBottom();
     };
 
     fetchMessages();
 
-    // Subscribe to new messages
     const channel = supabase
       .channel("chat_messages_channel")
       .on(
@@ -50,7 +49,6 @@ const Chat = () => {
           const newMessage = payload.new as ChatMessageType;
           setMessages((prev) => [...prev, newMessage]);
 
-          // Handle superchat pinning
           if (
             newMessage.message_type === "superchat" &&
             newMessage.superchat_expires_at
@@ -58,8 +56,10 @@ const Chat = () => {
             setPinnedMessage(newMessage);
             setTimeout(() => {
               setPinnedMessage(null);
-            }, 60000); // 60 seconds
+            }, 60000);
           }
+
+          scrollToBottom();
         }
       )
       .subscribe();
@@ -69,12 +69,11 @@ const Chat = () => {
     };
   }, []);
 
-  useEffect(() => {
-    // Scroll to bottom when new messages arrive
+  const scrollToBottom = () => {
     if (messagesEndRef.current && !isSearching) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages, isSearching]);
+  };
 
   const handleSearch = async () => {
     if (!searchQuery) return;
@@ -108,6 +107,7 @@ const Chat = () => {
     }
 
     setMessages(data);
+    scrollToBottom();
   };
 
   return (
@@ -153,16 +153,19 @@ const Chat = () => {
         </Button>
       </div>
 
-      <div
-        ref={containerRef}
-        className="flex-1 overflow-y-auto flex flex-col p-4"
+      <ScrollArea
+        className="flex-1 flex flex-col"
         style={{ height: "calc(100vh - 4rem)" }}
       >
-        {messages.map((message) => (
-          <ChatMessageComponent key={message.id} message={message} />
-        ))}
-        <div ref={messagesEndRef} />
-      </div>
+        <div className="flex flex-col justify-end min-h-full p-4">
+          <div className="space-y-0.5">
+            {messages.map((message) => (
+              <ChatMessageComponent key={message.id} message={message} />
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+        </div>
+      </ScrollArea>
 
       {pinnedMessage && (
         <div className="fixed top-4 left-0 right-0 p-4 bg-black/50 backdrop-blur-sm">
