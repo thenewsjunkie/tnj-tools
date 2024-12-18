@@ -111,7 +111,7 @@ const Chat = () => {
   };
 
   return (
-    <div className="min-h-screen bg-transparent text-white">
+    <div className="min-h-screen bg-transparent text-white flex flex-col">
       {isSearching ? (
         <div className="fixed top-0 left-0 right-0 p-4 bg-black/50 backdrop-blur-sm z-10">
           <div className="flex gap-2">
@@ -140,35 +140,35 @@ const Chat = () => {
         </div>
       ) : null}
 
+      <div className="fixed top-4 right-4 flex items-center gap-2 bg-black/50 backdrop-blur-sm p-2 rounded-lg z-20">
+        <MessageSquare className="h-4 w-4" />
+        <span className="text-sm font-mono">{messages.length}</span>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setIsSearching(!isSearching)}
+          className="hover:bg-white/10"
+        >
+          <Search className="h-5 w-5" />
+        </Button>
+      </div>
+
       <div
         ref={containerRef}
-        className="pb-16 pt-4 px-4 overflow-y-auto space-y-4"
+        className="flex-1 overflow-y-auto flex flex-col-reverse p-4 space-y-reverse space-y-4"
         style={{ height: "calc(100vh - 4rem)" }}
       >
-        {pinnedMessage && (
-          <div className="fixed top-4 left-0 right-0 p-4 bg-black/50 backdrop-blur-sm">
-            <ChatMessageComponent message={pinnedMessage} isPinned />
-          </div>
-        )}
-
-        <div className="fixed top-4 right-4 flex items-center gap-2 bg-black/50 backdrop-blur-sm p-2 rounded-lg z-20">
-          <MessageSquare className="h-4 w-4" />
-          <span className="text-sm font-mono">{messages.length}</span>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsSearching(!isSearching)}
-            className="hover:bg-white/10"
-          >
-            <Search className="h-5 w-5" />
-          </Button>
-        </div>
-
+        <div ref={messagesEndRef} />
         {messages.map((message) => (
           <ChatMessageComponent key={message.id} message={message} />
         ))}
-        <div ref={messagesEndRef} />
       </div>
+
+      {pinnedMessage && (
+        <div className="fixed top-4 left-0 right-0 p-4 bg-black/50 backdrop-blur-sm">
+          <ChatMessageComponent message={pinnedMessage} isPinned />
+        </div>
+      )}
 
       <ChatStatusIndicator />
     </div>

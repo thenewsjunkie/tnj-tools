@@ -43,18 +43,18 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
   return (
     <div
       className={cn(
-        "flex items-start gap-2 p-2 rounded",
+        "flex items-start gap-2 p-2 rounded bg-black/50 backdrop-blur-sm",
         isPinned
           ? "bg-yellow-500/20 border border-yellow-500/50"
           : message.message_type === "superchat"
           ? "bg-green-500/20 border border-green-500/50"
-          : "hover:bg-white/5"
+          : "hover:bg-white/10"
       )}
     >
       {renderIcon()}
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-2">
-          <span className="font-bold text-sm truncate">
+          <span className="font-bold text-sm truncate text-white">
             {message.username}
           </span>
           {message.message_type === "superchat" && (
@@ -63,7 +63,7 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
             </span>
           )}
         </div>
-        <p className="text-sm break-words">{renderMessage(message.message)}</p>
+        <p className="text-sm break-words text-white/90">{renderMessage(message.message)}</p>
       </div>
     </div>
   );
