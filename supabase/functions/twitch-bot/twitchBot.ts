@@ -1,4 +1,4 @@
-import { WebSocket } from "https://deno.land/x/websocket@v0.1.4/browser.ts";
+// Use native Deno WebSocket
 import { TwitchMessage, BotConfig } from "./types.ts";
 import { forwardToWebhook } from "./webhook.ts";
 
