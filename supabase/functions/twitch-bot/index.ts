@@ -18,8 +18,12 @@ if (!TWITCH_CHANNEL || !TWITCH_CLIENT_ID || !TWITCH_CLIENT_SECRET) {
 let bot: TwitchBot | null = null;
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders
+    });
   }
 
   // Status check
