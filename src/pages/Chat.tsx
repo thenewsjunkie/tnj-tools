@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Search } from "lucide-react";
+import { Search, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -149,6 +149,11 @@ const Chat = () => {
             <ChatMessageComponent message={pinnedMessage} isPinned />
           </div>
         )}
+
+        <div className="fixed top-4 left-4 flex items-center gap-2 bg-black/50 backdrop-blur-sm p-2 rounded-lg z-20">
+          <MessageSquare className="h-4 w-4" />
+          <span className="text-sm font-mono">{messages.length}</span>
+        </div>
 
         {messages.map((message) => (
           <ChatMessageComponent key={message.id} message={message} />
