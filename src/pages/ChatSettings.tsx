@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import ChatMessageComponent from "@/components/chat/ChatMessage";
 
 const ChatSettings = () => {
   const [youtubeVideoId, setYoutubeVideoId] = useState("");
