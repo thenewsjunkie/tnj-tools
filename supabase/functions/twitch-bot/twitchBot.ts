@@ -1,4 +1,4 @@
-import { WebSocket } from "https://deno.land/x/websocket@v0.1.4/mod.ts";
+import { WebSocket } from "https://deno.land/x/websocket@v0.1.4/browser.ts";
 import { TwitchMessage, BotConfig } from "./types.ts";
 import { forwardToWebhook } from "./webhook.ts";
 
