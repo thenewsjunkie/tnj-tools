@@ -13,6 +13,7 @@ let bot: TwitchBot | null = null;
 serve(async (req) => {
   console.log("[Edge Function] Request received:", req.method, req.url);
   
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     console.log("[Edge Function] Handling OPTIONS request");
     return new Response(null, { headers: corsHeaders });
@@ -47,6 +48,21 @@ serve(async (req) => {
           status: 200,
         }
       );
+    }
+
+    // For POST requests, check authorization
+    if (req.method === "POST") {
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader) {
+        console.error("[Edge Function] Missing authorization header for POST request");
+        return new Response(
+          JSON.stringify({ error: "Missing authorization header" }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 401,
+          }
+        );
+      }
     }
 
     console.log("[Edge Function] Starting Twitch bot with config:", {
