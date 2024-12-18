@@ -2,10 +2,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skull, Zap, Rocket, Heart, Mountain, Film } from "lucide-react";
 
 interface MovieGenreSelectProps {
-  onValueChange: (value: string) => void;
+  value?: string;
+  onChange: (value: string) => void;
 }
 
-const MovieGenreSelect = ({ onValueChange }: MovieGenreSelectProps) => {
+const MovieGenreSelect = ({ value, onChange }: MovieGenreSelectProps) => {
   const genreOptions = [
     { value: 'Horror', icon: Skull },
     { value: 'Action', icon: Zap },
@@ -20,7 +21,7 @@ const MovieGenreSelect = ({ onValueChange }: MovieGenreSelectProps) => {
   ];
 
   return (
-    <Select onValueChange={onValueChange}>
+    <Select value={value} onValueChange={onChange}>
       <SelectTrigger className="bg-white dark:bg-white dark:text-black">
         <SelectValue placeholder="Select movie genre" />
       </SelectTrigger>

@@ -1,12 +1,13 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface RatingSelectProps {
-  onValueChange: (value: number) => void;
+  value?: number;
+  onChange: (value: number) => void;
 }
 
-const RatingSelect = ({ onValueChange }: RatingSelectProps) => {
+const RatingSelect = ({ value, onChange }: RatingSelectProps) => {
   return (
-    <Select onValueChange={(value) => onValueChange(parseInt(value))}>
+    <Select value={value?.toString()} onValueChange={(value) => onChange(parseInt(value))}>
       <SelectTrigger className="bg-white dark:bg-white dark:text-black">
         <SelectValue placeholder="Rating" />
       </SelectTrigger>

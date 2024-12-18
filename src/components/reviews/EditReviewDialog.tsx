@@ -8,15 +8,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { ReviewTypeSelect } from "./ReviewTypeSelect";
-import { RatingSelect } from "./RatingSelect";
-import { MovieGenreSelect } from "./MovieGenreSelect";
-import { ReviewImageUpload } from "./ReviewImageUpload";
-import { Review } from "./types";
+import ReviewTypeSelect from "./ReviewTypeSelect";
+import RatingSelect from "./RatingSelect";
+import MovieGenreSelect from "./MovieGenreSelect";
+import ReviewImageUpload from "./ReviewImageUpload";
+import { Review, ReviewType } from "./types";
 import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
-  type: z.string().min(1, "Type is required"),
+  type: z.enum(["television", "movie", "food", "product"]),
   title: z.string().min(1, "Title is required"),
   rating: z.number().min(1, "Rating is required"),
   content: z.string().min(1, "Content is required"),
@@ -28,9 +28,10 @@ interface EditReviewDialogProps {
   review: Review;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onReviewUpdated?: () => void;
 }
 
-const EditReviewDialog = ({ review, open, onOpenChange }: EditReviewDialogProps) => {
+const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditReviewDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   
@@ -68,6 +69,7 @@ const EditReviewDialog = ({ review, open, onOpenChange }: EditReviewDialogProps)
         description: "Review updated successfully",
       });
       onOpenChange(false);
+      onReviewUpdated?.();
     } catch (error) {
       console.error("Error updating review:", error);
       toast({
@@ -177,8 +179,9 @@ const EditReviewDialog = ({ review, open, onOpenChange }: EditReviewDialogProps)
                   <FormLabel>Images</FormLabel>
                   <FormControl>
                     <ReviewImageUpload
-                      value={field.value}
-                      onChange={field.onChange}
+                      images={field.value || []}
+                      onImagesChange={field.onChange}
+                      title={form.getValues("title")}
                     />
                   </FormControl>
                   <FormMessage />

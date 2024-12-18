@@ -1,13 +1,15 @@
 import { Tv, Film, Utensils, Package } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ReviewType } from "./types";
 
 interface ReviewTypeSelectProps {
-  onValueChange: (value: "television" | "movie" | "food" | "product") => void;
+  value?: ReviewType;
+  onChange: (value: ReviewType) => void;
 }
 
-const ReviewTypeSelect = ({ onValueChange }: ReviewTypeSelectProps) => {
+const ReviewTypeSelect = ({ value, onChange }: ReviewTypeSelectProps) => {
   return (
-    <Select onValueChange={onValueChange}>
+    <Select value={value} onValueChange={onChange}>
       <SelectTrigger className="bg-white dark:bg-white dark:text-black">
         <SelectValue placeholder="Select review type" />
       </SelectTrigger>
