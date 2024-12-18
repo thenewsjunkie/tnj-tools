@@ -99,7 +99,7 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
                   <FormControl>
                     <ReviewTypeSelect
                       value={field.value}
-                      onChange={field.onChange}
+                      onValueChange={field.onChange}
                     />
                   </FormControl>
                   <FormMessage />
@@ -130,7 +130,7 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
                   <FormControl>
                     <RatingSelect
                       value={field.value}
-                      onChange={field.onChange}
+                      onValueChange={field.onChange}
                     />
                   </FormControl>
                   <FormMessage />
@@ -148,7 +148,7 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
                     <FormControl>
                       <MovieGenreSelect
                         value={field.value}
-                        onChange={field.onChange}
+                        onValueChange={field.onChange}
                       />
                     </FormControl>
                     <FormMessage />
