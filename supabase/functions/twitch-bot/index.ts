@@ -20,6 +20,22 @@ serve(async (req) => {
   }
 
   try {
+    // If it's a GET request, return the bot status without requiring authorization
+    if (req.method === "GET") {
+      console.log("[Edge Function] Processing GET request");
+      const channelName = Deno.env.get("TWITCH_CHANNEL_NAME");
+      const status = bot ? bot.getStatus() : "Not initialized";
+      console.log("[Edge Function] GET request - Returning bot status:", status);
+      return new Response(
+        JSON.stringify({ status, channelName }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    }
+
+    // For all other requests, check environment variables and authorization
     const channelName = Deno.env.get("TWITCH_CHANNEL_NAME");
     const clientId = Deno.env.get("TWITCH_CLIENT_ID");
     const clientSecret = Deno.env.get("TWITCH_CLIENT_SECRET");
@@ -37,20 +53,7 @@ serve(async (req) => {
       throw new Error("Missing required environment variables");
     }
 
-    // If it's a GET request, return the bot status without requiring authorization
-    if (req.method === "GET") {
-      const status = bot ? bot.getStatus() : "Not initialized";
-      console.log("[Edge Function] GET request - Returning bot status:", status);
-      return new Response(
-        JSON.stringify({ status, channelName }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200,
-        }
-      );
-    }
-
-    // For POST requests, check authorization
+    // Check authorization for non-GET requests
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       console.error("[Edge Function] Missing authorization header for POST request");
