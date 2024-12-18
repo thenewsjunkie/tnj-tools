@@ -23,7 +23,7 @@ const Chat = () => {
       const { data, error } = await supabase
         .from("chat_messages")
         .select("*")
-        .order("created_at", { ascending: false })
+        .order("created_at", { ascending: true })
         .limit(50);
 
       if (error) {
@@ -31,7 +31,7 @@ const Chat = () => {
         return;
       }
 
-      setMessages(data.reverse());
+      setMessages(data);
     };
 
     fetchMessages();
@@ -83,14 +83,14 @@ const Chat = () => {
       .from("chat_messages")
       .select("*")
       .or(`username.ilike.%${searchQuery}%,message.ilike.%${searchQuery}%`)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: true });
 
     if (error) {
       console.error("Error searching messages:", error);
       return;
     }
 
-    setMessages(data.reverse());
+    setMessages(data);
   };
 
   const resetSearch = async () => {
@@ -99,7 +99,7 @@ const Chat = () => {
     const { data, error } = await supabase
       .from("chat_messages")
       .select("*")
-      .order("created_at", { ascending: false })
+      .order("created_at", { ascending: true })
       .limit(50);
 
     if (error) {
@@ -107,7 +107,7 @@ const Chat = () => {
       return;
     }
 
-    setMessages(data.reverse());
+    setMessages(data);
   };
 
   return (
@@ -155,13 +155,13 @@ const Chat = () => {
 
       <div
         ref={containerRef}
-        className="flex-1 overflow-y-auto flex flex-col-reverse p-4 space-y-0"
+        className="flex-1 overflow-y-auto flex flex-col p-4"
         style={{ height: "calc(100vh - 4rem)" }}
       >
-        <div ref={messagesEndRef} />
         {messages.map((message) => (
           <ChatMessageComponent key={message.id} message={message} />
         ))}
+        <div ref={messagesEndRef} />
       </div>
 
       {pinnedMessage && (
