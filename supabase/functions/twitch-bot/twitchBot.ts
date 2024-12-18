@@ -28,7 +28,6 @@ export class TwitchBot {
       this.ws.onopen = () => {
         console.log("WebSocket connection established");
         this.isConnected = true;
-        
         this.authenticate();
       };
 
@@ -73,6 +72,7 @@ export class TwitchBot {
     } catch (error) {
       console.error("Error in connect method:", error);
       this.isConnected = false;
+      throw error; // Re-throw to be caught by the edge function
     }
   }
 
