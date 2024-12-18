@@ -21,47 +21,55 @@ class TwitchBot {
   private webhookUrl: string;
   private reconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 5;
+  private isConnected: boolean = false;
 
   constructor(channelName: string, clientId: string, clientSecret: string) {
     this.channelName = channelName.toLowerCase();
     this.clientId = clientId;
     this.clientSecret = clientSecret;
     this.webhookUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/chat-webhooks`;
-    console.log(`Initializing TwitchBot for channel: ${this.channelName}`);
-    console.log(`Webhook URL: ${this.webhookUrl}`);
+    console.log("TwitchBot constructor called with channel:", this.channelName);
   }
 
   async connect() {
     try {
-      console.log(`Attempting to connect to Twitch IRC (attempt ${this.reconnectAttempts + 1})`);
+      console.log("Starting connection attempt...");
+      console.log("Connecting to channel:", this.channelName);
+      
       this.ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
 
       this.ws.onopen = () => {
-        console.log("Connected to Twitch IRC, sending authentication...");
+        console.log("WebSocket connection established");
+        this.isConnected = true;
+        
         // Send authentication commands
+        console.log("Sending authentication commands...");
         this.ws?.send("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership");
         this.ws?.send(`PASS oauth:${this.clientSecret}`);
         this.ws?.send(`NICK ${this.channelName}`);
         this.ws?.send(`JOIN #${this.channelName}`);
         
-        // Reset reconnect attempts on successful connection
         this.reconnectAttempts = 0;
-        console.log(`Successfully joined channel: #${this.channelName}`);
+        console.log("Authentication commands sent, waiting for channel join confirmation");
       };
 
       this.ws.onmessage = async (event) => {
         const message = event.data;
-        console.log(`Raw IRC message: ${message}`);
+        console.log("Received IRC message:", message);
 
         if (message.includes("PING")) {
           this.ws?.send("PONG :tmi.twitch.tv");
-          console.log("Responded to PING with PONG");
+          console.log("Responded to PING");
           return;
         }
 
         if (message.includes("Login authentication failed")) {
-          console.error("Login authentication failed. Check your credentials.");
+          console.error("Login authentication failed. Check credentials.");
           return;
+        }
+
+        if (message.includes(`JOIN #${this.channelName}`)) {
+          console.log("Successfully joined channel!");
         }
 
         if (message.includes("PRIVMSG")) {
@@ -74,7 +82,8 @@ class TwitchBot {
       };
 
       this.ws.onclose = () => {
-        console.log("Disconnected from Twitch IRC");
+        console.log("WebSocket connection closed");
+        this.isConnected = false;
         if (this.reconnectAttempts < this.maxReconnectAttempts) {
           this.reconnectAttempts++;
           console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
@@ -86,9 +95,11 @@ class TwitchBot {
 
       this.ws.onerror = (error) => {
         console.error("WebSocket error:", error);
+        this.isConnected = false;
       };
     } catch (error) {
       console.error("Error in connect method:", error);
+      this.isConnected = false;
     }
   }
 
@@ -134,16 +145,21 @@ class TwitchBot {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      console.log("Message forwarded successfully");
       
-      // Log the response for debugging
       const responseData = await response.text();
       console.log("Webhook response:", responseData);
     } catch (error) {
       console.error("Error forwarding message:", error);
     }
   }
+
+  getStatus(): string {
+    return this.isConnected ? "Connected" : "Disconnected";
+  }
 }
+
+// Create a global bot instance
+let bot: TwitchBot | null = null;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -159,17 +175,36 @@ serve(async (req) => {
       throw new Error("Missing required environment variables");
     }
 
+    // If it's a GET request, return the bot status
+    if (req.method === "GET") {
+      const status = bot ? bot.getStatus() : "Not initialized";
+      return new Response(
+        JSON.stringify({ status, channelName }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    }
+
     console.log("Starting Twitch bot with config:", {
       channelName,
       clientId: "***" + clientId.slice(-4),
       clientSecret: "***" + clientSecret.slice(-4)
     });
 
-    const bot = new TwitchBot(channelName, clientId, clientSecret);
-    await bot.connect();
+    // Create new bot instance if it doesn't exist
+    if (!bot) {
+      bot = new TwitchBot(channelName, clientId, clientSecret);
+      await bot.connect();
+    }
 
     return new Response(
-      JSON.stringify({ success: true, message: "Twitch bot started" }),
+      JSON.stringify({ 
+        success: true, 
+        message: "Twitch bot started",
+        channelName: channelName
+      }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
