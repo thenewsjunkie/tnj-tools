@@ -47,7 +47,7 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
           ? "bg-yellow-500/20 border border-yellow-500/50"
           : message.message_type === "superchat"
           ? "bg-green-500/20 border border-green-500/50"
-          : "hover:bg-white/5 transition-colors"
+          : ""
       )}
     >
       {renderIcon()}

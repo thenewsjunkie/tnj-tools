@@ -153,12 +153,9 @@ const Chat = () => {
         </Button>
       </div>
 
-      <ScrollArea
-        className="flex-1 flex flex-col"
-        style={{ height: "calc(100vh - 4rem)" }}
-      >
-        <div className="flex flex-col justify-end min-h-full p-4">
-          <div className="space-y-0.5">
+      <ScrollArea className="flex-1">
+        <div className="min-h-screen flex flex-col justify-end p-4">
+          <div>
             {messages.map((message) => (
               <ChatMessageComponent key={message.id} message={message} />
             ))}
