@@ -1,0 +1,174 @@
+import { useEffect, useRef, useState } from "react";
+import { Search } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import ChatMessage from "@/components/chat/ChatMessage";
+import { Tables } from "@/integrations/supabase/types";
+
+type ChatMessage = Tables<"chat_messages">;
+
+const Chat = () => {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [pinnedMessage, setPinnedMessage] = useState<ChatMessage | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Initial fetch of messages
+    const fetchMessages = async () => {
+      const { data, error } = await supabase
+        .from("chat_messages")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (error) {
+        console.error("Error fetching messages:", error);
+        return;
+      }
+
+      setMessages(data.reverse());
+    };
+
+    fetchMessages();
+
+    // Subscribe to new messages
+    const channel = supabase
+      .channel("chat_messages_channel")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "chat_messages",
+        },
+        (payload) => {
+          const newMessage = payload.new as ChatMessage;
+          setMessages((prev) => [...prev, newMessage]);
+
+          // Handle superchat pinning
+          if (
+            newMessage.message_type === "superchat" &&
+            newMessage.superchat_expires_at
+          ) {
+            setPinnedMessage(newMessage);
+            setTimeout(() => {
+              setPinnedMessage(null);
+            }, 60000); // 60 seconds
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  useEffect(() => {
+    // Scroll to bottom when new messages arrive
+    if (messagesEndRef.current && !isSearching) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, isSearching]);
+
+  const handleSearch = async () => {
+    if (!searchQuery) return;
+
+    const { data, error } = await supabase
+      .from("chat_messages")
+      .select("*")
+      .or(`username.ilike.%${searchQuery}%,message.ilike.%${searchQuery}%`)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error searching messages:", error);
+      return;
+    }
+
+    setMessages(data.reverse());
+  };
+
+  const resetSearch = async () => {
+    setIsSearching(false);
+    setSearchQuery("");
+    const { data, error } = await supabase
+      .from("chat_messages")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (error) {
+      console.error("Error fetching messages:", error);
+      return;
+    }
+
+    setMessages(data.reverse());
+  };
+
+  return (
+    <div className="min-h-screen bg-transparent text-white">
+      {isSearching ? (
+        <div className="fixed top-0 left-0 right-0 p-4 bg-black/50 backdrop-blur-sm z-10">
+          <div className="flex gap-2">
+            <Input
+              type="text"
+              placeholder="Search by username or message..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-transparent border-white/20"
+            />
+            <Button
+              variant="outline"
+              className="border-white/20"
+              onClick={handleSearch}
+            >
+              Search
+            </Button>
+            <Button
+              variant="outline"
+              className="border-white/20"
+              onClick={resetSearch}
+            >
+              Clear
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
+      <div
+        ref={containerRef}
+        className="pb-16 pt-4 px-4 overflow-y-auto space-y-4"
+        style={{ height: "calc(100vh - 4rem)" }}
+      >
+        {pinnedMessage && (
+          <div className="fixed top-0 left-0 right-0 p-4 bg-black/50 backdrop-blur-sm">
+            <ChatMessage message={pinnedMessage} isPinned />
+          </div>
+        )}
+
+        {messages.map((message) => (
+          <ChatMessage key={message.id} message={message} />
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 p-4 flex justify-between items-center bg-black/50 backdrop-blur-sm">
+        <h1 className="text-xl font-bold">Mega Chat</h1>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setIsSearching(!isSearching)}
+          className="hover:bg-white/10"
+        >
+          <Search className="h-5 w-5" />
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+export default Chat;

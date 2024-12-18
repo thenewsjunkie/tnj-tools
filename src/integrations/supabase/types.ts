@@ -140,6 +140,42 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_messages: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          message_type: Database["public"]["Enums"]["message_type"]
+          metadata: Json | null
+          source: Database["public"]["Enums"]["chat_source"]
+          superchat_amount: number | null
+          superchat_expires_at: string | null
+          username: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          message_type?: Database["public"]["Enums"]["message_type"]
+          metadata?: Json | null
+          source: Database["public"]["Enums"]["chat_source"]
+          superchat_amount?: number | null
+          superchat_expires_at?: string | null
+          username: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          message_type?: Database["public"]["Enums"]["message_type"]
+          metadata?: Json | null
+          source?: Database["public"]["Enums"]["chat_source"]
+          superchat_amount?: number | null
+          superchat_expires_at?: string | null
+          username?: string
+        }
+        Relationships: []
+      }
       code_implementations: {
         Row: {
           code: string
@@ -527,6 +563,8 @@ export type Database = {
     }
     Enums: {
       call_status: "waiting" | "connected" | "ended"
+      chat_source: "youtube" | "twitch"
+      message_type: "chat" | "subscription" | "superchat"
       review_type: "television" | "movie" | "food" | "product"
     }
     CompositeTypes: {

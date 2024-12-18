@@ -16,6 +16,7 @@ import Reviews from "./pages/Reviews";
 import Alerts from "./pages/Alerts";
 import Settings from "./pages/Settings";
 import Instructions from "./pages/Instructions";
+import Chat from "./pages/Chat";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/notes" element={<Notes />} />
             <Route path="/reviews" element={<Reviews />} />
             <Route path="/alerts" element={<Alerts />} />
+            <Route path="/chat" element={<Chat />} />
             <Route path="/alerts/queue/:action" element={<Alerts />} />
             <Route path="/alerts/:alertSlug" element={<Alerts />} />
             <Route path="/alerts/:alertSlug/:username" element={<Alerts />} />
