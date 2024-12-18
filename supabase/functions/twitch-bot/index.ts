@@ -16,7 +16,20 @@ serve(async (req) => {
 
   try {
     const { action } = await req.json();
-    console.log(`Received ${action} request`);
+    console.log(`[TwitchBot] Received ${action} request`);
+
+    // Get config from environment variables
+    const config = {
+      channel: Deno.env.get("TWITCH_CHANNEL_NAME"),
+      clientId: Deno.env.get("TWITCH_CLIENT_ID"),
+      clientSecret: Deno.env.get("TWITCH_CLIENT_SECRET"),
+    };
+
+    // Validate config
+    if (!config.channel || !config.clientId || !config.clientSecret) {
+      console.error("[TwitchBot] Missing required environment variables");
+      throw new Error("Missing Twitch configuration. Please check environment variables.");
+    }
 
     if (action === "status") {
       const status = botInstance?.getStatus() === "Connected" ? "connected" : "disconnected";
@@ -27,14 +40,16 @@ serve(async (req) => {
     }
 
     if (action === "start") {
+      console.log("[TwitchBot] Starting bot with channel:", config.channel);
+      
       if (botInstance) {
         console.log("[TwitchBot] Already running, stopping first...");
         await botInstance.disconnect();
       }
 
-      const config = { channel: "your_channel", clientId: "your_client_id", clientSecret: "your_client_secret" }; // Replace with actual config
       botInstance = new TwitchBot(config);
       await botInstance.connect();
+      
       return new Response(
         JSON.stringify({ status: "Twitch bot started" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -42,6 +57,7 @@ serve(async (req) => {
     }
 
     if (action === "stop") {
+      console.log("[TwitchBot] Stopping bot");
       if (botInstance) {
         await botInstance.disconnect();
         botInstance = null;
@@ -51,10 +67,15 @@ serve(async (req) => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    throw new Error(`Unknown action: ${action}`);
   } catch (error) {
-    console.error("Error:", error);
+    console.error("[TwitchBot] Error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message || "An unexpected error occurred",
+        details: error.toString()
+      }),
       { 
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
