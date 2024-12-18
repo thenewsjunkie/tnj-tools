@@ -22,12 +22,32 @@ export class TwitchBot {
       console.log("[TwitchBot] Starting connection attempt...");
       console.log("[TwitchBot] Connecting to channel:", this.channel);
       
+      // Get OAuth token first
+      const tokenResponse = await fetch('https://id.twitch.tv/oauth2/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          client_id: this.clientId,
+          client_secret: this.clientSecret,
+          grant_type: 'client_credentials',
+        }),
+      });
+
+      if (!tokenResponse.ok) {
+        throw new Error('Failed to get OAuth token');
+      }
+
+      const { access_token } = await tokenResponse.json();
+      console.log("[TwitchBot] Successfully obtained OAuth token");
+      
       this.ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
 
       this.ws.onopen = () => {
         console.log("[TwitchBot] WebSocket connection established");
         this.isConnected = true;
-        this.authenticate();
+        this.authenticate(access_token);
       };
 
       this.ws.onmessage = async (event) => {
@@ -84,10 +104,10 @@ export class TwitchBot {
     }
   }
 
-  private authenticate() {
+  private authenticate(accessToken: string) {
     console.log("[TwitchBot] Sending authentication commands...");
     this.ws?.send("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership");
-    this.ws?.send(`PASS oauth:${this.clientSecret}`);
+    this.ws?.send(`PASS oauth:${accessToken}`);
     this.ws?.send(`NICK ${this.channel}`);
     this.ws?.send(`JOIN #${this.channel}`);
     
