@@ -4,12 +4,12 @@ import { ReviewType } from "./types";
 
 interface ReviewTypeSelectProps {
   value?: ReviewType;
-  onChange: (value: ReviewType) => void;
+  onValueChange: (value: ReviewType) => void;
 }
 
-const ReviewTypeSelect = ({ value, onChange }: ReviewTypeSelectProps) => {
+const ReviewTypeSelect = ({ value, onValueChange }: ReviewTypeSelectProps) => {
   return (
-    <Select value={value} onValueChange={onChange}>
+    <Select value={value} onValueChange={onValueChange}>
       <SelectTrigger className="bg-white dark:bg-white dark:text-black">
         <SelectValue placeholder="Select review type" />
       </SelectTrigger>

@@ -3,16 +3,16 @@ import { Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import ChatMessage from "@/components/chat/ChatMessage";
+import ChatMessageComponent from "@/components/chat/ChatMessage";
 import { Tables } from "@/integrations/supabase/types";
 
-type ChatMessage = Tables<"chat_messages">;
+type ChatMessageType = Tables<"chat_messages">;
 
 const Chat = () => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [pinnedMessage, setPinnedMessage] = useState<ChatMessage | null>(null);
+  const [pinnedMessage, setPinnedMessage] = useState<ChatMessageType | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -46,7 +46,7 @@ const Chat = () => {
           table: "chat_messages",
         },
         (payload) => {
-          const newMessage = payload.new as ChatMessage;
+          const newMessage = payload.new as ChatMessageType;
           setMessages((prev) => [...prev, newMessage]);
 
           // Handle superchat pinning
@@ -146,12 +146,12 @@ const Chat = () => {
       >
         {pinnedMessage && (
           <div className="fixed top-0 left-0 right-0 p-4 bg-black/50 backdrop-blur-sm">
-            <ChatMessage message={pinnedMessage} isPinned />
+            <ChatMessageComponent message={pinnedMessage} isPinned />
           </div>
         )}
 
         {messages.map((message) => (
-          <ChatMessage key={message.id} message={message} />
+          <ChatMessageComponent key={message.id} message={message} />
         ))}
         <div ref={messagesEndRef} />
       </div>
