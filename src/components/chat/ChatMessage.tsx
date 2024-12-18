@@ -43,7 +43,7 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
   return (
     <div
       className={cn(
-        "flex items-start gap-2 p-2 rounded bg-black/50 backdrop-blur-sm",
+        "flex items-center gap-2 px-2 py-0.5 bg-black/50 backdrop-blur-sm",
         isPinned
           ? "bg-yellow-500/20 border border-yellow-500/50"
           : message.message_type === "superchat"
@@ -52,18 +52,16 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
       )}
     >
       {renderIcon()}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-baseline gap-2">
-          <span className="font-bold text-sm truncate text-white">
-            {message.username}
+      <div className="flex items-center gap-2 min-w-0 flex-1">
+        <span className="font-bold text-sm whitespace-nowrap text-white">
+          {message.username}:
+        </span>
+        {message.message_type === "superchat" && (
+          <span className="text-xs text-green-400">
+            ${message.superchat_amount}
           </span>
-          {message.message_type === "superchat" && (
-            <span className="text-xs text-green-400">
-              ${message.superchat_amount}
-            </span>
-          )}
-        </div>
-        <p className="text-sm break-words text-white/90">{renderMessage(message.message)}</p>
+        )}
+        <p className="text-sm text-white/90 truncate">{renderMessage(message.message)}</p>
       </div>
     </div>
   );

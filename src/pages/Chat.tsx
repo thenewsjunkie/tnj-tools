@@ -155,7 +155,7 @@ const Chat = () => {
 
       <div
         ref={containerRef}
-        className="flex-1 overflow-y-auto flex flex-col-reverse p-4 space-y-reverse space-y-4"
+        className="flex-1 overflow-y-auto flex flex-col-reverse p-4 space-y-0"
         style={{ height: "calc(100vh - 4rem)" }}
       >
         <div ref={messagesEndRef} />
