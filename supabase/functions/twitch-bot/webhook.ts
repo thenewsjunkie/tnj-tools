@@ -17,6 +17,7 @@ export async function forwardToWebhook(message: TwitchMessage) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
         ...corsHeaders,
       },
       body: JSON.stringify({
