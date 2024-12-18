@@ -37,7 +37,7 @@ serve(async (req) => {
       throw new Error("Missing required environment variables");
     }
 
-    // If it's a GET request, return the bot status
+    // If it's a GET request, return the bot status without requiring authorization
     if (req.method === "GET") {
       const status = bot ? bot.getStatus() : "Not initialized";
       console.log("[Edge Function] GET request - Returning bot status:", status);
@@ -51,18 +51,16 @@ serve(async (req) => {
     }
 
     // For POST requests, check authorization
-    if (req.method === "POST") {
-      const authHeader = req.headers.get('Authorization');
-      if (!authHeader) {
-        console.error("[Edge Function] Missing authorization header for POST request");
-        return new Response(
-          JSON.stringify({ error: "Missing authorization header" }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 401,
-          }
-        );
-      }
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error("[Edge Function] Missing authorization header for POST request");
+      return new Response(
+        JSON.stringify({ error: "Missing authorization header" }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 401,
+        }
+      );
     }
 
     console.log("[Edge Function] Starting Twitch bot with config:", {
