@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { YouTubeChat } from "./youtubeChat.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,6 +16,8 @@ if (!YOUTUBE_API_KEY || !YOUTUBE_CLIENT_ID || !YOUTUBE_CLIENT_SECRET) {
   throw new Error("Missing required YouTube credentials");
 }
 
+let chatInstance: YouTubeChat | null = null;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -23,6 +26,7 @@ serve(async (req) => {
   if (req.method === "POST") {
     try {
       const { action, videoId } = await req.json();
+      console.log(`Received ${action} request for video: ${videoId}`);
       
       if (!videoId) {
         throw new Error("Video ID is required");
@@ -30,8 +34,20 @@ serve(async (req) => {
 
       if (action === "start") {
         console.log("Starting YouTube chat listener for video:", videoId);
-        // Initialize YouTube chat listener
-        // This will be implemented in the next step
+        
+        if (chatInstance) {
+          await chatInstance.stop();
+        }
+
+        chatInstance = new YouTubeChat({
+          videoId,
+          apiKey: YOUTUBE_API_KEY,
+          clientId: YOUTUBE_CLIENT_ID,
+          clientSecret: YOUTUBE_CLIENT_SECRET,
+        });
+
+        await chatInstance.start();
+        
         return new Response(
           JSON.stringify({ status: "YouTube chat listener started" }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -40,6 +56,10 @@ serve(async (req) => {
       
       if (action === "stop") {
         console.log("Stopping YouTube chat listener");
+        if (chatInstance) {
+          await chatInstance.stop();
+          chatInstance = null;
+        }
         return new Response(
           JSON.stringify({ status: "YouTube chat listener stopped" }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }

@@ -9,7 +9,7 @@ const corsHeaders = {
 export async function forwardToWebhook(message: TwitchMessage) {
   try {
     const webhookUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/chat-webhooks`;
-    console.log("Forwarding message to webhook:", message);
+    console.log("Forwarding Twitch message to webhook:", message);
     
     const response = await fetch(webhookUrl, {
       method: "POST",
@@ -23,6 +23,7 @@ export async function forwardToWebhook(message: TwitchMessage) {
         data: {
           username: message.username,
           message: message.message,
+          channel: message.channel,
         },
       }),
     });
@@ -35,5 +36,6 @@ export async function forwardToWebhook(message: TwitchMessage) {
     console.log("Webhook response:", responseData);
   } catch (error) {
     console.error("Error forwarding message:", error);
+    throw error; // Propagate error to caller for proper handling
   }
 }
