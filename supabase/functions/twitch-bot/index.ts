@@ -13,25 +13,29 @@ let bot: TwitchBot | null = null;
 serve(async (req) => {
   console.log("[Edge Function] Request received:", req.method, req.url);
   
+  // Always add CORS headers for all responses
+  const baseHeaders = {
+    ...corsHeaders,
+    "Content-Type": "application/json",
+  };
+
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     console.log("[Edge Function] Handling OPTIONS request");
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: baseHeaders });
   }
 
   try {
-    // If it's a GET request, return the bot status without requiring authorization
+    // Handle GET requests without authorization
     if (req.method === "GET") {
       console.log("[Edge Function] Processing GET request");
       const channelName = Deno.env.get("TWITCH_CHANNEL_NAME");
       const status = bot ? bot.getStatus() : "Not initialized";
       console.log("[Edge Function] GET request - Returning bot status:", status);
+      
       return new Response(
         JSON.stringify({ status, channelName }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200,
-        }
+        { headers: baseHeaders }
       );
     }
 
@@ -60,7 +64,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "Missing authorization header" }),
         {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: baseHeaders,
           status: 401,
         }
       );
@@ -88,7 +92,7 @@ serve(async (req) => {
         channelName: channelName
       }),
       {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: baseHeaders,
         status: 200,
       }
     );
@@ -97,7 +101,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: error.message }),
       {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: baseHeaders,
         status: 500,
       }
     );
