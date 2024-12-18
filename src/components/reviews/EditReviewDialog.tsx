@@ -1,111 +1,82 @@
+import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { ReviewTypeSelect } from "./ReviewTypeSelect";
+import { RatingSelect } from "./RatingSelect";
+import { MovieGenreSelect } from "./MovieGenreSelect";
+import { ReviewImageUpload } from "./ReviewImageUpload";
+import { Review } from "./types";
 import { supabase } from "@/integrations/supabase/client";
-import { Tv, Film, Utensils, Package, Skull, Zap, Rocket, Heart, Mountain, Trash2 } from "lucide-react";
-import ReviewImageUpload from "./ReviewImageUpload";
-import type { Review, ReviewType } from "./types";
+
+const formSchema = z.object({
+  type: z.string().min(1, "Type is required"),
+  title: z.string().min(1, "Title is required"),
+  rating: z.number().min(1, "Rating is required"),
+  content: z.string().min(1, "Content is required"),
+  genre: z.string().optional(),
+  image_urls: z.array(z.string()).optional(),
+});
 
 interface EditReviewDialogProps {
   review: Review;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onReviewUpdated: () => void;
 }
 
-const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditReviewDialogProps) => {
-  const [title, setTitle] = useState(review.title);
-  const [type, setType] = useState<ReviewType>(review.type);
-  const [genre, setGenre] = useState(review.genre || undefined);
-  const [rating, setRating] = useState(review.rating);
-  const [content, setContent] = useState(review.content);
-  const [imageUrls, setImageUrls] = useState<string[]>(review.image_urls || []);
+const EditReviewDialog = ({ review, open, onOpenChange }: EditReviewDialogProps) => {
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      type: review.type,
+      title: review.title,
+      rating: review.rating,
+      content: review.content,
+      genre: review.genre || undefined,
+      image_urls: review.image_urls || [],
+    },
+  });
 
-  const genreOptions = [
-    { value: 'Horror', icon: Skull },
-    { value: 'Action', icon: Zap },
-    { value: 'Sci Fi', icon: Rocket },
-    { value: 'Romantic Comedy', icon: Heart },
-    { value: 'Adventure', icon: Mountain },
-    { value: 'Comedy', icon: Heart },
-    { value: 'Drama', icon: Film },
-    { value: 'Animation', icon: Film },
-    { value: 'Thriller', icon: Skull },
-    { value: 'Other', icon: Film },
-  ];
-
-  const handleDelete = async () => {
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const { error: deleteError } = await supabase
-        .from('reviews')
-        .delete()
-        .eq('id', review.id);
-
-      if (deleteError) throw deleteError;
-
-      toast({
-        title: "Success",
-        description: "Review deleted successfully",
-      });
-      
-      onReviewUpdated();
-      onOpenChange(false);
-    } catch (error) {
-      console.error('Delete error:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete review",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (type === 'movie' && !genre) {
-      toast({
-        title: "Error",
-        description: "Please select a genre for the movie",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const { error: updateError } = await supabase
-        .from('reviews')
+      setIsLoading(true);
+      const { error } = await supabase
+        .from("reviews")
         .update({
-          title,
-          type,
-          rating,
-          content,
-          image_urls: imageUrls,
-          genre: type === 'movie' ? genre : null,
+          type: values.type,
+          title: values.title,
+          rating: values.rating,
+          content: values.content,
+          genre: values.genre,
+          image_urls: values.image_urls,
         })
-        .eq('id', review.id);
+        .eq("id", review.id);
 
-      if (updateError) throw updateError;
+      if (error) throw error;
 
       toast({
         title: "Success",
         description: "Review updated successfully",
       });
-      
-      onReviewUpdated();
       onOpenChange(false);
     } catch (error) {
-      console.error('Update error:', error);
+      console.error("Error updating review:", error);
       toast({
         title: "Error",
         description: "Failed to update review",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -113,108 +84,123 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="dark:text-black">Edit Review</DialogTitle>
+          <DialogTitle>Edit Review</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Select value={type} onValueChange={(value: ReviewType) => setType(value)}>
-            <SelectTrigger className="bg-white dark:bg-white dark:text-black">
-              <SelectValue placeholder="Select type" />
-            </SelectTrigger>
-            <SelectContent className="bg-white dark:bg-white">
-              <SelectItem value="television" className="text-black dark:text-black">
-                <div className="flex items-center gap-2">
-                  <Tv className="h-4 w-4" />
-                  <span>Television Series</span>
-                </div>
-              </SelectItem>
-              <SelectItem value="movie" className="text-black dark:text-black">
-                <div className="flex items-center gap-2">
-                  <Film className="h-4 w-4" />
-                  <span>Movie</span>
-                </div>
-              </SelectItem>
-              <SelectItem value="food" className="text-black dark:text-black">
-                <div className="flex items-center gap-2">
-                  <Utensils className="h-4 w-4" />
-                  <span>Food</span>
-                </div>
-              </SelectItem>
-              <SelectItem value="product" className="text-black dark:text-black">
-                <div className="flex items-center gap-2">
-                  <Package className="h-4 w-4" />
-                  <span>Product</span>
-                </div>
-              </SelectItem>
-            </SelectContent>
-          </Select>
-
-          {type === 'movie' && (
-            <Select value={genre} onValueChange={setGenre}>
-              <SelectTrigger className="bg-white dark:bg-white dark:text-black">
-                <SelectValue placeholder="Select movie genre" />
-              </SelectTrigger>
-              <SelectContent className="bg-white dark:bg-white">
-                {genreOptions.map(({ value, icon: Icon }) => (
-                  <SelectItem key={value} value={value} className="text-black dark:text-black">
-                    <div className="flex items-center gap-2">
-                      <Icon className="h-4 w-4" />
-                      <span>{value}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-
-          <Input
-            placeholder="Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            className="bg-white dark:bg-white dark:text-black"
-          />
-
-          <div className="space-y-2">
-            <label className="text-sm text-muted-foreground dark:text-white">Rating</label>
-            <Input
-              type="number"
-              min="1"
-              max="5"
-              value={rating}
-              onChange={(e) => setRating(Number(e.target.value))}
-              required
-              className="bg-white dark:bg-white dark:text-black"
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Type</FormLabel>
+                  <FormControl>
+                    <ReviewTypeSelect
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <Textarea
-            placeholder="Review content"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            required
-            className="min-h-[100px] bg-white dark:bg-white dark:text-black"
-          />
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Title</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <ReviewImageUpload
-            images={imageUrls}
-            onImagesChange={setImageUrls}
-            title={title}
-          />
+            <FormField
+              control={form.control}
+              name="rating"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Rating</FormLabel>
+                  <FormControl>
+                    <RatingSelect
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <div className="flex gap-2">
-            <Button type="submit" className="flex-1 light:text-black dark:text-black">
-              Update Review
-            </Button>
-            <Button 
-              type="button" 
-              variant="destructive"
-              onClick={handleDelete}
-              className="px-3"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        </form>
+            {form.watch("type") === "movie" && (
+              <FormField
+                control={form.control}
+                name="genre"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Genre</FormLabel>
+                    <FormControl>
+                      <MovieGenreSelect
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            <FormField
+              control={form.control}
+              name="content"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Content</FormLabel>
+                  <FormControl>
+                    <Textarea {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="image_urls"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Images</FormLabel>
+                  <FormControl>
+                    <ReviewImageUpload
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
