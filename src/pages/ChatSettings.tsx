@@ -1,13 +1,14 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Play, Square, Search, Twitch } from "lucide-react";
+import { Play, Square, Search, Twitch, Youtube } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import ChatMessageComponent from "@/components/chat/ChatMessage";
 import YouTubeSettings from "@/components/chat/YouTubeSettings";
+import BotStatusIndicator from "@/components/chat/BotStatusIndicator";
 
 const ChatSettings = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -16,32 +17,6 @@ const ChatSettings = () => {
   const [twitchStatus, setTwitchStatus] = useState<"connected" | "disconnected">("disconnected");
   const [youtubeStatus, setYoutubeStatus] = useState<"connected" | "disconnected">("disconnected");
   const { toast } = useToast();
-
-  useEffect(() => {
-    const checkBotStatus = async () => {
-      try {
-        const [twitchResponse, youtubeResponse] = await Promise.all([
-          fetch("/functions/v1/twitch-bot", {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-          }),
-          fetch("/functions/v1/youtube-bot", {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-          }),
-        ]);
-
-        setTwitchStatus(twitchResponse.ok ? "connected" : "disconnected");
-        setYoutubeStatus(youtubeResponse.ok ? "connected" : "disconnected");
-      } catch (error) {
-        console.error("Error checking bot status:", error);
-      }
-    };
-
-    checkBotStatus();
-    const interval = setInterval(checkBotStatus, 30000);
-    return () => clearInterval(interval);
-  }, []);
 
   const startBots = async (videoId?: string) => {
     setIsLoading(true);
@@ -166,18 +141,12 @@ const ChatSettings = () => {
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">Bot Status</h2>
             <div className="flex flex-col gap-4">
-              <div className="flex items-center gap-2">
-                <Twitch className="h-5 w-5 text-purple-500" />
-                <span>Twitch:</span>
-                <div
-                  className={`h-2 w-2 rounded-full ${
-                    twitchStatus === "connected" ? "bg-green-500" : "bg-red-500"
-                  }`}
-                />
-                <span className="text-sm text-gray-400">
-                  {twitchStatus === "connected" ? "Connected" : "Disconnected"}
-                </span>
-              </div>
+              <BotStatusIndicator
+                botType="twitch"
+                icon={<Twitch className="h-5 w-5 text-purple-500" />}
+                status={twitchStatus}
+                setStatus={setTwitchStatus}
+              />
               <YouTubeSettings 
                 status={youtubeStatus}
                 onStart={startBots}

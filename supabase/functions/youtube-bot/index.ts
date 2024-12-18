@@ -24,75 +24,73 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  if (req.method === "POST") {
-    try {
-      const { action, videoId } = await req.json();
-      console.log(`Received ${action} request`);
-      
-      if (action === "get-config") {
-        return new Response(
-          JSON.stringify({ 
-            api_key: YOUTUBE_API_KEY,
-            channel_id: YOUTUBE_CHANNEL_ID
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
+  try {
+    const { action, videoId } = await req.json();
+    console.log(`Received ${action} request`);
 
-      if (action === "start" && !videoId) {
-        throw new Error("Video ID is required");
-      }
-
-      if (action === "start") {
-        console.log("Starting YouTube chat listener for video:", videoId);
-        
-        if (chatInstance) {
-          await chatInstance.stop();
-        }
-
-        chatInstance = new YouTubeChat({
-          videoId,
-          apiKey: YOUTUBE_API_KEY,
-          clientId: YOUTUBE_CLIENT_ID,
-          clientSecret: YOUTUBE_CLIENT_SECRET,
-        });
-
-        await chatInstance.start();
-        
-        return new Response(
-          JSON.stringify({ status: "YouTube chat listener started" }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      
-      if (action === "stop") {
-        console.log("Stopping YouTube chat listener");
-        if (chatInstance) {
-          await chatInstance.stop();
-          chatInstance = null;
-        }
-        return new Response(
-          JSON.stringify({ status: "YouTube chat listener stopped" }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-    } catch (error) {
-      console.error("Error:", error);
+    if (action === "status") {
+      const status = chatInstance ? "connected" : "disconnected";
       return new Response(
-        JSON.stringify({ error: error.message }),
-        { 
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        }
+        JSON.stringify({ status }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-  }
 
-  return new Response(
-    JSON.stringify({ error: "Method not allowed" }),
-    { 
-      status: 405,
-      headers: { ...corsHeaders, "Content-Type": "application/json" }
+    if (action === "get-config") {
+      return new Response(
+        JSON.stringify({ 
+          api_key: YOUTUBE_API_KEY,
+          channel_id: YOUTUBE_CHANNEL_ID
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
-  );
+
+    if (action === "start" && !videoId) {
+      throw new Error("Video ID is required");
+    }
+
+    if (action === "start") {
+      console.log("Starting YouTube chat listener for video:", videoId);
+      
+      if (chatInstance) {
+        await chatInstance.stop();
+      }
+
+      chatInstance = new YouTubeChat({
+        videoId,
+        apiKey: YOUTUBE_API_KEY,
+        clientId: YOUTUBE_CLIENT_ID,
+        clientSecret: YOUTUBE_CLIENT_SECRET,
+      });
+
+      await chatInstance.start();
+      
+      return new Response(
+        JSON.stringify({ status: "YouTube chat listener started" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    if (action === "stop") {
+      console.log("Stopping YouTube chat listener");
+      if (chatInstance) {
+        await chatInstance.stop();
+        chatInstance = null;
+      }
+      return new Response(
+        JSON.stringify({ status: "YouTube chat listener stopped" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { 
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      }
+    );
+  }
 });
