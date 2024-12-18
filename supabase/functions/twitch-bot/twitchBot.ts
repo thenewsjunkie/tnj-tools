@@ -42,7 +42,8 @@ export class TwitchBot {
       const { access_token } = await tokenResponse.json();
       console.log("[TwitchBot] Successfully obtained OAuth token");
       
-      this.ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
+      // Updated WebSocket URL to include the port in the URL itself
+      this.ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443/");
 
       this.ws.onopen = () => {
         console.log("[TwitchBot] WebSocket connection established");
