@@ -33,20 +33,33 @@ class TwitchBot {
 
     this.ws.onopen = () => {
       console.log("Connected to Twitch IRC");
-      this.ws?.send("CAP REQ :twitch.tv/tags twitch.tv/commands");
+      // Send authentication commands
+      this.ws?.send("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership");
       this.ws?.send(`PASS oauth:${this.clientSecret}`);
       this.ws?.send(`NICK ${this.channelName}`);
       this.ws?.send(`JOIN #${this.channelName}`);
+      
+      // Log successful connection
+      console.log(`Joined channel: #${this.channelName}`);
     };
 
     this.ws.onmessage = async (event) => {
       const message = event.data;
+      console.log("Received message:", message); // Debug log
+
       if (message.includes("PING")) {
         this.ws?.send("PONG :tmi.twitch.tv");
         return;
       }
 
+      // Handle authentication failures
+      if (message.includes("Login authentication failed")) {
+        console.error("Login authentication failed. Check your credentials.");
+        return;
+      }
+
       if (message.includes("PRIVMSG")) {
+        console.log("Processing chat message:", message); // Debug log
         const parsedMessage = this.parseMessage(message);
         if (parsedMessage) {
           await this.forwardToWebhook(parsedMessage);
@@ -67,14 +80,17 @@ class TwitchBot {
 
   private parseMessage(rawMessage: string): TwitchMessage | null {
     try {
+      console.log("Parsing message:", rawMessage); // Debug log
       const regex = /.*:([^!]+).*PRIVMSG #([^ ]+) :(.+)/;
       const match = rawMessage.match(regex);
       if (match) {
-        return {
+        const message = {
           username: match[1],
           channel: match[2],
           message: match[3].trim(),
         };
+        console.log("Parsed message:", message); // Debug log
+        return message;
       }
     } catch (error) {
       console.error("Error parsing message:", error);
@@ -84,6 +100,7 @@ class TwitchBot {
 
   private async forwardToWebhook(message: TwitchMessage) {
     try {
+      console.log("Forwarding message to webhook:", message); // Debug log
       const response = await fetch(this.webhookUrl, {
         method: "POST",
         headers: {
@@ -124,6 +141,7 @@ serve(async (req) => {
       throw new Error("Missing required environment variables");
     }
 
+    console.log("Starting Twitch bot for channel:", channelName); // Debug log
     const bot = new TwitchBot(channelName, clientId, clientSecret);
     await bot.connect();
 
