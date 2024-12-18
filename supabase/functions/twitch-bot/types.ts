@@ -5,7 +5,7 @@ export interface TwitchMessage {
 }
 
 export interface BotConfig {
-  channelName: string;
+  channel: string;
   clientId: string;
   clientSecret: string;
 }

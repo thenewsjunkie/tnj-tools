@@ -1,10 +1,9 @@
-// Use native Deno WebSocket
 import { TwitchMessage, BotConfig } from "./types.ts";
 import { forwardToWebhook } from "./webhook.ts";
 
 export class TwitchBot {
   private ws: WebSocket | null = null;
-  private channelName: string;
+  private channel: string;
   private clientId: string;
   private clientSecret: string;
   private reconnectAttempts: number = 0;
@@ -12,16 +11,16 @@ export class TwitchBot {
   private isConnected: boolean = false;
 
   constructor(config: BotConfig) {
-    this.channelName = config.channel.toLowerCase();
+    this.channel = config.channel.toLowerCase();
     this.clientId = config.clientId;
     this.clientSecret = config.clientSecret;
-    console.log("[TwitchBot] Constructor called with channel:", this.channelName);
+    console.log("[TwitchBot] Constructor called with channel:", this.channel);
   }
 
   async connect() {
     try {
       console.log("[TwitchBot] Starting connection attempt...");
-      console.log("[TwitchBot] Connecting to channel:", this.channelName);
+      console.log("[TwitchBot] Connecting to channel:", this.channel);
       
       this.ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
 
@@ -46,7 +45,7 @@ export class TwitchBot {
           return;
         }
 
-        if (message.includes(`JOIN #${this.channelName}`)) {
+        if (message.includes(`JOIN #${this.channel}`)) {
           console.log("[TwitchBot] Successfully joined channel!");
         }
 
@@ -89,8 +88,8 @@ export class TwitchBot {
     console.log("[TwitchBot] Sending authentication commands...");
     this.ws?.send("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership");
     this.ws?.send(`PASS oauth:${this.clientSecret}`);
-    this.ws?.send(`NICK ${this.channelName}`);
-    this.ws?.send(`JOIN #${this.channelName}`);
+    this.ws?.send(`NICK ${this.channel}`);
+    this.ws?.send(`JOIN #${this.channel}`);
     
     this.reconnectAttempts = 0;
     console.log("[TwitchBot] Authentication commands sent, waiting for channel join confirmation");
