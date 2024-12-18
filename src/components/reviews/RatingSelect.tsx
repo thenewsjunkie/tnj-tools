@@ -1,20 +1,23 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-interface RatingSelectProps {
-  value?: number;
+export interface RatingSelectProps {
+  value: number;
   onValueChange: (value: number) => void;
 }
 
 const RatingSelect = ({ value, onValueChange }: RatingSelectProps) => {
   return (
-    <Select value={value?.toString()} onValueChange={(value) => onValueChange(parseInt(value))}>
-      <SelectTrigger className="bg-white dark:bg-white dark:text-black">
-        <SelectValue placeholder="Rating" />
+    <Select 
+      value={value.toString()} 
+      onValueChange={(val) => onValueChange(parseInt(val, 10))}
+    >
+      <SelectTrigger>
+        <SelectValue placeholder="Select rating" />
       </SelectTrigger>
-      <SelectContent className="bg-white dark:bg-white">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <SelectItem key={star} value={star.toString()} className="text-black dark:text-black">
-            {"★".repeat(star)}{"☆".repeat(5-star)}
+      <SelectContent>
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((rating) => (
+          <SelectItem key={rating} value={rating.toString()}>
+            {rating}
           </SelectItem>
         ))}
       </SelectContent>
