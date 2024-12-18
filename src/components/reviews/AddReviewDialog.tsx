@@ -100,10 +100,16 @@ const AddReviewDialog = ({ onReviewAdded }: AddReviewDialogProps) => {
           <DialogTitle className="text-foreground">Add New Review</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          <ReviewTypeSelect onValueChange={setType} />
+          <ReviewTypeSelect 
+            value={type} 
+            onValueChange={setType} 
+          />
 
           {type === 'movie' && (
-            <MovieGenreSelect onValueChange={setGenre} />
+            <MovieGenreSelect 
+              value={genre} 
+              onValueChange={setGenre} 
+            />
           )}
 
           <Input
@@ -113,7 +119,10 @@ const AddReviewDialog = ({ onReviewAdded }: AddReviewDialogProps) => {
             className="text-foreground"
           />
 
-          <RatingSelect onValueChange={setRating} />
+          <RatingSelect 
+            value={rating} 
+            onValueChange={setRating} 
+          />
 
           <ReviewImageUpload
             images={imageUrls}
