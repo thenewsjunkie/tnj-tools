@@ -19,68 +19,82 @@ class TwitchBot {
   private clientId: string;
   private clientSecret: string;
   private webhookUrl: string;
+  private reconnectAttempts: number = 0;
+  private maxReconnectAttempts: number = 5;
 
   constructor(channelName: string, clientId: string, clientSecret: string) {
     this.channelName = channelName.toLowerCase();
     this.clientId = clientId;
     this.clientSecret = clientSecret;
     this.webhookUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/chat-webhooks`;
+    console.log(`Initializing TwitchBot for channel: ${this.channelName}`);
+    console.log(`Webhook URL: ${this.webhookUrl}`);
   }
 
   async connect() {
-    console.log("Connecting to Twitch IRC...");
-    this.ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
+    try {
+      console.log(`Attempting to connect to Twitch IRC (attempt ${this.reconnectAttempts + 1})`);
+      this.ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
 
-    this.ws.onopen = () => {
-      console.log("Connected to Twitch IRC");
-      // Send authentication commands
-      this.ws?.send("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership");
-      this.ws?.send(`PASS oauth:${this.clientSecret}`);
-      this.ws?.send(`NICK ${this.channelName}`);
-      this.ws?.send(`JOIN #${this.channelName}`);
-      
-      // Log successful connection
-      console.log(`Joined channel: #${this.channelName}`);
-    };
+      this.ws.onopen = () => {
+        console.log("Connected to Twitch IRC, sending authentication...");
+        // Send authentication commands
+        this.ws?.send("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership");
+        this.ws?.send(`PASS oauth:${this.clientSecret}`);
+        this.ws?.send(`NICK ${this.channelName}`);
+        this.ws?.send(`JOIN #${this.channelName}`);
+        
+        // Reset reconnect attempts on successful connection
+        this.reconnectAttempts = 0;
+        console.log(`Successfully joined channel: #${this.channelName}`);
+      };
 
-    this.ws.onmessage = async (event) => {
-      const message = event.data;
-      console.log("Received message:", message); // Debug log
+      this.ws.onmessage = async (event) => {
+        const message = event.data;
+        console.log(`Raw IRC message: ${message}`);
 
-      if (message.includes("PING")) {
-        this.ws?.send("PONG :tmi.twitch.tv");
-        return;
-      }
-
-      // Handle authentication failures
-      if (message.includes("Login authentication failed")) {
-        console.error("Login authentication failed. Check your credentials.");
-        return;
-      }
-
-      if (message.includes("PRIVMSG")) {
-        console.log("Processing chat message:", message); // Debug log
-        const parsedMessage = this.parseMessage(message);
-        if (parsedMessage) {
-          await this.forwardToWebhook(parsedMessage);
+        if (message.includes("PING")) {
+          this.ws?.send("PONG :tmi.twitch.tv");
+          console.log("Responded to PING with PONG");
+          return;
         }
-      }
-    };
 
-    this.ws.onclose = () => {
-      console.log("Disconnected from Twitch IRC");
-      // Attempt to reconnect after a delay
-      setTimeout(() => this.connect(), 5000);
-    };
+        if (message.includes("Login authentication failed")) {
+          console.error("Login authentication failed. Check your credentials.");
+          return;
+        }
 
-    this.ws.onerror = (error) => {
-      console.error("WebSocket error:", error);
-    };
+        if (message.includes("PRIVMSG")) {
+          console.log("Processing chat message:", message);
+          const parsedMessage = this.parseMessage(message);
+          if (parsedMessage) {
+            await this.forwardToWebhook(parsedMessage);
+          }
+        }
+      };
+
+      this.ws.onclose = () => {
+        console.log("Disconnected from Twitch IRC");
+        if (this.reconnectAttempts < this.maxReconnectAttempts) {
+          this.reconnectAttempts++;
+          console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+          setTimeout(() => this.connect(), 5000 * this.reconnectAttempts);
+        } else {
+          console.error("Max reconnection attempts reached");
+        }
+      };
+
+      this.ws.onerror = (error) => {
+        console.error("WebSocket error:", error);
+      };
+    } catch (error) {
+      console.error("Error in connect method:", error);
+    }
   }
 
   private parseMessage(rawMessage: string): TwitchMessage | null {
     try {
-      console.log("Parsing message:", rawMessage); // Debug log
+      console.log("Parsing message:", rawMessage);
       const regex = /.*:([^!]+).*PRIVMSG #([^ ]+) :(.+)/;
       const match = rawMessage.match(regex);
       if (match) {
@@ -89,7 +103,7 @@ class TwitchBot {
           channel: match[2],
           message: match[3].trim(),
         };
-        console.log("Parsed message:", message); // Debug log
+        console.log("Successfully parsed message:", message);
         return message;
       }
     } catch (error) {
@@ -100,7 +114,7 @@ class TwitchBot {
 
   private async forwardToWebhook(message: TwitchMessage) {
     try {
-      console.log("Forwarding message to webhook:", message); // Debug log
+      console.log("Forwarding message to webhook:", message);
       const response = await fetch(this.webhookUrl, {
         method: "POST",
         headers: {
@@ -120,7 +134,11 @@ class TwitchBot {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      console.log("Message forwarded successfully:", message);
+      console.log("Message forwarded successfully");
+      
+      // Log the response for debugging
+      const responseData = await response.text();
+      console.log("Webhook response:", responseData);
     } catch (error) {
       console.error("Error forwarding message:", error);
     }
@@ -141,7 +159,12 @@ serve(async (req) => {
       throw new Error("Missing required environment variables");
     }
 
-    console.log("Starting Twitch bot for channel:", channelName); // Debug log
+    console.log("Starting Twitch bot with config:", {
+      channelName,
+      clientId: "***" + clientId.slice(-4),
+      clientSecret: "***" + clientSecret.slice(-4)
+    });
+
     const bot = new TwitchBot(channelName, clientId, clientSecret);
     await bot.connect();
 
@@ -155,7 +178,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error starting Twitch bot:", error);
     return new Response(
-      JSON.stringify({ error: "Failed to start Twitch bot" }),
+      JSON.stringify({ error: error.message }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,
