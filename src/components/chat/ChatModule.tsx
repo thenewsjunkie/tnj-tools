@@ -4,8 +4,8 @@ import { MessageSquare, Settings } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import ChatMessage from "@/components/chat/ChatMessage";
 import type { Tables } from "@/integrations/supabase/types";
+import ChatMessageComponent from "@/components/chat/ChatMessage";
 
 type ChatMessage = Tables<"chat_messages">;
 
@@ -52,7 +52,7 @@ const ChatModule = () => {
   }, []);
 
   return (
-    <Card>
+    <Card className="w-full bg-background border border-gray-200 dark:border-white/10">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div className="flex items-center gap-4">
           <h3 className="font-semibold leading-none tracking-tight">Chat</h3>
@@ -74,7 +74,7 @@ const ChatModule = () => {
       </CardHeader>
       <CardContent className="max-h-[400px] overflow-y-auto space-y-1">
         {messages.map((message) => (
-          <ChatMessage key={message.id} message={message} />
+          <ChatMessageComponent key={message.id} message={message} />
         ))}
       </CardContent>
     </Card>
