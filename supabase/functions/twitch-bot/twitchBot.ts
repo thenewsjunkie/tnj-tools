@@ -22,21 +22,21 @@ export class TwitchBot {
       console.log("[TwitchBot] Starting connection attempt...");
       console.log("[TwitchBot] Connecting to channel:", this.channel);
       
-      // Get OAuth token first
+      // Get OAuth token using client credentials flow
       const tokenResponse = await fetch('https://id.twitch.tv/oauth2/token', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
         body: new URLSearchParams({
           client_id: this.clientId,
           client_secret: this.clientSecret,
           grant_type: 'client_credentials',
-        }),
+          scope: 'chat:read'
+        })
       });
 
       if (!tokenResponse.ok) {
-        throw new Error('Failed to get OAuth token');
+        const errorData = await tokenResponse.text();
+        console.error("[TwitchBot] OAuth token error:", errorData);
+        throw new Error(`Failed to get OAuth token: ${tokenResponse.status} ${errorData}`);
       }
 
       const { access_token } = await tokenResponse.json();
