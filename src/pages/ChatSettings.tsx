@@ -1,15 +1,15 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Play, Square, Search, Twitch, Youtube } from "lucide-react";
+import { Play, Square, Search, Twitch } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import ChatMessageComponent from "@/components/chat/ChatMessage";
+import YouTubeSettings from "@/components/chat/YouTubeSettings";
 
 const ChatSettings = () => {
-  const [youtubeVideoId, setYoutubeVideoId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [messages, setMessages] = useState([]);
@@ -43,7 +43,7 @@ const ChatSettings = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const startBots = async () => {
+  const startBots = async (videoId?: string) => {
     setIsLoading(true);
     try {
       console.log("[ChatSettings] Starting bots...");
@@ -59,12 +59,12 @@ const ChatSettings = () => {
       }
 
       // Start YouTube bot if video ID is provided
-      if (youtubeVideoId) {
-        console.log("[ChatSettings] Starting YouTube bot for video:", youtubeVideoId);
+      if (videoId) {
+        console.log("[ChatSettings] Starting YouTube bot for video:", videoId);
         const { data: youtubeData, error: youtubeError } = await supabase.functions.invoke('youtube-bot', {
           body: { 
             action: "start",
-            videoId: youtubeVideoId
+            videoId: videoId
           }
         });
 
@@ -165,7 +165,7 @@ const ChatSettings = () => {
         <div className="space-y-6">
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">Bot Status</h2>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col gap-4">
               <div className="flex items-center gap-2">
                 <Twitch className="h-5 w-5 text-purple-500" />
                 <span>Twitch:</span>
@@ -178,37 +178,18 @@ const ChatSettings = () => {
                   {twitchStatus === "connected" ? "Connected" : "Disconnected"}
                 </span>
               </div>
-              <div className="flex items-center gap-2">
-                <Youtube className="h-5 w-5 text-red-500" />
-                <span>YouTube:</span>
-                <div
-                  className={`h-2 w-2 rounded-full ${
-                    youtubeStatus === "connected" ? "bg-green-500" : "bg-red-500"
-                  }`}
-                />
-                <span className="text-sm text-gray-400">
-                  {youtubeStatus === "connected" ? "Connected" : "Disconnected"}
-                </span>
-              </div>
+              <YouTubeSettings 
+                status={youtubeStatus}
+                onStart={startBots}
+              />
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-200">YouTube Video ID (optional)</label>
-            <Input
-              type="text"
-              placeholder="YouTube Video ID"
-              value={youtubeVideoId}
-              onChange={(e) => setYoutubeVideoId(e.target.value)}
-              className="bg-gray-900 border-gray-700 text-white placeholder-gray-400 max-w-xs"
-            />
           </div>
 
           <div className="flex gap-4">
             <Button
               variant="outline"
               className="border-gray-700 hover:bg-gray-800 text-white"
-              onClick={startBots}
+              onClick={() => startBots()}
               disabled={isLoading}
             >
               <Play className="h-4 w-4 mr-2" />

@@ -10,6 +10,7 @@ const corsHeaders = {
 const YOUTUBE_API_KEY = Deno.env.get("YOUTUBE_API_KEY");
 const YOUTUBE_CLIENT_ID = Deno.env.get("YOUTUBE_CLIENT_ID");
 const YOUTUBE_CLIENT_SECRET = Deno.env.get("YOUTUBE_CLIENT_SECRET");
+const YOUTUBE_CHANNEL_ID = Deno.env.get("YOUTUBE_CHANNEL_ID");
 
 if (!YOUTUBE_API_KEY || !YOUTUBE_CLIENT_ID || !YOUTUBE_CLIENT_SECRET) {
   console.error("Missing required YouTube credentials");
@@ -26,9 +27,19 @@ serve(async (req) => {
   if (req.method === "POST") {
     try {
       const { action, videoId } = await req.json();
-      console.log(`Received ${action} request for video: ${videoId}`);
+      console.log(`Received ${action} request`);
       
-      if (!videoId) {
+      if (action === "get-config") {
+        return new Response(
+          JSON.stringify({ 
+            api_key: YOUTUBE_API_KEY,
+            channel_id: YOUTUBE_CHANNEL_ID
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (action === "start" && !videoId) {
         throw new Error("Video ID is required");
       }
 
