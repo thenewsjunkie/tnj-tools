@@ -14,19 +14,27 @@ const ChatSettings = () => {
   const startBots = async () => {
     setIsLoading(true);
     try {
+      console.log("[ChatSettings] Starting bots...");
+      
       // Start Twitch bot
+      console.log("[ChatSettings] Starting Twitch bot...");
       const twitchResponse = await fetch("/functions/v1/twitch-bot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "start" }),
       });
 
+      console.log("[ChatSettings] Twitch bot response status:", twitchResponse.status);
+      const twitchData = await twitchResponse.text();
+      console.log("[ChatSettings] Twitch bot response:", twitchData);
+
       if (!twitchResponse.ok) {
-        throw new Error("Failed to start Twitch bot");
+        throw new Error(`Failed to start Twitch bot: ${twitchData}`);
       }
 
       // Start YouTube bot if video ID is provided
       if (youtubeVideoId) {
+        console.log("[ChatSettings] Starting YouTube bot for video:", youtubeVideoId);
         const youtubeResponse = await fetch("/functions/v1/youtube-bot", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -36,8 +44,12 @@ const ChatSettings = () => {
           }),
         });
 
+        console.log("[ChatSettings] YouTube bot response status:", youtubeResponse.status);
+        const youtubeData = await youtubeResponse.text();
+        console.log("[ChatSettings] YouTube bot response:", youtubeData);
+
         if (!youtubeResponse.ok) {
-          throw new Error("Failed to start YouTube bot");
+          throw new Error(`Failed to start YouTube bot: ${youtubeData}`);
         }
       }
 
@@ -46,10 +58,10 @@ const ChatSettings = () => {
         description: "Successfully connected to chat services",
       });
     } catch (error) {
-      console.error("Error starting bots:", error);
+      console.error("[ChatSettings] Error starting bots:", error);
       toast({
         title: "Error",
-        description: "Failed to start chat bots. Please try again.",
+        description: error.message || "Failed to start chat bots. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -60,15 +72,27 @@ const ChatSettings = () => {
   const stopBots = async () => {
     setIsLoading(true);
     try {
+      console.log("[ChatSettings] Stopping bots...");
+      
       // Stop Twitch bot
-      await fetch("/functions/v1/twitch-bot", {
+      console.log("[ChatSettings] Stopping Twitch bot...");
+      const twitchResponse = await fetch("/functions/v1/twitch-bot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "stop" }),
       });
 
+      console.log("[ChatSettings] Twitch bot stop response status:", twitchResponse.status);
+      const twitchData = await twitchResponse.text();
+      console.log("[ChatSettings] Twitch bot stop response:", twitchData);
+
+      if (!twitchResponse.ok) {
+        throw new Error(`Failed to stop Twitch bot: ${twitchData}`);
+      }
+
       // Stop YouTube bot
-      await fetch("/functions/v1/youtube-bot", {
+      console.log("[ChatSettings] Stopping YouTube bot...");
+      const youtubeResponse = await fetch("/functions/v1/youtube-bot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -77,15 +101,23 @@ const ChatSettings = () => {
         }),
       });
 
+      console.log("[ChatSettings] YouTube bot stop response status:", youtubeResponse.status);
+      const youtubeData = await youtubeResponse.text();
+      console.log("[ChatSettings] YouTube bot stop response:", youtubeData);
+
+      if (!youtubeResponse.ok) {
+        throw new Error(`Failed to stop YouTube bot: ${youtubeData}`);
+      }
+
       toast({
         title: "Chat bots stopped",
         description: "Successfully disconnected from chat services",
       });
     } catch (error) {
-      console.error("Error stopping bots:", error);
+      console.error("[ChatSettings] Error stopping bots:", error);
       toast({
         title: "Error",
-        description: "Failed to stop chat bots. Please try again.",
+        description: error.message || "Failed to stop chat bots. Please try again.",
         variant: "destructive",
       });
     } finally {
