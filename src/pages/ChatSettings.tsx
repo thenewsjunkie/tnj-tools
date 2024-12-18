@@ -1,16 +1,46 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Play, Square } from "lucide-react";
+import { Play, Square, Search, Twitch, Youtube } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 const ChatSettings = () => {
   const [youtubeVideoId, setYoutubeVideoId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [messages, setMessages] = useState([]);
+  const [twitchStatus, setTwitchStatus] = useState<"connected" | "disconnected">("disconnected");
+  const [youtubeStatus, setYoutubeStatus] = useState<"connected" | "disconnected">("disconnected");
   const { toast } = useToast();
+
+  useEffect(() => {
+    const checkBotStatus = async () => {
+      try {
+        const [twitchResponse, youtubeResponse] = await Promise.all([
+          fetch("/functions/v1/twitch-bot", {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+          }),
+          fetch("/functions/v1/youtube-bot", {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+          }),
+        ]);
+
+        setTwitchStatus(twitchResponse.ok ? "connected" : "disconnected");
+        setYoutubeStatus(youtubeResponse.ok ? "connected" : "disconnected");
+      } catch (error) {
+        console.error("Error checking bot status:", error);
+      }
+    };
+
+    checkBotStatus();
+    const interval = setInterval(checkBotStatus, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const startBots = async () => {
     setIsLoading(true);
@@ -22,8 +52,6 @@ const ChatSettings = () => {
       const { data: twitchData, error: twitchError } = await supabase.functions.invoke('twitch-bot', {
         body: { action: "start" }
       });
-
-      console.log("[ChatSettings] Twitch bot response:", twitchData);
 
       if (twitchError) {
         throw new Error(`Failed to start Twitch bot: ${twitchError.message}`);
@@ -38,8 +66,6 @@ const ChatSettings = () => {
             videoId: youtubeVideoId
           }
         });
-
-        console.log("[ChatSettings] YouTube bot response:", youtubeData);
 
         if (youtubeError) {
           throw new Error(`Failed to start YouTube bot: ${youtubeError.message}`);
@@ -67,31 +93,21 @@ const ChatSettings = () => {
     try {
       console.log("[ChatSettings] Stopping bots...");
       
-      // Stop Twitch bot
-      console.log("[ChatSettings] Stopping Twitch bot...");
-      const { data: twitchData, error: twitchError } = await supabase.functions.invoke('twitch-bot', {
-        body: { action: "stop" }
-      });
+      const [twitchResponse, youtubeResponse] = await Promise.all([
+        supabase.functions.invoke('twitch-bot', {
+          body: { action: "stop" }
+        }),
+        supabase.functions.invoke('youtube-bot', {
+          body: { action: "stop" }
+        })
+      ]);
 
-      console.log("[ChatSettings] Twitch bot stop response:", twitchData);
-
-      if (twitchError) {
-        throw new Error(`Failed to stop Twitch bot: ${twitchError.message}`);
+      if (twitchResponse.error) {
+        throw new Error(`Failed to stop Twitch bot: ${twitchResponse.error.message}`);
       }
 
-      // Stop YouTube bot
-      console.log("[ChatSettings] Stopping YouTube bot...");
-      const { data: youtubeData, error: youtubeError } = await supabase.functions.invoke('youtube-bot', {
-        body: { 
-          action: "stop",
-          videoId: youtubeVideoId
-        }
-      });
-
-      console.log("[ChatSettings] YouTube bot stop response:", youtubeData);
-
-      if (youtubeError) {
-        throw new Error(`Failed to stop YouTube bot: ${youtubeError.message}`);
+      if (youtubeResponse.error) {
+        throw new Error(`Failed to stop YouTube bot: ${youtubeResponse.error.message}`);
       }
 
       toast({
@@ -110,6 +126,28 @@ const ChatSettings = () => {
     }
   };
 
+  const handleSearch = async () => {
+    if (!searchQuery) return;
+
+    const { data, error } = await supabase
+      .from("chat_messages")
+      .select("*")
+      .or(`username.ilike.%${searchQuery}%,message.ilike.%${searchQuery}%`)
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      console.error("Error searching messages:", error);
+      toast({
+        title: "Error",
+        description: "Failed to search messages. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setMessages(data);
+  };
+
   return (
     <div className="min-h-screen bg-black text-white p-4">
       <div className="max-w-2xl mx-auto space-y-8">
@@ -124,6 +162,36 @@ const ChatSettings = () => {
         <h1 className="text-2xl font-bold">Chat Settings</h1>
 
         <div className="space-y-6">
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">Bot Status</h2>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Twitch className="h-5 w-5 text-purple-500" />
+                <span>Twitch:</span>
+                <div
+                  className={`h-2 w-2 rounded-full ${
+                    twitchStatus === "connected" ? "bg-green-500" : "bg-red-500"
+                  }`}
+                />
+                <span className="text-sm text-gray-400">
+                  {twitchStatus === "connected" ? "Connected" : "Disconnected"}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Youtube className="h-5 w-5 text-red-500" />
+                <span>YouTube:</span>
+                <div
+                  className={`h-2 w-2 rounded-full ${
+                    youtubeStatus === "connected" ? "bg-green-500" : "bg-red-500"
+                  }`}
+                />
+                <span className="text-sm text-gray-400">
+                  {youtubeStatus === "connected" ? "Connected" : "Disconnected"}
+                </span>
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-200">YouTube Video ID (optional)</label>
             <Input
@@ -155,6 +223,38 @@ const ChatSettings = () => {
               Stop Bots
             </Button>
           </div>
+        </div>
+
+        <div className="space-y-4 pt-8 border-t border-gray-800">
+          <h2 className="text-xl font-semibold">Search Messages</h2>
+          <div className="flex gap-2">
+            <Input
+              type="text"
+              placeholder="Search by username or message..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-gray-900 border-gray-700 text-white placeholder-gray-400"
+            />
+            <Button
+              variant="outline"
+              className="border-gray-700 hover:bg-gray-800 text-white"
+              onClick={handleSearch}
+            >
+              <Search className="h-4 w-4 mr-2" />
+              Search
+            </Button>
+          </div>
+
+          {messages.length > 0 && (
+            <div className="space-y-2 mt-4">
+              <h3 className="text-lg font-semibold">Search Results</h3>
+              <div className="space-y-1 bg-gray-900 rounded-lg p-4">
+                {messages.map((message) => (
+                  <ChatMessageComponent key={message.id} message={message} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
