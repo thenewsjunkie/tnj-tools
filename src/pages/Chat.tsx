@@ -150,7 +150,7 @@ const Chat = () => {
           </div>
         )}
 
-        <div className="fixed top-4 left-4 flex items-center gap-2 bg-black/50 backdrop-blur-sm p-2 rounded-lg z-20">
+        <div className="fixed top-4 right-4 flex items-center gap-2 bg-black/50 backdrop-blur-sm p-2 rounded-lg z-20">
           <MessageSquare className="h-4 w-4" />
           <span className="text-sm font-mono">{messages.length}</span>
         </div>
