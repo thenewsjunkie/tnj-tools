@@ -61,7 +61,7 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
             ${message.superchat_amount}
           </span>
         )}
-        <p className="text-sm text-white/90 truncate">{renderMessage(message.message)}</p>
+        <p className="text-sm text-white/90">{renderMessage(message.message)}</p>
       </div>
     </div>
   );
