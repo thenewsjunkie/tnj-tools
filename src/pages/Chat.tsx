@@ -64,9 +64,9 @@ const Chat = () => {
         <span className="text-sm font-mono">{messages.length}</span>
       </div>
 
-      <ScrollArea className="flex-1">
-        <div className="min-h-screen flex flex-col justify-end p-4">
-          <div>
+      <ScrollArea className="flex-1 w-full">
+        <div className="min-h-screen flex flex-col justify-end p-4 space-y-1">
+          <div className="w-full max-w-4xl mx-auto">
             {messages.map((message) => (
               <ChatMessageComponent key={message.id} message={message} />
             ))}

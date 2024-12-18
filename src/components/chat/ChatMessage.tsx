@@ -12,9 +12,9 @@ interface ChatMessageProps {
 const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
   const renderIcon = () => {
     if (message.source === "youtube") {
-      return <Youtube className="h-4 w-4 text-red-500" />;
+      return <Youtube className="h-4 w-4 text-red-500 shrink-0" />;
     }
-    return <Twitch className="h-4 w-4 text-purple-500" />;
+    return <Twitch className="h-4 w-4 text-purple-500 shrink-0" />;
   };
 
   const renderMessage = (text: string) => {
@@ -29,7 +29,7 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
             href={part}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-400 hover:underline"
+            className="text-blue-400 hover:underline break-all"
           >
             {part}
           </a>
@@ -42,7 +42,7 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
   return (
     <div
       className={cn(
-        "flex items-center gap-2 px-2 py-1 bg-black/50 backdrop-blur-sm w-full",
+        "flex items-start gap-2 px-2 py-1 bg-black/50 backdrop-blur-sm w-full",
         isPinned
           ? "bg-yellow-500/20 border border-yellow-500/50"
           : message.message_type === "superchat"
@@ -51,12 +51,12 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
       )}
     >
       {renderIcon()}
-      <div className="flex items-center gap-2 min-w-0 w-full">
-        <span className="font-bold text-sm whitespace-nowrap text-white">
+      <div className="flex items-start gap-2 min-w-0 w-full">
+        <span className="font-bold text-sm whitespace-nowrap text-white shrink-0">
           {message.username}:
         </span>
         {message.message_type === "superchat" && (
-          <span className="text-xs text-green-400">
+          <span className="text-xs text-green-400 shrink-0">
             ${message.superchat_amount}
           </span>
         )}
