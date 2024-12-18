@@ -1,16 +1,21 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { MessageSquare, Settings } from "lucide-react";
+import { MessageSquare, Settings, Youtube, Twitch } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import ChatMessageComponent from "@/components/chat/ChatMessage";
+import BotStatusIndicator from "@/components/chat/BotStatusIndicator";
+import { useToast } from "@/hooks/use-toast";
 
 type ChatMessage = Tables<"chat_messages">;
 
 const ChatModule = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [twitchStatus, setTwitchStatus] = useState<"connected" | "disconnected">("disconnected");
+  const [youtubeStatus, setYoutubeStatus] = useState<"connected" | "disconnected">("disconnected");
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -18,7 +23,7 @@ const ChatModule = () => {
         .from("chat_messages")
         .select("*")
         .order("created_at", { ascending: false })
-        .limit(20);
+        .limit(10);
 
       if (error) {
         console.error("Error fetching messages:", error);
@@ -41,7 +46,7 @@ const ChatModule = () => {
         },
         (payload) => {
           const newMessage = payload.new as ChatMessage;
-          setMessages((prev) => [...prev.slice(-19), newMessage]);
+          setMessages((prev) => [...prev.slice(-9), newMessage]);
         }
       )
       .subscribe();
@@ -50,6 +55,52 @@ const ChatModule = () => {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  const startBots = async () => {
+    try {
+      // Start Twitch bot
+      await supabase.functions.invoke('twitch-bot', {
+        body: { action: "start" }
+      });
+
+      toast({
+        title: "Chat bots started",
+        description: "Successfully connected to chat services",
+      });
+    } catch (error) {
+      console.error("Error starting bots:", error);
+      toast({
+        title: "Error",
+        description: "Failed to start chat bots. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const stopBots = async () => {
+    try {
+      await Promise.all([
+        supabase.functions.invoke('twitch-bot', {
+          body: { action: "stop" }
+        }),
+        supabase.functions.invoke('youtube-bot', {
+          body: { action: "stop" }
+        })
+      ]);
+
+      toast({
+        title: "Chat bots stopped",
+        description: "Successfully disconnected from chat services",
+      });
+    } catch (error) {
+      console.error("Error stopping bots:", error);
+      toast({
+        title: "Error",
+        description: "Failed to stop chat bots. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <Card className="w-full bg-background border border-gray-200 dark:border-white/10">
@@ -72,10 +123,44 @@ const ChatModule = () => {
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="max-h-[400px] overflow-y-auto space-y-1">
-        {messages.map((message) => (
-          <ChatMessageComponent key={message.id} message={message} />
-        ))}
+      <CardContent className="space-y-4">
+        <div className="max-h-[400px] overflow-y-auto space-y-1">
+          {messages.map((message) => (
+            <ChatMessageComponent key={message.id} message={message} />
+          ))}
+        </div>
+        <div className="flex justify-end items-center gap-4 pt-2 border-t border-border">
+          <BotStatusIndicator
+            botType="twitch"
+            icon={<Twitch className="h-5 w-5 text-purple-500" />}
+            status={twitchStatus}
+            setStatus={setTwitchStatus}
+          />
+          <BotStatusIndicator
+            botType="youtube"
+            icon={<Youtube className="h-5 w-5 text-red-500" />}
+            status={youtubeStatus}
+            setStatus={setYoutubeStatus}
+          />
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={startBots}
+              className="text-green-500 hover:text-green-600"
+            >
+              Start Bots
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={stopBots}
+              className="text-red-500 hover:text-red-600"
+            >
+              Stop Bots
+            </Button>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
