@@ -130,18 +130,14 @@ const ChatModule = () => {
           ))}
         </div>
         <div className="flex justify-end items-center gap-4 pt-2 border-t border-border">
-          <BotStatusIndicator
-            botType="twitch"
-            icon={<Twitch className="h-5 w-5 text-purple-500" />}
-            status={twitchStatus}
-            setStatus={setTwitchStatus}
-          />
-          <BotStatusIndicator
-            botType="youtube"
-            icon={<Youtube className="h-5 w-5 text-red-500" />}
-            status={youtubeStatus}
-            setStatus={setYoutubeStatus}
-          />
+          <div className="flex items-center gap-2">
+            <div className={`h-2 w-2 rounded-full ${twitchStatus === "connected" ? "bg-green-500" : "bg-red-500"}`} />
+            <Twitch className="h-5 w-5 text-purple-500" />
+          </div>
+          <div className="flex items-center gap-2">
+            <div className={`h-2 w-2 rounded-full ${youtubeStatus === "connected" ? "bg-green-500" : "bg-red-500"}`} />
+            <Youtube className="h-5 w-5 text-red-500" />
+          </div>
           <div className="flex gap-2">
             <Button
               variant="outline"
