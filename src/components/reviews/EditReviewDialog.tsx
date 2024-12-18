@@ -111,7 +111,7 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <DialogContent className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="dark:text-black">Edit Review</DialogTitle>
         </DialogHeader>
