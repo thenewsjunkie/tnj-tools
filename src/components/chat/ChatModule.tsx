@@ -1,0 +1,84 @@
+import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { MessageSquare, Settings } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import ChatMessage from "@/components/chat/ChatMessage";
+import type { Tables } from "@/integrations/supabase/types";
+
+type ChatMessage = Tables<"chat_messages">;
+
+const ChatModule = () => {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+
+  useEffect(() => {
+    const fetchMessages = async () => {
+      const { data, error } = await supabase
+        .from("chat_messages")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      if (error) {
+        console.error("Error fetching messages:", error);
+        return;
+      }
+
+      setMessages(data.reverse());
+    };
+
+    fetchMessages();
+
+    const channel = supabase
+      .channel("chat_messages_channel")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "chat_messages",
+        },
+        (payload) => {
+          const newMessage = payload.new as ChatMessage;
+          setMessages((prev) => [...prev.slice(-19), newMessage]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <div className="flex items-center gap-4">
+          <h3 className="font-semibold leading-none tracking-tight">Chat</h3>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <MessageSquare className="h-4 w-4" />
+            <span>{messages.length}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/chat">View Chat</Link>
+          </Button>
+          <Button variant="ghost" size="icon" asChild>
+            <Link to="/chat/settings">
+              <Settings className="h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="max-h-[400px] overflow-y-auto space-y-1">
+        {messages.map((message) => (
+          <ChatMessage key={message.id} message={message} />
+        ))}
+      </CardContent>
+    </Card>
+  );
+};
+
+export default ChatModule;
