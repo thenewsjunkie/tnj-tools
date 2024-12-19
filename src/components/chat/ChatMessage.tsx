@@ -1,4 +1,4 @@
-import { Youtube, Twitch } from "lucide-react";
+import { Youtube, Twitch, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tables } from "@/integrations/supabase/types";
 
@@ -14,7 +14,10 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
     if (message.source === "youtube") {
       return <Youtube className="h-4 w-4 text-red-500 shrink-0" />;
     }
-    return <Twitch className="h-4 w-4 text-purple-500 shrink-0" />;
+    if (message.source === "twitch") {
+      return <Twitch className="h-4 w-4 text-purple-500 shrink-0" />;
+    }
+    return <MessageSquare className="h-4 w-4 text-blue-500 shrink-0" />;
   };
 
   const renderMessage = (text: string) => {
