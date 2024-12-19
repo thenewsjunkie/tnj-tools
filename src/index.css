@@ -142,28 +142,3 @@ a {
   font-family: 'Radiate Sans Extra Bold', system-ui, -apple-system, sans-serif !important;
   font-weight: 800 !important;
 }
-
-/* Light mode chat module styles */
-.light .chat-module-message {
-  @apply bg-white/80 border-b border-gray-100;
-}
-
-.light .chat-module-message-username {
-  @apply text-gray-900;
-}
-
-.light .chat-module-message-text {
-  @apply text-gray-700;
-}
-
-.light .chat-module-message-superchat {
-  @apply text-green-600;
-}
-
-.light .chat-module-message-pinned {
-  @apply bg-yellow-500/10 border border-yellow-500/30;
-}
-
-.light .chat-module-message-superchat-bg {
-  @apply bg-green-500/10 border border-green-500/30;
-}
