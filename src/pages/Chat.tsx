@@ -4,16 +4,22 @@ import { supabase } from "@/integrations/supabase/client";
 import ChatMessageComponent from "@/components/chat/ChatMessage";
 import ChatStatusIndicator from "@/components/chat/ChatStatusIndicator";
 import { Tables } from "@/integrations/supabase/types";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 type ChatMessageType = Tables<"chat_messages">;
 
 const Chat = () => {
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
   const lastScrollTop = useRef(0);
 
+  const scrollToBottom = () => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  };
+
+  // Initial messages load
   useEffect(() => {
     const fetchMessages = async () => {
       const { data, error } = await supabase
@@ -28,11 +34,15 @@ const Chat = () => {
       }
 
       setMessages(data);
-      scrollToBottom();
+      // Scroll to bottom after initial load
+      setTimeout(scrollToBottom, 100);
     };
 
     fetchMessages();
+  }, []);
 
+  // Real-time updates
+  useEffect(() => {
     const channel = supabase
       .channel("chat_messages_channel")
       .on(
@@ -46,7 +56,7 @@ const Chat = () => {
           const newMessage = payload.new as ChatMessageType;
           setMessages((prev) => [...prev, newMessage]);
           if (autoScroll) {
-            scrollToBottom();
+            setTimeout(scrollToBottom, 100);
           }
         }
       )
@@ -57,35 +67,30 @@ const Chat = () => {
     };
   }, [autoScroll]);
 
-  const scrollToBottom = () => {
-    if (scrollAreaRef.current) {
-      const scrollElement = scrollAreaRef.current;
-      scrollElement.scrollTop = scrollElement.scrollHeight;
-    }
-  };
-
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const element = event.currentTarget;
-    const isScrollingUp = element.scrollTop < lastScrollTop.current;
-    const isAtBottom = Math.abs(element.scrollHeight - element.scrollTop - element.clientHeight) < 10;
+    const isAtBottom =
+      Math.abs(
+        element.scrollHeight - element.scrollTop - element.clientHeight
+      ) < 10;
     
     setAutoScroll(isAtBottom);
     lastScrollTop.current = element.scrollTop;
   };
 
   return (
-    <div className="min-h-screen bg-transparent text-white flex flex-col">
+    <div className="fixed inset-0 bg-transparent text-white flex flex-col">
       <div className="fixed top-4 right-4 flex items-center gap-2 bg-black/50 backdrop-blur-sm p-2 rounded-lg z-20">
         <MessageSquare className="h-4 w-4" />
         <span className="text-sm font-mono">{messages.length}</span>
       </div>
 
-      <div 
-        ref={scrollAreaRef}
+      <div
+        ref={chatContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto"
+        className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
       >
-        <div className="min-h-screen flex flex-col justify-end p-4">
+        <div className="min-h-full flex flex-col justify-end p-4">
           <div className="w-full max-w-4xl mx-auto space-y-1">
             {messages.map((message) => (
               <ChatMessageComponent key={message.id} message={message} />
