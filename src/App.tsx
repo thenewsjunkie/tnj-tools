@@ -39,12 +39,21 @@ const RouteTracker = () => {
 };
 
 // AdminLayout component to wrap admin routes
-const AdminLayout = () => (
-  <>
-    <GlobalQueueManager />
-    <Outlet />
-  </>
-);
+const AdminLayout = () => {
+  useEffect(() => {
+    console.log("[AdminLayout] Mounted");
+    return () => {
+      console.log("[AdminLayout] Unmounted");
+    };
+  }, []);
+
+  return (
+    <>
+      <GlobalQueueManager />
+      <Outlet />
+    </>
+  );
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

@@ -12,12 +12,6 @@ const GlobalQueueManager = () => {
   useEffect(() => {
     console.log('[GlobalQueueManager] Initializing');
     
-    // If there's no current alert and the queue isn't paused, try to process the next alert
-    if (!currentAlert && !isPaused) {
-      console.log('[GlobalQueueManager] No current alert, attempting to process next');
-      processNextAlert(isPaused);
-    }
-
     // Only set up subscription if we don't already have one
     if (!channelRef.current) {
       console.log('[GlobalQueueManager] Setting up realtime subscription');
@@ -33,6 +27,12 @@ const GlobalQueueManager = () => {
         .subscribe((status) => {
           console.log('[GlobalQueueManager] Subscription status:', status);
         });
+
+      // If there's no current alert and the queue isn't paused, try to process the next alert
+      if (!currentAlert && !isPaused) {
+        console.log('[GlobalQueueManager] No current alert, attempting to process next');
+        processNextAlert(isPaused);
+      }
     }
 
     // Cleanup function
@@ -43,7 +43,7 @@ const GlobalQueueManager = () => {
         channelRef.current = null;
       }
     };
-  }, [isPaused, currentAlert]);
+  }, [isPaused, currentAlert, processNextAlert]);
 
   return null;
 };
