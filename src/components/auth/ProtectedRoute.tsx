@@ -10,14 +10,15 @@ export const ProtectedRoute = () => {
   const { isApproved, checkApprovalStatus } = useProfileStatus();
   const location = useLocation();
 
-  // Only protect admin routes - immediately return Outlet for non-admin routes
+  // Only check auth for admin routes
   if (!location.pathname.startsWith('/admin')) {
+    console.log('[ProtectedRoute] Non-admin route detected, bypassing auth check');
     return <Outlet />;
   }
 
   const checkSession = useCallback(async () => {
     try {
-      console.log("[ProtectedRoute] Checking session...");
+      console.log("[ProtectedRoute] Checking session for admin route...");
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       console.log("[ProtectedRoute] Session state:", !!currentSession);
       
@@ -35,15 +36,19 @@ export const ProtectedRoute = () => {
   }, [checkApprovalStatus]);
 
   useEffect(() => {
+    if (!location.pathname.startsWith('/admin')) {
+      return;
+    }
+
     let mounted = true;
     checkSession();
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      console.log("[ProtectedRoute] Auth state changed:", _event);
-      if (!mounted) return;
+      if (!mounted || !location.pathname.startsWith('/admin')) return;
       
+      console.log("[ProtectedRoute] Auth state changed:", _event);
       setSession(!!session);
       if (session) {
         await checkApprovalStatus(session.user.id);
@@ -55,7 +60,7 @@ export const ProtectedRoute = () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [checkSession]);
+  }, [checkSession, location.pathname]);
 
   // Show nothing while loading
   if (isLoading) {
