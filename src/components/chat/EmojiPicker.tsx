@@ -53,7 +53,7 @@ const EmojiPicker = ({ onEmojiSelect }: EmojiPickerProps) => {
           placeholder="Search..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="mb-2 bg-white/5 border-white/10"
+          className="mb-2 bg-white/5 border-white/10 text-white placeholder:text-white/50"
         />
         <TabsContent value="emojis" className="m-0">
           <div className="grid grid-cols-6 gap-2">

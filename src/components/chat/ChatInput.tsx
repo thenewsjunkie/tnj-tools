@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { MessageSquare, Send, Smile } from "lucide-react";
+import { MessageSquare, Send, Smile, Settings } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 import EmojiPicker from "./EmojiPicker";
 
 export const ChatInput = () => {
@@ -137,6 +138,16 @@ export const ChatInput = () => {
               <EmojiPicker onEmojiSelect={handleEmojiSelect} />
             </PopoverContent>
           </Popover>
+          
+          <Link to="/chat/settings">
+            <Button 
+              variant="ghost" 
+              size="icon"
+              className="text-white/90 hover:text-white hover:bg-white/10"
+            >
+              <Settings className="h-5 w-5" />
+            </Button>
+          </Link>
         </div>
       </div>
     </div>
