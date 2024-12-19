@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import ChatMessageComponent from "@/components/chat/ChatMessage";
-import BotStatusIndicator from "@/components/chat/BotStatusIndicator";
 import { useToast } from "@/hooks/use-toast";
 
 type ChatMessage = Tables<"chat_messages">;
@@ -58,7 +57,6 @@ const ChatModule = () => {
 
   const startBots = async () => {
     try {
-      // Start Twitch bot
       await supabase.functions.invoke('twitch-bot', {
         body: { action: "start" }
       });
