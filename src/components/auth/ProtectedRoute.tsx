@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useProfileStatus } from "@/hooks/useProfileStatus";
@@ -8,6 +8,7 @@ export const ProtectedRoute = () => {
   const [session, setSession] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { isApproved, checkApprovalStatus } = useProfileStatus();
+  const location = useLocation();
 
   useEffect(() => {
     let mounted = true;
@@ -58,7 +59,7 @@ export const ProtectedRoute = () => {
 
   // Redirect if not logged in
   if (!session) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
   // Only show approval pending screen if explicitly not approved
