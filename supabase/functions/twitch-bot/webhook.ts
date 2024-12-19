@@ -8,7 +8,7 @@ export const corsHeaders = {
   "Access-Control-Max-Age": "86400",
 };
 
-export async function forwardToWebhook(message: TwitchMessage) {
+export async function forwardToWebhook(message: TwitchMessage & { type: string }) {
   try {
     const webhookUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/chat-webhooks`;
     console.log("[Webhook] Forwarding Twitch message to webhook:", message);
@@ -22,7 +22,7 @@ export async function forwardToWebhook(message: TwitchMessage) {
       },
       body: JSON.stringify({
         platform: "twitch",
-        type: "chat",
+        type: message.type,
         data: {
           username: message.username,
           message: message.message,

@@ -22,7 +22,6 @@ export class TwitchBot {
       console.log("[TwitchBot] Starting connection attempt...");
       console.log("[TwitchBot] Connecting to channel:", this.channel);
       
-      // Get OAuth token using client credentials flow
       const tokenResponse = await fetch('https://id.twitch.tv/oauth2/token', {
         method: 'POST',
         body: new URLSearchParams({
@@ -47,7 +46,6 @@ export class TwitchBot {
       this.ws.onopen = () => {
         console.log("[TwitchBot] WebSocket connection established");
         this.isConnected = true;
-        // Use a bot username instead of channel name for the NICK command
         const botUsername = "justinfan" + Math.floor(Math.random() * 100000);
         this.authenticate(access_token, botUsername);
       };
@@ -71,11 +69,30 @@ export class TwitchBot {
           console.log("[TwitchBot] Successfully joined channel!");
         }
 
+        // Handle subscription messages
+        if (message.includes("USERNOTICE")) {
+          console.log("[TwitchBot] Processing subscription message:", message);
+          const subInfo = this.parseSubscriptionMessage(message);
+          if (subInfo) {
+            await forwardToWebhook({
+              type: "subscription",
+              username: subInfo.username,
+              message: subInfo.message,
+              channel: this.channel
+            });
+          }
+          return;
+        }
+
+        // Handle regular chat messages
         if (message.includes("PRIVMSG")) {
           console.log("[TwitchBot] Processing chat message:", message);
           const parsedMessage = this.parseMessage(message);
           if (parsedMessage) {
-            await forwardToWebhook(parsedMessage);
+            await forwardToWebhook({
+              type: "chat",
+              ...parsedMessage
+            });
           }
         }
       };
@@ -143,6 +160,25 @@ export class TwitchBot {
       }
     } catch (error) {
       console.error("[TwitchBot] Error parsing message:", error);
+    }
+    return null;
+  }
+
+  private parseSubscriptionMessage(rawMessage: string) {
+    try {
+      console.log("[TwitchBot] Parsing subscription message:", rawMessage);
+      // Extract username from the USERNOTICE tags
+      const usernameMatch = rawMessage.match(/display-name=([^;]+)/);
+      const username = usernameMatch ? usernameMatch[1] : null;
+
+      if (username) {
+        return {
+          username,
+          message: `${username} just subscribed!`,
+        };
+      }
+    } catch (error) {
+      console.error("[TwitchBot] Error parsing subscription message:", error);
     }
     return null;
   }
