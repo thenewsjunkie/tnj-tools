@@ -38,13 +38,20 @@ const RouteTracker = () => {
   return null;
 };
 
+// AdminLayout component to wrap admin routes
+const AdminLayout = () => (
+  <>
+    <GlobalQueueManager />
+    <Outlet />
+  </>
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider defaultTheme="dark">
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <GlobalQueueManager />
         <BrowserRouter>
           <RouteTracker />
           <Routes>
@@ -61,11 +68,13 @@ const App = () => (
 
             {/* Protected Admin Routes */}
             <Route element={<ProtectedRoute />}>
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/admin/ai" element={<AI />} />
-              <Route path="/admin/settings" element={<Settings />} />
-              <Route path="/admin/instructions" element={<Instructions />} />
-              <Route path="/admin/settings/chat" element={<ChatSettings />} />
+              <Route element={<AdminLayout />}>
+                <Route path="/admin" element={<Admin />} />
+                <Route path="/admin/ai" element={<AI />} />
+                <Route path="/admin/settings" element={<Settings />} />
+                <Route path="/admin/instructions" element={<Instructions />} />
+                <Route path="/admin/settings/chat" element={<ChatSettings />} />
+              </Route>
             </Route>
           </Routes>
         </BrowserRouter>
