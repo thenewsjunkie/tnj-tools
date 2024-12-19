@@ -1,14 +1,10 @@
 import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useProfileStatus } from "@/hooks/useProfileStatus";
 
-interface ProtectedRouteProps {
-  children: React.ReactNode;
-}
-
-export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+export const ProtectedRoute = () => {
   const [session, setSession] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { isApproved, checkApprovalStatus } = useProfileStatus();
@@ -86,5 +82,5 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   }
 
   // Allow access if approved or if approval status is unknown (null)
-  return children;
+  return <Outlet />;
 };
