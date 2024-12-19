@@ -80,8 +80,7 @@ const Chat = () => {
 
   return (
     <div className="fixed inset-0 bg-transparent text-white flex flex-col">
-      <div className="fixed top-4 right-8 flex items-center gap-2 bg-black/80 backdrop-blur-sm px-3 py-1.5 rounded-lg z-20 border border-white/10">
-        <MessageSquare className="h-4 w-4 text-white/70" />
+      <div className="fixed top-2 right-2 flex items-center gap-1.5 bg-black/90 backdrop-blur-sm px-2 py-1 rounded-md z-20 border border-white/20">
         <span className="text-sm font-mono text-white/90">{messages.length}</span>
       </div>
 
