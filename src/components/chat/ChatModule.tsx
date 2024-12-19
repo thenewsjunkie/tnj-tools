@@ -64,11 +64,13 @@ const ChatModule = () => {
   }, []);
 
   return (
-    <Card className="w-full bg-background border border-gray-200 dark:border-white/10">
+    <Card className="w-full bg-white dark:bg-background border border-gray-200/50 dark:border-white/10">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div className="flex items-center gap-4">
-          <h3 className="font-semibold leading-none tracking-tight">Chat</h3>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <h3 className="font-semibold leading-none tracking-tight text-gray-900 dark:text-white">
+            Chat
+          </h3>
+          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-muted-foreground">
             <MessageSquare className="h-4 w-4" />
             <span>{totalMessages}</span>
           </div>
@@ -85,7 +87,7 @@ const ChatModule = () => {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="max-h-[400px] overflow-y-auto space-y-1">
+        <div className="max-h-[400px] overflow-y-auto space-y-1 rounded-md bg-gray-50/80 dark:bg-black/50">
           {messages.map((message) => (
             <ChatMessageComponent key={message.id} message={message} />
           ))}
