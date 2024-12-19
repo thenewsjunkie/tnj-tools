@@ -57,8 +57,8 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
       )}
     >
       {renderIcon()}
-      <div className="flex flex-wrap gap-2 min-w-0 w-full">
-        <div className="flex gap-2 items-baseline w-full">
+      <div className="flex flex-col min-w-0 w-full">
+        <div className="flex items-baseline gap-2">
           <span className="font-bold text-sm whitespace-nowrap text-white shrink-0">
             {message.username}:
           </span>
