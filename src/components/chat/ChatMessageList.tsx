@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import ChatMessageComponent from "@/components/chat/ChatMessage";
 import { Tables } from "@/integrations/supabase/types";
 
