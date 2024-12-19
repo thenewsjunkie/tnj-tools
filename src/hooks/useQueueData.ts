@@ -20,11 +20,12 @@ export const useQueueData = () => {
         throw error;
       }
       console.log('[useQueueData] Queue data fetched:', data);
-      return data;
+      return data || [];
     },
-    refetchInterval: 5000, // Reduce polling frequency
+    refetchInterval: 3000, // Reduce polling frequency
     refetchIntervalInBackground: false,
-    staleTime: 2000, // Increase stale time to reduce refetches
+    staleTime: 2000,
+    gcTime: 5000, // Add garbage collection time
   });
 
   return { queueData, refetch };
