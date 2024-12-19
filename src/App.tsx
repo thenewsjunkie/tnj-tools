@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import GlobalQueueManager from "@/components/alerts/GlobalQueueManager";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
@@ -61,71 +61,60 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
-  useEffect(() => {
-    let mounted = true;
+  const checkAuth = useCallback(async (session: any) => {
+    if (!session) {
+      console.log('[AdminRoute] No session found');
+      setIsAuthenticated(false);
+      setIsLoading(false);
+      return;
+    }
 
-    const checkAuth = async () => {
-      try {
-        console.log('[AdminRoute] Checking authentication...');
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!session) {
-          console.log('[AdminRoute] No session found');
-          if (mounted) {
-            setIsAuthenticated(false);
-            setIsLoading(false);
-          }
-          return;
-        }
-
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('status')
-          .eq('id', session.user.id)
-          .single();
-        
-        const isApproved = profile?.status === 'approved';
-        console.log('[AdminRoute] User authentication status:', isApproved);
-        
-        if (mounted) {
-          setIsAuthenticated(isApproved);
-          setIsLoading(false);
-        }
-      } catch (error) {
-        console.error('[AdminRoute] Error checking auth:', error);
-        if (mounted) {
-          setIsAuthenticated(false);
-          setIsLoading(false);
-        }
-      }
-    };
-
-    checkAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('[AdminRoute] Auth state changed:', event);
-      
-      if (!session) {
-        setIsAuthenticated(false);
-        setIsLoading(false);
-        return;
-      }
-
+    try {
       const { data: profile } = await supabase
         .from('profiles')
         .select('status')
         .eq('id', session.user.id)
         .single();
       
-      setIsAuthenticated(profile?.status === 'approved');
+      const isApproved = profile?.status === 'approved';
+      console.log('[AdminRoute] User authentication status:', isApproved);
+      
+      setIsAuthenticated(isApproved);
       setIsLoading(false);
+    } catch (error) {
+      console.error('[AdminRoute] Error checking auth:', error);
+      setIsAuthenticated(false);
+      setIsLoading(false);
+    }
+  }, []);
+  
+  useEffect(() => {
+    let mounted = true;
+
+    // Initial auth check
+    const initialCheck = async () => {
+      console.log('[AdminRoute] Checking authentication...');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (mounted) {
+        checkAuth(session);
+      }
+    };
+
+    initialCheck();
+
+    // Subscribe to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      console.log('[AdminRoute] Auth state changed:', _event);
+      if (mounted) {
+        checkAuth(session);
+      }
     });
 
     return () => {
       mounted = false;
       subscription?.unsubscribe();
     };
-  }, []);
+  }, [checkAuth]);
 
   if (isLoading) {
     return (
