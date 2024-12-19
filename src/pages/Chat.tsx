@@ -39,14 +39,24 @@ const Chat = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error inserting message:", error);
+        toast({
+          title: "Error sending message",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
 
+      console.log("Message inserted successfully:", data);
       setNewMessage("");
       scrollToBottom();
     } catch (error) {
+      console.error("Unexpected error:", error);
       toast({
         title: "Error sending message",
-        description: "Please try again later",
+        description: "An unexpected error occurred",
         variant: "destructive",
       });
     }
@@ -62,23 +72,37 @@ const Chat = () => {
   // Initial messages load
   useEffect(() => {
     const fetchMessages = async () => {
-      const { data, error } = await supabase
-        .from("chat_messages")
-        .select("*")
-        .order("created_at", { ascending: true })
-        .limit(50);
+      try {
+        const { data, error } = await supabase
+          .from("chat_messages")
+          .select("*")
+          .order("created_at", { ascending: true });
 
-      if (error) {
-        console.error("Error fetching messages:", error);
-        return;
+        if (error) {
+          console.error("Error fetching messages:", error);
+          toast({
+            title: "Error loading messages",
+            description: error.message,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        console.log(`Loaded ${data.length} messages`);
+        setMessages(data || []);
+        setTimeout(scrollToBottom, 100);
+      } catch (error) {
+        console.error("Unexpected error loading messages:", error);
+        toast({
+          title: "Error loading messages",
+          description: "An unexpected error occurred while loading messages",
+          variant: "destructive",
+        });
       }
-
-      setMessages(data);
-      setTimeout(scrollToBottom, 100);
     };
 
     fetchMessages();
-  }, []);
+  }, [toast]);
 
   // Real-time updates
   useEffect(() => {
@@ -92,6 +116,7 @@ const Chat = () => {
           table: "chat_messages",
         },
         (payload) => {
+          console.log("New message received:", payload);
           const newMessage = payload.new as ChatMessageType;
           setMessages((prev) => [...prev, newMessage]);
           if (autoScroll) {
