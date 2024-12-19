@@ -126,9 +126,9 @@ const Chat = () => {
       >
         <div className="min-h-full p-4">
           <div className="w-full max-w-4xl mx-auto space-y-2">
-            <div className="fixed bottom-16 right-4 flex items-center gap-1.5 bg-black/90 backdrop-blur-sm px-2 py-1 rounded-md z-20 border border-white/20">
+            <div className="flex items-center gap-1.5 bg-black/90 backdrop-blur-sm px-2 py-1 rounded-md border border-white/20 mb-4">
               <MessageSquare className="h-4 w-4 text-white/90" />
-              <span className="text-sm font-mono text-white/90">{messages.length}</span>
+              <span className="text-sm font-mono text-white/90">Chat Messages: {messages.length}</span>
             </div>
             {messages.map((message) => (
               <ChatMessageComponent key={message.id} message={message} />
