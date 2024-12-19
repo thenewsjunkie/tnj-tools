@@ -21,24 +21,33 @@ const Reviews = ({ showViewAllLink = false, reviews: propReviews, simpleView = f
   const { data: fetchedReviews = [], refetch } = useQuery({
     queryKey: ['reviews'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('reviews')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data as Review[];
+      try {
+        const { data, error } = await supabase
+          .from('reviews')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        return data as Review[];
+      } catch (error) {
+        console.error('Error fetching reviews:', error);
+        return [];
+      }
     },
   });
 
   useEffect(() => {
     const fetchTotalReviews = async () => {
-      const { count, error } = await supabase
-        .from('reviews')
-        .select('*', { count: 'exact', head: true });
-      
-      if (!error && count !== null) {
-        setTotalReviews(count);
+      try {
+        const { count, error } = await supabase
+          .from('reviews')
+          .select('*', { count: 'exact', head: true });
+        
+        if (!error && count !== null) {
+          setTotalReviews(count);
+        }
+      } catch (error) {
+        console.error('Error fetching total reviews:', error);
       }
     };
 
@@ -54,7 +63,7 @@ const Reviews = ({ showViewAllLink = false, reviews: propReviews, simpleView = f
         },
         () => {
           fetchTotalReviews();
-          refetch(); // Add this to refresh the reviews list when changes occur
+          refetch();
         }
       )
       .subscribe();
@@ -62,11 +71,12 @@ const Reviews = ({ showViewAllLink = false, reviews: propReviews, simpleView = f
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [refetch]); // Add refetch to the dependency array
+  }, [refetch]);
 
-  const reviews = propReviews || fetchedReviews;
+  const reviews = propReviews || fetchedReviews || [];
 
   const handleReviewClick = (review: Review) => {
+    if (!review) return;
     setSelectedReview(review);
     setDialogOpen(true);
   };
@@ -76,7 +86,7 @@ const Reviews = ({ showViewAllLink = false, reviews: propReviews, simpleView = f
       <CardHeader>
         <ReviewHeader 
           showViewAllLink={showViewAllLink} 
-          onReviewAdded={refetch} // Pass refetch as onReviewAdded
+          onReviewAdded={refetch}
         />
       </CardHeader>
       <CardContent>
