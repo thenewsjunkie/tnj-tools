@@ -43,32 +43,26 @@ export const ProtectedRoute = () => {
     };
 
     // Only set up auth subscription for admin routes
-    if (location.pathname.startsWith('/admin')) {
-      checkSession();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      console.log("[ProtectedRoute] Auth state changed:", _event);
+      if (!mounted) return;
       
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-        console.log("[ProtectedRoute] Auth state changed:", _event);
-        if (!mounted) return;
-        
-        if (session) {
-          await checkApprovalStatus(session.user.id);
-          setSession(true);
-        } else {
-          setSession(false);
-        }
-        setIsLoading(false);
-      });
+      if (session) {
+        await checkApprovalStatus(session.user.id);
+        setSession(true);
+      } else {
+        setSession(false);
+      }
+      setIsLoading(false);
+    });
 
-      return () => {
-        mounted = false;
-        subscription.unsubscribe();
-      };
-    }
+    checkSession();
 
     return () => {
       mounted = false;
+      subscription.unsubscribe();
     };
-  }, [location.pathname, checkApprovalStatus]);
+  }, [checkApprovalStatus]);
 
   if (isLoading) {
     console.log("[ProtectedRoute] Still loading...");
