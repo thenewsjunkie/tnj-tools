@@ -2,10 +2,10 @@ import { Youtube, Twitch, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tables } from "@/integrations/supabase/types";
 
-type ChatMessage = Tables<"chat_messages">;
+type ChatMessageType = Tables<"chat_messages">;
 
 interface ChatMessageProps {
-  message: ChatMessage;
+  message: ChatMessageType;
   isPinned?: boolean;
 }
 
@@ -32,11 +32,10 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
 
     // Handle Twitch emotes if present in metadata
     if (message.source === "twitch" && typeof message.metadata === 'object' && message.metadata !== null && 'emotes' in message.metadata) {
-      let result = text;
+      let result: React.ReactNode = text;
       const emotes = message.metadata.emotes as TwitchEmotes;
       
       // Sort emotes by position to replace from end to start
-      // This prevents position indices from shifting
       const sortedEmotes = Object.entries(emotes).sort((a, b) => {
         const posA = parseInt(a[1][0].split('-')[0]);
         const posB = parseInt(b[1][0].split('-')[0]);
@@ -59,8 +58,8 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
           );
           
           // Replace text with emote image
-          const before = result.slice(0, start);
-          const after = result.slice(end + 1);
+          const before = result.toString().slice(0, start);
+          const after = result.toString().slice(end + 1);
           result = (
             <>
               {before}

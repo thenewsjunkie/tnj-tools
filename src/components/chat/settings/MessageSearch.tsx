@@ -4,7 +4,7 @@ import { Search, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import ChatMessage from "@/components/chat/ChatMessage";
+import ChatMessageComponent from "@/components/chat/ChatMessage";
 import type { Tables } from "@/integrations/supabase/types";
 
 type ChatMessage = Tables<"chat_messages">;
@@ -87,7 +87,7 @@ export const MessageSearch = () => {
             {messages.map((message) => (
               <div key={message.id} className="flex items-center gap-2">
                 <div className="flex-1">
-                  <ChatMessage message={message} />
+                  <ChatMessageComponent message={message} />
                 </div>
                 <Button
                   variant="ghost"
