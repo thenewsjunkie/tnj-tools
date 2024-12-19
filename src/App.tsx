@@ -36,21 +36,14 @@ const RouteTracker = () => {
 
   useEffect(() => {
     console.log("[Router] Route changed to:", location.pathname);
-    
-    // Set transitioning state
     setIsTransitioning(true);
-    
-    // Clear transition state after a short delay
     const timer = setTimeout(() => {
       setIsTransitioning(false);
-    }, 100); // Increased from 50ms to 100ms for smoother transitions
+    }, 100);
 
-    return () => {
-      clearTimeout(timer);
-    };
+    return () => clearTimeout(timer);
   }, [location]);
 
-  // Add a div that covers the screen during transitions
   if (isTransitioning) {
     return (
       <div 
@@ -66,14 +59,22 @@ const RouteTracker = () => {
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
+    let mounted = true;
+
     const checkAuth = async () => {
       try {
+        console.log('[AdminRoute] Checking authentication...');
         const { data: { session } } = await supabase.auth.getSession();
+        
         if (!session) {
           console.log('[AdminRoute] No session found');
-          setIsAuthenticated(false);
+          if (mounted) {
+            setIsAuthenticated(false);
+            setIsLoading(false);
+          }
           return;
         }
 
@@ -85,10 +86,17 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
         
         const isApproved = profile?.status === 'approved';
         console.log('[AdminRoute] User authentication status:', isApproved);
-        setIsAuthenticated(isApproved);
+        
+        if (mounted) {
+          setIsAuthenticated(isApproved);
+          setIsLoading(false);
+        }
       } catch (error) {
         console.error('[AdminRoute] Error checking auth:', error);
-        setIsAuthenticated(false);
+        if (mounted) {
+          setIsAuthenticated(false);
+          setIsLoading(false);
+        }
       }
     };
 
@@ -99,6 +107,7 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
       
       if (!session) {
         setIsAuthenticated(false);
+        setIsLoading(false);
         return;
       }
 
@@ -109,17 +118,19 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
         .single();
       
       setIsAuthenticated(profile?.status === 'approved');
+      setIsLoading(false);
     });
 
     return () => {
+      mounted = false;
       subscription?.unsubscribe();
     };
   }, []);
 
-  if (isAuthenticated === null) {
+  if (isLoading) {
     return (
-      <div className="fixed inset-0 bg-background flex items-center justify-center">
-        <div className="text-foreground">Loading...</div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-foreground text-lg">Loading...</div>
       </div>
     );
   }
