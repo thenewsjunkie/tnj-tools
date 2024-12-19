@@ -54,7 +54,7 @@ export const ChatInput = () => {
         .from("chat_messages")
         .insert({
           source: "megachat",
-          username: "User",
+          username: "MegaChat",
           message: newMessage.trim(),
           message_type: "chat",
         })
