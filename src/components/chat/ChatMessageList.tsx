@@ -42,7 +42,6 @@ export const ChatMessageList = ({
     }
   };
 
-  // Scroll to bottom on initial load and when new messages arrive
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -59,8 +58,8 @@ export const ChatMessageList = ({
         onScroll={handleScroll}
         className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
       >
-        <div className="min-h-full p-4">
-          <div className="w-full max-w-4xl mx-auto space-y-2">
+        <div className="p-2">
+          <div className="space-y-2">
             {messages.map((message) => (
               <ChatMessageComponent key={message.id} message={message} />
             ))}

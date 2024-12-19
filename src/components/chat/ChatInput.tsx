@@ -87,8 +87,8 @@ export const ChatInput = () => {
   };
 
   return (
-    <div className="border-t border-white/10 bg-black p-4">
-      <div className="max-w-4xl mx-auto space-y-4">
+    <div className="border-t border-white/10 bg-black p-2">
+      <div className="space-y-2">
         <div className="flex items-center gap-1.5 bg-black/90 backdrop-blur-sm px-2 py-1 rounded-md">
           <MessageSquare className="h-4 w-4 text-white/90" />
           <div className="flex items-center gap-2 text-sm font-mono text-white/90">
