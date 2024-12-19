@@ -33,8 +33,22 @@ async function getTwitchViewerCount(accessToken: string): Promise<number> {
 
 async function getYouTubeViewerCount(): Promise<number> {
   try {
+    // First, get the live stream ID
+    const searchResponse = await fetch(
+      `https://www.googleapis.com/youtube/v3/search?part=id&channelId=${YOUTUBE_CHANNEL_ID}&eventType=live&type=video&key=${YOUTUBE_API_KEY}`
+    );
+
+    const searchData = await searchResponse.json();
+    const liveVideoId = searchData.items?.[0]?.id?.videoId;
+
+    if (!liveVideoId) {
+      console.log("No live stream found");
+      return 0;
+    }
+
+    // Then get the viewer count using the live stream ID
     const response = await fetch(
-      `https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${YOUTUBE_CHANNEL_ID}&key=${YOUTUBE_API_KEY}`
+      `https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${liveVideoId}&key=${YOUTUBE_API_KEY}`
     );
 
     const data = await response.json();
@@ -78,6 +92,8 @@ serve(async (req) => {
       getTwitchViewerCount(twitchToken),
       getYouTubeViewerCount(),
     ]);
+
+    console.log(`[viewer-count] Twitch viewers: ${twitchViewers}, YouTube viewers: ${youtubeViewers}`);
 
     return new Response(
       JSON.stringify({ 
