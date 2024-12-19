@@ -14,6 +14,7 @@ const QueueManager = ({ currentAlert, queueCount, isPaused, processNextAlert }: 
 
   // Effect to process next alert when queue is empty and not paused
   useEffect(() => {
+    // Only process if we have alerts to process and aren't already processing
     if (!currentAlert && queueCount > 0 && !isPaused && !processingRef.current) {
       console.log('[QueueManager] Processing next alert. Current state:', {
         currentAlert,
@@ -24,14 +25,12 @@ const QueueManager = ({ currentAlert, queueCount, isPaused, processNextAlert }: 
       
       processingRef.current = true;
       processNextAlert();
-      
-      // Reset processing flag after a delay
-      const timer = setTimeout(() => {
-        processingRef.current = false;
-      }, 2000); // Increased delay to prevent rapid re-processing
-
-      return () => clearTimeout(timer);
     }
+    
+    // Cleanup function to reset processing state
+    return () => {
+      processingRef.current = false;
+    };
   }, [currentAlert, queueCount, isPaused, processNextAlert]);
 
   // Only show if there are alerts in queue or if paused or if there's a current alert
