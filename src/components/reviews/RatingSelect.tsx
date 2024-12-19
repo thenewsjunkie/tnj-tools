@@ -15,9 +15,9 @@ const RatingSelect = ({ value, onValueChange }: RatingSelectProps) => {
         <SelectValue placeholder="Select rating" />
       </SelectTrigger>
       <SelectContent>
-        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((rating) => (
+        {[1, 2, 3, 4, 5].map((rating) => (
           <SelectItem key={rating} value={rating.toString()}>
-            {rating}
+            {"★".repeat(rating)}{"☆".repeat(5-rating)}
           </SelectItem>
         ))}
       </SelectContent>
