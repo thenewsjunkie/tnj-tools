@@ -87,7 +87,7 @@ const Chat = () => {
       >
         <div className="min-h-full flex flex-col justify-end p-4">
           <div className="w-full max-w-4xl mx-auto relative">
-            <div className="absolute top-0 right-0 flex items-center gap-1.5 bg-black/90 backdrop-blur-sm px-2 py-1 rounded-md z-20 border border-white/20">
+            <div className="sticky bottom-[calc(100vh-4rem)] right-0 flex items-center gap-1.5 bg-black/90 backdrop-blur-sm px-2 py-1 rounded-md z-20 border border-white/20 float-right">
               <span className="text-sm font-mono text-white/90">{messages.length}</span>
             </div>
             {messages.map((message) => (
