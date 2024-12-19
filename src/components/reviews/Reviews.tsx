@@ -54,6 +54,7 @@ const Reviews = ({ showViewAllLink = false, reviews: propReviews, simpleView = f
         },
         () => {
           fetchTotalReviews();
+          refetch(); // Add this to refresh the reviews list when changes occur
         }
       )
       .subscribe();
@@ -61,7 +62,7 @@ const Reviews = ({ showViewAllLink = false, reviews: propReviews, simpleView = f
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [refetch]); // Add refetch to the dependency array
 
   const reviews = propReviews || fetchedReviews;
 
@@ -73,7 +74,10 @@ const Reviews = ({ showViewAllLink = false, reviews: propReviews, simpleView = f
   return (
     <Card className="w-full bg-background border border-gray-200 dark:border-white/10 relative pb-8">
       <CardHeader>
-        <ReviewHeader showViewAllLink={showViewAllLink} onReviewAdded={refetch} />
+        <ReviewHeader 
+          showViewAllLink={showViewAllLink} 
+          onReviewAdded={refetch} // Pass refetch as onReviewAdded
+        />
       </CardHeader>
       <CardContent>
         <ReviewList
