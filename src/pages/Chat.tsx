@@ -80,17 +80,16 @@ const Chat = () => {
 
   return (
     <div className="fixed inset-0 bg-transparent text-white flex flex-col">
-      <div className="fixed top-2 right-2 flex items-center gap-1.5 bg-black/90 backdrop-blur-sm px-2 py-1 rounded-md z-20 border border-white/20">
-        <span className="text-sm font-mono text-white/90">{messages.length}</span>
-      </div>
-
       <div
         ref={chatContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
+        className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent relative"
       >
         <div className="min-h-full flex flex-col justify-end p-4">
-          <div className="w-full max-w-4xl mx-auto">
+          <div className="w-full max-w-4xl mx-auto relative">
+            <div className="absolute top-0 right-0 flex items-center gap-1.5 bg-black/90 backdrop-blur-sm px-2 py-1 rounded-md z-20 border border-white/20">
+              <span className="text-sm font-mono text-white/90">{messages.length}</span>
+            </div>
             {messages.map((message) => (
               <ChatMessageComponent key={message.id} message={message} />
             ))}
