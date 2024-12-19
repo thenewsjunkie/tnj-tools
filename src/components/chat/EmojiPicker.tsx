@@ -1,14 +1,13 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { emojis } from "./emoji-data/emojis";
-import { emotes } from "./emoji-data/emotes";
-import EmojiGrid from "./emoji-grid/EmojiGrid";
-import EmojiSearch from "./emoji-search/EmojiSearch";
 import CustomEmoteManager from "./CustomEmoteManager";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import EmojiGrid from "./emoji-grid/EmojiGrid";
+import EmojiSearch from "./emoji-search/EmojiSearch";
 
 interface EmojiPickerProps {
   onEmojiSelect: (symbol: string) => void;
@@ -41,16 +40,12 @@ const EmojiPicker = ({ onEmojiSelect }: EmojiPickerProps) => {
     emoji.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredEmotes = emotes.filter((emote) =>
-    emote.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   const filteredCustomEmotes = customEmotes.filter((emote) =>
     emote.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Use the larger list's length to set minimum height
-  const minGridHeight = Math.ceil(Math.max(emojis.length, emotes.length, customEmotes.length) / 8) * 32;
+  const minGridHeight = Math.ceil(Math.max(emojis.length, customEmotes.length) / 8) * 32;
 
   return (
     <Tabs defaultValue="emojis">
@@ -60,9 +55,6 @@ const EmojiPicker = ({ onEmojiSelect }: EmojiPickerProps) => {
         </TabsTrigger>
         <TabsTrigger value="emotes" className="flex-1">
           Emotes
-        </TabsTrigger>
-        <TabsTrigger value="custom" className="flex-1">
-          Custom
         </TabsTrigger>
       </TabsList>
       <div className="p-2">
@@ -76,13 +68,6 @@ const EmojiPicker = ({ onEmojiSelect }: EmojiPickerProps) => {
         </TabsContent>
         <TabsContent 
           value="emotes" 
-          className="m-0"
-          style={{ minHeight: `${minGridHeight}px` }}
-        >
-          <EmojiGrid items={filteredEmotes} onSelect={onEmojiSelect} />
-        </TabsContent>
-        <TabsContent 
-          value="custom" 
           className="m-0 space-y-4"
           style={{ minHeight: `${minGridHeight}px` }}
         >
