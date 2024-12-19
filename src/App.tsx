@@ -2,10 +2,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import GlobalQueueManager from "@/components/alerts/GlobalQueueManager";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { useEffect } from "react";
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
 import Login from "./pages/Login";
@@ -26,6 +27,17 @@ const queryClient = new QueryClient({
   },
 });
 
+// Route change tracker component
+const RouteTracker = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    console.log("[Router] Route changed to:", location.pathname);
+  }, [location]);
+
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider defaultTheme="dark">
@@ -34,6 +46,7 @@ const App = () => (
         <Sonner />
         <GlobalQueueManager />
         <BrowserRouter>
+          <RouteTracker />
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Index />} />
