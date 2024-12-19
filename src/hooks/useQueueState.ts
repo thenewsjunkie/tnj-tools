@@ -12,9 +12,13 @@ export const useQueueState = () => {
   const [isPaused, setIsPaused] = useState(false);
   const { queueData } = useQueueData();
   const channelRef = useRef<RealtimeChannel | null>(null);
+  const isInitializedRef = useRef(false);
 
   useEffect(() => {
-    console.log('[useQueueState] Setting up queue state subscription');
+    if (isInitializedRef.current) return;
+    isInitializedRef.current = true;
+
+    console.log('[useQueueState] Initializing queue state');
     
     const loadPauseState = async () => {
       const { data, error } = await supabase

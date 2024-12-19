@@ -8,8 +8,12 @@ const GlobalQueueManager = () => {
   const { isPaused } = useQueueState();
   const { currentAlert, processNextAlert } = useAlertQueue();
   const channelRef = useRef<RealtimeChannel | null>(null);
+  const isInitializedRef = useRef(false);
 
   useEffect(() => {
+    if (isInitializedRef.current) return;
+    isInitializedRef.current = true;
+
     console.log('[GlobalQueueManager] Initializing');
     
     // Only set up subscription if we don't already have one
