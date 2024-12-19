@@ -3,17 +3,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import ReviewTypeSelect from "./ReviewTypeSelect";
-import RatingSelect from "./RatingSelect";
-import MovieGenreSelect from "./MovieGenreSelect";
-import ReviewImageUpload from "./ReviewImageUpload";
 import { Review } from "./types";
 import { supabase } from "@/integrations/supabase/client";
+import EditReviewFormFields from "./EditReviewFormFields";
 
 const formSchema = z.object({
   type: z.enum(["television", "movie", "food", "product"]),
@@ -90,105 +85,8 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-foreground">Type</FormLabel>
-                  <FormControl>
-                    <ReviewTypeSelect
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-foreground">Title</FormLabel>
-                  <FormControl>
-                    <Input {...field} className="text-foreground dark:bg-black/50 dark:border-white/10" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="rating"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-foreground">Rating</FormLabel>
-                  <FormControl>
-                    <RatingSelect
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {form.watch("type") === "movie" && (
-              <FormField
-                control={form.control}
-                name="genre"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-foreground">Genre</FormLabel>
-                    <FormControl>
-                      <MovieGenreSelect
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
-            <FormField
-              control={form.control}
-              name="content"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-foreground">Content</FormLabel>
-                  <FormControl>
-                    <Textarea {...field} className="text-foreground dark:bg-black/50 dark:border-white/10" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="image_urls"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-foreground">Images</FormLabel>
-                  <FormControl>
-                    <ReviewImageUpload
-                      images={field.value || []}
-                      onImagesChange={field.onChange}
-                      title={form.getValues("title")}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
+            <EditReviewFormFields form={form} />
+            
             <div className="flex justify-end space-x-2 pt-4">
               <Button
                 type="button"
@@ -202,7 +100,7 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
               <Button 
                 type="submit" 
                 disabled={isLoading}
-                className="bg-primary text-black dark:text-white"
+                className="bg-primary text-black hover:text-white dark:text-white"
               >
                 {isLoading ? "Saving..." : "Save Changes"}
               </Button>
