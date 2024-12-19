@@ -43,7 +43,7 @@ const RouteTracker = () => {
     // Clear transition state after a short delay
     const timer = setTimeout(() => {
       setIsTransitioning(false);
-    }, 50);
+    }, 100); // Increased from 50ms to 100ms for smoother transitions
 
     return () => {
       clearTimeout(timer);
@@ -54,8 +54,8 @@ const RouteTracker = () => {
   if (isTransitioning) {
     return (
       <div 
-        className="fixed inset-0 bg-black z-50" 
-        style={{ opacity: 1 }}
+        className="fixed inset-0 bg-black z-50 transition-opacity duration-100" 
+        style={{ opacity: 0.5 }}
       />
     );
   }
@@ -69,24 +69,34 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setIsAuthenticated(false);
-        return;
-      }
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          console.log('[AdminRoute] No session found');
+          setIsAuthenticated(false);
+          return;
+        }
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('status')
-        .eq('id', session.user.id)
-        .single();
-      
-      setIsAuthenticated(profile?.status === 'approved');
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('status')
+          .eq('id', session.user.id)
+          .single();
+        
+        const isApproved = profile?.status === 'approved';
+        console.log('[AdminRoute] User authentication status:', isApproved);
+        setIsAuthenticated(isApproved);
+      } catch (error) {
+        console.error('[AdminRoute] Error checking auth:', error);
+        setIsAuthenticated(false);
+      }
     };
 
     checkAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('[AdminRoute] Auth state changed:', event);
+      
       if (!session) {
         setIsAuthenticated(false);
         return;
@@ -107,7 +117,11 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   if (isAuthenticated === null) {
-    return <div className="fixed inset-0 bg-black" />; // Loading state
+    return (
+      <div className="fixed inset-0 bg-background flex items-center justify-center">
+        <div className="text-foreground">Loading...</div>
+      </div>
+    );
   }
 
   if (!isAuthenticated) {

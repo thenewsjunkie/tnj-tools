@@ -18,8 +18,11 @@ const QueueManager = ({ currentAlert, queueCount, isPaused, processNextAlert }: 
     }
   }, [currentAlert, queueCount, isPaused, processNextAlert]);
 
-  // Always show if there are alerts in queue or if paused
-  if (!currentAlert && queueCount === 0 && !isPaused) return null;
+  // Only show if there are alerts in queue or if paused or if there's a current alert
+  if (!currentAlert && queueCount === 0 && !isPaused) {
+    console.log('[QueueManager] No alerts to display, hiding manager');
+    return null;
+  }
 
   return (
     <div className="px-6 pb-4">
