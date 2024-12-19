@@ -1,5 +1,6 @@
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { PauseCircle } from "lucide-react";
+import { useEffect } from "react";
 
 interface QueueManagerProps {
   currentAlert: any;
@@ -9,6 +10,14 @@ interface QueueManagerProps {
 }
 
 const QueueManager = ({ currentAlert, queueCount, isPaused, processNextAlert }: QueueManagerProps) => {
+  // Effect to process next alert when queue is empty and not paused
+  useEffect(() => {
+    if (!currentAlert && queueCount > 0 && !isPaused) {
+      console.log('[QueueManager] No current alert and queue not empty, processing next alert');
+      processNextAlert();
+    }
+  }, [currentAlert, queueCount, isPaused, processNextAlert]);
+
   // Always show if there are alerts in queue or if paused
   if (!currentAlert && queueCount === 0 && !isPaused) return null;
 

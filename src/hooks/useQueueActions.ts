@@ -52,6 +52,7 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
       return;
     }
 
+    // If there's a current alert playing, don't process the next one
     if (currentAlert) {
       console.log('[useQueueActions] Current alert still playing:', currentAlert.id);
       return;
@@ -67,9 +68,7 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
 
     const { error } = await supabase
       .from('alert_queue')
-      .update({ 
-        status: 'playing',
-      })
+      .update({ status: 'playing' })
       .eq('id', nextAlert.id);
 
     if (error) {
