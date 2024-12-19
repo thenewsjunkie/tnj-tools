@@ -72,7 +72,7 @@ const YouTubeSettings = ({ status, onStart }: YouTubeSettingsProps) => {
         />
         <Button
           variant="outline"
-          className="border-gray-700 hover:bg-gray-800 text-white"
+          className="bg-black text-white border-gray-700 hover:bg-gray-800"
           onClick={handleAutoFetch}
           disabled={isLoading}
         >
