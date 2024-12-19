@@ -80,9 +80,9 @@ const Chat = () => {
 
   return (
     <div className="fixed inset-0 bg-transparent text-white flex flex-col">
-      <div className="fixed top-4 right-4 flex items-center gap-2 bg-black/50 backdrop-blur-sm p-2 rounded-lg z-20">
-        <MessageSquare className="h-4 w-4" />
-        <span className="text-sm font-mono">{messages.length}</span>
+      <div className="fixed top-4 right-8 flex items-center gap-2 bg-black/80 backdrop-blur-sm px-3 py-1.5 rounded-lg z-20 border border-white/10">
+        <MessageSquare className="h-4 w-4 text-white/70" />
+        <span className="text-sm font-mono text-white/90">{messages.length}</span>
       </div>
 
       <div
@@ -91,7 +91,7 @@ const Chat = () => {
         className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
       >
         <div className="min-h-full flex flex-col justify-end p-4">
-          <div className="w-full max-w-4xl mx-auto space-y-1">
+          <div className="w-full max-w-4xl mx-auto">
             {messages.map((message) => (
               <ChatMessageComponent key={message.id} message={message} />
             ))}
