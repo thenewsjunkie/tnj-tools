@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import GlobalQueueManager from "@/components/alerts/GlobalQueueManager";
-import { useEffect, useState } from "react";
+import { useEffect, useState, createContext, useContext } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
@@ -30,6 +30,15 @@ const queryClient = new QueryClient({
   },
 });
 
+// Create auth context
+const AuthContext = createContext<{
+  isAuthenticated: boolean | null;
+  isAdmin: boolean;
+}>({
+  isAuthenticated: null,
+  isAdmin: false,
+});
+
 const RouteTracker = () => {
   const location = useLocation();
   useEffect(() => {
@@ -38,15 +47,18 @@ const RouteTracker = () => {
   return null;
 };
 
-const AdminRoute = ({ children }: { children: React.ReactNode }) => {
-  const location = useLocation();
+// Separate auth provider component
+const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  
+  const [isAdmin, setIsAdmin] = useState(false);
+
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
+      
       if (!session) {
         setIsAuthenticated(false);
+        setIsAdmin(false);
         return;
       }
 
@@ -55,8 +67,10 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
         .select('status')
         .eq('id', session.user.id)
         .single();
-      
-      setIsAuthenticated(profile?.status === 'approved');
+
+      const isApproved = profile?.status === 'approved';
+      setIsAuthenticated(true);
+      setIsAdmin(isApproved);
     };
 
     checkAuth();
@@ -64,6 +78,7 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!session) {
         setIsAuthenticated(false);
+        setIsAdmin(false);
         return;
       }
 
@@ -72,20 +87,34 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
         .select('status')
         .eq('id', session.user.id)
         .single();
-      
-      setIsAuthenticated(profile?.status === 'approved');
+
+      const isApproved = profile?.status === 'approved';
+      setIsAuthenticated(true);
+      setIsAdmin(isApproved);
     });
 
     return () => {
-      subscription?.unsubscribe();
+      subscription.unsubscribe();
     };
   }, []);
 
+  return (
+    <AuthContext.Provider value={{ isAuthenticated, isAdmin }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+// Simplified AdminRoute component
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, isAdmin } = useContext(AuthContext);
+  const location = useLocation();
+
   if (isAuthenticated === null) {
-    return null; // Loading state
+    return null;
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !isAdmin) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
@@ -101,29 +130,31 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider defaultTheme="dark">
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
         <BrowserRouter>
-          <RouteTracker />
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/notes" element={<Notes />} />
-            <Route path="/reviews" element={<Reviews />} />
-            <Route path="/alerts" element={<Alerts />} />
-            <Route path="/chat" element={<Chat />} />
-            <Route path="/alerts/queue/:action" element={<Alerts />} />
-            <Route path="/alerts/:alertSlug" element={<Alerts />} />
-            <Route path="/alerts/:alertSlug/:username" element={<Alerts />} />
+          <AuthProvider>
+            <Toaster />
+            <Sonner />
+            <RouteTracker />
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/notes" element={<Notes />} />
+              <Route path="/reviews" element={<Reviews />} />
+              <Route path="/alerts" element={<Alerts />} />
+              <Route path="/chat" element={<Chat />} />
+              <Route path="/alerts/queue/:action" element={<Alerts />} />
+              <Route path="/alerts/:alertSlug" element={<Alerts />} />
+              <Route path="/alerts/:alertSlug/:username" element={<Alerts />} />
 
-            {/* Protected Admin Routes */}
-            <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
-            <Route path="/admin/ai" element={<AdminRoute><AI /></AdminRoute>} />
-            <Route path="/admin/settings" element={<AdminRoute><Settings /></AdminRoute>} />
-            <Route path="/admin/instructions" element={<AdminRoute><Instructions /></AdminRoute>} />
-            <Route path="/admin/settings/chat" element={<AdminRoute><ChatSettings /></AdminRoute>} />
-          </Routes>
+              {/* Protected Admin Routes */}
+              <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
+              <Route path="/admin/ai" element={<AdminRoute><AI /></AdminRoute>} />
+              <Route path="/admin/settings" element={<AdminRoute><Settings /></AdminRoute>} />
+              <Route path="/admin/instructions" element={<AdminRoute><Instructions /></AdminRoute>} />
+              <Route path="/admin/settings/chat" element={<AdminRoute><ChatSettings /></AdminRoute>} />
+            </Routes>
+          </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>
