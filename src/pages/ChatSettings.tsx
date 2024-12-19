@@ -5,8 +5,8 @@ import { MessageSearch } from "@/components/chat/settings/MessageSearch";
 
 const ChatSettings = () => {
   return (
-    <div className="min-h-screen bg-black text-white p-4">
-      <div className="max-w-2xl mx-auto space-y-8">
+    <div className="fixed inset-0 bg-black text-white overflow-auto">
+      <div className="max-w-2xl mx-auto space-y-8 p-4">
         <Link
           to="/chat"
           className="text-red-500 hover:text-red-400 transition-colors flex items-center gap-2"
