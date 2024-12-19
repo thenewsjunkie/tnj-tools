@@ -48,7 +48,7 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
   return (
     <div
       className={cn(
-        "flex items-start gap-2 px-2 py-1 bg-black/50 backdrop-blur-sm w-full",
+        "flex items-center gap-2 px-2 py-1 bg-black/50 backdrop-blur-sm w-full",
         isPinned
           ? "bg-yellow-500/20 border border-yellow-500/50"
           : message.message_type === "superchat"
