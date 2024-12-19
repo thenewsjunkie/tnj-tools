@@ -48,7 +48,7 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
   return (
     <div
       className={cn(
-        "flex items-center gap-2 px-2 py-1 bg-black/50 backdrop-blur-sm w-full",
+        "flex items-start gap-2 px-2 py-1 bg-black/50 backdrop-blur-sm w-full",
         isPinned
           ? "bg-yellow-500/20 border border-yellow-500/50"
           : message.message_type === "superchat"
@@ -56,8 +56,8 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
           : ""
       )}
     >
-      {renderIcon()}
-      <div className="min-w-0 w-full">
+      <div className="pt-1">{renderIcon()}</div>
+      <div className="min-w-0 flex-1">
         <span className="inline-block font-bold text-sm text-white mr-2">
           {message.username}:
         </span>
