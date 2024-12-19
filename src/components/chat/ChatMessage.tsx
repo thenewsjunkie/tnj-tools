@@ -57,18 +57,16 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
       )}
     >
       {renderIcon()}
-      <div className="flex flex-col min-w-0 w-full">
-        <div className="flex items-center gap-2">
-          <span className="font-bold text-sm text-white shrink-0">
-            {message.username}:
+      <div className="flex flex-wrap min-w-0 w-full gap-x-2">
+        <span className="font-bold text-sm text-white shrink-0">
+          {message.username}:
+        </span>
+        {message.message_type === "superchat" && (
+          <span className="text-xs text-green-400 shrink-0">
+            ${message.superchat_amount}
           </span>
-          {message.message_type === "superchat" && (
-            <span className="text-xs text-green-400 shrink-0">
-              ${message.superchat_amount}
-            </span>
-          )}
-        </div>
-        <p className="text-sm text-white/90 break-words">
+        )}
+        <p className="text-sm text-white/90 break-words flex-1">
           {renderMessage(message.message)}
         </p>
       </div>
