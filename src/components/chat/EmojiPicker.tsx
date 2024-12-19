@@ -3,28 +3,51 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// Emoji data
+// Emoji data - expanded with more common options
 const emojis = [
   { name: "smile", symbol: "😊" },
   { name: "laugh", symbol: "😄" },
+  { name: "joy", symbol: "😂" },
   { name: "heart", symbol: "❤️" },
   { name: "thumbsup", symbol: "👍" },
   { name: "wink", symbol: "😉" },
   { name: "cry", symbol: "😢" },
+  { name: "sob", symbol: "😭" },
   { name: "angry", symbol: "😠" },
+  { name: "rage", symbol: "😡" },
   { name: "surprised", symbol: "😮" },
+  { name: "wow", symbol: "😲" },
   { name: "cool", symbol: "😎" },
   { name: "party", symbol: "🎉" },
+  { name: "thinking", symbol: "🤔" },
+  { name: "mindblown", symbol: "🤯" },
+  { name: "clap", symbol: "👏" },
+  { name: "fire", symbol: "🔥" },
+  { name: "heart_eyes", symbol: "😍" },
+  { name: "rofl", symbol: "🤣" },
+  { name: "shush", symbol: "🤫" },
+  { name: "yum", symbol: "😋" },
+  { name: "sunglasses", symbol: "😎" },
+  { name: "devil", symbol: "😈" },
 ];
 
-// Emote data
+// Emote data - expanded with more reaction options
 const emotes = [
   { name: "heart", symbol: "❤️" },
   { name: "thumbsup", symbol: "👍" },
+  { name: "thumbsdown", symbol: "👎" },
   { name: "fire", symbol: "🔥" },
   { name: "clap", symbol: "👏" },
   { name: "100", symbol: "💯" },
   { name: "star", symbol: "⭐" },
+  { name: "trophy", symbol: "🏆" },
+  { name: "medal", symbol: "🏅" },
+  { name: "sparkles", symbol: "✨" },
+  { name: "rocket", symbol: "🚀" },
+  { name: "eyes", symbol: "👀" },
+  { name: "raised_hands", symbol: "🙌" },
+  { name: "pray", symbol: "🙏" },
+  { name: "crown", symbol: "👑" },
 ];
 
 interface EmojiPickerProps {
