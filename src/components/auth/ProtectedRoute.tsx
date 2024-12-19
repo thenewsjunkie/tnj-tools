@@ -17,7 +17,6 @@ export const ProtectedRoute = () => {
 
   useEffect(() => {
     let mounted = true;
-    let authSubscription: { unsubscribe: () => void } | null = null;
 
     const checkSession = async () => {
       try {
@@ -45,7 +44,7 @@ export const ProtectedRoute = () => {
     if (location.pathname.startsWith('/admin')) {
       checkSession();
       
-      authSubscription = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const { subscription } = supabase.auth.onAuthStateChange(async (_event, session) => {
         if (!mounted) return;
         
         if (session) {
@@ -56,13 +55,15 @@ export const ProtectedRoute = () => {
         }
         setIsLoading(false);
       });
+
+      return () => {
+        mounted = false;
+        subscription?.unsubscribe();
+      };
     }
 
     return () => {
       mounted = false;
-      if (authSubscription) {
-        authSubscription.unsubscribe();
-      }
     };
   }, [location.pathname, checkApprovalStatus]);
 
