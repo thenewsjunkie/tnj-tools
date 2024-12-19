@@ -12,7 +12,7 @@ import ReviewTypeSelect from "./ReviewTypeSelect";
 import RatingSelect from "./RatingSelect";
 import MovieGenreSelect from "./MovieGenreSelect";
 import ReviewImageUpload from "./ReviewImageUpload";
-import { Review, ReviewType } from "./types";
+import { Review } from "./types";
 import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
@@ -86,7 +86,7 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Review</DialogTitle>
+          <DialogTitle className="text-foreground">Edit Review</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -95,7 +95,7 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
               name="type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Type</FormLabel>
+                  <FormLabel className="text-foreground">Type</FormLabel>
                   <FormControl>
                     <ReviewTypeSelect
                       value={field.value}
@@ -112,9 +112,9 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Title</FormLabel>
+                  <FormLabel className="text-foreground">Title</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} className="text-foreground dark:bg-black/50 dark:border-white/10" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -126,7 +126,7 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
               name="rating"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Rating</FormLabel>
+                  <FormLabel className="text-foreground">Rating</FormLabel>
                   <FormControl>
                     <RatingSelect
                       value={field.value}
@@ -144,7 +144,7 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
                 name="genre"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Genre</FormLabel>
+                    <FormLabel className="text-foreground">Genre</FormLabel>
                     <FormControl>
                       <MovieGenreSelect
                         value={field.value}
@@ -162,9 +162,9 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
               name="content"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Content</FormLabel>
+                  <FormLabel className="text-foreground">Content</FormLabel>
                   <FormControl>
-                    <Textarea {...field} />
+                    <Textarea {...field} className="text-foreground dark:bg-black/50 dark:border-white/10" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -176,7 +176,7 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
               name="image_urls"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Images</FormLabel>
+                  <FormLabel className="text-foreground">Images</FormLabel>
                   <FormControl>
                     <ReviewImageUpload
                       images={field.value || []}
@@ -195,10 +195,15 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
                 variant="outline"
                 onClick={() => onOpenChange(false)}
                 disabled={isLoading}
+                className="text-foreground"
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isLoading}>
+              <Button 
+                type="submit" 
+                disabled={isLoading}
+                className="bg-primary text-black dark:text-white"
+              >
                 {isLoading ? "Saving..." : "Save Changes"}
               </Button>
             </div>
