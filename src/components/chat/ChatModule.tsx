@@ -11,9 +11,20 @@ type ChatMessage = Tables<"chat_messages">;
 
 const ChatModule = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [totalMessages, setTotalMessages] = useState(0);
 
   useEffect(() => {
     const fetchMessages = async () => {
+      // Fetch total count
+      const { count: totalCount } = await supabase
+        .from("chat_messages")
+        .select("*", { count: "exact", head: true });
+
+      if (totalCount !== null) {
+        setTotalMessages(totalCount);
+      }
+
+      // Fetch recent messages
       const { data, error } = await supabase
         .from("chat_messages")
         .select("*")
@@ -42,6 +53,7 @@ const ChatModule = () => {
         (payload) => {
           const newMessage = payload.new as ChatMessage;
           setMessages((prev) => [...prev.slice(-9), newMessage]);
+          setTotalMessages((prev) => prev + 1);
         }
       )
       .subscribe();
@@ -58,7 +70,7 @@ const ChatModule = () => {
           <h3 className="font-semibold leading-none tracking-tight">Chat</h3>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <MessageSquare className="h-4 w-4" />
-            <span>{messages.length}</span>
+            <span>{totalMessages}</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
