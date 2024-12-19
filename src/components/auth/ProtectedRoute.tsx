@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -10,73 +10,75 @@ export const ProtectedRoute = () => {
   const { isApproved, checkApprovalStatus } = useProfileStatus();
   const location = useLocation();
 
-  // Only check auth for admin routes
+  // Immediately return Outlet for non-admin routes
   if (!location.pathname.startsWith('/admin')) {
-    console.log('[ProtectedRoute] Non-admin route detected, bypassing auth check');
     return <Outlet />;
   }
 
-  const checkSession = useCallback(async () => {
-    try {
-      console.log("[ProtectedRoute] Checking session for admin route...");
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      console.log("[ProtectedRoute] Session state:", !!currentSession);
-      
-      setSession(!!currentSession);
-      if (currentSession) {
-        console.log("[ProtectedRoute] User authenticated, checking approval status...");
-        await checkApprovalStatus(currentSession.user.id);
-      }
-      setIsLoading(false);
-    } catch (error) {
-      console.error("[ProtectedRoute] Error checking session:", error);
-      setSession(null);
-      setIsLoading(false);
-    }
-  }, [checkApprovalStatus]);
-
   useEffect(() => {
-    if (!location.pathname.startsWith('/admin')) {
-      return;
-    }
-
     let mounted = true;
-    checkSession();
+    let authSubscription: { unsubscribe: () => void } | null = null;
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!mounted || !location.pathname.startsWith('/admin')) return;
-      
-      console.log("[ProtectedRoute] Auth state changed:", _event);
-      setSession(!!session);
-      if (session) {
-        await checkApprovalStatus(session.user.id);
+    const checkSession = async () => {
+      try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
+        
+        if (currentSession) {
+          await checkApprovalStatus(currentSession.user.id);
+          setSession(true);
+        } else {
+          setSession(false);
+        }
+        setIsLoading(false);
+      } catch (error) {
+        console.error("[ProtectedRoute] Error checking session:", error);
+        if (mounted) {
+          setSession(false);
+          setIsLoading(false);
+        }
       }
-      setIsLoading(false);
-    });
+    };
+
+    // Only set up auth subscription for admin routes
+    if (location.pathname.startsWith('/admin')) {
+      checkSession();
+      
+      authSubscription = supabase.auth.onAuthStateChange(async (_event, session) => {
+        if (!mounted) return;
+        
+        if (session) {
+          await checkApprovalStatus(session.user.id);
+          setSession(true);
+        } else {
+          setSession(false);
+        }
+        setIsLoading(false);
+      });
+    }
 
     return () => {
       mounted = false;
-      subscription.unsubscribe();
+      if (authSubscription) {
+        authSubscription.unsubscribe();
+      }
     };
-  }, [checkSession, location.pathname]);
+  }, [location.pathname, checkApprovalStatus]);
 
-  // Show nothing while loading
+  if (!location.pathname.startsWith('/admin')) {
+    return <Outlet />;
+  }
+
   if (isLoading) {
-    console.log("[ProtectedRoute] Still loading...");
     return null;
   }
 
-  // Redirect if not logged in
   if (!session) {
-    console.log("[ProtectedRoute] No session, redirecting to login");
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
-  // Only show approval pending screen if explicitly not approved
   if (isApproved === false) {
-    console.log("[ProtectedRoute] User not approved");
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="text-center space-y-4">
@@ -95,6 +97,5 @@ export const ProtectedRoute = () => {
     );
   }
 
-  console.log("[ProtectedRoute] Rendering protected content");
   return <Outlet />;
 };
