@@ -20,11 +20,13 @@ export const ProtectedRoute = () => {
 
     const checkSession = async () => {
       try {
+        console.log("[ProtectedRoute] Checking session for admin route...");
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         
         if (!mounted) return;
         
         if (currentSession) {
+          console.log("[ProtectedRoute] User authenticated, checking approval status...");
           await checkApprovalStatus(currentSession.user.id);
           setSession(true);
         } else {
@@ -44,7 +46,8 @@ export const ProtectedRoute = () => {
     if (location.pathname.startsWith('/admin')) {
       checkSession();
       
-      const { subscription } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        console.log("[ProtectedRoute] Auth state changed:", _event);
         if (!mounted) return;
         
         if (session) {
@@ -58,7 +61,7 @@ export const ProtectedRoute = () => {
 
       return () => {
         mounted = false;
-        subscription?.unsubscribe();
+        subscription.unsubscribe();
       };
     }
 
@@ -67,11 +70,8 @@ export const ProtectedRoute = () => {
     };
   }, [location.pathname, checkApprovalStatus]);
 
-  if (!location.pathname.startsWith('/admin')) {
-    return <Outlet />;
-  }
-
   if (isLoading) {
+    console.log("[ProtectedRoute] Still loading...");
     return null;
   }
 
@@ -98,5 +98,6 @@ export const ProtectedRoute = () => {
     );
   }
 
+  console.log("[ProtectedRoute] Rendering protected content");
   return <Outlet />;
 };
