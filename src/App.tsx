@@ -32,9 +32,34 @@ const queryClient = new QueryClient({
 
 const RouteTracker = () => {
   const location = useLocation();
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
   useEffect(() => {
     console.log("[Router] Route changed to:", location.pathname);
+    
+    // Set transitioning state
+    setIsTransitioning(true);
+    
+    // Clear transition state after a short delay
+    const timer = setTimeout(() => {
+      setIsTransitioning(false);
+    }, 50);
+
+    return () => {
+      clearTimeout(timer);
+    };
   }, [location]);
+
+  // Add a div that covers the screen during transitions
+  if (isTransitioning) {
+    return (
+      <div 
+        className="fixed inset-0 bg-black z-50" 
+        style={{ opacity: 1 }}
+      />
+    );
+  }
+
   return null;
 };
 
@@ -82,7 +107,7 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   if (isAuthenticated === null) {
-    return null; // Loading state
+    return <div className="fixed inset-0 bg-black" />; // Loading state
   }
 
   if (!isAuthenticated) {
