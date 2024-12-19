@@ -15,16 +15,20 @@ export const ProtectedRoute = () => {
 
     const checkSession = async () => {
       try {
+        console.log("[ProtectedRoute] Checking session...");
         const { data: { session: currentSession } } = await supabase.auth.getSession();
+        console.log("[ProtectedRoute] Session state:", !!currentSession);
+        
         if (mounted) {
           setSession(!!currentSession);
           if (currentSession) {
+            console.log("[ProtectedRoute] User authenticated, checking approval status...");
             checkApprovalStatus(currentSession.user.id);
           }
           setIsLoading(false);
         }
       } catch (error) {
-        console.error("Error checking session:", error);
+        console.error("[ProtectedRoute] Error checking session:", error);
         if (mounted) {
           setSession(null);
           setIsLoading(false);
@@ -37,6 +41,7 @@ export const ProtectedRoute = () => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log("[ProtectedRoute] Auth state changed:", _event);
       if (mounted) {
         setSession(!!session);
         if (session) {
@@ -54,16 +59,19 @@ export const ProtectedRoute = () => {
 
   // Show nothing while loading
   if (isLoading) {
+    console.log("[ProtectedRoute] Still loading...");
     return null;
   }
 
   // Redirect if not logged in
   if (!session) {
+    console.log("[ProtectedRoute] No session, redirecting to login");
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
   // Only show approval pending screen if explicitly not approved
   if (isApproved === false) {
+    console.log("[ProtectedRoute] User not approved");
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="text-center space-y-4">
@@ -82,6 +90,7 @@ export const ProtectedRoute = () => {
     );
   }
 
+  console.log("[ProtectedRoute] Rendering protected content");
   // Allow access if approved or if approval status is unknown (null)
   return <Outlet />;
 };
