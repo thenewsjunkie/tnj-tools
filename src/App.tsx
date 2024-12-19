@@ -19,10 +19,14 @@ import Instructions from "./pages/Instructions";
 import Chat from "./pages/Chat";
 import ChatSettings from "./pages/ChatSettings";
 
+// Configure QueryClient with minimal defaults
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: false, // Disable automatic retries
+      refetchOnWindowFocus: false, // Disable refetch on window focus
+      refetchOnReconnect: false, // Disable refetch on reconnect
     },
   },
 });
