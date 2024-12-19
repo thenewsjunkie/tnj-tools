@@ -2,11 +2,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation, Outlet } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import GlobalQueueManager from "@/components/alerts/GlobalQueueManager";
-import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
 import Login from "./pages/Login";
@@ -24,9 +24,9 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: false, // Disable automatic retries
-      refetchOnWindowFocus: false, // Disable refetch on window focus
-      refetchOnReconnect: false, // Disable refetch on reconnect
+      retry: false,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
     },
   },
 });
@@ -42,19 +42,61 @@ const RouteTracker = () => {
   return null;
 };
 
-// AdminLayout component to wrap admin routes
-const AdminLayout = () => {
+// AdminRoute component to protect admin routes
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const location = useLocation();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
-    console.log("[AdminLayout] Mounted");
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('status')
+          .eq('id', session.user.id)
+          .single();
+        
+        setIsAuthenticated(profile?.status === 'approved');
+      }
+      setIsLoading(false);
+    };
+
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('status')
+          .eq('id', session.user.id)
+          .single();
+        
+        setIsAuthenticated(profile?.status === 'approved');
+      } else {
+        setIsAuthenticated(false);
+      }
+      setIsLoading(false);
+    });
+
     return () => {
-      console.log("[AdminLayout] Unmounted");
+      subscription?.unsubscribe();
     };
   }, []);
+
+  if (isLoading) {
+    return null;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
 
   return (
     <>
       <GlobalQueueManager />
-      <Outlet />
+      {children}
     </>
   );
 };
@@ -68,7 +110,7 @@ const App = () => (
         <BrowserRouter>
           <RouteTracker />
           <Routes>
-            {/* Public Routes - Not wrapped in ProtectedRoute */}
+            {/* Public Routes */}
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/notes" element={<Notes />} />
@@ -79,16 +121,12 @@ const App = () => (
             <Route path="/alerts/:alertSlug" element={<Alerts />} />
             <Route path="/alerts/:alertSlug/:username" element={<Alerts />} />
 
-            {/* Protected Admin Routes - Wrapped in ProtectedRoute */}
-            <Route path="/admin" element={<ProtectedRoute />}>
-              <Route element={<AdminLayout />}>
-                <Route index element={<Admin />} />
-                <Route path="ai" element={<AI />} />
-                <Route path="settings" element={<Settings />} />
-                <Route path="instructions" element={<Instructions />} />
-                <Route path="settings/chat" element={<ChatSettings />} />
-              </Route>
-            </Route>
+            {/* Protected Admin Routes */}
+            <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
+            <Route path="/admin/ai" element={<AdminRoute><AI /></AdminRoute>} />
+            <Route path="/admin/settings" element={<AdminRoute><Settings /></AdminRoute>} />
+            <Route path="/admin/instructions" element={<AdminRoute><Instructions /></AdminRoute>} />
+            <Route path="/admin/settings/chat" element={<AdminRoute><ChatSettings /></AdminRoute>} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
