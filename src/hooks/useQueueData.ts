@@ -22,10 +22,10 @@ export const useQueueData = () => {
       console.log('[useQueueData] Queue data fetched:', data);
       return data || [];
     },
-    refetchInterval: 3000, // Reduce polling frequency
+    refetchInterval: 5000, // Increased interval to reduce server load
     refetchIntervalInBackground: false,
-    staleTime: 2000,
-    gcTime: 5000, // Add garbage collection time
+    staleTime: 3000, // Increased stale time
+    gcTime: 10000, // Increased garbage collection time
   });
 
   return { queueData, refetch };
