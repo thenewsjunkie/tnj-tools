@@ -239,6 +239,27 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_emotes: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string
+          name?: string
+        }
+        Relationships: []
+      }
       instructions: {
         Row: {
           content: string

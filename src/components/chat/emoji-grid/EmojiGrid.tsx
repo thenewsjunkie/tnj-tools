@@ -8,14 +8,14 @@ interface EmojiGridProps {
 
 const EmojiGrid = ({ items, onSelect }: EmojiGridProps) => {
   const renderItem = (item: { name: string; symbol: string }) => {
-    // Check if this is a Twitch emote (if it has a numeric name)
-    const isTwitchEmote = !isNaN(Number(item.name));
+    // Check if the symbol is a URL (custom emote)
+    const isCustomEmote = item.symbol.startsWith('http');
 
-    if (isTwitchEmote) {
+    if (isCustomEmote) {
       return (
         <img 
-          src={`https://static-cdn.jtvnw.net/emoticons/v2/${item.name}/default/dark/1.0`}
-          alt={item.symbol}
+          src={item.symbol}
+          alt={item.name}
           className="w-6 h-6 object-contain"
           loading="lazy"
         />
@@ -33,7 +33,7 @@ const EmojiGrid = ({ items, onSelect }: EmojiGridProps) => {
           variant="ghost"
           className="h-8 w-8 p-0 hover:bg-white/10 flex items-center justify-center"
           onClick={() => onSelect(item.symbol)}
-          title={item.symbol}
+          title={item.name}
         >
           {renderItem(item)}
         </Button>

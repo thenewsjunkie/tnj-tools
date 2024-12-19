@@ -73,25 +73,40 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
       return result;
     }
 
-    // Handle regular messages with URLs
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const parts = text.split(urlRegex);
-
-    return parts.map((part, index) => {
-      if (part.match(urlRegex)) {
+    // Handle custom emotes and regular messages with URLs
+    const words = text.split(' ');
+    return words.map((word, index) => {
+      // Check if word is a custom emote URL
+      if (word.startsWith('http') && (word.includes('/storage/v1/object/public/custom_emotes/') || word.includes('/storage/v1/object/sign/custom_emotes/'))) {
         return (
-          <a
+          <img 
             key={index}
-            href={part}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-400 hover:underline break-all"
-          >
-            {part}
-          </a>
+            src={word}
+            alt="Custom Emote"
+            className="inline-block h-6 align-middle mx-0.5"
+          />
         );
       }
-      return part;
+      
+      // Handle URLs
+      if (word.match(/(https?:\/\/[^\s]+)/g)) {
+        return (
+          <React.Fragment key={index}>
+            <a
+              href={word}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-400 hover:underline break-all"
+            >
+              {word}
+            </a>
+            {' '}
+          </React.Fragment>
+        );
+      }
+      
+      // Regular word
+      return <React.Fragment key={index}>{word} </React.Fragment>;
     });
   };
 
