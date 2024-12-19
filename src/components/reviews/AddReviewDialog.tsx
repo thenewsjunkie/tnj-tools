@@ -74,6 +74,7 @@ const AddReviewDialog = ({ onReviewAdded }: AddReviewDialogProps) => {
       setImageUrls([]);
       onReviewAdded();
     } catch (error) {
+      console.error('Error adding review:', error);
       toast({
         title: "Error",
         description: "Failed to add review",

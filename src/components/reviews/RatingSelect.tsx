@@ -1,14 +1,14 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export interface RatingSelectProps {
-  value: number;
+  value: number | undefined;
   onValueChange: (value: number) => void;
 }
 
 const RatingSelect = ({ value, onValueChange }: RatingSelectProps) => {
   return (
     <Select 
-      value={value.toString()} 
+      value={value?.toString() || ""} 
       onValueChange={(val) => onValueChange(parseInt(val, 10))}
     >
       <SelectTrigger>
