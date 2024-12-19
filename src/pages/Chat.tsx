@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import ChatMessageComponent from "@/components/chat/ChatMessage";
 import ChatStatusIndicator from "@/components/chat/ChatStatusIndicator";
 import { Tables } from "@/integrations/supabase/types";
+import { useAuth } from "@/hooks/useAuth";
 
 type ChatMessageType = Tables<"chat_messages">;
 
@@ -12,6 +13,7 @@ const Chat = () => {
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
   const lastScrollTop = useRef(0);
+  const { session } = useAuth();
 
   const scrollToBottom = () => {
     if (chatContainerRef.current) {
