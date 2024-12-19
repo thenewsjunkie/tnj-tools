@@ -16,7 +16,7 @@ export const ProtectedRoute = () => {
     const checkSession = async () => {
       try {
         const { data: { session: currentSession } } = await supabase.auth.getSession();
-        if (mounted && session !== !!currentSession) {
+        if (mounted) {
           setSession(!!currentSession);
           if (currentSession) {
             checkApprovalStatus(currentSession.user.id);
@@ -38,15 +38,11 @@ export const ProtectedRoute = () => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (mounted) {
-        const isAuthenticated = !!session;
-        // Only update if the session state has actually changed
-        if (isAuthenticated !== !!session) {
-          setSession(isAuthenticated);
-          if (session) {
-            checkApprovalStatus(session.user.id);
-          }
-          setIsLoading(false);
+        setSession(!!session);
+        if (session) {
+          checkApprovalStatus(session.user.id);
         }
+        setIsLoading(false);
       }
     });
 
@@ -54,7 +50,7 @@ export const ProtectedRoute = () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [checkApprovalStatus]);
 
   // Show nothing while loading
   if (isLoading) {
