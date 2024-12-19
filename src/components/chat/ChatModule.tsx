@@ -70,11 +70,6 @@ const ChatModule = () => {
             </Button>
           </div>
         </div>
-        <div className="flex flex-col gap-2">
-          <div className="text-sm text-muted-foreground">
-            Use the buttons above to access the chat interface and settings.
-          </div>
-        </div>
       </CardContent>
     </Card>
   );
