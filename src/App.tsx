@@ -19,11 +19,10 @@ import Instructions from "./pages/Instructions";
 import Chat from "./pages/Chat";
 import ChatSettings from "./pages/ChatSettings";
 
-// Configure QueryClient with minimal defaults
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      staleTime: 1000 * 60 * 5,
       retry: false,
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
@@ -31,53 +30,50 @@ const queryClient = new QueryClient({
   },
 });
 
-// Route change tracker component
 const RouteTracker = () => {
   const location = useLocation();
-
   useEffect(() => {
     console.log("[Router] Route changed to:", location.pathname);
   }, [location]);
-
   return null;
 };
 
-// AdminRoute component to protect admin routes
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('status')
-          .eq('id', session.user.id)
-          .single();
-        
-        setIsAuthenticated(profile?.status === 'approved');
+      if (!session) {
+        setIsAuthenticated(false);
+        return;
       }
-      setIsLoading(false);
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('status')
+        .eq('id', session.user.id)
+        .single();
+      
+      setIsAuthenticated(profile?.status === 'approved');
     };
 
     checkAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('status')
-          .eq('id', session.user.id)
-          .single();
-        
-        setIsAuthenticated(profile?.status === 'approved');
-      } else {
+      if (!session) {
         setIsAuthenticated(false);
+        return;
       }
-      setIsLoading(false);
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('status')
+        .eq('id', session.user.id)
+        .single();
+      
+      setIsAuthenticated(profile?.status === 'approved');
     });
 
     return () => {
@@ -85,8 +81,8 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  if (isLoading) {
-    return null;
+  if (isAuthenticated === null) {
+    return null; // Loading state
   }
 
   if (!isAuthenticated) {
