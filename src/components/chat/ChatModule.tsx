@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { MessageSquare, Settings } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -46,24 +47,26 @@ const ChatModule = () => {
 
   return (
     <Card className="w-full bg-background border border-gray-200 dark:border-white/10">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <div className="flex items-center gap-4">
-          <h3 className="font-semibold leading-none tracking-tight">Chat Controls</h3>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <MessageSquare className="h-4 w-4" />
-            <span>{totalMessages}</span>
+      <CardHeader>
+        <CardTitle className="flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            Controls
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <MessageSquare className="h-4 w-4" />
+              <span>{totalMessages}</span>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/chat">View Chat</Link>
-          </Button>
-          <Button variant="ghost" size="icon" asChild>
-            <Link to="/chat/settings">
-              <Settings className="h-4 w-4" />
-            </Link>
-          </Button>
-        </div>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/chat">View Chat</Link>
+            </Button>
+            <Button variant="ghost" size="icon" asChild>
+              <Link to="/chat/settings">
+                <Settings className="h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-col gap-2">
