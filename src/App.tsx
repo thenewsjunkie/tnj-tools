@@ -59,8 +59,8 @@ const App = () => (
             <Route path="/alerts/:alertSlug" element={<Alerts />} />
             <Route path="/alerts/:alertSlug/:username" element={<Alerts />} />
 
-            {/* Protected Routes - Grouped under /admin path */}
-            <Route path="/admin" element={<ProtectedRoute />}>
+            {/* Protected Routes - All under /admin */}
+            <Route path="/admin/*" element={<ProtectedRoute />}>
               <Route index element={<Admin />} />
               <Route path="ai" element={<AI />} />
               <Route path="settings" element={<Settings />} />
