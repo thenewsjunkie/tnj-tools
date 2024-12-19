@@ -17,6 +17,9 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
     if (message.source === "twitch") {
       return <Twitch className="h-4 w-4 text-purple-500 shrink-0" />;
     }
+    if (message.source === "megachat") {
+      return <MessageSquare className="h-4 w-4 text-blue-500 shrink-0" />;
+    }
     return <MessageSquare className="h-4 w-4 text-blue-500 shrink-0" />;
   };
 
