@@ -19,7 +19,7 @@ const Chat = () => {
   const { toast } = useToast();
 
   const scrollToBottom = () => {
-    if (chatContainerRef.current) {
+    if (chatContainerRef.current && autoScroll) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   };
@@ -51,7 +51,6 @@ const Chat = () => {
 
       console.log("Message inserted successfully:", data);
       setNewMessage("");
-      scrollToBottom();
     } catch (error) {
       console.error("Unexpected error:", error);
       toast({
@@ -102,25 +101,33 @@ const Chat = () => {
     };
 
     fetchMessages();
-  }, [toast]);
 
-  // Real-time updates
-  useEffect(() => {
+    // Set up real-time subscription
     const channel = supabase
-      .channel("chat_messages_channel")
+      .channel("chat_messages_changes")
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "*", // Listen to all events (INSERT, UPDATE, DELETE)
           schema: "public",
           table: "chat_messages",
         },
         (payload) => {
-          console.log("New message received:", payload);
-          const newMessage = payload.new as ChatMessageType;
-          setMessages((prev) => [...prev, newMessage]);
-          if (autoScroll) {
+          console.log("Real-time event received:", payload);
+          
+          if (payload.eventType === "INSERT") {
+            setMessages((prev) => [...prev, payload.new as ChatMessageType]);
             setTimeout(scrollToBottom, 100);
+          } else if (payload.eventType === "DELETE") {
+            setMessages((prev) => 
+              prev.filter((msg) => msg.id !== payload.old.id)
+            );
+          } else if (payload.eventType === "UPDATE") {
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === payload.new.id ? (payload.new as ChatMessageType) : msg
+              )
+            );
           }
         }
       )
@@ -129,7 +136,7 @@ const Chat = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [autoScroll]);
+  }, [toast]);
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const element = event.currentTarget;
