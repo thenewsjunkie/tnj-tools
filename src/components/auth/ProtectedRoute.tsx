@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -16,52 +16,47 @@ export const ProtectedRoute = () => {
     return <Outlet />;
   }
 
+  const checkSession = useCallback(async () => {
+    try {
+      console.log("[ProtectedRoute] Checking session...");
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      console.log("[ProtectedRoute] Session state:", !!currentSession);
+      
+      setSession(!!currentSession);
+      if (currentSession) {
+        console.log("[ProtectedRoute] User authenticated, checking approval status...");
+        await checkApprovalStatus(currentSession.user.id);
+      }
+      setIsLoading(false);
+    } catch (error) {
+      console.error("[ProtectedRoute] Error checking session:", error);
+      setSession(null);
+      setIsLoading(false);
+    }
+  }, [checkApprovalStatus]);
+
   useEffect(() => {
     let mounted = true;
-
-    const checkSession = async () => {
-      try {
-        console.log("[ProtectedRoute] Checking session...");
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        console.log("[ProtectedRoute] Session state:", !!currentSession);
-        
-        if (mounted) {
-          setSession(!!currentSession);
-          if (currentSession) {
-            console.log("[ProtectedRoute] User authenticated, checking approval status...");
-            checkApprovalStatus(currentSession.user.id);
-          }
-          setIsLoading(false);
-        }
-      } catch (error) {
-        console.error("[ProtectedRoute] Error checking session:", error);
-        if (mounted) {
-          setSession(null);
-          setIsLoading(false);
-        }
-      }
-    };
-
     checkSession();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       console.log("[ProtectedRoute] Auth state changed:", _event);
-      if (mounted) {
-        setSession(!!session);
-        if (session) {
-          checkApprovalStatus(session.user.id);
-        }
-        setIsLoading(false);
+      if (!mounted) return;
+      
+      setSession(!!session);
+      if (session) {
+        await checkApprovalStatus(session.user.id);
       }
+      setIsLoading(false);
     });
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [checkApprovalStatus]);
+  }, [checkSession]);
 
   // Show nothing while loading
   if (isLoading) {
@@ -97,6 +92,5 @@ export const ProtectedRoute = () => {
   }
 
   console.log("[ProtectedRoute] Rendering protected content");
-  // Allow access if approved or if approval status is unknown (null)
   return <Outlet />;
 };
