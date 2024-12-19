@@ -48,25 +48,27 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
   return (
     <div
       className={cn(
-        "flex items-center gap-2 px-2 py-1 bg-black/50 backdrop-blur-sm w-full",
+        "flex items-center gap-2 px-2 py-1 w-full",
+        "dark:bg-black/50 dark:backdrop-blur-sm",
+        "bg-gray-50 border-b border-gray-100",
         isPinned
-          ? "bg-yellow-500/20 border border-yellow-500/50"
+          ? "bg-yellow-500/10 border border-yellow-500/50 dark:bg-yellow-500/20"
           : message.message_type === "superchat"
-          ? "bg-green-500/20 border border-green-500/50"
+          ? "bg-green-500/10 border border-green-500/50 dark:bg-green-500/20"
           : ""
       )}
     >
       {renderIcon()}
       <div className="min-w-0 w-full">
-        <span className="inline-block font-bold text-sm text-white mr-2">
+        <span className="inline-block font-bold text-sm mr-2 text-gray-900 dark:text-white">
           {message.username}:
         </span>
         {message.message_type === "superchat" && (
-          <span className="inline-block text-xs text-green-400 mr-2">
+          <span className="inline-block text-xs text-green-600 dark:text-green-400 mr-2">
             ${message.superchat_amount}
           </span>
         )}
-        <span className="inline text-sm text-white/90 break-words">
+        <span className="inline text-sm text-gray-700 dark:text-white/90 break-words">
           {renderMessage(message.message)}
         </span>
       </div>
