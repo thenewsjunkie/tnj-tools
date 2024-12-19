@@ -9,6 +9,10 @@ interface ChatMessageProps {
   isPinned?: boolean;
 }
 
+interface TwitchEmotes {
+  [key: string]: string[];
+}
+
 const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
   const renderIcon = () => {
     if (message.source === "youtube") {
@@ -27,9 +31,9 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
     if (!text) return "";
 
     // Handle Twitch emotes if present in metadata
-    if (message.source === "twitch" && message.metadata?.emotes) {
+    if (message.source === "twitch" && typeof message.metadata === 'object' && message.metadata !== null && 'emotes' in message.metadata) {
       let result = text;
-      const emotes = message.metadata.emotes;
+      const emotes = message.metadata.emotes as TwitchEmotes;
       
       // Sort emotes by position to replace from end to start
       // This prevents position indices from shifting

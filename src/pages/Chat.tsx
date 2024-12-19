@@ -28,13 +28,21 @@ const Chat = () => {
     if (!newMessage.trim()) return;
 
     try {
+      // For testing: Add test emote data when message contains "Kappa"
+      const metadata = newMessage.includes("Kappa") ? {
+        emotes: {
+          "25": ["0-4"] // Kappa emote ID with position 0-4
+        }
+      } : {};
+
       const { data, error } = await supabase
         .from("chat_messages")
         .insert({
-          source: "megachat",
+          source: "twitch", // Change to twitch for testing emotes
           username: "MegaChat",
           message: newMessage.trim(),
           message_type: "chat",
+          metadata: metadata
         })
         .select()
         .single();
@@ -177,7 +185,7 @@ const Chat = () => {
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Type a message..."
+              placeholder="Type 'Kappa' to test Twitch emotes..."
               className="bg-white/5 border-white/10 text-white"
             />
             <Button 
