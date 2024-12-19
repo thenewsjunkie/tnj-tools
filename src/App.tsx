@@ -42,14 +42,6 @@ const App = () => (
             <Route path="/reviews" element={<Reviews />} />
             <Route path="/alerts" element={<Alerts />} />
             <Route path="/chat" element={<Chat />} />
-            <Route 
-              path="/chat/settings" 
-              element={
-                <ProtectedRoute>
-                  <ChatSettings />
-                </ProtectedRoute>
-              } 
-            />
             <Route path="/alerts/queue/:action" element={<Alerts />} />
             <Route path="/alerts/:alertSlug" element={<Alerts />} />
             <Route path="/alerts/:alertSlug/:username" element={<Alerts />} />
@@ -84,6 +76,14 @@ const App = () => (
                   <Instructions />
                 </ProtectedRoute>
               }
+            />
+            <Route 
+              path="/chat/settings" 
+              element={
+                <ProtectedRoute>
+                  <ChatSettings />
+                </ProtectedRoute>
+              } 
             />
           </Routes>
         </BrowserRouter>
