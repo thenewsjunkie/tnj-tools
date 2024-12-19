@@ -64,7 +64,7 @@ const App = () => (
         <BrowserRouter>
           <RouteTracker />
           <Routes>
-            {/* Public Routes */}
+            {/* Public Routes - Not wrapped in ProtectedRoute */}
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/notes" element={<Notes />} />
@@ -75,14 +75,14 @@ const App = () => (
             <Route path="/alerts/:alertSlug" element={<Alerts />} />
             <Route path="/alerts/:alertSlug/:username" element={<Alerts />} />
 
-            {/* Protected Admin Routes */}
-            <Route element={<ProtectedRoute />}>
+            {/* Protected Admin Routes - Wrapped in ProtectedRoute */}
+            <Route path="/admin" element={<ProtectedRoute />}>
               <Route element={<AdminLayout />}>
-                <Route path="/admin" element={<Admin />} />
-                <Route path="/admin/ai" element={<AI />} />
-                <Route path="/admin/settings" element={<Settings />} />
-                <Route path="/admin/instructions" element={<Instructions />} />
-                <Route path="/admin/settings/chat" element={<ChatSettings />} />
+                <Route index element={<Admin />} />
+                <Route path="ai" element={<AI />} />
+                <Route path="settings" element={<Settings />} />
+                <Route path="instructions" element={<Instructions />} />
+                <Route path="settings/chat" element={<ChatSettings />} />
               </Route>
             </Route>
           </Routes>
