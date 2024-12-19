@@ -64,7 +64,7 @@ const ChatModule = () => {
               <Link to="/chat">View Chat</Link>
             </Button>
             <Button variant="ghost" size="icon" asChild>
-              <Link to="/chat/settings">
+              <Link to="/admin/settings/chat">
                 <Settings className="h-4 w-4" />
               </Link>
             </Button>

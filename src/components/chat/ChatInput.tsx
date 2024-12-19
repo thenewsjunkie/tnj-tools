@@ -139,7 +139,7 @@ export const ChatInput = () => {
             </PopoverContent>
           </Popover>
           
-          <Link to="/chat/settings">
+          <Link to="/admin/settings/chat">
             <Button 
               variant="ghost" 
               size="icon"
