@@ -27,6 +27,7 @@ export async function forwardToWebhook(message: TwitchMessage & { type: string }
           username: message.username,
           message: message.message,
           channel: message.channel,
+          emotes: message.emotes || {},
         },
       }),
     });
