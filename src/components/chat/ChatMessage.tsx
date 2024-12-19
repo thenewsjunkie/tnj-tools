@@ -1,3 +1,4 @@
+import React from 'react';
 import { Youtube, Twitch, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tables } from "@/integrations/supabase/types";
@@ -61,11 +62,11 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
           const before = result.toString().slice(0, start);
           const after = result.toString().slice(end + 1);
           result = (
-            <>
+            <React.Fragment>
               {before}
               {emoteImg}
               {after}
-            </>
+            </React.Fragment>
           );
         }
       }
