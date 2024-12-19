@@ -24,6 +24,64 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
   };
 
   const renderMessage = (text: string) => {
+    if (!text) return "";
+
+    // Handle Twitch emotes if present in metadata
+    if (message.source === "twitch" && message.metadata?.emotes) {
+      let result = text;
+      const emotes = message.metadata.emotes;
+      
+      // Sort emotes by position to replace from end to start
+      // This prevents position indices from shifting
+      const sortedEmotes = Object.entries(emotes).sort((a, b) => {
+        const posA = a[1][0].split('-')[0];
+        const posB = b[1][0].split('-')[0];
+        return Number(posB) - Number(posA);
+      });
+
+      for (const [emoteId, positions] of sortedEmotes) {
+        for (const position of positions) {
+          const [start, end] = position.split('-').map(Number);
+          const emoteText = text.slice(start, end + 1);
+          const emoteUrl = `https://static-cdn.jtvnw.net/emoticons/v2/${emoteId}/default/dark/1.0`;
+          
+          // Create img element for emote
+          const emoteImg = `<img src="${emoteUrl}" alt="${emoteText}" class="inline-block h-6 align-middle mx-0.5" />`;
+          
+          // Replace text with emote image
+          result = result.slice(0, start) + emoteImg + result.slice(end + 1);
+        }
+      }
+
+      // Handle URLs in the remaining text
+      const urlRegex = /(https?:\/\/[^\s<]+)/g;
+      const parts = result.split(urlRegex);
+
+      return parts.map((part, index) => {
+        if (part.match(urlRegex)) {
+          return (
+            <a
+              key={index}
+              href={part}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-400 hover:underline break-all"
+            >
+              {part}
+            </a>
+          );
+        }
+        // Use dangerouslySetInnerHTML for parts that may contain emote images
+        return (
+          <span
+            key={index}
+            dangerouslySetInnerHTML={{ __html: part }}
+          />
+        );
+      });
+    }
+
+    // Handle regular messages with URLs
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     const parts = text.split(urlRegex);
 
