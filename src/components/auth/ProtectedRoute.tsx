@@ -14,27 +14,45 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { isApproved, checkApprovalStatus } = useProfileStatus();
 
   useEffect(() => {
-    // Check initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(!!session);
-      if (session) {
-        checkApprovalStatus(session.user.id);
-      }
-      setIsLoading(false);
-    });
+    let mounted = true;
 
-    // Listen for auth changes
+    const checkSession = async () => {
+      try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        if (mounted) {
+          setSession(!!currentSession);
+          if (currentSession) {
+            checkApprovalStatus(currentSession.user.id);
+          }
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error("Error checking session:", error);
+        if (mounted) {
+          setSession(null);
+          setIsLoading(false);
+        }
+      }
+    };
+
+    checkSession();
+
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      setSession(!!session);
-      if (session) {
-        checkApprovalStatus(session.user.id);
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (mounted) {
+        setSession(!!session);
+        if (session) {
+          checkApprovalStatus(session.user.id);
+        }
+        setIsLoading(false);
       }
-      setIsLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Show nothing while loading
