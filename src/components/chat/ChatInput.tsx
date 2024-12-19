@@ -3,37 +3,13 @@ import { MessageSquare, Send, Smile } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-
-// Emoji data
-const emojis = [
-  { name: "smile", symbol: "😊" },
-  { name: "laugh", symbol: "😄" },
-  { name: "heart", symbol: "❤️" },
-  { name: "thumbsup", symbol: "👍" },
-  { name: "wink", symbol: "😉" },
-  { name: "cry", symbol: "😢" },
-  { name: "angry", symbol: "😠" },
-  { name: "surprised", symbol: "😮" },
-  { name: "cool", symbol: "😎" },
-  { name: "party", symbol: "🎉" },
-];
-
-// Emote data
-const emotes = [
-  { name: "heart", symbol: "❤️" },
-  { name: "thumbsup", symbol: "👍" },
-  { name: "fire", symbol: "🔥" },
-  { name: "clap", symbol: "👏" },
-  { name: "100", symbol: "💯" },
-  { name: "star", symbol: "⭐" },
-];
+import { useToast } from "@/hooks/use-toast";
+import EmojiPicker from "./EmojiPicker";
 
 export const ChatInput = () => {
   const [newMessage, setNewMessage] = useState("");
   const [totalMessages, setTotalMessages] = useState(0);
-  const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -112,17 +88,9 @@ export const ChatInput = () => {
     }
   };
 
-  const handleEmojiClick = (symbol: string) => {
+  const handleEmojiSelect = (symbol: string) => {
     setNewMessage((prev) => prev + symbol);
   };
-
-  const filteredEmojis = emojis.filter((emoji) =>
-    emoji.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const filteredEmotes = emotes.filter((emote) =>
-    emote.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   return (
     <div className="border-t border-white/10 bg-black p-2">
@@ -166,48 +134,7 @@ export const ChatInput = () => {
               align="start"
               side="top"
             >
-              <Tabs defaultValue="emojis">
-                <TabsList className="w-full bg-white/5">
-                  <TabsTrigger value="emojis" className="flex-1">Emojis</TabsTrigger>
-                  <TabsTrigger value="emotes" className="flex-1">Emotes</TabsTrigger>
-                </TabsList>
-                <div className="p-2">
-                  <Input
-                    placeholder="Search..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="mb-2 bg-white/5 border-white/10"
-                  />
-                  <TabsContent value="emojis" className="m-0">
-                    <div className="grid grid-cols-6 gap-2">
-                      {filteredEmojis.map((emoji) => (
-                        <Button
-                          key={emoji.name}
-                          variant="ghost"
-                          className="h-8 w-8 p-0 hover:bg-white/10"
-                          onClick={() => handleEmojiClick(emoji.symbol)}
-                        >
-                          {emoji.symbol}
-                        </Button>
-                      ))}
-                    </div>
-                  </TabsContent>
-                  <TabsContent value="emotes" className="m-0">
-                    <div className="grid grid-cols-6 gap-2">
-                      {filteredEmotes.map((emote) => (
-                        <Button
-                          key={emote.name}
-                          variant="ghost"
-                          className="h-8 w-8 p-0 hover:bg-white/10"
-                          onClick={() => handleEmojiClick(emote.symbol)}
-                        >
-                          {emote.symbol}
-                        </Button>
-                      ))}
-                    </div>
-                  </TabsContent>
-                </div>
-              </Tabs>
+              <EmojiPicker onEmojiSelect={handleEmojiSelect} />
             </PopoverContent>
           </Popover>
         </div>
