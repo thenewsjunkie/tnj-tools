@@ -10,7 +10,9 @@ type ChatMessageType = Tables<"chat_messages">;
 
 const Chat = () => {
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [autoScroll, setAutoScroll] = useState(true);
+  const lastScrollTop = useRef(0);
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -43,7 +45,9 @@ const Chat = () => {
         (payload) => {
           const newMessage = payload.new as ChatMessageType;
           setMessages((prev) => [...prev, newMessage]);
-          scrollToBottom();
+          if (autoScroll) {
+            scrollToBottom();
+          }
         }
       )
       .subscribe();
@@ -51,10 +55,22 @@ const Chat = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [autoScroll]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (scrollAreaRef.current) {
+      const scrollElement = scrollAreaRef.current;
+      scrollElement.scrollTop = scrollElement.scrollHeight;
+    }
+  };
+
+  const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    const element = event.currentTarget;
+    const isScrollingUp = element.scrollTop < lastScrollTop.current;
+    const isAtBottom = Math.abs(element.scrollHeight - element.scrollTop - element.clientHeight) < 10;
+    
+    setAutoScroll(isAtBottom);
+    lastScrollTop.current = element.scrollTop;
   };
 
   return (
@@ -64,16 +80,19 @@ const Chat = () => {
         <span className="text-sm font-mono">{messages.length}</span>
       </div>
 
-      <ScrollArea className="flex-1 w-full">
-        <div className="min-h-screen flex flex-col justify-end p-4 space-y-1">
-          <div className="w-full max-w-4xl mx-auto">
+      <div 
+        ref={scrollAreaRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto"
+      >
+        <div className="min-h-screen flex flex-col justify-end p-4">
+          <div className="w-full max-w-4xl mx-auto space-y-1">
             {messages.map((message) => (
               <ChatMessageComponent key={message.id} message={message} />
             ))}
-            <div ref={messagesEndRef} />
           </div>
         </div>
-      </ScrollArea>
+      </div>
 
       <ChatStatusIndicator />
     </div>
