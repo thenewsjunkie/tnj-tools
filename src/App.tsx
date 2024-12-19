@@ -59,7 +59,7 @@ const App = () => (
             <Route path="/alerts/:alertSlug" element={<Alerts />} />
             <Route path="/alerts/:alertSlug/:username" element={<Alerts />} />
 
-            {/* Protected Routes */}
+            {/* Protected Admin Routes */}
             <Route element={<ProtectedRoute />}>
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin/ai" element={<AI />} />

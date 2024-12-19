@@ -10,6 +10,12 @@ export const ProtectedRoute = () => {
   const { isApproved, checkApprovalStatus } = useProfileStatus();
   const location = useLocation();
 
+  // Only protect admin routes
+  if (!location.pathname.startsWith('/admin')) {
+    console.log("[ProtectedRoute] Non-admin route detected, allowing access:", location.pathname);
+    return <Outlet />;
+  }
+
   useEffect(() => {
     let mounted = true;
 
