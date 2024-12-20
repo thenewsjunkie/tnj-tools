@@ -13,7 +13,34 @@ import { createEmoteMetadata } from "@/utils/emoteUtils";
 export const ChatInput = () => {
   const [newMessage, setNewMessage] = useState("");
   const [totalMessages, setTotalMessages] = useState(0);
+  const [isBotConnected, setIsBotConnected] = useState(false);
   const { toast } = useToast();
+
+  // Check bot status periodically
+  useEffect(() => {
+    const checkBotStatus = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('twitch-bot', {
+          body: { action: "status" }
+        });
+
+        if (error) {
+          console.error("[ChatInput] Error checking bot status:", error);
+          setIsBotConnected(false);
+          return;
+        }
+
+        setIsBotConnected(data?.status === "connected");
+      } catch (error) {
+        console.error("[ChatInput] Error checking bot status:", error);
+        setIsBotConnected(false);
+      }
+    };
+
+    checkBotStatus();
+    const interval = setInterval(checkBotStatus, 30000); // Check every 30 seconds
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const fetchTotalMessages = async () => {
@@ -50,6 +77,15 @@ export const ChatInput = () => {
 
   const handleSendMessage = async () => {
     if (!newMessage.trim()) return;
+
+    if (!isBotConnected) {
+      toast({
+        title: "Bot not connected",
+        description: "Please start the chat bot in settings before sending messages",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       console.log("[ChatInput] Processing message:", newMessage);
@@ -91,8 +127,8 @@ export const ChatInput = () => {
         console.error("[ChatInput] Error sending message to Twitch:", twitchError);
         toast({
           title: "Warning",
-          description: "Message sent to chat but failed to send to Twitch",
-          variant: "default",  // Changed from "warning" to "default"
+          description: "Message sent to chat but failed to send to Twitch. Please check bot connection in settings.",
+          variant: "destructive",
         });
       }
 
@@ -129,6 +165,11 @@ export const ChatInput = () => {
             </div>
           </div>
           <ViewerCount />
+          {!isBotConnected && (
+            <div className="text-red-500 text-sm">
+              Bot disconnected
+            </div>
+          )}
         </div>
         
         <div className="flex gap-2">
