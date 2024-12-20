@@ -20,23 +20,34 @@ const EmojiPicker = ({ onEmojiSelect }: EmojiPickerProps) => {
 
   const fetchCustomEmotes = async () => {
     console.log("[EmojiPicker] Fetching custom emotes");
-    const { data, error } = await supabase
-      .from('custom_emotes')
-      .select('*')
-      .order('created_at', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('custom_emotes')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    if (!error && data) {
-      console.log("[EmojiPicker] Fetched custom emotes:", data);
-      setCustomEmotes(data.map(emote => ({
-        name: emote.name,
-        symbol: emote.image_url
-      })));
-    } else {
-      console.error("[EmojiPicker] Error fetching emotes:", error);
+      if (error) {
+        console.error("[EmojiPicker] Error fetching emotes:", error);
+        return;
+      }
+
+      if (data) {
+        console.log("[EmojiPicker] Fetched custom emotes:", data);
+        const formattedEmotes = data.map(emote => ({
+          name: emote.name,
+          symbol: emote.image_url
+        }));
+        console.log("[EmojiPicker] Formatted emotes:", formattedEmotes);
+        setCustomEmotes(formattedEmotes);
+      }
+    } catch (error) {
+      console.error("[EmojiPicker] Unexpected error fetching emotes:", error);
     }
   };
 
+  // Fetch emotes when component mounts
   useEffect(() => {
+    console.log("[EmojiPicker] Component mounted, fetching emotes");
     fetchCustomEmotes();
   }, []);
 
