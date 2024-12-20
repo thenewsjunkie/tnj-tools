@@ -1,19 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { TwitchConnection } from "./connection.ts";
-import { TwitchAuthenticator } from "./authenticator.ts";
-import { getOAuthToken } from "./auth.ts";
-import { validateConfig, TwitchConfig } from "./config.ts";
+import { TwitchBot } from "./twitchBot.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
-let botInstance: {
-  connection: TwitchConnection;
-  authenticator: TwitchAuthenticator;
-  ws: WebSocket | null;
-} | null = null;
+let botInstance: TwitchBot | null = null;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -24,28 +18,21 @@ serve(async (req) => {
     const { action } = await req.json();
     console.log(`[TwitchBot] Received ${action} request`);
 
-    const config: TwitchConfig = {
-      channel: Deno.env.get("TWITCH_CHANNEL_NAME") || "",
-      clientId: Deno.env.get("TWITCH_CLIENT_ID") || "",
-      clientSecret: Deno.env.get("TWITCH_CLIENT_SECRET") || "",
+    // Get config from environment variables
+    const config = {
+      channel: Deno.env.get("TWITCH_CHANNEL_NAME"),
+      clientId: Deno.env.get("TWITCH_CLIENT_ID"),
+      clientSecret: Deno.env.get("TWITCH_CLIENT_SECRET"),
     };
 
-    try {
-      validateConfig(config);
-    } catch (error) {
-      console.error("[TwitchBot] Configuration error:", error);
-      return new Response(
-        JSON.stringify({ error: error.message }),
-        { 
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        }
-      );
+    // Validate config
+    if (!config.channel || !config.clientId || !config.clientSecret) {
+      console.error("[TwitchBot] Missing required environment variables");
+      throw new Error("Missing Twitch configuration. Please check environment variables.");
     }
 
     if (action === "status") {
-      const status = botInstance?.ws?.readyState === WebSocket.OPEN ? "connected" : "disconnected";
-      console.log("[TwitchBot] Status check:", status);
+      const status = botInstance?.getStatus() === "Connected" ? "connected" : "disconnected";
       return new Response(
         JSON.stringify({ status }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -55,68 +42,28 @@ serve(async (req) => {
     if (action === "start") {
       console.log("[TwitchBot] Starting bot with channel:", config.channel);
       
-      if (botInstance?.ws?.readyState === WebSocket.OPEN) {
-        console.log("[TwitchBot] Bot already running");
-        return new Response(
-          JSON.stringify({ status: "Bot already running" }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+      if (botInstance) {
+        console.log("[TwitchBot] Already running, stopping first...");
+        await botInstance.disconnect();
       }
 
-      try {
-        const accessToken = await getOAuthToken(config.clientId, config.clientSecret);
-        console.log("[TwitchBot] Successfully obtained access token");
-
-        const connection = new TwitchConnection();
-        const authenticator = new TwitchAuthenticator(config.channel, accessToken, config.clientId);
-        
-        const ws = await connection.connect();
-        console.log("[TwitchBot] WebSocket connection established");
-
-        ws.onmessage = async (event) => {
-          const message = event.data;
-          connection.messageReceived();
-          console.log("[TwitchBot] Received message:", message);
-
-          if (message.includes("PING")) {
-            ws.send("PONG :tmi.twitch.tv");
-            return;
-          }
-
-          if (message.includes("Login authentication failed")) {
-            console.error("[TwitchBot] Authentication failed");
-            connection.disconnect();
-            return;
-          }
-        };
-
-        await authenticator.authenticate(ws);
-        connection.setupPingInterval(ws);
-
-        botInstance = { connection, authenticator, ws };
-        
-        return new Response(
-          JSON.stringify({ status: "Bot started successfully" }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      } catch (error) {
-        console.error("[TwitchBot] Error starting bot:", error);
-        if (botInstance) {
-          botInstance.connection.disconnect();
-          botInstance = null;
-        }
-        throw error;
-      }
+      botInstance = new TwitchBot(config);
+      await botInstance.connect();
+      
+      return new Response(
+        JSON.stringify({ status: "Twitch bot started" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     if (action === "stop") {
       console.log("[TwitchBot] Stopping bot");
       if (botInstance) {
-        botInstance.connection.disconnect();
+        await botInstance.disconnect();
         botInstance = null;
       }
       return new Response(
-        JSON.stringify({ status: "Bot stopped" }),
+        JSON.stringify({ status: "Twitch bot stopped" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

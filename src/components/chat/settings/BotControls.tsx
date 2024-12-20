@@ -16,7 +16,6 @@ export const BotControls = () => {
   const startBots = async (videoId?: string) => {
     setIsLoading(true);
     try {
-      // Start Twitch bot
       const { data: twitchData, error: twitchError } = await supabase.functions.invoke('twitch-bot', {
         body: { action: "start" }
       });
@@ -25,16 +24,6 @@ export const BotControls = () => {
         throw new Error(`Failed to start Twitch bot: ${twitchError.message}`);
       }
 
-      // Verify Twitch connection
-      const { data: twitchStatus } = await supabase.functions.invoke('twitch-bot', {
-        body: { action: "status" }
-      });
-
-      if (twitchStatus?.status !== "connected") {
-        throw new Error("Failed to establish Twitch bot connection");
-      }
-
-      // Start YouTube bot if videoId is provided
       if (videoId) {
         const { data: youtubeData, error: youtubeError } = await supabase.functions.invoke('youtube-bot', {
           body: { 
@@ -45,15 +34,6 @@ export const BotControls = () => {
 
         if (youtubeError) {
           throw new Error(`Failed to start YouTube bot: ${youtubeError.message}`);
-        }
-
-        // Verify YouTube connection
-        const { data: youtubeStatus } = await supabase.functions.invoke('youtube-bot', {
-          body: { action: "status" }
-        });
-
-        if (youtubeStatus?.status !== "connected") {
-          throw new Error("Failed to establish YouTube bot connection");
         }
       }
 

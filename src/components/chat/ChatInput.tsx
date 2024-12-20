@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Send, Smile, Settings } from "lucide-react";
+import { MessageSquare, Send, Smile, Settings } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -7,14 +7,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import EmojiPicker from "./EmojiPicker";
-import { ChatStats } from "./ChatStats";
-import { useBotStatus } from "@/hooks/useBotStatus";
+import { ViewerCount } from "./ViewerCount";
 import { createEmoteMetadata } from "@/utils/emoteUtils";
 
 export const ChatInput = () => {
   const [newMessage, setNewMessage] = useState("");
   const [totalMessages, setTotalMessages] = useState(0);
-  const isBotConnected = useBotStatus();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -58,8 +56,7 @@ export const ChatInput = () => {
       
       const emoteMetadata = await createEmoteMetadata(newMessage.trim());
 
-      // Insert message into database
-      const { error: dbError } = await supabase
+      const { error } = await supabase
         .from("chat_messages")
         .insert({
           source: "megachat",
@@ -71,33 +68,14 @@ export const ChatInput = () => {
         .select()
         .single();
 
-      if (dbError) {
-        console.error("[ChatInput] Error inserting message:", dbError);
+      if (error) {
+        console.error("[ChatInput] Error inserting message:", error);
         toast({
           title: "Error sending message",
-          description: dbError.message,
+          description: error.message,
           variant: "destructive",
         });
         return;
-      }
-
-      // Only attempt to send to Twitch if the bot is connected
-      if (isBotConnected) {
-        const { error: twitchError } = await supabase.functions.invoke('twitch-bot', {
-          body: { 
-            action: "send",
-            message: newMessage.trim()
-          }
-        });
-
-        if (twitchError) {
-          console.error("[ChatInput] Error sending message to Twitch:", twitchError);
-          toast({
-            title: "Warning",
-            description: "Message sent to chat but failed to send to Twitch",
-            variant: "destructive",
-          });
-        }
       }
 
       setNewMessage("");
@@ -125,7 +103,15 @@ export const ChatInput = () => {
   return (
     <div className="border-t border-white/10 bg-black p-2">
       <div className="space-y-2">
-        <ChatStats totalMessages={totalMessages} isBotConnected={isBotConnected} />
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 bg-black/90 backdrop-blur-sm px-2 py-1 rounded-md">
+            <MessageSquare className="h-4 w-4 text-white/90" />
+            <div className="flex items-center gap-2 text-sm font-mono text-white/90">
+              <span>{totalMessages}</span>
+            </div>
+          </div>
+          <ViewerCount />
+        </div>
         
         <div className="flex gap-2">
           <Input
