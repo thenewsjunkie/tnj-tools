@@ -7,9 +7,14 @@ interface EmoteRendererProps {
 }
 
 const EmoteRenderer = ({ emoteId, emoteText, isChannelEmote = false }: EmoteRendererProps) => {
+  // For channel emotes, we need to remove the 'channel-' prefix
   const actualEmoteId = isChannelEmote ? emoteId.replace('channel-', '') : emoteId;
   
-  console.log(`[EmoteRenderer] Rendering ${isChannelEmote ? 'channel' : 'global'} emote:`, actualEmoteId);
+  console.log(`[EmoteRenderer] Rendering ${isChannelEmote ? 'channel' : 'global'} emote:`, {
+    originalId: emoteId,
+    processedId: actualEmoteId,
+    text: emoteText
+  });
   
   return (
     <img
@@ -18,7 +23,10 @@ const EmoteRenderer = ({ emoteId, emoteText, isChannelEmote = false }: EmoteRend
       className="inline-block h-6 align-middle mx-0.5"
       loading="lazy"
       onError={(e) => {
-        console.error("[EmoteRenderer] Error loading emote:", actualEmoteId);
+        console.error("[EmoteRenderer] Error loading emote:", {
+          emoteId: actualEmoteId,
+          error: e
+        });
         const target = e.target as HTMLImageElement;
         target.style.display = 'none';
       }}

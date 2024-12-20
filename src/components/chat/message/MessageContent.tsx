@@ -15,7 +15,10 @@ const MessageContent = ({ message, metadata }: MessageContentProps) => {
 
   // Handle messages with Twitch emotes
   if (metadata?.emotes) {
-    console.log("[MessageContent] Processing message with emotes");
+    console.log("[MessageContent] Processing message with emotes:", {
+      message,
+      metadata
+    });
     
     // Get all positions for emotes
     let allPositions: Array<{
@@ -44,6 +47,8 @@ const MessageContent = ({ message, metadata }: MessageContentProps) => {
 
     // Sort positions by start index
     allPositions.sort((a, b) => a.start - b.start);
+
+    console.log("[MessageContent] All emote positions:", allPositions);
 
     // Build the final result
     const result: React.ReactNode[] = [];
