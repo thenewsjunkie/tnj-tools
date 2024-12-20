@@ -26,18 +26,20 @@ export class TwitchAuthenticator {
       });
     };
 
-    // Execute authentication sequence with proper ordering
+    // Execute authentication sequence with proper ordering and longer delays
     return (async () => {
       try {
         // First request capabilities
         await sendWithDelay("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership", 0);
         
-        // Then send authentication
-        await sendWithDelay(`PASS oauth:${this.accessToken}`, 1000);
-        await sendWithDelay(`NICK ${this.channel.toLowerCase()}`, 2000);
+        // Then send authentication with longer delay
+        await sendWithDelay(`PASS oauth:${this.accessToken}`, 2000);
         
-        // Finally join the channel
-        await sendWithDelay(`JOIN #${this.channel.toLowerCase()}`, 3000);
+        // Set nickname with longer delay
+        await sendWithDelay(`NICK ${this.channel.toLowerCase()}`, 4000);
+        
+        // Finally join the channel with longer delay
+        await sendWithDelay(`JOIN #${this.channel.toLowerCase()}`, 6000);
 
         console.log("[TwitchAuthenticator] Authentication sequence completed");
       } catch (error) {

@@ -33,7 +33,7 @@ export class TwitchConnection {
       const timeout = setTimeout(() => {
         reject(new Error("Connection timeout"));
         this.ws?.close();
-      }, 30000); // Increased timeout to 30 seconds
+      }, 45000); // Increased timeout to 45 seconds for slower connections
 
       this.ws.onopen = () => {
         clearTimeout(timeout);
@@ -58,8 +58,8 @@ export class TwitchConnection {
     this.pingInterval = setInterval(() => {
       if (ws.readyState === WebSocket.OPEN) {
         const now = Date.now();
-        // Send PING every 4 minutes if no other messages received
-        if (now - this.lastMessageReceived > 240000) {
+        // Send PING every 3 minutes if no other messages received
+        if (now - this.lastMessageReceived > 180000) {
           console.log("[TwitchConnection] Sending PING to maintain connection");
           ws.send("PING :tmi.twitch.tv");
           this.lastPingSent = now;
