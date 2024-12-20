@@ -52,11 +52,14 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
       Object.entries(emotes).forEach(([emoteId, positions]) => {
         positions.forEach(position => {
           const [start, end] = position.split('-').map(Number);
+          const emoteText = text.slice(start, end + 1);
+          console.log("[ChatMessage] Processing emote:", { emoteId, emoteText, start, end });
+          
           allPositions.push({
             start,
             end,
             emoteId,
-            emoteText: text.slice(start, end + 1),
+            emoteText,
             isChannelEmote: emoteId.startsWith('channel-')
           });
         });
@@ -71,7 +74,7 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
       const result: React.ReactNode[] = [];
       let lastIndex = 0;
 
-      allPositions.forEach((pos, index) => {
+      allPositions.forEach((pos) => {
         // Add text before the emote
         if (pos.start > lastIndex) {
           result.push(text.slice(lastIndex, pos.start));
@@ -79,8 +82,9 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
 
         // Add the emote
         if (pos.isChannelEmote) {
-          // For channel emotes, use the stored URL directly
+          // For channel emotes, we need to handle the ID differently
           const emoteId = pos.emoteId.replace('channel-', '');
+          console.log("[ChatMessage] Rendering channel emote:", emoteId);
           result.push(
             <img
               key={`${emoteId}-${pos.start}`}
@@ -88,10 +92,16 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
               alt={pos.emoteText}
               className="inline-block h-6 align-middle mx-0.5"
               loading="lazy"
+              onError={(e) => {
+                console.error("[ChatMessage] Error loading emote:", emoteId);
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+              }}
             />
           );
         } else {
           // For global emotes
+          console.log("[ChatMessage] Rendering global emote:", pos.emoteId);
           result.push(
             <img
               key={`${pos.emoteId}-${pos.start}`}
@@ -99,6 +109,11 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
               alt={pos.emoteText}
               className="inline-block h-6 align-middle mx-0.5"
               loading="lazy"
+              onError={(e) => {
+                console.error("[ChatMessage] Error loading emote:", pos.emoteId);
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+              }}
             />
           );
         }
@@ -126,6 +141,11 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
             alt="Custom Emote"
             className="inline-block h-6 align-middle mx-0.5"
             loading="lazy"
+            onError={(e) => {
+              console.error("[ChatMessage] Error loading custom emote:", word);
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+            }}
           />
         );
       }
