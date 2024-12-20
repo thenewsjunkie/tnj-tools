@@ -71,25 +71,37 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
       const result: React.ReactNode[] = [];
       let lastIndex = 0;
 
-      allPositions.forEach((pos) => {
+      allPositions.forEach((pos, index) => {
         // Add text before the emote
         if (pos.start > lastIndex) {
           result.push(text.slice(lastIndex, pos.start));
         }
 
         // Add the emote
-        const emoteUrl = pos.isChannelEmote 
-          ? `${pos.emoteId.replace('channel-', '')}/default/dark/1.0`
-          : `${pos.emoteId}/default/dark/1.0`;
-
-        result.push(
-          <img
-            key={`${pos.emoteId}-${pos.start}`}
-            src={`https://static-cdn.jtvnw.net/emoticons/v2/${emoteUrl}`}
-            alt={pos.emoteText}
-            className="inline-block h-6 align-middle mx-0.5"
-          />
-        );
+        if (pos.isChannelEmote) {
+          // For channel emotes, use the stored URL directly
+          const emoteId = pos.emoteId.replace('channel-', '');
+          result.push(
+            <img
+              key={`${emoteId}-${pos.start}`}
+              src={`https://static-cdn.jtvnw.net/emoticons/v2/${emoteId}/default/dark/1.0`}
+              alt={pos.emoteText}
+              className="inline-block h-6 align-middle mx-0.5"
+              loading="lazy"
+            />
+          );
+        } else {
+          // For global emotes
+          result.push(
+            <img
+              key={`${pos.emoteId}-${pos.start}`}
+              src={`https://static-cdn.jtvnw.net/emoticons/v2/${pos.emoteId}/default/dark/1.0`}
+              alt={pos.emoteText}
+              className="inline-block h-6 align-middle mx-0.5"
+              loading="lazy"
+            />
+          );
+        }
 
         lastIndex = pos.end + 1;
       });
@@ -113,6 +125,7 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
             src={word}
             alt="Custom Emote"
             className="inline-block h-6 align-middle mx-0.5"
+            loading="lazy"
           />
         );
       }
