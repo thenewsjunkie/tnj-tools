@@ -9,7 +9,7 @@ import Alerts from "@/components/Alerts";
 import ChatModule from "@/components/chat/ChatModule";
 import { Edit2, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { ThemeToggle } from "@/components/theme/ThemeProvider";
 import { useTheme } from "@/components/theme/ThemeProvider";
 
 const Admin = () => {
@@ -55,7 +55,11 @@ const Admin = () => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
           <ChatModule />
-          <Reviews showViewAllLink={true} simpleView={true} />
+          <Reviews 
+            showViewAllLink={true} 
+            simpleView={true} 
+            limit={5} 
+          />
         </div>
         <div className="grid grid-cols-1 gap-4 sm:gap-6 md:gap-8">
           <ShowNotes />

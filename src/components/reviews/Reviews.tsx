@@ -11,21 +11,28 @@ interface ReviewsProps {
   showViewAllLink?: boolean;
   reviews?: Review[];
   simpleView?: boolean;
+  limit?: number;
 }
 
-const Reviews = ({ showViewAllLink = false, reviews: propReviews, simpleView = false }: ReviewsProps) => {
+const Reviews = ({ showViewAllLink = false, reviews: propReviews, simpleView = false, limit }: ReviewsProps) => {
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [totalReviews, setTotalReviews] = useState(0);
 
   const { data: fetchedReviews = [], refetch } = useQuery({
-    queryKey: ['reviews'],
+    queryKey: ['reviews', limit],
     queryFn: async () => {
       try {
-        const { data, error } = await supabase
+        let query = supabase
           .from('reviews')
           .select('*')
           .order('created_at', { ascending: false });
+        
+        if (limit) {
+          query = query.limit(limit);
+        }
+        
+        const { data, error } = await query;
         
         if (error) throw error;
         return data as Review[];
