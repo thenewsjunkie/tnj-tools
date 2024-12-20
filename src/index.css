@@ -99,9 +99,9 @@
     @apply bg-black text-black;
   }
 
-  /* Dark mode background for Alert Queue History page */
+  /* Dark mode background and text for Alert Queue History page */
   .dark .queue-history-page {
-    @apply bg-black;
+    @apply bg-black text-white;
   }
 
   /* Default link styles */
