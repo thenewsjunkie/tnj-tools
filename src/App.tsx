@@ -18,6 +18,7 @@ import Settings from "./pages/Settings";
 import Instructions from "./pages/Instructions";
 import Chat from "./pages/Chat";
 import ChatSettings from "./pages/ChatSettings";
+import QueueHistory from "./pages/QueueHistory";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -162,6 +163,7 @@ const App = () => (
             <Route path="/admin/settings" element={<AdminRoute><Settings /></AdminRoute>} />
             <Route path="/admin/instructions" element={<AdminRoute><Instructions /></AdminRoute>} />
             <Route path="/admin/settings/chat" element={<AdminRoute><ChatSettings /></AdminRoute>} />
+            <Route path="/admin/queue-history" element={<AdminRoute><QueueHistory /></AdminRoute>} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
