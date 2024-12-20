@@ -54,7 +54,7 @@ export const ChatInput = () => {
     try {
       console.log("[ChatInput] Processing message:", newMessage);
       
-      const emoteMetadata = createEmoteMetadata(newMessage.trim());
+      const emoteMetadata = await createEmoteMetadata(newMessage.trim());
 
       const { error } = await supabase
         .from("chat_messages")

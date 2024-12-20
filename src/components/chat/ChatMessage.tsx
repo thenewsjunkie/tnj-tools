@@ -45,6 +45,7 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
         end: number;
         emoteId: string;
         emoteText: string;
+        isChannelEmote?: boolean;
       }> = [];
 
       // Collect all positions for all emotes
@@ -55,7 +56,8 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
             start,
             end,
             emoteId,
-            emoteText: text.slice(start, end + 1)
+            emoteText: text.slice(start, end + 1),
+            isChannelEmote: emoteId.startsWith('channel-')
           });
         });
       });
@@ -76,10 +78,14 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
         }
 
         // Add the emote
+        const emoteUrl = pos.isChannelEmote 
+          ? `${pos.emoteId.replace('channel-', '')}/default/dark/1.0`
+          : `${pos.emoteId}/default/dark/1.0`;
+
         result.push(
           <img
             key={`${pos.emoteId}-${pos.start}`}
-            src={`https://static-cdn.jtvnw.net/emoticons/v2/${pos.emoteId}/default/dark/1.0`}
+            src={`https://static-cdn.jtvnw.net/emoticons/v2/${emoteUrl}`}
             alt={pos.emoteText}
             className="inline-block h-6 align-middle mx-0.5"
           />
