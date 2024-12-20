@@ -14,6 +14,7 @@ export class TwitchBot {
   private isConnected: boolean = false;
   private accessToken: string | null = null;
   private lastMessageReceived: number = 0;
+  private reconnectTimeout: number | null = null;
 
   constructor(config: BotConfig) {
     this.channel = config.channel.toLowerCase();
@@ -26,24 +27,38 @@ export class TwitchBot {
     try {
       console.log("[TwitchBot] Starting connection attempt...");
       
+      // Clear any existing reconnect timeout
+      if (this.reconnectTimeout) {
+        clearTimeout(this.reconnectTimeout);
+        this.reconnectTimeout = null;
+      }
+      
       this.accessToken = await getOAuthToken(this.clientId, this.clientSecret);
       console.log("[TwitchBot] OAuth token obtained successfully");
       
       await fetchAndStoreChannelEmotes(this.channel, this.accessToken, this.clientId);
       
+      if (this.ws) {
+        console.log("[TwitchBot] Closing existing WebSocket connection");
+        this.ws.close();
+      }
+
       this.ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443/");
       this.setupWebSocketHandlers();
       
       return new Promise((resolve, reject) => {
         const timeout = setTimeout(() => {
-          reject(new Error("Connection timeout"));
+          if (this.ws?.readyState !== WebSocket.OPEN) {
+            console.error("[TwitchBot] Connection timeout");
+            this.ws?.close();
+            reject(new Error("Connection timeout"));
+          }
         }, 10000);
 
         this.ws!.onopen = () => {
           clearTimeout(timeout);
           console.log("[TwitchBot] WebSocket connection established");
           this.isConnected = true;
-          // Use the channel name as the bot username since we have its OAuth token
           authenticate(this.ws!, this.accessToken!, this.channel, this.channel);
           this.reconnectAttempts = 0;
           resolve(true);
@@ -52,14 +67,26 @@ export class TwitchBot {
         this.ws!.onerror = (error) => {
           clearTimeout(timeout);
           console.error("[TwitchBot] WebSocket error:", error);
-          this.isConnected = false;
+          this.handleConnectionError();
           reject(error);
         };
       });
     } catch (error) {
       console.error("[TwitchBot] Error in connect method:", error);
-      this.isConnected = false;
+      this.handleConnectionError();
       throw error;
+    }
+  }
+
+  private handleConnectionError() {
+    this.isConnected = false;
+    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+      const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
+      console.log(`[TwitchBot] Attempting to reconnect in ${delay/1000} seconds (attempt ${this.reconnectAttempts + 1}/${this.maxReconnectAttempts})`);
+      this.reconnectTimeout = setTimeout(() => this.connect(), delay);
+      this.reconnectAttempts++;
+    } else {
+      console.error("[TwitchBot] Max reconnection attempts reached");
     }
   }
 
@@ -112,10 +139,10 @@ export class TwitchBot {
       }
     };
 
-    this.ws.onclose = () => {
-      console.log("[TwitchBot] WebSocket connection closed");
+    this.ws.onclose = (event) => {
+      console.log("[TwitchBot] WebSocket connection closed", event);
       this.isConnected = false;
-      this.handleReconnect();
+      this.handleConnectionError();
     };
   }
 
@@ -126,7 +153,6 @@ export class TwitchBot {
     }
 
     try {
-      // Send message as the channel account
       this.ws.send(`PRIVMSG #${this.channel} :${message}`);
       console.log("[TwitchBot] Message sent to Twitch:", message);
     } catch (error) {
@@ -135,18 +161,12 @@ export class TwitchBot {
     }
   }
 
-  private handleReconnect() {
-    if (this.reconnectAttempts < this.maxReconnectAttempts) {
-      this.reconnectAttempts++;
-      console.log(`[TwitchBot] Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
-      setTimeout(() => this.connect(), 5000 * this.reconnectAttempts);
-    } else {
-      console.error("[TwitchBot] Max reconnection attempts reached");
-    }
-  }
-
   async disconnect() {
     console.log("[TwitchBot] Disconnecting...");
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
     if (this.ws) {
       this.ws.close();
       this.ws = null;
@@ -155,8 +175,6 @@ export class TwitchBot {
   }
 
   getStatus(): string {
-    // Consider the bot connected if we've received a message in the last minute
-    // or if the connection is established but we haven't received any messages yet
     const isActive = this.isConnected && 
       (Date.now() - this.lastMessageReceived < 60000 || this.lastMessageReceived === 0);
     
