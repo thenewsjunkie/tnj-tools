@@ -20,29 +20,6 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 0 86% 97%;
-    --primary-foreground: 355.7 100% 97.3%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 0 86% 97%;
-    --radius: 0.5rem;
-  }
-
-  .dark {
     --background: 20 14.3% 4.1%;
     --foreground: 0 0% 95%;
     --card: 24 9.8% 10%;
@@ -62,24 +39,23 @@
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 0 86% 97%;
+    --radius: 0.5rem;
   }
 
-  /* Dark mode select styles */
-  .dark [data-radix-select-trigger] {
+  [data-radix-select-trigger] {
     @apply bg-black/50 text-white border-white/10;
   }
 
-  .dark [data-radix-select-content] {
+  [data-radix-select-content] {
     @apply bg-black text-white border-white/10;
   }
 
-  .dark [data-radix-select-item] {
+  [data-radix-select-item] {
     @apply text-white focus:bg-white/10 data-[highlighted]:bg-white/10;
   }
 
-  /* Default link styles */
   a {
-    @apply text-neon-red hover:text-neon-red transition-colors;
+    @apply text-neon-red hover:text-tnj-light transition-colors;
   }
 }
 
@@ -88,56 +64,14 @@
   font-display: swap;
 }
 
-/* Override note borders */
-.dark .note-card {
+.note-card {
   @apply bg-black/50 border border-white/5;
 }
 
-.note-card {
-  @apply border-0;
-}
-
-/* Override theme toggle colors */
-.dark .theme-toggle:hover {
+.tnj-ai-title {
   @apply text-tnj-light;
 }
 
-/* TNJ AI text color in dark mode */
-.dark .tnj-ai-title {
-  @apply text-tnj-light;
-}
-
-/* Alert icons in light mode */
-.light .alert-icon {
-  @apply text-tnj-dark;
-}
-
-/* Make all links match TNJ TOOLS color */
-.dark a {
-  @apply text-neon-red hover:text-tnj-light transition-colors;
-}
-
-/* Light mode specific link styles for show notes */
-.light .note-card a {
-  @apply text-neon-red hover:text-neon-red visited:text-neon-red transition-colors;
-}
-
-/* Default link styles */
-a {
-  @apply text-neon-red hover:text-neon-red transition-colors;
-}
-
-/* Light mode card styles */
-.light .Card {
-  @apply border border-gray-200;
-}
-
-/* Dark mode textarea styles */
-.dark textarea {
-  @apply text-white bg-black/50;
-}
-
-/* Preload font for OBS */
 .alert-message-font {
   font-family: 'Radiate Sans Extra Bold', system-ui, -apple-system, sans-serif !important;
   font-weight: 800 !important;

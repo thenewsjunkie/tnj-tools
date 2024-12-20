@@ -139,7 +139,7 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="dark">
+    <ThemeProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />

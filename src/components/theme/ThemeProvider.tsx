@@ -1,58 +1,35 @@
 "use client"
 
 import * as React from "react"
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useEffect } from "react"
 
-type Theme = "dark" | "light"
+type Theme = "dark"
 
 type ThemeProviderProps = {
   children: React.ReactNode
-  defaultTheme?: Theme
 }
 
 type ThemeProviderState = {
   theme: Theme
-  setTheme: (theme: Theme) => void
 }
 
 const initialState: ThemeProviderState = {
   theme: "dark",
-  setTheme: () => null,
 }
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState)
 
 export function ThemeProvider({
   children,
-  defaultTheme = "dark", // Changed default here
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    // Check localStorage first
-    if (typeof window !== 'undefined') {
-      const stored = window.localStorage.getItem("theme") as Theme
-      if (stored) return stored
-    }
-    return defaultTheme
-  })
-
   useEffect(() => {
     const root = window.document.documentElement
-    
-    // Remove both classes first
-    root.classList.remove("light", "dark")
-    
-    // Add the current theme class
-    root.classList.add(theme)
-    
-    // Store in localStorage
-    localStorage.setItem("theme", theme)
-  }, [theme])
+    root.classList.remove("light")
+    root.classList.add("dark")
+  }, [])
 
   const value = {
-    theme,
-    setTheme: (theme: Theme) => {
-      setTheme(theme)
-    },
+    theme: "dark",
   }
 
   return (
