@@ -36,9 +36,33 @@ const CustomEmoteManager = ({ onSuccess }: CustomEmoteManagerProps) => {
       return;
     }
 
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Error",
+        description: "Please select a valid image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "Error",
+        description: "File size must be less than 2MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsUploading(true);
     try {
-      console.log("[CustomEmoteManager] Starting upload for:", emoteName);
+      console.log("[CustomEmoteManager] Starting upload for:", {
+        emoteName,
+        fileType: file.type,
+        fileSize: file.size
+      });
       
       const fileExt = file.name.split('.').pop();
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
@@ -55,11 +79,13 @@ const CustomEmoteManager = ({ onSuccess }: CustomEmoteManagerProps) => {
         throw uploadError;
       }
 
+      console.log("[CustomEmoteManager] File uploaded successfully:", data);
+
       const { data: publicUrl } = supabase.storage
         .from('custom_emotes')
         .getPublicUrl(fileName);
 
-      console.log("[CustomEmoteManager] File uploaded, public URL:", publicUrl);
+      console.log("[CustomEmoteManager] Generated public URL:", publicUrl);
 
       const { error: dbError } = await supabase
         .from('custom_emotes')
@@ -70,6 +96,10 @@ const CustomEmoteManager = ({ onSuccess }: CustomEmoteManagerProps) => {
 
       if (dbError) {
         console.error("[CustomEmoteManager] Database error:", dbError);
+        // If DB insert fails, try to clean up the uploaded file
+        await supabase.storage
+          .from('custom_emotes')
+          .remove([fileName]);
         throw dbError;
       }
 
@@ -85,7 +115,7 @@ const CustomEmoteManager = ({ onSuccess }: CustomEmoteManagerProps) => {
       console.error("[CustomEmoteManager] Error:", error);
       toast({
         title: "Error",
-        description: "Failed to add emote. Please try again.",
+        description: error.message || "Failed to add emote. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -101,6 +131,7 @@ const CustomEmoteManager = ({ onSuccess }: CustomEmoteManagerProps) => {
           value={emoteName}
           onChange={(e) => setEmoteName(e.target.value)}
           className="text-foreground bg-background"
+          maxLength={50}
         />
       </div>
       <div className="space-y-2">
@@ -111,6 +142,7 @@ const CustomEmoteManager = ({ onSuccess }: CustomEmoteManagerProps) => {
           disabled={isUploading}
           className="text-foreground bg-background"
         />
+        <p className="text-xs text-gray-500">Max file size: 2MB</p>
       </div>
       <Button 
         type="submit" 
