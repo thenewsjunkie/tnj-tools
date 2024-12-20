@@ -15,17 +15,15 @@ serve(async (req) => {
   }
 
   try {
-    const { action } = await req.json();
+    const { action, message } = await req.json();
     console.log(`[TwitchBot] Received ${action} request`);
 
-    // Get config from environment variables
     const config = {
       channel: Deno.env.get("TWITCH_CHANNEL_NAME"),
       clientId: Deno.env.get("TWITCH_CLIENT_ID"),
       clientSecret: Deno.env.get("TWITCH_CLIENT_SECRET"),
     };
 
-    // Validate config
     if (!config.channel || !config.clientId || !config.clientSecret) {
       console.error("[TwitchBot] Missing required environment variables");
       throw new Error("Missing Twitch configuration. Please check environment variables.");
@@ -64,6 +62,22 @@ serve(async (req) => {
       }
       return new Response(
         JSON.stringify({ status: "Twitch bot stopped" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (action === "send") {
+      if (!message) {
+        throw new Error("Message is required for send action");
+      }
+
+      if (!botInstance || botInstance.getStatus() !== "Connected") {
+        throw new Error("Bot is not connected");
+      }
+
+      await botInstance.sendMessage(message);
+      return new Response(
+        JSON.stringify({ status: "Message sent" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

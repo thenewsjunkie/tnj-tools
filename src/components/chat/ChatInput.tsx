@@ -56,7 +56,8 @@ export const ChatInput = () => {
       
       const emoteMetadata = await createEmoteMetadata(newMessage.trim());
 
-      const { error } = await supabase
+      // Insert message into database
+      const { error: dbError } = await supabase
         .from("chat_messages")
         .insert({
           source: "megachat",
@@ -68,14 +69,31 @@ export const ChatInput = () => {
         .select()
         .single();
 
-      if (error) {
-        console.error("[ChatInput] Error inserting message:", error);
+      if (dbError) {
+        console.error("[ChatInput] Error inserting message:", dbError);
         toast({
           title: "Error sending message",
-          description: error.message,
+          description: dbError.message,
           variant: "destructive",
         });
         return;
+      }
+
+      // Send message to Twitch
+      const { error: twitchError } = await supabase.functions.invoke('twitch-bot', {
+        body: { 
+          action: "send",
+          message: newMessage.trim()
+        }
+      });
+
+      if (twitchError) {
+        console.error("[ChatInput] Error sending message to Twitch:", twitchError);
+        toast({
+          title: "Warning",
+          description: "Message sent to chat but failed to send to Twitch",
+          variant: "warning",
+        });
       }
 
       setNewMessage("");
