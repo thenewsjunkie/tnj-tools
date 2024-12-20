@@ -18,22 +18,32 @@ const EmojiPicker = ({ onEmojiSelect }: EmojiPickerProps) => {
   const [customEmotes, setCustomEmotes] = useState<Array<{ name: string; symbol: string }>>([]);
   const [showAddEmote, setShowAddEmote] = useState(false);
 
-  useEffect(() => {
-    fetchCustomEmotes();
-  }, []);
-
   const fetchCustomEmotes = async () => {
+    console.log("[EmojiPicker] Fetching custom emotes");
     const { data, error } = await supabase
       .from('custom_emotes')
       .select('*')
       .order('created_at', { ascending: false });
 
     if (!error && data) {
+      console.log("[EmojiPicker] Fetched custom emotes:", data);
       setCustomEmotes(data.map(emote => ({
         name: emote.name,
         symbol: emote.image_url
       })));
+    } else {
+      console.error("[EmojiPicker] Error fetching emotes:", error);
     }
+  };
+
+  useEffect(() => {
+    fetchCustomEmotes();
+  }, []);
+
+  const handleEmoteAdded = () => {
+    console.log("[EmojiPicker] Emote added, refreshing list");
+    fetchCustomEmotes();
+    setShowAddEmote(false);
   };
 
   const filteredEmojis = emojis.filter((emoji) =>
@@ -83,7 +93,7 @@ const EmojiPicker = ({ onEmojiSelect }: EmojiPickerProps) => {
                 <DialogHeader>
                   <DialogTitle>Add Custom Emote</DialogTitle>
                 </DialogHeader>
-                <CustomEmoteManager />
+                <CustomEmoteManager onSuccess={handleEmoteAdded} />
               </DialogContent>
             </Dialog>
           </div>

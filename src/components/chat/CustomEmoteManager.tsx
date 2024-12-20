@@ -4,7 +4,11 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-const CustomEmoteManager = () => {
+interface CustomEmoteManagerProps {
+  onSuccess?: () => void;
+}
+
+const CustomEmoteManager = ({ onSuccess }: CustomEmoteManagerProps) => {
   const [emoteName, setEmoteName] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
@@ -40,7 +44,7 @@ const CustomEmoteManager = () => {
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
       
       const { error: uploadError, data } = await supabase.storage
-        .from('custom_emotes')  // Using the correct bucket
+        .from('custom_emotes')
         .upload(fileName, file, {
           contentType: file.type,
           upsert: false
@@ -76,6 +80,7 @@ const CustomEmoteManager = () => {
 
       setEmoteName("");
       if (fileInput) fileInput.value = "";
+      onSuccess?.();
     } catch (error) {
       console.error("[CustomEmoteManager] Error:", error);
       toast({
