@@ -34,18 +34,28 @@ const CustomEmoteManager = () => {
 
     setIsUploading(true);
     try {
+      console.log("[CustomEmoteManager] Starting upload for:", emoteName);
+      
       const fileExt = file.name.split('.').pop();
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
       
       const { error: uploadError, data } = await supabase.storage
-        .from('custom_emotes')
-        .upload(fileName, file);
+        .from('custom_emotes')  // Using the correct bucket
+        .upload(fileName, file, {
+          contentType: file.type,
+          upsert: false
+        });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("[CustomEmoteManager] Upload error:", uploadError);
+        throw uploadError;
+      }
 
       const { data: publicUrl } = supabase.storage
         .from('custom_emotes')
         .getPublicUrl(fileName);
+
+      console.log("[CustomEmoteManager] File uploaded, public URL:", publicUrl);
 
       const { error: dbError } = await supabase
         .from('custom_emotes')
@@ -54,22 +64,25 @@ const CustomEmoteManager = () => {
           image_url: publicUrl.publicUrl,
         });
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.error("[CustomEmoteManager] Database error:", dbError);
+        throw dbError;
+      }
 
       toast({
         title: "Success",
-        description: "Emote uploaded successfully",
+        description: "Emote added successfully",
       });
 
       setEmoteName("");
       if (fileInput) fileInput.value = "";
     } catch (error) {
+      console.error("[CustomEmoteManager] Error:", error);
       toast({
         title: "Error",
-        description: "Failed to upload emote",
+        description: "Failed to add emote. Please try again.",
         variant: "destructive",
       });
-      console.error('Upload error:', error);
     } finally {
       setIsUploading(false);
     }
