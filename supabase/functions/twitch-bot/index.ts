@@ -24,8 +24,13 @@ serve(async (req) => {
       clientSecret: Deno.env.get("TWITCH_CLIENT_SECRET"),
     };
 
+    // Validate configuration
     if (!config.channel || !config.clientId || !config.clientSecret) {
-      console.error("[TwitchBot] Missing required environment variables");
+      console.error("[TwitchBot] Missing required environment variables:", {
+        hasChannel: !!config.channel,
+        hasClientId: !!config.clientId,
+        hasClientSecret: !!config.clientSecret
+      });
       throw new Error("Missing Twitch configuration. Please check environment variables.");
     }
 
@@ -45,13 +50,18 @@ serve(async (req) => {
         await botInstance.disconnect();
       }
 
-      botInstance = new TwitchBot(config);
-      await botInstance.connect();
-      
-      return new Response(
-        JSON.stringify({ status: "Twitch bot started" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      try {
+        botInstance = new TwitchBot(config);
+        await botInstance.connect();
+        
+        return new Response(
+          JSON.stringify({ status: "Twitch bot started" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      } catch (error) {
+        console.error("[TwitchBot] Error during bot startup:", error);
+        throw new Error(`Failed to start Twitch bot: ${error.message}`);
+      }
     }
 
     if (action === "stop") {
