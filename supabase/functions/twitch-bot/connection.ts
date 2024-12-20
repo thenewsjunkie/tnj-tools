@@ -33,16 +33,18 @@ export class TwitchConnection {
       const timeout = setTimeout(() => {
         reject(new Error("Connection timeout"));
         this.ws?.close();
-      }, 10000);
+      }, 30000); // Increased timeout to 30 seconds
 
       this.ws.onopen = () => {
         clearTimeout(timeout);
+        console.log("[TwitchConnection] WebSocket connection established");
         this.reconnectAttempts = 0;
         resolve(this.ws!);
       };
 
       this.ws.onerror = (error) => {
         clearTimeout(timeout);
+        console.error("[TwitchConnection] WebSocket error:", error);
         reject(error);
       };
     });
@@ -56,7 +58,8 @@ export class TwitchConnection {
     this.pingInterval = setInterval(() => {
       if (ws.readyState === WebSocket.OPEN) {
         const now = Date.now();
-        if (now - this.lastMessageReceived > 60000 && now - this.lastPingSent > 30000) {
+        // Send PING every 4 minutes if no other messages received
+        if (now - this.lastMessageReceived > 240000) {
           console.log("[TwitchConnection] Sending PING to maintain connection");
           ws.send("PING :tmi.twitch.tv");
           this.lastPingSent = now;
@@ -65,7 +68,7 @@ export class TwitchConnection {
         console.log("[TwitchConnection] WebSocket not open during ping interval");
         this.clearTimers();
       }
-    }, 30000) as unknown as number;
+    }, 60000) as unknown as number; // Check every minute
   }
 
   messageReceived() {
