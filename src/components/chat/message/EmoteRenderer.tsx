@@ -9,20 +9,38 @@ interface EmoteRendererProps {
 
 const EmoteRenderer = ({ emoteId, emoteText, isChannelEmote = false }: EmoteRendererProps) => {
   const [customEmoteUrl, setCustomEmoteUrl] = useState<string | null>(null);
+  const [error, setError] = useState<boolean>(false);
   
   useEffect(() => {
     const fetchCustomEmoteUrl = async () => {
       // Only fetch if it's a custom emote
       if (emoteId.startsWith('custom-')) {
         const emoteName = emoteId.replace('custom-', '');
-        const { data } = await supabase
-          .from('custom_emotes')
-          .select('image_url')
-          .eq('name', emoteName)
-          .single();
+        console.log("[EmoteRenderer] Fetching custom emote:", emoteName);
         
-        if (data) {
-          setCustomEmoteUrl(data.image_url);
+        try {
+          const { data, error: supabaseError } = await supabase
+            .from('custom_emotes')
+            .select('image_url')
+            .eq('name', emoteName)
+            .single();
+          
+          if (supabaseError) {
+            console.error("[EmoteRenderer] Supabase error:", supabaseError);
+            setError(true);
+            return;
+          }
+          
+          if (data) {
+            console.log("[EmoteRenderer] Found custom emote URL:", data.image_url);
+            setCustomEmoteUrl(data.image_url);
+          } else {
+            console.error("[EmoteRenderer] No custom emote found for:", emoteName);
+            setError(true);
+          }
+        } catch (err) {
+          console.error("[EmoteRenderer] Failed to fetch custom emote:", err);
+          setError(true);
         }
       }
     };
@@ -32,7 +50,15 @@ const EmoteRenderer = ({ emoteId, emoteText, isChannelEmote = false }: EmoteRend
   
   // If it's a custom emote, wait for the URL
   if (emoteId.startsWith('custom-')) {
-    if (!customEmoteUrl) return null;
+    if (error) {
+      console.log("[EmoteRenderer] Rendering text fallback due to error:", emoteText);
+      return <span>{emoteText}</span>;
+    }
+    
+    if (!customEmoteUrl) {
+      console.log("[EmoteRenderer] Waiting for custom emote URL...");
+      return null;
+    }
     
     return (
       <img
@@ -41,12 +67,12 @@ const EmoteRenderer = ({ emoteId, emoteText, isChannelEmote = false }: EmoteRend
         className="inline-block h-6 align-middle mx-0.5"
         loading="lazy"
         onError={(e) => {
-          console.error("[EmoteRenderer] Error loading custom emote:", {
+          console.error("[EmoteRenderer] Error loading custom emote image:", {
             emoteId,
+            url: customEmoteUrl,
             error: e
           });
-          const target = e.target as HTMLImageElement;
-          target.style.display = 'none';
+          setError(true);
         }}
       />
     );
