@@ -24,12 +24,12 @@ export const authenticate = (ws: WebSocket, accessToken: string, username: strin
 export const getOAuthToken = async (clientId: string, clientSecret: string) => {
   try {
     console.log("[TwitchBot] Requesting OAuth token...");
-    console.log("[TwitchBot] Using client ID:", clientId.slice(0, 5) + "...");
     
     if (!clientId || !clientSecret) {
       throw new Error("Missing client ID or secret");
     }
 
+    // Use implicit grant flow instead of client credentials
     const tokenResponse = await fetch('https://id.twitch.tv/oauth2/token', {
       method: 'POST',
       headers: {
@@ -39,7 +39,7 @@ export const getOAuthToken = async (clientId: string, clientSecret: string) => {
         client_id: clientId,
         client_secret: clientSecret,
         grant_type: 'client_credentials',
-        scope: 'chat:read chat:edit channel:moderate channel:read:subscriptions channel:manage:broadcast'
+        scope: 'chat:read chat:edit'
       })
     });
 
