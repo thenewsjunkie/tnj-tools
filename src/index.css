@@ -94,6 +94,11 @@
     @apply bg-white/5;
   }
 
+  /* Status badge in dark mode */
+  .dark .queue-history-table [role="status"] {
+    @apply bg-black text-black;
+  }
+
   /* Dark mode background for Alert Queue History page */
   .dark .queue-history-page {
     @apply bg-black;
