@@ -37,45 +37,60 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
     // Handle Twitch emotes if present in metadata
     if (typeof message.metadata === 'object' && message.metadata !== null && 'emotes' in message.metadata) {
       console.log("[ChatMessage] Processing message with emotes");
-      let result: React.ReactNode = text;
       const emotes = message.metadata.emotes as TwitchEmotes;
       
-      // Sort emotes by position to replace from end to start
-      const sortedEmotes = Object.entries(emotes).sort((a, b) => {
-        const posA = parseInt(a[1][0].split('-')[0]);
-        const posB = parseInt(b[1][0].split('-')[0]);
-        return posB - posA;
+      // Get all positions for emotes
+      let allPositions: Array<{
+        start: number;
+        end: number;
+        emoteId: string;
+        emoteText: string;
+      }> = [];
+
+      // Collect all positions for all emotes
+      Object.entries(emotes).forEach(([emoteId, positions]) => {
+        positions.forEach(position => {
+          const [start, end] = position.split('-').map(Number);
+          allPositions.push({
+            start,
+            end,
+            emoteId,
+            emoteText: text.slice(start, end + 1)
+          });
+        });
       });
 
-      console.log("[ChatMessage] Sorted emotes:", sortedEmotes);
+      // Sort positions by start index
+      allPositions.sort((a, b) => a.start - b.start);
 
-      for (const [emoteId, positions] of sortedEmotes) {
-        for (const position of positions) {
-          const [start, end] = position.split('-').map(Number);
-          const emoteText = text.slice(start, end + 1);
-          console.log("[ChatMessage] Replacing emote:", emoteText, "with ID:", emoteId);
-          
-          // Create img element for emote
-          const emoteImg = (
-            <img 
-              key={`${emoteId}-${start}`}
-              src={`https://static-cdn.jtvnw.net/emoticons/v2/${emoteId}/default/dark/1.0`}
-              alt={emoteText}
-              className="inline-block h-6 align-middle mx-0.5"
-            />
-          );
-          
-          // Replace text with emote image
-          const before = result.toString().slice(0, start);
-          const after = result.toString().slice(end + 1);
-          result = (
-            <React.Fragment>
-              {before}
-              {emoteImg}
-              {after}
-            </React.Fragment>
-          );
+      console.log("[ChatMessage] All emote positions:", allPositions);
+
+      // Build the final result
+      const result: React.ReactNode[] = [];
+      let lastIndex = 0;
+
+      allPositions.forEach((pos) => {
+        // Add text before the emote
+        if (pos.start > lastIndex) {
+          result.push(text.slice(lastIndex, pos.start));
         }
+
+        // Add the emote
+        result.push(
+          <img
+            key={`${pos.emoteId}-${pos.start}`}
+            src={`https://static-cdn.jtvnw.net/emoticons/v2/${pos.emoteId}/default/dark/1.0`}
+            alt={pos.emoteText}
+            className="inline-block h-6 align-middle mx-0.5"
+          />
+        );
+
+        lastIndex = pos.end + 1;
+      });
+
+      // Add any remaining text
+      if (lastIndex < text.length) {
+        result.push(text.slice(lastIndex));
       }
 
       return result;
