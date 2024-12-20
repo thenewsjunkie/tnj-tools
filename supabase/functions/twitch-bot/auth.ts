@@ -6,7 +6,7 @@ export const getOAuthToken = async (clientId: string, clientSecret: string) => {
       throw new Error("Missing client ID or secret");
     }
 
-    console.log("[TwitchAuth] Making OAuth token request");
+    console.log("[TwitchAuth] Making OAuth token request with client ID:", clientId.slice(0, 5) + "...");
     
     const tokenResponse = await fetch('https://id.twitch.tv/oauth2/token', {
       method: 'POST',
@@ -17,7 +17,7 @@ export const getOAuthToken = async (clientId: string, clientSecret: string) => {
         client_id: clientId,
         client_secret: clientSecret,
         grant_type: 'client_credentials',
-        scope: 'chat:read chat:edit'
+        scope: 'chat:read chat:edit channel:moderate channel:read:subscriptions'
       })
     });
 

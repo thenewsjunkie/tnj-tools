@@ -3,6 +3,8 @@ export class TwitchConnection {
   private pingInterval: number | null = null;
   private lastPingSent: number = 0;
   private lastMessageReceived: number = 0;
+  private reconnectAttempts: number = 0;
+  private maxReconnectAttempts: number = 5;
 
   constructor() {
     console.log("[TwitchConnection] Initializing connection handler");
@@ -17,8 +19,33 @@ export class TwitchConnection {
       this.clearTimers();
     }
 
-    this.ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443/");
-    return this.ws;
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.error("[TwitchConnection] Max reconnection attempts reached");
+      throw new Error("Max reconnection attempts reached");
+    }
+
+    this.reconnectAttempts++;
+    this.ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
+    
+    return new Promise((resolve, reject) => {
+      if (!this.ws) return reject(new Error("WebSocket not initialized"));
+
+      const timeout = setTimeout(() => {
+        reject(new Error("Connection timeout"));
+        this.ws?.close();
+      }, 10000);
+
+      this.ws.onopen = () => {
+        clearTimeout(timeout);
+        this.reconnectAttempts = 0;
+        resolve(this.ws!);
+      };
+
+      this.ws.onerror = (error) => {
+        clearTimeout(timeout);
+        reject(error);
+      };
+    });
   }
 
   setupPingInterval(ws: WebSocket) {
