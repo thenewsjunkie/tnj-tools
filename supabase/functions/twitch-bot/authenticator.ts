@@ -16,6 +16,7 @@ export class TwitchAuthenticator {
     return new Promise<void>((resolve, reject) => {
       let authenticated = false;
       let joinedChannel = false;
+      let capabilitiesAcknowledged = false;
 
       // Handle incoming messages during authentication
       this.messageHandler = (event: MessageEvent) => {
@@ -35,10 +36,6 @@ export class TwitchAuthenticator {
         if (message.includes(":tmi.twitch.tv 001")) {
           console.log("[TwitchAuthenticator] Successfully authenticated");
           authenticated = true;
-          // Request additional capabilities after authentication
-          ws.send("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership");
-          // Join channel after authentication
-          ws.send(`JOIN #${this.channel.toLowerCase()}`);
         }
 
         // Check for successful channel join
@@ -50,10 +47,11 @@ export class TwitchAuthenticator {
         // Check for capability acknowledgment
         if (message.includes("CAP * ACK")) {
           console.log("[TwitchAuthenticator] Capabilities acknowledged");
+          capabilitiesAcknowledged = true;
         }
 
-        // Resolve when we're both authenticated and joined the channel
-        if (authenticated && joinedChannel) {
+        // Resolve when all conditions are met
+        if (authenticated && joinedChannel && capabilitiesAcknowledged) {
           console.log("[TwitchAuthenticator] Authentication and channel join complete");
           this.cleanup(ws);
           resolve();
@@ -63,11 +61,11 @@ export class TwitchAuthenticator {
       // Add message handler for authentication process
       ws.addEventListener('message', this.messageHandler);
 
-      // Set authentication timeout - reduced to 30 seconds
+      // Set authentication timeout - increased to 60 seconds for slower connections
       this.authenticationTimeout = setTimeout(() => {
         this.cleanup(ws);
         reject(new Error("Authentication timeout - no response from Twitch"));
-      }, 30000) as unknown as number;
+      }, 60000) as unknown as number;
 
       // Execute authentication sequence with delays
       this.executeAuthSequence(ws).catch(reject);
@@ -76,20 +74,30 @@ export class TwitchAuthenticator {
 
   private async executeAuthSequence(ws: WebSocket) {
     try {
+      // Request capabilities first
+      ws.send("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership");
+      console.log("[TwitchAuthenticator] Requested capabilities");
+      
+      // Small delay after capabilities request
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       // Send PASS command with oauth: prefix
       ws.send(`PASS oauth:${this.accessToken}`);
       console.log("[TwitchAuthenticator] Sent PASS command");
       
       // Small delay between commands
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Send NICK command
       ws.send(`NICK ${this.channel.toLowerCase()}`);
       console.log("[TwitchAuthenticator] Sent NICK command");
 
-      // Add client ID to connection
-      ws.send(`PASS ${this.clientId}`);
-      console.log("[TwitchAuthenticator] Sent client ID");
+      // Small delay before joining channel
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Join channel
+      ws.send(`JOIN #${this.channel.toLowerCase()}`);
+      console.log("[TwitchAuthenticator] Sent JOIN command");
 
     } catch (error) {
       console.error("[TwitchAuthenticator] Error in auth sequence:", error);
