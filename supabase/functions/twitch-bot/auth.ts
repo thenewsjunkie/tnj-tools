@@ -14,7 +14,7 @@ export const getOAuthToken = async (clientId: string, clientSecret: string) => {
       client_id: clientId,
       client_secret: clientSecret,
       grant_type: 'client_credentials',
-      scope: 'chat:read chat:edit'
+      scope: 'chat:read chat:edit channel:moderate channel:read:subscriptions'
     })
   });
 

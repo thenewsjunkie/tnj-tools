@@ -42,8 +42,8 @@ export class TwitchBot {
           clearTimeout(timeout);
           console.log("[TwitchBot] WebSocket connection established");
           this.isConnected = true;
-          const botUsername = "justinfan" + Math.floor(Math.random() * 100000);
-          authenticate(this.ws!, this.accessToken!, botUsername, this.channel);
+          // Use the channel name as the bot username since we have its OAuth token
+          authenticate(this.ws!, this.accessToken!, this.channel, this.channel);
           this.reconnectAttempts = 0;
           resolve(true);
         };
@@ -122,6 +122,7 @@ export class TwitchBot {
     }
 
     try {
+      // Send message as the channel account
       this.ws.send(`PRIVMSG #${this.channel} :${message}`);
       console.log("[TwitchBot] Message sent to Twitch:", message);
     } catch (error) {
