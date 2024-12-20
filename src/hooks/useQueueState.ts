@@ -50,11 +50,11 @@ export const useQueueState = () => {
 
     // Only set up subscription if we don't already have one
     if (!channelRef.current) {
-      channelRef.current = supabase.channel('queue-state')
+      channelRef.current = supabase.channel('queue-state-changes')
         .on(
           'postgres_changes',
           { 
-            event: '*',  // Listen to all events for more responsive updates
+            event: '*',
             schema: 'public',
             table: 'system_settings',
             filter: 'key=eq.queue_state'
