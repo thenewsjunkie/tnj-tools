@@ -9,7 +9,7 @@ import Alerts from "@/components/Alerts";
 import ChatModule from "@/components/chat/ChatModule";
 import { Edit2, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme/ThemeProvider";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { useTheme } from "@/components/theme/ThemeProvider";
 
 const Admin = () => {
