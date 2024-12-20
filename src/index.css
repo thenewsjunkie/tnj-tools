@@ -94,6 +94,11 @@
     @apply bg-white/5;
   }
 
+  /* Dark mode background for Alert Queue History page */
+  .dark .queue-history-page {
+    @apply bg-black;
+  }
+
   /* Default link styles */
   a {
     @apply text-neon-red hover:text-neon-red transition-colors;

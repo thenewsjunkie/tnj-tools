@@ -85,32 +85,34 @@ const QueueHistory = () => {
   const totalPages = Math.ceil((data?.total || 0) / ITEMS_PER_PAGE);
 
   return (
-    <div className="container mx-auto py-8">
-      <nav className="mb-8">
-        <Link 
-          to="/admin" 
-          className="text-foreground hover:text-neon-red transition-colors"
-        >
-          ← Admin
-        </Link>
-      </nav>
-      
-      <h1 className="text-2xl font-bold mb-6">Alert Queue History</h1>
-      
-      <div className="rounded-md border">
-        <QueueTable 
-          items={data?.items || []}
-          onStatusUpdate={handleStatusUpdate}
-          onDelete={handleDelete}
-        />
-      </div>
+    <div className="queue-history-page min-h-screen py-8">
+      <div className="container mx-auto">
+        <nav className="mb-8">
+          <Link 
+            to="/admin" 
+            className="text-foreground hover:text-neon-red transition-colors"
+          >
+            ← Admin
+          </Link>
+        </nav>
+        
+        <h1 className="text-2xl font-bold mb-6">Alert Queue History</h1>
+        
+        <div className="rounded-md border">
+          <QueueTable 
+            items={data?.items || []}
+            onStatusUpdate={handleStatusUpdate}
+            onDelete={handleDelete}
+          />
+        </div>
 
-      <div className="mt-4">
-        <QueuePagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-        />
+        <div className="mt-4">
+          <QueuePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        </div>
       </div>
     </div>
   );
