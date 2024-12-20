@@ -8,10 +8,8 @@ interface QueueStateValue {
   isPaused: boolean;
 }
 
-interface PostgresChangesPayload {
-  new: {
-    value: Json;
-  };
+interface SystemSettingsRow {
+  value: Json;
 }
 
 export const useQueueState = () => {
@@ -59,12 +57,14 @@ export const useQueueState = () => {
             table: 'system_settings',
             filter: 'key=eq.queue_state'
           },
-          (payload: RealtimePostgresChangesPayload<{ value: Json }>) => {
+          (payload: RealtimePostgresChangesPayload<SystemSettingsRow>) => {
             console.log('[useQueueState] Received database queue state update:', payload);
-            const value = payload.new.value as unknown as QueueStateValue;
-            if (value && typeof value === 'object' && 'isPaused' in value) {
-              console.log('[useQueueState] Updating pause state to:', value.isPaused);
-              setIsPaused(!!value.isPaused);
+            if (payload.new && 'value' in payload.new) {
+              const value = payload.new.value as unknown as QueueStateValue;
+              if (value && typeof value === 'object' && 'isPaused' in value) {
+                console.log('[useQueueState] Updating pause state to:', value.isPaused);
+                setIsPaused(!!value.isPaused);
+              }
             }
           }
         )
