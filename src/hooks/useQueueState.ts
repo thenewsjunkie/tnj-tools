@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQueueData } from "./useQueueData";
 import { supabase } from "@/integrations/supabase/client";
 import { Json } from "@/integrations/supabase/types";
-import { RealtimeChannel } from "@supabase/supabase-js";
+import { RealtimeChannel, RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
 interface QueueStateValue {
   isPaused: boolean;
@@ -54,12 +54,12 @@ export const useQueueState = () => {
         .on(
           'postgres_changes',
           { 
-            event: '*',
+            event: 'UPDATE',
             schema: 'public',
             table: 'system_settings',
             filter: 'key=eq.queue_state'
           },
-          (payload: PostgresChangesPayload) => {
+          (payload: RealtimePostgresChangesPayload<{ value: Json }>) => {
             console.log('[useQueueState] Received database queue state update:', payload);
             const value = payload.new.value as unknown as QueueStateValue;
             if (value && typeof value === 'object' && 'isPaused' in value) {
