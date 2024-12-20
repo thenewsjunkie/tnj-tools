@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { MessageSquare, Settings } from "lucide-react";
+import { MessageSquare, Settings, AlertOctagon } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -67,6 +66,20 @@ const ChatModule = () => {
               <Link to="/admin/settings/chat">
                 <Settings className="h-4 w-4" />
               </Link>
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <h3 className="font-semibold leading-none tracking-tight">Alerts</h3>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <AlertOctagon className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/admin/queue-history">View Queue</Link>
             </Button>
           </div>
         </div>
