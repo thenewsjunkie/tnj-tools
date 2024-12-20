@@ -6,19 +6,29 @@ export const authenticate = (ws: WebSocket, accessToken: string, username: strin
     throw new Error("No access token provided");
   }
 
-  // Send capabilities request before authentication
-  ws.send("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership");
-  console.log("[TwitchBot] Sent capabilities request");
+  // Add delay between commands to prevent rate limiting
+  const sendWithDelay = (message: string, delay: number) => {
+    setTimeout(() => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(message);
+        console.log("[TwitchBot] Sent:", message);
+      } else {
+        console.error("[TwitchBot] WebSocket not open when trying to send:", message);
+      }
+    }, delay);
+  };
+
+  // Send capabilities request before authentication with delay
+  sendWithDelay("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership", 0);
   
-  // Send authentication with oauth prefix
-  ws.send(`PASS oauth:${accessToken}`);
-  console.log("[TwitchBot] Sent OAuth authentication");
+  // Send authentication with oauth prefix and delay
+  sendWithDelay(`PASS oauth:${accessToken}`, 1000);
   
-  ws.send(`NICK ${username.toLowerCase()}`);
-  console.log("[TwitchBot] Sent NICK command with username:", username.toLowerCase());
+  // Send nickname with delay
+  sendWithDelay(`NICK ${username.toLowerCase()}`, 2000);
   
-  ws.send(`JOIN #${channel.toLowerCase()}`);
-  console.log("[TwitchBot] Sent JOIN command for channel:", channel.toLowerCase());
+  // Send join command with delay
+  sendWithDelay(`JOIN #${channel.toLowerCase()}`, 3000);
 };
 
 export const getOAuthToken = async (clientId: string, clientSecret: string) => {
@@ -38,7 +48,7 @@ export const getOAuthToken = async (clientId: string, clientSecret: string) => {
         client_id: clientId,
         client_secret: clientSecret,
         grant_type: 'client_credentials',
-        scope: 'chat:read chat:edit channel:moderate'
+        scope: 'chat:read chat:edit'
       })
     });
 
