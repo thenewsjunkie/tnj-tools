@@ -83,11 +83,11 @@
   }
 
   .dark .queue-history-table th {
-    @apply bg-black/50 text-white/80;
+    @apply bg-black/70 text-white/90 border-white/10;
   }
 
   .dark .queue-history-table td {
-    @apply text-white/70 border-white/10;
+    @apply text-white/80 border-white/10 bg-black/30;
   }
 
   .dark .queue-history-table tr:hover td {
