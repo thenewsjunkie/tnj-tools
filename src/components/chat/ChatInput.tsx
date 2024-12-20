@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import EmojiPicker from "./EmojiPicker";
 import { ViewerCount } from "./ViewerCount";
-import { emotes } from "./emoji-data/emotes";
+import { createEmoteMetadata } from "@/utils/emoteUtils";
 
 export const ChatInput = () => {
   const [newMessage, setNewMessage] = useState("");
@@ -54,27 +54,7 @@ export const ChatInput = () => {
     try {
       console.log("[ChatInput] Processing message:", newMessage);
       
-      // Create emotes metadata for known Twitch emotes
-      const messageWords = newMessage.trim().split(' ');
-      const emoteMetadata: { [key: string]: string[] } = {};
-      let currentPosition = 0;
-      
-      messageWords.forEach((word) => {
-        console.log("[ChatInput] Checking word for emote:", word);
-        const emote = emotes.find(e => e.symbol === word);
-        if (emote) {
-          console.log("[ChatInput] Found emote:", emote);
-          if (!emoteMetadata[emote.name]) {
-            emoteMetadata[emote.name] = [];
-          }
-          const start = currentPosition;
-          const end = start + word.length - 1;
-          emoteMetadata[emote.name].push(`${start}-${end}`);
-        }
-        currentPosition += word.length + 1; // +1 for the space after the word
-      });
-
-      console.log("[ChatInput] Final emote metadata:", emoteMetadata);
+      const emoteMetadata = createEmoteMetadata(newMessage.trim());
 
       const { error } = await supabase
         .from("chat_messages")
