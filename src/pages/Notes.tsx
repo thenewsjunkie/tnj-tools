@@ -1,5 +1,6 @@
 import ShowNotes from "@/components/ShowNotes";
 import { Link } from "react-router-dom";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 const Notes = () => {
   return (
@@ -11,7 +12,10 @@ const Notes = () => {
         >
           ← Home
         </Link>
-        <h1 className="text-foreground text-xl sm:text-2xl digital">TNJ Notes</h1>
+        <div className="flex items-center gap-4">
+          <ThemeToggle />
+          <h1 className="text-foreground text-xl sm:text-2xl digital">TNJ Notes</h1>
+        </div>
       </nav>
       
       <div className="max-w-3xl mx-auto">

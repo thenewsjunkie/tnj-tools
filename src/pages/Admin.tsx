@@ -9,8 +9,12 @@ import Alerts from "@/components/Alerts";
 import ChatModule from "@/components/chat/ChatModule";
 import { Edit2, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { useTheme } from "@/components/theme/ThemeProvider";
 
 const Admin = () => {
+  const { theme } = useTheme();
+
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8">
       <nav className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
@@ -30,6 +34,7 @@ const Admin = () => {
             <Edit2 className="h-5 w-5" />
             <span className="hidden sm:inline">Edit</span>
           </a>
+          <ThemeToggle />
           <h1 className="text-foreground text-xl sm:text-2xl digital">TNJ Tools</h1>
           <Link to="/settings">
             <Button

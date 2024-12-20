@@ -1,127 +1,122 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Edit2, Trash2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import EditAlertDialog from "./alerts/EditAlertDialog";
-import UsernameDialog from "./alerts/dialogs/UsernameDialog";
+import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import AddAlertDialog from "./alerts/AddAlertDialog";
+import AlertButton from "./alerts/AlertButton";
+import AlertsHeader from "./alerts/AlertsHeader";
+import QueueManager from "./alerts/QueueManager";
+import { useQueueState } from "@/hooks/useQueueState";
+import { useAlerts } from "@/hooks/useAlerts";
+import { useAlertQueue } from "@/hooks/useAlertQueue";
+import { useTheme } from "@/components/theme/ThemeProvider";
+import { supabase } from "@/integrations/supabase/client";
 
-interface AlertButtonProps {
-  alert: {
-    id: string;
-    title: string;
-    media_url: string;
-    media_type: string;
-    message_enabled?: boolean;
-    message_text?: string;
-    font_size?: number;
-  };
-  onAlertDeleted?: () => void;
-}
-
-const AlertButton = ({ alert, onAlertDeleted }: AlertButtonProps) => {
-  const [isNameDialogOpen, setIsNameDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+const Alerts = () => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [totalAlertsSent, setTotalAlertsSent] = useState(0);
   const { toast } = useToast();
+  const { isPaused, togglePause } = useQueueState();
+  const { alerts, refetch } = useAlerts();
+  const { currentAlert, queueCount, processNextAlert } = useAlertQueue();
+  const { theme } = useTheme();
 
-  const handleClick = () => {
-    if (alert.message_enabled) {
-      setIsNameDialogOpen(true);
-    } else {
-      queueAlert();
-    }
-  };
+  useEffect(() => {
+    // Initial fetch of completed alerts count
+    const fetchTotalAlerts = async () => {
+      const { count, error } = await supabase
+        .from('alert_queue')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'completed');
+      
+      if (!error && count !== null) {
+        setTotalAlertsSent(count);
+      }
+    };
 
-  const queueAlert = async (username?: string) => {
-    const { error } = await supabase
-      .from('alert_queue')
-      .insert({
-        alert_id: alert.id,
-        username,
-        status: 'pending'
-      });
+    fetchTotalAlerts();
 
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to queue alert",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Subscribe to changes in alert_queue
+    const channel = supabase.channel('alert-queue-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'alert_queue',
+          filter: 'status=eq.completed'
+        },
+        () => {
+          fetchTotalAlerts();
+        }
+      )
+      .subscribe();
 
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const handleAlertAdded = () => {
+    refetch();
+    setIsDialogOpen(false);
     toast({
       title: "Success",
-      description: "Alert queued successfully",
+      description: "Alert added successfully",
     });
-
-    setIsNameDialogOpen(false);
   };
 
-  const handleDelete = async () => {
-    const { error } = await supabase
-      .from('alerts')
-      .delete()
-      .eq('id', alert.id);
+  const handleAlertDeleted = () => {
+    refetch();
+  };
 
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete alert",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    toast({
-      title: "Success",
-      description: "Alert deleted successfully",
-    });
-    
-    if (onAlertDeleted) {
-      onAlertDeleted();
+  const handleTogglePause = async () => {
+    const newPausedState = await togglePause();
+    if (!newPausedState) {
+      processNextAlert(newPausedState);
     }
   };
+
+  const bgColor = theme === 'light' ? 'bg-white' : 'bg-black/50';
 
   return (
-    <div className="flex gap-2">
-      <Button 
-        variant="outline" 
-        className="flex-1"
-        onClick={handleClick}
-      >
-        {alert.title}
-      </Button>
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={() => setIsEditDialogOpen(true)}
-      >
-        <Edit2 className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={handleDelete}
-        className="text-destructive hover:text-destructive"
-      >
-        <Trash2 className="h-4 w-4" />
-      </Button>
-
-      <UsernameDialog
-        open={isNameDialogOpen}
-        onOpenChange={setIsNameDialogOpen}
-        onSubmit={queueAlert}
+    <div className={`rounded-lg ${bgColor} text-card-foreground shadow-sm border border-gray-200 dark:border-white/10 relative pb-8`}>
+      <AlertsHeader 
+        isPaused={isPaused}
+        togglePause={handleTogglePause}
+        openDialog={() => setIsDialogOpen(true)}
       />
 
-      <EditAlertDialog
-        alert={alert}
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        onAlertUpdated={onAlertDeleted}
+      <QueueManager
+        currentAlert={currentAlert}
+        queueCount={queueCount}
+        isPaused={isPaused}
+        processNextAlert={() => processNextAlert(isPaused)}
+      />
+
+      <div className="p-6 pt-0 grid gap-4 grid-cols-1">
+        {alerts?.map((alert) => (
+          <AlertButton 
+            key={alert.id} 
+            alert={alert} 
+            onAlertDeleted={handleAlertDeleted}
+          />
+        ))}
+      </div>
+
+      <div className="absolute bottom-3 left-4 text-xs text-muted-foreground">
+        Queue Status: {isPaused ? 'Paused' : 'Playing'}
+      </div>
+
+      <div className="absolute bottom-3 right-4 text-xs text-muted-foreground">
+        Total Alerts Sent: {totalAlertsSent}
+      </div>
+
+      <AddAlertDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        onAlertAdded={handleAlertAdded}
       />
     </div>
   );
 };
 
-export default AlertButton;
+export default Alerts;

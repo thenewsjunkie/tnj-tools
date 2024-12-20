@@ -8,9 +8,13 @@ interface LinkItemProps {
   url: string;
   status: string;
   onDelete: () => void;
+  theme: string;
 }
 
-const LinkItem = ({ title, url, status, onDelete }: LinkItemProps) => {
+const LinkItem = ({ title, url, status, onDelete, theme }: LinkItemProps) => {
+  const textColor = theme === 'light' ? 'text-black' : 'text-white';
+  const bgColor = theme === 'light' ? 'bg-gray-50' : 'bg-white/5';
+  
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'up':
@@ -23,14 +27,14 @@ const LinkItem = ({ title, url, status, onDelete }: LinkItemProps) => {
   };
 
   return (
-    <div className="flex items-center justify-between p-2 sm:p-3 bg-white/5 rounded-lg group">
+    <div className={`flex items-center justify-between p-2 sm:p-3 ${bgColor} rounded-lg group`}>
       <div className="flex items-center gap-2 sm:gap-3">
-        <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5 text-white opacity-50 group-hover:opacity-100 transition-opacity" />
+        <ExternalLink className={`w-4 h-4 sm:w-5 sm:h-5 ${textColor} opacity-50 group-hover:opacity-100 transition-opacity`} />
         <a 
           href={url} 
           target="_blank" 
           rel="noopener noreferrer"
-          className="text-white text-sm sm:text-base hover:text-primary transition-colors"
+          className={`${textColor} text-sm sm:text-base hover:text-primary transition-colors`}
         >
           {title}
         </a>
@@ -46,7 +50,7 @@ const LinkItem = ({ title, url, status, onDelete }: LinkItemProps) => {
           variant="ghost"
           size="icon"
           onClick={onDelete}
-          className="text-white opacity-50 hover:text-red-500 hover:bg-red-500/10 hover:opacity-100"
+          className={`${textColor} opacity-50 hover:text-red-500 hover:bg-red-500/10 hover:opacity-100`}
         >
           <Trash2 className="h-4 w-4" />
         </Button>

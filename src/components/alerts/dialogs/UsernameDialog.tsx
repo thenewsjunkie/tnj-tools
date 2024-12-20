@@ -22,7 +22,7 @@ const UsernameDialog = ({ open, onOpenChange, onSubmit }: UsernameDialogProps) =
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Enter Username</DialogTitle>
+          <DialogTitle className="text-foreground">Enter Username</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
@@ -30,8 +30,9 @@ const UsernameDialog = ({ open, onOpenChange, onSubmit }: UsernameDialogProps) =
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
+            className="text-foreground bg-background"
           />
-          <Button type="submit" className="w-full">Submit</Button>
+          <Button type="submit" className="w-full text-black dark:text-black">Submit</Button>
         </form>
       </DialogContent>
     </Dialog>
