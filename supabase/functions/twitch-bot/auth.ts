@@ -1,5 +1,6 @@
 export const authenticate = (ws: WebSocket, accessToken: string, username: string, channel: string) => {
   console.log("[TwitchBot] Starting authentication process for channel:", channel);
+  console.log("[TwitchBot] Using username:", username);
   
   if (!accessToken) {
     console.error("[TwitchBot] Authentication failed: No access token provided");
@@ -11,34 +12,37 @@ export const authenticate = (ws: WebSocket, accessToken: string, username: strin
     setTimeout(() => {
       if (ws.readyState === WebSocket.OPEN) {
         ws.send(message);
-        console.log("[TwitchBot] Sent:", message);
+        console.log("[TwitchBot] Sent command:", message);
       } else {
         console.error("[TwitchBot] WebSocket not open when trying to send:", message);
+        console.log("[TwitchBot] WebSocket state:", ws.readyState);
       }
     }, delay);
   };
 
-  // Send capabilities request before authentication with delay
+  // Send capabilities request before authentication
   sendWithDelay("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership", 0);
   
-  // Send authentication with oauth prefix and delay
+  // Send authentication with oauth prefix
   sendWithDelay(`PASS oauth:${accessToken}`, 1000);
   
-  // Send nickname with delay
+  // Send nickname
   sendWithDelay(`NICK ${username.toLowerCase()}`, 2000);
   
-  // Send join command with delay
+  // Send join command
   sendWithDelay(`JOIN #${channel.toLowerCase()}`, 3000);
 };
 
 export const getOAuthToken = async (clientId: string, clientSecret: string) => {
   try {
-    console.log("[TwitchBot] Requesting OAuth token...");
+    console.log("[TwitchBot] Starting OAuth token request process");
     
     if (!clientId || !clientSecret) {
       throw new Error("Missing client ID or secret");
     }
 
+    console.log("[TwitchBot] Making OAuth token request with scopes: chat:read chat:edit");
+    
     const tokenResponse = await fetch('https://id.twitch.tv/oauth2/token', {
       method: 'POST',
       headers: {
@@ -66,6 +70,7 @@ export const getOAuthToken = async (clientId: string, clientSecret: string) => {
     let tokenData;
     try {
       tokenData = JSON.parse(responseText);
+      console.log("[TwitchBot] Successfully parsed OAuth response");
     } catch (error) {
       console.error("[TwitchBot] Failed to parse OAuth response:", error);
       console.error("[TwitchBot] Raw response was:", responseText);
