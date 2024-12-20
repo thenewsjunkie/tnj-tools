@@ -1,6 +1,6 @@
 export const fetchAndStoreChannelEmotes = async (channelName: string, accessToken: string, clientId: string) => {
   try {
-    console.log("[TwitchBot] Fetching channel emotes...");
+    console.log("[TwitchBot] Fetching channel emotes for:", channelName);
     
     // First, get the channel ID
     const channelResponse = await fetch(
@@ -14,15 +14,24 @@ export const fetchAndStoreChannelEmotes = async (channelName: string, accessToke
     );
 
     if (!channelResponse.ok) {
-      throw new Error(`Failed to fetch channel info: ${channelResponse.status}`);
+      const errorText = await channelResponse.text();
+      console.error("[TwitchBot] Failed to fetch channel info:", {
+        status: channelResponse.status,
+        error: errorText
+      });
+      throw new Error(`Failed to fetch channel info: ${channelResponse.status} ${errorText}`);
     }
 
     const channelData = await channelResponse.json();
-    const channelId = channelData.data[0]?.id;
+    console.log("[TwitchBot] Channel data response:", channelData);
 
-    if (!channelId) {
+    if (!channelData.data || !channelData.data[0]) {
+      console.error("[TwitchBot] Channel not found:", channelName);
       throw new Error('Channel not found');
     }
+
+    const channelId = channelData.data[0].id;
+    console.log("[TwitchBot] Retrieved channel ID:", channelId);
 
     // Fetch channel emotes
     const emotesResponse = await fetch(
@@ -36,11 +45,21 @@ export const fetchAndStoreChannelEmotes = async (channelName: string, accessToke
     );
 
     if (!emotesResponse.ok) {
-      throw new Error(`Failed to fetch emotes: ${emotesResponse.status}`);
+      const errorText = await emotesResponse.text();
+      console.error("[TwitchBot] Failed to fetch emotes:", {
+        status: emotesResponse.status,
+        error: errorText
+      });
+      throw new Error(`Failed to fetch emotes: ${emotesResponse.status} ${errorText}`);
     }
 
     const emotesData = await emotesResponse.json();
     console.log("[TwitchBot] Fetched channel emotes:", emotesData);
+
+    if (!emotesData.data) {
+      console.log("[TwitchBot] No emotes found for channel");
+      return; // Exit gracefully if no emotes found
+    }
 
     // Store emotes in the database
     const { error } = await (await fetch(
@@ -58,9 +77,9 @@ export const fetchAndStoreChannelEmotes = async (channelName: string, accessToke
             id: emote.id,
             name: emote.name,
             urls: {
-              '1.0': emote.images['url_1x'],
-              '2.0': emote.images['url_2x'],
-              '3.0': emote.images['url_3x']
+              '1.0': emote.images.url_1x,
+              '2.0': emote.images.url_2x,
+              '3.0': emote.images.url_3x
             }
           }))
         )
@@ -68,12 +87,14 @@ export const fetchAndStoreChannelEmotes = async (channelName: string, accessToke
     )).json();
 
     if (error) {
+      console.error("[TwitchBot] Error storing emotes:", error);
       throw error;
     }
 
     console.log("[TwitchBot] Successfully stored channel emotes");
   } catch (error) {
-    console.error("[TwitchBot] Error fetching channel emotes:", error);
-    throw error;
+    console.error("[TwitchBot] Error in fetchAndStoreChannelEmotes:", error);
+    // Don't throw the error, just log it - this allows the bot to continue connecting
+    // even if emote fetching fails
   }
 };
