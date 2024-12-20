@@ -10,42 +10,76 @@ export class TwitchAuthenticator {
   authenticate(ws: WebSocket) {
     console.log("[TwitchAuthenticator] Starting authentication sequence");
     
-    // Add delay between commands to prevent rate limiting
-    const sendWithDelay = (message: string, delay: number) => {
-      return new Promise<void>((resolve) => {
-        setTimeout(() => {
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.send(message);
-            console.log("[TwitchAuthenticator] Sent command:", message);
-            resolve();
-          } else {
-            console.error("[TwitchAuthenticator] WebSocket not open when trying to send:", message);
-            resolve();
-          }
-        }, delay);
-      });
-    };
+    return new Promise<void>((resolve, reject) => {
+      let capAcknowledged = false;
+      let authenticationTimeout: number;
 
-    // Execute authentication sequence with proper ordering and delays
-    return (async () => {
-      try {
-        // 1. Send PASS command first - this MUST be first
-        await sendWithDelay(`PASS oauth:${this.accessToken}`, 0);
-        
-        // 2. Send NICK command immediately after PASS
-        await sendWithDelay(`NICK ${this.channel.toLowerCase()}`, 1000);
-        
-        // 3. Request capabilities
-        await sendWithDelay("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership", 2000);
-        
-        // 4. Finally join the channel
-        await sendWithDelay(`JOIN #${this.channel.toLowerCase()}`, 3000);
+      // Handle incoming messages during authentication
+      const messageHandler = (event: MessageEvent) => {
+        const message = event.data;
+        console.log("[TwitchAuthenticator] Received:", message);
 
-        console.log("[TwitchAuthenticator] Authentication sequence completed");
-      } catch (error) {
-        console.error("[TwitchAuthenticator] Error during authentication sequence:", error);
-        throw error;
-      }
-    })();
+        if (message.includes("CAP * ACK")) {
+          console.log("[TwitchAuthenticator] Capabilities acknowledged");
+          capAcknowledged = true;
+          // Now that CAP is acknowledged, we can join the channel
+          ws.send(`JOIN #${this.channel.toLowerCase()}`);
+        }
+
+        if (message.includes(`JOIN #${this.channel.toLowerCase()}`)) {
+          console.log("[TwitchAuthenticator] Successfully joined channel");
+          cleanup();
+          resolve();
+        }
+
+        if (message.includes("Login authentication failed")) {
+          cleanup();
+          reject(new Error("Authentication failed"));
+        }
+      };
+
+      const cleanup = () => {
+        ws.removeEventListener('message', messageHandler);
+        clearTimeout(authenticationTimeout);
+      };
+
+      // Set timeout for entire authentication process
+      authenticationTimeout = setTimeout(() => {
+        cleanup();
+        reject(new Error("Authentication timeout"));
+      }, 30000) as unknown as number;
+
+      // Add message handler for authentication process
+      ws.addEventListener('message', messageHandler);
+
+      // Execute authentication sequence
+      const authenticate = async () => {
+        try {
+          // 1. Send PASS command first - this MUST be first
+          ws.send(`PASS oauth:${this.accessToken}`);
+          console.log("[TwitchAuthenticator] Sent PASS command");
+          
+          // Small delay to ensure commands are processed in order
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
+          // 2. Send NICK command
+          ws.send(`NICK ${this.channel.toLowerCase()}`);
+          console.log("[TwitchAuthenticator] Sent NICK command");
+          
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
+          // 3. Request capabilities and wait for acknowledgment
+          ws.send("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership");
+          console.log("[TwitchAuthenticator] Sent CAP REQ command");
+          
+          // Note: We don't send JOIN here - we wait for CAP acknowledgment first
+        } catch (error) {
+          cleanup();
+          reject(error);
+        }
+      };
+
+      authenticate().catch(reject);
+    });
   }
 }
