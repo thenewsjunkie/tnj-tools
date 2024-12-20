@@ -77,6 +77,23 @@
     @apply text-white focus:bg-white/10 data-[highlighted]:bg-white/10;
   }
 
+  /* Dark mode table styles for Alert Queue History */
+  .dark .queue-history-table {
+    @apply bg-black/50 border-white/10;
+  }
+
+  .dark .queue-history-table th {
+    @apply bg-black/50 text-white/80;
+  }
+
+  .dark .queue-history-table td {
+    @apply text-white/70 border-white/10;
+  }
+
+  .dark .queue-history-table tr:hover td {
+    @apply bg-white/5;
+  }
+
   /* Default link styles */
   a {
     @apply text-neon-red hover:text-neon-red transition-colors;
@@ -95,11 +112,6 @@
 
 .note-card {
   @apply border-0;
-}
-
-/* Override theme toggle colors */
-.dark .theme-toggle:hover {
-  @apply text-tnj-light;
 }
 
 /* TNJ AI text color in dark mode */
