@@ -38,7 +38,7 @@ export const ChatInput = () => {
     };
 
     checkBotStatus();
-    const interval = setInterval(checkBotStatus, 30000); // Check every 30 seconds
+    const interval = setInterval(checkBotStatus, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -78,15 +78,6 @@ export const ChatInput = () => {
   const handleSendMessage = async () => {
     if (!newMessage.trim()) return;
 
-    if (!isBotConnected) {
-      toast({
-        title: "Bot not connected",
-        description: "Please start the chat bot in settings before sending messages",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
       console.log("[ChatInput] Processing message:", newMessage);
       
@@ -115,21 +106,23 @@ export const ChatInput = () => {
         return;
       }
 
-      // Send message to Twitch
-      const { error: twitchError } = await supabase.functions.invoke('twitch-bot', {
-        body: { 
-          action: "send",
-          message: newMessage.trim()
-        }
-      });
-
-      if (twitchError) {
-        console.error("[ChatInput] Error sending message to Twitch:", twitchError);
-        toast({
-          title: "Warning",
-          description: "Message sent to chat but failed to send to Twitch. Please check bot connection in settings.",
-          variant: "destructive",
+      // Only attempt to send to Twitch if the bot is connected
+      if (isBotConnected) {
+        const { error: twitchError } = await supabase.functions.invoke('twitch-bot', {
+          body: { 
+            action: "send",
+            message: newMessage.trim()
+          }
         });
+
+        if (twitchError) {
+          console.error("[ChatInput] Error sending message to Twitch:", twitchError);
+          toast({
+            title: "Warning",
+            description: "Message sent to chat but failed to send to Twitch",
+            variant: "destructive",
+          });
+        }
       }
 
       setNewMessage("");
