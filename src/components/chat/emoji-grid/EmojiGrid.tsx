@@ -25,6 +25,12 @@ const EmojiGrid = ({ items, onSelect }: EmojiGridProps) => {
     return item.symbol;
   };
 
+  const handleSelect = (item: { name: string; symbol: string }) => {
+    // If it's a custom emote, pass the name instead of the URL
+    const isCustomEmote = item.symbol.startsWith('http');
+    onSelect(isCustomEmote ? item.name : item.symbol);
+  };
+
   return (
     <div className="grid grid-cols-8 gap-1 min-h-[300px] overflow-y-auto">
       {items.map((item) => (
@@ -32,7 +38,7 @@ const EmojiGrid = ({ items, onSelect }: EmojiGridProps) => {
           key={item.name}
           variant="ghost"
           className="h-8 w-8 p-0 hover:bg-white/10 flex items-center justify-center"
-          onClick={() => onSelect(item.symbol)}
+          onClick={() => handleSelect(item)}
           title={item.name}
         >
           {renderItem(item)}

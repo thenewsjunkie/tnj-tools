@@ -14,8 +14,14 @@ export const createEmoteMetadata = async (message: string): Promise<EmoteMetadat
   const { data: channelEmotes } = await supabase
     .from('twitch_channel_emotes')
     .select('id, name');
+    
+  // Fetch custom emotes
+  const { data: customEmotes } = await supabase
+    .from('custom_emotes')
+    .select('name');
   
   console.log("[EmoteUtils] Channel emotes:", channelEmotes);
+  console.log("[EmoteUtils] Custom emotes:", customEmotes);
   
   messageWords.forEach((word) => {
     console.log("[EmoteUtils] Checking word for emote:", word);
@@ -37,6 +43,19 @@ export const createEmoteMetadata = async (message: string): Promise<EmoteMetadat
     if (channelEmote) {
       console.log("[EmoteUtils] Found channel emote:", channelEmote);
       const emoteKey = `channel-${channelEmote.id}`;
+      if (!emoteMetadata[emoteKey]) {
+        emoteMetadata[emoteKey] = [];
+      }
+      const start = currentPosition;
+      const end = start + word.length - 1;
+      emoteMetadata[emoteKey].push(`${start}-${end}`);
+    }
+    
+    // Check custom emotes
+    const customEmote = customEmotes?.find(e => e.name === word);
+    if (customEmote) {
+      console.log("[EmoteUtils] Found custom emote:", customEmote);
+      const emoteKey = `custom-${word}`;
       if (!emoteMetadata[emoteKey]) {
         emoteMetadata[emoteKey] = [];
       }

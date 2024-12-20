@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import EmoteRenderer from './EmoteRenderer';
+import { supabase } from "@/integrations/supabase/client";
 
 interface MessageContentProps {
   message: string;
@@ -11,6 +12,26 @@ interface MessageContentProps {
 }
 
 const MessageContent = ({ message, metadata }: MessageContentProps) => {
+  const [customEmotes, setCustomEmotes] = useState<{ [key: string]: string }>({});
+
+  useEffect(() => {
+    const fetchCustomEmotes = async () => {
+      const { data } = await supabase
+        .from('custom_emotes')
+        .select('name, image_url');
+      
+      if (data) {
+        const emoteMap = data.reduce((acc, emote) => ({
+          ...acc,
+          [emote.name]: emote.image_url
+        }), {});
+        setCustomEmotes(emoteMap);
+      }
+    };
+
+    fetchCustomEmotes();
+  }, []);
+
   if (!message) return null;
 
   // Handle messages with Twitch emotes
@@ -81,21 +102,18 @@ const MessageContent = ({ message, metadata }: MessageContentProps) => {
     return <>{result}</>;
   }
 
-  // Handle custom emotes and regular messages with URLs
+  // Handle custom emotes and regular messages
   const words = message.split(' ');
   return (
     <>
       {words.map((word, index) => {
-        // Check if word is a custom emote URL
-        if (word.startsWith('http') && (
-          word.includes('/storage/v1/object/public/custom_emotes/') || 
-          word.includes('/storage/v1/object/sign/custom_emotes/')
-        )) {
+        // Check if word is a custom emote
+        if (customEmotes[word]) {
           return (
             <img 
               key={index}
-              src={word}
-              alt="Custom Emote"
+              src={customEmotes[word]}
+              alt={word}
               className="inline-block h-6 align-middle mx-0.5"
               loading="lazy"
               onError={(e) => {
