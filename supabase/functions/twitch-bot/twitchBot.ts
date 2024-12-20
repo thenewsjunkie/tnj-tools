@@ -13,6 +13,7 @@ export class TwitchBot {
   private maxReconnectAttempts: number = 5;
   private isConnected: boolean = false;
   private accessToken: string | null = null;
+  private lastMessageReceived: number = 0;
 
   constructor(config: BotConfig) {
     this.channel = config.channel.toLowerCase();
@@ -67,6 +68,7 @@ export class TwitchBot {
 
     this.ws.onmessage = async (event) => {
       const message = event.data;
+      this.lastMessageReceived = Date.now();
       console.log("[TwitchBot] Received IRC message:", message);
 
       if (message.includes("PING")) {
@@ -77,11 +79,13 @@ export class TwitchBot {
 
       if (message.includes("Login authentication failed")) {
         console.error("[TwitchBot] Login authentication failed");
+        this.isConnected = false;
         throw new Error("Login authentication failed");
       }
 
       if (message.includes(`JOIN #${this.channel}`)) {
         console.log("[TwitchBot] Successfully joined channel!");
+        this.isConnected = true;
       }
 
       if (message.includes("USERNOTICE")) {
@@ -116,8 +120,8 @@ export class TwitchBot {
   }
 
   async sendMessage(message: string) {
-    if (!this.ws || !this.isConnected) {
-      console.error("[TwitchBot] Cannot send message - not connected");
+    if (!this.ws) {
+      console.error("[TwitchBot] Cannot send message - WebSocket not initialized");
       throw new Error("Bot is not connected");
     }
 
@@ -151,6 +155,11 @@ export class TwitchBot {
   }
 
   getStatus(): string {
-    return this.isConnected ? "Connected" : "Disconnected";
+    // Consider the bot connected if we've received a message in the last minute
+    // or if the connection is established but we haven't received any messages yet
+    const isActive = this.isConnected && 
+      (Date.now() - this.lastMessageReceived < 60000 || this.lastMessageReceived === 0);
+    
+    return isActive ? "Connected" : "Disconnected";
   }
 }
