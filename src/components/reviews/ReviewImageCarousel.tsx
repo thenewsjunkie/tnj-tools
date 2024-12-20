@@ -44,8 +44,8 @@ const ReviewImageCarousel = ({
         </CarouselContent>
         {showControls && images.length > 1 && (
           <>
-            <CarouselPrevious className="left-2 bg-black/50 hover:bg-black/70 dark:bg-white/10 dark:hover:bg-white/20 dark:border-white/10" />
-            <CarouselNext className="right-2 bg-black/50 hover:bg-black/70 dark:bg-white/10 dark:hover:bg-white/20 dark:border-white/10" />
+            <CarouselPrevious className="left-2 bg-black/50 hover:bg-black/70 dark:bg-white/10 dark:hover:bg-white/20 dark:border-white/10 text-white" />
+            <CarouselNext className="right-2 bg-black/50 hover:bg-black/70 dark:bg-white/10 dark:hover:bg-white/20 dark:border-white/10 text-white" />
           </>
         )}
       </Carousel>
