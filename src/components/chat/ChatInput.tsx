@@ -57,8 +57,9 @@ export const ChatInput = () => {
       // Create emotes metadata for known Twitch emotes
       const messageWords = newMessage.trim().split(' ');
       const emoteMetadata: { [key: string]: string[] } = {};
+      let currentPosition = 0;
       
-      messageWords.forEach((word, index) => {
+      messageWords.forEach((word) => {
         console.log("[ChatInput] Checking word for emote:", word);
         const emote = emotes.find(e => e.symbol === word);
         if (emote) {
@@ -66,10 +67,11 @@ export const ChatInput = () => {
           if (!emoteMetadata[emote.name]) {
             emoteMetadata[emote.name] = [];
           }
-          const start = newMessage.indexOf(word, index);
+          const start = currentPosition;
           const end = start + word.length - 1;
           emoteMetadata[emote.name].push(`${start}-${end}`);
         }
+        currentPosition += word.length + 1; // +1 for the space after the word
       });
 
       console.log("[ChatInput] Final emote metadata:", emoteMetadata);
