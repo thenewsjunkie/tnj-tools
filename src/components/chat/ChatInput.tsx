@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MessageSquare, Send, Smile, Settings } from "lucide-react";
+import { Send, Smile, Settings } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -7,40 +7,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import EmojiPicker from "./EmojiPicker";
-import { ViewerCount } from "./ViewerCount";
+import { ChatStats } from "./ChatStats";
+import { useBotStatus } from "@/hooks/useBotStatus";
 import { createEmoteMetadata } from "@/utils/emoteUtils";
 
 export const ChatInput = () => {
   const [newMessage, setNewMessage] = useState("");
   const [totalMessages, setTotalMessages] = useState(0);
-  const [isBotConnected, setIsBotConnected] = useState(false);
+  const isBotConnected = useBotStatus();
   const { toast } = useToast();
-
-  // Check bot status periodically
-  useEffect(() => {
-    const checkBotStatus = async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke('twitch-bot', {
-          body: { action: "status" }
-        });
-
-        if (error) {
-          console.error("[ChatInput] Error checking bot status:", error);
-          setIsBotConnected(false);
-          return;
-        }
-
-        setIsBotConnected(data?.status === "connected");
-      } catch (error) {
-        console.error("[ChatInput] Error checking bot status:", error);
-        setIsBotConnected(false);
-      }
-    };
-
-    checkBotStatus();
-    const interval = setInterval(checkBotStatus, 30000);
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     const fetchTotalMessages = async () => {
@@ -150,20 +125,7 @@ export const ChatInput = () => {
   return (
     <div className="border-t border-white/10 bg-black p-2">
       <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 bg-black/90 backdrop-blur-sm px-2 py-1 rounded-md">
-            <MessageSquare className="h-4 w-4 text-white/90" />
-            <div className="flex items-center gap-2 text-sm font-mono text-white/90">
-              <span>{totalMessages}</span>
-            </div>
-          </div>
-          <ViewerCount />
-          {!isBotConnected && (
-            <div className="text-red-500 text-sm">
-              Bot disconnected
-            </div>
-          )}
-        </div>
+        <ChatStats totalMessages={totalMessages} isBotConnected={isBotConnected} />
         
         <div className="flex gap-2">
           <Input
