@@ -2,16 +2,13 @@ import React from 'react';
 import { Youtube, Twitch, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tables } from "@/integrations/supabase/types";
+import MessageContent from './message/MessageContent';
 
 type ChatMessageType = Tables<"chat_messages">;
 
 interface ChatMessageProps {
   message: ChatMessageType;
   isPinned?: boolean;
-}
-
-interface TwitchEmotes {
-  [key: string]: string[];
 }
 
 const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
@@ -22,154 +19,7 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
     if (message.source === "twitch") {
       return <Twitch className="h-4 w-4 text-purple-500 shrink-0" />;
     }
-    if (message.source === "megachat") {
-      return <MessageSquare className="h-4 w-4 text-blue-500 shrink-0" />;
-    }
     return <MessageSquare className="h-4 w-4 text-blue-500 shrink-0" />;
-  };
-
-  const renderMessage = (text: string) => {
-    console.log("[ChatMessage] Rendering message:", text);
-    console.log("[ChatMessage] Message metadata:", message.metadata);
-
-    if (!text) return "";
-
-    // Handle Twitch emotes if present in metadata
-    if (typeof message.metadata === 'object' && message.metadata !== null && 'emotes' in message.metadata) {
-      console.log("[ChatMessage] Processing message with emotes");
-      const emotes = message.metadata.emotes as TwitchEmotes;
-      
-      // Get all positions for emotes
-      let allPositions: Array<{
-        start: number;
-        end: number;
-        emoteId: string;
-        emoteText: string;
-        isChannelEmote?: boolean;
-      }> = [];
-
-      // Collect all positions for all emotes
-      Object.entries(emotes).forEach(([emoteId, positions]) => {
-        positions.forEach(position => {
-          const [start, end] = position.split('-').map(Number);
-          const emoteText = text.slice(start, end + 1);
-          console.log("[ChatMessage] Processing emote:", { emoteId, emoteText, start, end });
-          
-          allPositions.push({
-            start,
-            end,
-            emoteId,
-            emoteText,
-            isChannelEmote: emoteId.startsWith('channel-')
-          });
-        });
-      });
-
-      // Sort positions by start index
-      allPositions.sort((a, b) => a.start - b.start);
-
-      console.log("[ChatMessage] All emote positions:", allPositions);
-
-      // Build the final result
-      const result: React.ReactNode[] = [];
-      let lastIndex = 0;
-
-      allPositions.forEach((pos) => {
-        // Add text before the emote
-        if (pos.start > lastIndex) {
-          result.push(text.slice(lastIndex, pos.start));
-        }
-
-        // Add the emote
-        if (pos.isChannelEmote) {
-          // For channel emotes, we need to handle the ID differently
-          const emoteId = pos.emoteId.replace('channel-', '');
-          console.log("[ChatMessage] Rendering channel emote:", emoteId);
-          result.push(
-            <img
-              key={`${emoteId}-${pos.start}`}
-              src={`https://static-cdn.jtvnw.net/emoticons/v2/${emoteId}/default/dark/1.0`}
-              alt={pos.emoteText}
-              className="inline-block h-6 align-middle mx-0.5"
-              loading="lazy"
-              onError={(e) => {
-                console.error("[ChatMessage] Error loading emote:", emoteId);
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-              }}
-            />
-          );
-        } else {
-          // For global emotes
-          console.log("[ChatMessage] Rendering global emote:", pos.emoteId);
-          result.push(
-            <img
-              key={`${pos.emoteId}-${pos.start}`}
-              src={`https://static-cdn.jtvnw.net/emoticons/v2/${pos.emoteId}/default/dark/1.0`}
-              alt={pos.emoteText}
-              className="inline-block h-6 align-middle mx-0.5"
-              loading="lazy"
-              onError={(e) => {
-                console.error("[ChatMessage] Error loading emote:", pos.emoteId);
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-              }}
-            />
-          );
-        }
-
-        lastIndex = pos.end + 1;
-      });
-
-      // Add any remaining text
-      if (lastIndex < text.length) {
-        result.push(text.slice(lastIndex));
-      }
-
-      return result;
-    }
-
-    // Handle custom emotes and regular messages with URLs
-    const words = text.split(' ');
-    return words.map((word, index) => {
-      // Check if word is a custom emote URL
-      if (word.startsWith('http') && (word.includes('/storage/v1/object/public/custom_emotes/') || word.includes('/storage/v1/object/sign/custom_emotes/'))) {
-        return (
-          <img 
-            key={index}
-            src={word}
-            alt="Custom Emote"
-            className="inline-block h-6 align-middle mx-0.5"
-            loading="lazy"
-            onError={(e) => {
-              console.error("[ChatMessage] Error loading custom emote:", word);
-              const target = e.target as HTMLImageElement;
-              target.style.display = 'none';
-            }}
-          />
-        );
-      }
-      
-      // Handle URLs
-      if (word.match(/(https?:\/\/[^\s]+)/g)) {
-        return (
-          <React.Fragment key={index}>
-            <a
-              href={word}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-400 hover:underline break-all"
-            >
-              {word}
-            </a>
-            {' '}
-          </React.Fragment>
-        );
-      }
-      
-      // Regular word
-      return <React.Fragment key={index}>{word} </React.Fragment>;
-    });
   };
 
   return (
@@ -194,7 +44,10 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
           </span>
         )}
         <span className="inline text-sm text-white/90 break-words">
-          {renderMessage(message.message)}
+          <MessageContent 
+            message={message.message} 
+            metadata={message.metadata as { emotes?: { [key: string]: string[] } }}
+          />
         </span>
       </div>
     </div>
