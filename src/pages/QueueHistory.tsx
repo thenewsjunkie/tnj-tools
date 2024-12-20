@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
 import { QueueTable } from "@/components/queue/QueueTable";
@@ -85,6 +86,15 @@ const QueueHistory = () => {
 
   return (
     <div className="container mx-auto py-8">
+      <nav className="mb-8">
+        <Link 
+          to="/admin" 
+          className="text-foreground hover:text-neon-red transition-colors"
+        >
+          ← Admin
+        </Link>
+      </nav>
+      
       <h1 className="text-2xl font-bold mb-6">Alert Queue History</h1>
       
       <div className="rounded-md border">
