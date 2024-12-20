@@ -48,7 +48,7 @@ export const useQueueState = () => {
         .on(
           'postgres_changes',
           { 
-            event: 'UPDATE',
+            event: '*',  // Listen to all events for more responsive updates
             schema: 'public',
             table: 'system_settings',
             filter: 'key=eq.queue_state'

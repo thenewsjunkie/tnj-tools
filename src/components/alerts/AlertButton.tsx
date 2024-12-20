@@ -22,6 +22,7 @@ interface AlertButtonProps {
 const AlertButton = ({ alert, onAlertDeleted }: AlertButtonProps) => {
   const [isNameDialogOpen, setIsNameDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isQueuing, setIsQueuing] = useState(false);
   const { toast } = useToast();
 
   const handleClick = () => {
@@ -33,38 +34,50 @@ const AlertButton = ({ alert, onAlertDeleted }: AlertButtonProps) => {
   };
 
   const queueAlert = async (username?: string) => {
-    const { error } = await supabase
-      .from('alert_queue')
-      .insert({
-        alert_id: alert.id,
-        username,
-        status: 'pending'
-      });
+    if (isQueuing) return; // Prevent double-queueing
+    setIsQueuing(true);
 
-    if (error) {
+    try {
+      console.log('[AlertButton] Queueing alert:', alert.title);
+      const { error } = await supabase
+        .from('alert_queue')
+        .insert({
+          alert_id: alert.id,
+          username,
+          status: 'pending'
+        });
+
+      if (error) {
+        console.error('[AlertButton] Error queueing alert:', error);
+        toast({
+          title: "Error",
+          description: "Failed to queue alert",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('[AlertButton] Alert queued successfully');
       toast({
-        title: "Error",
-        description: "Failed to queue alert",
-        variant: "destructive",
+        title: "Success",
+        description: "Alert queued successfully",
       });
-      return;
+
+      setIsNameDialogOpen(false);
+    } finally {
+      setIsQueuing(false);
     }
-
-    toast({
-      title: "Success",
-      description: "Alert queued successfully",
-    });
-
-    setIsNameDialogOpen(false);
   };
 
   const handleDelete = async () => {
+    console.log('[AlertButton] Deleting alert:', alert.title);
     const { error } = await supabase
       .from('alerts')
       .delete()
       .eq('id', alert.id);
 
     if (error) {
+      console.error('[AlertButton] Error deleting alert:', error);
       toast({
         title: "Error",
         description: "Failed to delete alert",
@@ -73,6 +86,7 @@ const AlertButton = ({ alert, onAlertDeleted }: AlertButtonProps) => {
       return;
     }
 
+    console.log('[AlertButton] Alert deleted successfully');
     toast({
       title: "Success",
       description: "Alert deleted successfully",
@@ -89,6 +103,7 @@ const AlertButton = ({ alert, onAlertDeleted }: AlertButtonProps) => {
         variant="outline" 
         className="flex-1"
         onClick={handleClick}
+        disabled={isQueuing}
       >
         {alert.title}
       </Button>
