@@ -17,12 +17,24 @@ export const fetchAndStoreChannelEmotes = async (channelName: string, accessToke
       const errorText = await channelResponse.text();
       console.error("[TwitchBot] Failed to fetch channel info:", {
         status: channelResponse.status,
-        error: errorText
+        error: errorText,
+        headers: Object.fromEntries(channelResponse.headers.entries())
       });
       throw new Error(`Failed to fetch channel info: ${channelResponse.status} ${errorText}`);
     }
 
-    const channelData = await channelResponse.json();
+    const channelResponseText = await channelResponse.text();
+    console.log("[TwitchBot] Raw channel response:", channelResponseText);
+
+    let channelData;
+    try {
+      channelData = JSON.parse(channelResponseText);
+    } catch (error) {
+      console.error("[TwitchBot] Failed to parse channel response:", error);
+      console.error("[TwitchBot] Raw response was:", channelResponseText);
+      throw new Error('Failed to parse channel response');
+    }
+
     console.log("[TwitchBot] Channel data response:", channelData);
 
     if (!channelData.data || !channelData.data[0]) {
@@ -48,12 +60,24 @@ export const fetchAndStoreChannelEmotes = async (channelName: string, accessToke
       const errorText = await emotesResponse.text();
       console.error("[TwitchBot] Failed to fetch emotes:", {
         status: emotesResponse.status,
-        error: errorText
+        error: errorText,
+        headers: Object.fromEntries(emotesResponse.headers.entries())
       });
       throw new Error(`Failed to fetch emotes: ${emotesResponse.status} ${errorText}`);
     }
 
-    const emotesData = await emotesResponse.json();
+    const emotesResponseText = await emotesResponse.text();
+    console.log("[TwitchBot] Raw emotes response:", emotesResponseText);
+
+    let emotesData;
+    try {
+      emotesData = JSON.parse(emotesResponseText);
+    } catch (error) {
+      console.error("[TwitchBot] Failed to parse emotes response:", error);
+      console.error("[TwitchBot] Raw response was:", emotesResponseText);
+      throw new Error('Failed to parse emotes response');
+    }
+
     console.log("[TwitchBot] Fetched channel emotes:", emotesData);
 
     if (!emotesData.data) {
