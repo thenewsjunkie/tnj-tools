@@ -17,7 +17,7 @@ export const getOAuthToken = async (clientId: string, clientSecret: string) => {
         client_id: clientId,
         client_secret: clientSecret,
         grant_type: 'client_credentials',
-        scope: 'chat:read chat:edit'  // Simplified scopes for chat bot
+        scope: 'chat:read chat:edit channel:moderate'
       })
     });
 
@@ -34,10 +34,8 @@ export const getOAuthToken = async (clientId: string, clientSecret: string) => {
       throw new Error('OAuth response missing access token');
     }
 
-    // Add oauth: prefix required for Twitch IRC
-    const formattedToken = `oauth:${tokenData.access_token}`;
     console.log("[TwitchAuth] Successfully obtained OAuth token");
-    return formattedToken;
+    return tokenData.access_token;
   } catch (error) {
     console.error("[TwitchAuth] Error getting OAuth token:", error);
     throw error;

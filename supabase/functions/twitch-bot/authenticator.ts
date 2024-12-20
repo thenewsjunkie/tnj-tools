@@ -11,7 +11,6 @@ export class TwitchAuthenticator {
     console.log("[TwitchAuthenticator] Starting authentication sequence");
     
     return new Promise<void>((resolve, reject) => {
-      let capAcknowledged = false;
       let authenticationTimeout: number;
 
       // Handle incoming messages during authentication
@@ -19,10 +18,9 @@ export class TwitchAuthenticator {
         const message = event.data;
         console.log("[TwitchAuthenticator] Received:", message);
 
-        if (message.includes("CAP * ACK")) {
-          console.log("[TwitchAuthenticator] Capabilities acknowledged");
-          capAcknowledged = true;
-          // Now that CAP is acknowledged, we can join the channel
+        if (message.includes("Welcome, GLHF!")) {
+          console.log("[TwitchAuthenticator] Successfully authenticated");
+          // Now that we're authenticated, we can join the channel
           ws.send(`JOIN #${this.channel.toLowerCase()}`);
         }
 
@@ -55,11 +53,10 @@ export class TwitchAuthenticator {
       // Execute authentication sequence
       const authenticate = async () => {
         try {
-          // 1. Send PASS command first - this MUST be first
-          ws.send(`PASS oauth:${this.accessToken}`);
+          // 1. Send PASS command with the OAuth token
+          ws.send(`PASS ${this.accessToken}`);
           console.log("[TwitchAuthenticator] Sent PASS command");
           
-          // Small delay to ensure commands are processed in order
           await new Promise(resolve => setTimeout(resolve, 1000));
 
           // 2. Send NICK command
@@ -68,11 +65,9 @@ export class TwitchAuthenticator {
           
           await new Promise(resolve => setTimeout(resolve, 1000));
 
-          // 3. Request capabilities and wait for acknowledgment
+          // 3. Request capabilities
           ws.send("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership");
           console.log("[TwitchAuthenticator] Sent CAP REQ command");
-          
-          // Note: We don't send JOIN here - we wait for CAP acknowledgment first
         } catch (error) {
           cleanup();
           reject(error);
