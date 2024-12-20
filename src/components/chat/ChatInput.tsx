@@ -92,7 +92,7 @@ export const ChatInput = () => {
         toast({
           title: "Warning",
           description: "Message sent to chat but failed to send to Twitch",
-          variant: "warning",
+          variant: "default",  // Changed from "warning" to "default"
         });
       }
 
