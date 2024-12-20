@@ -7,11 +7,9 @@ import { AudioControls } from './audio/AudioControls'
 import { ConversationDisplay } from './audio/ConversationDisplay'
 import { useAudioRecording } from '@/hooks/useAudioRecording'
 import { useAudioPlayback } from '@/hooks/useAudioPlayback'
-import { useTheme } from '@/components/theme/ThemeProvider'
 
 const TNJAi = () => {
   const { toast } = useToast()
-  const { theme } = useTheme()
   const [currentConversation, setCurrentConversation] = useState<{
     question_text?: string;
     answer_text?: string;
@@ -56,10 +54,8 @@ const TNJAi = () => {
     togglePlayPause
   } = useAudioPlayback()
 
-  const bgColor = theme === 'light' ? 'bg-white' : 'bg-black/50'
-
   return (
-    <div className={`rounded-lg ${bgColor} text-card-foreground shadow-sm border border-gray-200 dark:border-white/10`}>
+    <div className="rounded-lg bg-black/50 text-card-foreground shadow-sm border border-gray-200 dark:border-white/10">
       <div className="p-4">
         <h2 className="text-xl font-semibold mb-4 tnj-ai-title">TNJ AI</h2>
         <div className="flex flex-col gap-4">
@@ -68,7 +64,7 @@ const TNJAi = () => {
               variant="outline"
               onClick={isRecording ? stopRecording : startRecording}
               disabled={isProcessing}
-              className="dark:bg-background dark:text-white dark:hover:bg-accent light:bg-white light:text-tnj-dark light:hover:bg-accent border-2 border-tnj-dark dark:border-white"
+              className="bg-background text-white hover:bg-accent border-2 border-white/10"
             >
               {isRecording ? <Square className="h-4 w-4 mr-2" /> : <Mic className="h-4 w-4 mr-2" />}
               {isRecording ? 'Stop Recording' : 'Start Recording'}

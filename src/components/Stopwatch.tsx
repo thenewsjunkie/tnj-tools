@@ -1,12 +1,10 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { useTheme } from "@/components/theme/ThemeProvider";
 
 const Stopwatch = () => {
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
-  const { theme } = useTheme();
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout | undefined;
@@ -28,13 +26,10 @@ const Stopwatch = () => {
     setIsRunning(false);
   };
 
-  const bgColor = theme === 'light' ? 'bg-white' : 'bg-black/50';
-  const textColor = theme === 'light' ? 'text-black' : 'text-white';
-
   return (
-    <Card className={`${bgColor} border border-gray-200 dark:border-white/10`}>
+    <Card className="bg-black/50 border border-gray-200 dark:border-white/10">
       <CardHeader>
-        <CardTitle className={`${textColor} text-lg sm:text-xl`}>Stopwatch</CardTitle>
+        <CardTitle className="text-white text-lg sm:text-xl">Stopwatch</CardTitle>
       </CardHeader>
       <CardContent className="px-2 sm:px-6">
         <div className="digital text-neon-red text-[clamp(1.5rem,5vw,2.5rem)] mb-4 animate-led-flicker tracking-wider">
