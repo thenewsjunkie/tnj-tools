@@ -26,20 +26,20 @@ export class TwitchAuthenticator {
       });
     };
 
-    // Execute authentication sequence with proper ordering and longer delays
+    // Execute authentication sequence with proper ordering and delays
     return (async () => {
       try {
-        // 1. First send authentication - this MUST be first according to Twitch docs
+        // 1. Send PASS command first - this MUST be first
         await sendWithDelay(`PASS oauth:${this.accessToken}`, 0);
         
-        // 2. Set nickname immediately after PASS
-        await sendWithDelay(`NICK ${this.channel.toLowerCase()}`, 2000);
-
-        // 3. Request capabilities after authentication
-        await sendWithDelay("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership", 4000);
+        // 2. Send NICK command immediately after PASS
+        await sendWithDelay(`NICK ${this.channel.toLowerCase()}`, 1000);
+        
+        // 3. Request capabilities
+        await sendWithDelay("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership", 2000);
         
         // 4. Finally join the channel
-        await sendWithDelay(`JOIN #${this.channel.toLowerCase()}`, 6000);
+        await sendWithDelay(`JOIN #${this.channel.toLowerCase()}`, 3000);
 
         console.log("[TwitchAuthenticator] Authentication sequence completed");
       } catch (error) {
