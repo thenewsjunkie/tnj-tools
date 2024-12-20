@@ -39,6 +39,9 @@ const QueueManager = ({ currentAlert, queueCount, isPaused, processNextAlert }: 
     return null;
   }
 
+  // Calculate total alerts (pending + current if exists)
+  const totalAlerts = queueCount + (currentAlert ? 1 : 0);
+
   return (
     <div className="px-6 pb-4">
       <Alert>
@@ -59,7 +62,7 @@ const QueueManager = ({ currentAlert, queueCount, isPaused, processNextAlert }: 
           </>
         ) : null}
         <AlertDescription className="mt-2 text-sm text-muted-foreground">
-          Queue: {queueCount} alert{queueCount !== 1 ? 's' : ''}
+          Queue: {totalAlerts} alert{totalAlerts !== 1 ? 's' : ''}
         </AlertDescription>
       </Alert>
     </div>
