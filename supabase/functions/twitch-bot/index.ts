@@ -16,26 +16,34 @@ serve(async (req) => {
 
   try {
     const { action, message } = await req.json();
-    console.log(`[TwitchBot] Received ${action} request`);
+    console.log(`[TwitchBot] Received ${action} request with message:`, message);
 
+    // Validate environment variables first
     const config = {
       channel: Deno.env.get("TWITCH_CHANNEL_NAME"),
       clientId: Deno.env.get("TWITCH_CLIENT_ID"),
       clientSecret: Deno.env.get("TWITCH_CLIENT_SECRET"),
     };
 
-    // Validate configuration
+    // Log configuration (without sensitive data)
+    console.log("[TwitchBot] Configuration check:", {
+      hasChannel: !!config.channel,
+      hasClientId: !!config.clientId,
+      hasClientSecret: !!config.clientSecret
+    });
+
     if (!config.channel || !config.clientId || !config.clientSecret) {
-      console.error("[TwitchBot] Missing required environment variables:", {
-        hasChannel: !!config.channel,
-        hasClientId: !!config.clientId,
-        hasClientSecret: !!config.clientSecret
-      });
-      throw new Error("Missing Twitch configuration. Please check environment variables.");
+      const missingVars = [];
+      if (!config.channel) missingVars.push("TWITCH_CHANNEL_NAME");
+      if (!config.clientId) missingVars.push("TWITCH_CLIENT_ID");
+      if (!config.clientSecret) missingVars.push("TWITCH_CLIENT_SECRET");
+      
+      throw new Error(`Missing required environment variables: ${missingVars.join(", ")}`);
     }
 
     if (action === "status") {
       const status = botInstance?.getStatus() === "Connected" ? "connected" : "disconnected";
+      console.log("[TwitchBot] Status check:", status);
       return new Response(
         JSON.stringify({ status }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -46,13 +54,14 @@ serve(async (req) => {
       console.log("[TwitchBot] Starting bot with channel:", config.channel);
       
       if (botInstance) {
-        console.log("[TwitchBot] Already running, stopping first...");
+        console.log("[TwitchBot] Existing instance found, disconnecting first...");
         await botInstance.disconnect();
       }
 
       try {
         botInstance = new TwitchBot(config);
         await botInstance.connect();
+        console.log("[TwitchBot] Bot successfully started");
         
         return new Response(
           JSON.stringify({ status: "Twitch bot started" }),
@@ -85,6 +94,7 @@ serve(async (req) => {
         throw new Error("Bot is not connected");
       }
 
+      console.log("[TwitchBot] Sending message:", message);
       await botInstance.sendMessage(message);
       return new Response(
         JSON.stringify({ status: "Message sent" }),

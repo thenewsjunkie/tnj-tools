@@ -26,10 +26,35 @@ export class TwitchBot {
       console.log("[TwitchBot] Starting connection attempt...");
       
       this.accessToken = await getOAuthToken(this.clientId, this.clientSecret);
+      console.log("[TwitchBot] OAuth token obtained successfully");
+      
       await fetchAndStoreChannelEmotes(this.channel, this.accessToken, this.clientId);
       
       this.ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443/");
       this.setupWebSocketHandlers();
+      
+      return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error("Connection timeout"));
+        }, 10000);
+
+        this.ws!.onopen = () => {
+          clearTimeout(timeout);
+          console.log("[TwitchBot] WebSocket connection established");
+          this.isConnected = true;
+          const botUsername = "justinfan" + Math.floor(Math.random() * 100000);
+          authenticate(this.ws!, this.accessToken!, botUsername, this.channel);
+          this.reconnectAttempts = 0;
+          resolve(true);
+        };
+
+        this.ws!.onerror = (error) => {
+          clearTimeout(timeout);
+          console.error("[TwitchBot] WebSocket error:", error);
+          this.isConnected = false;
+          reject(error);
+        };
+      });
     } catch (error) {
       console.error("[TwitchBot] Error in connect method:", error);
       this.isConnected = false;
@@ -39,14 +64,6 @@ export class TwitchBot {
 
   private setupWebSocketHandlers() {
     if (!this.ws) return;
-
-    this.ws.onopen = () => {
-      console.log("[TwitchBot] WebSocket connection established");
-      this.isConnected = true;
-      const botUsername = "justinfan" + Math.floor(Math.random() * 100000);
-      authenticate(this.ws!, this.accessToken!, botUsername, this.channel);
-      this.reconnectAttempts = 0;
-    };
 
     this.ws.onmessage = async (event) => {
       const message = event.data;
@@ -59,8 +76,8 @@ export class TwitchBot {
       }
 
       if (message.includes("Login authentication failed")) {
-        console.error("[TwitchBot] Login authentication failed. Check credentials.");
-        return;
+        console.error("[TwitchBot] Login authentication failed");
+        throw new Error("Login authentication failed");
       }
 
       if (message.includes(`JOIN #${this.channel}`)) {
@@ -96,17 +113,12 @@ export class TwitchBot {
       this.isConnected = false;
       this.handleReconnect();
     };
-
-    this.ws.onerror = (error) => {
-      console.error("[TwitchBot] WebSocket error:", error);
-      this.isConnected = false;
-    };
   }
 
   async sendMessage(message: string) {
     if (!this.ws || !this.isConnected) {
       console.error("[TwitchBot] Cannot send message - not connected");
-      return;
+      throw new Error("Bot is not connected");
     }
 
     try {
