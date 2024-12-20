@@ -5,6 +5,7 @@ export class TwitchConnection {
   private lastMessageReceived: number = 0;
   private reconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 5;
+  private connectionTimeout: number | null = null;
 
   constructor() {
     console.log("[TwitchConnection] Initializing connection handler");
@@ -25,29 +26,81 @@ export class TwitchConnection {
     }
 
     this.reconnectAttempts++;
-    this.ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
     
     return new Promise((resolve, reject) => {
-      if (!this.ws) return reject(new Error("WebSocket not initialized"));
+      try {
+        console.log("[TwitchConnection] Creating new WebSocket instance");
+        this.ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
+        
+        if (!this.ws) {
+          console.error("[TwitchConnection] Failed to create WebSocket instance");
+          return reject(new Error("WebSocket not initialized"));
+        }
 
-      const timeout = setTimeout(() => {
-        reject(new Error("Connection timeout"));
-        this.ws?.close();
-      }, 45000); // Increased timeout to 45 seconds for slower connections
+        // Set connection timeout
+        this.connectionTimeout = setTimeout(() => {
+          console.error("[TwitchConnection] Connection timeout");
+          if (this.ws && this.ws.readyState !== WebSocket.OPEN) {
+            this.ws.close();
+            reject(new Error("Connection timeout"));
+          }
+        }, 45000) as unknown as number;
 
-      this.ws.onopen = () => {
-        clearTimeout(timeout);
-        console.log("[TwitchConnection] WebSocket connection established");
-        this.reconnectAttempts = 0;
-        resolve(this.ws!);
-      };
+        this.ws.onopen = () => {
+          console.log("[TwitchConnection] WebSocket connection established");
+          this.clearConnectionTimeout();
+          this.reconnectAttempts = 0;
+          resolve(this.ws!);
+        };
 
-      this.ws.onerror = (error) => {
-        clearTimeout(timeout);
-        console.error("[TwitchConnection] WebSocket error:", error);
+        this.ws.onerror = (error) => {
+          console.error("[TwitchConnection] WebSocket error:", error);
+          this.clearConnectionTimeout();
+          
+          // Log detailed error information
+          if (error instanceof ErrorEvent) {
+            console.error("[TwitchConnection] Error details:", {
+              message: error.message,
+              filename: error.filename,
+              lineno: error.lineno,
+              colno: error.colno,
+              error: error.error
+            });
+          }
+          
+          if (this.ws?.readyState === WebSocket.CLOSED) {
+            reject(new Error(`WebSocket connection failed: ${error.type}`));
+          }
+        };
+
+        this.ws.onclose = (event) => {
+          console.log("[TwitchConnection] WebSocket closed:", {
+            code: event.code,
+            reason: event.reason,
+            wasClean: event.wasClean
+          });
+          this.clearConnectionTimeout();
+          this.clearTimers();
+          
+          if (this.reconnectAttempts < this.maxReconnectAttempts) {
+            const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
+            console.log(`[TwitchConnection] Will attempt to reconnect in ${delay}ms`);
+          }
+        };
+
+      } catch (error) {
+        console.error("[TwitchConnection] Error in connect:", error);
+        this.clearConnectionTimeout();
         reject(error);
-      };
+      }
     });
+  }
+
+  private clearConnectionTimeout() {
+    if (this.connectionTimeout) {
+      clearTimeout(this.connectionTimeout);
+      this.connectionTimeout = null;
+    }
   }
 
   setupPingInterval(ws: WebSocket) {
@@ -76,6 +129,7 @@ export class TwitchConnection {
   }
 
   clearTimers() {
+    this.clearConnectionTimeout();
     if (this.pingInterval) {
       clearInterval(this.pingInterval);
       this.pingInterval = null;
