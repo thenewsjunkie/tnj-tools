@@ -3,14 +3,12 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { useTheme } from "@/components/theme/ThemeProvider";
 import LinkItem from "./tnj-links/LinkItem";
 import AddLinkDialog from "./tnj-links/AddLinkDialog";
 
 const TNJLinks = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { theme } = useTheme();
 
   const { data: links = [], isLoading } = useQuery({
     queryKey: ['tnj-links'],
@@ -55,7 +53,6 @@ const TNJLinks = () => {
     const checkLinksStatus = async () => {
       for (const link of links) {
         try {
-          // Use Supabase Edge Function to check status
           const { data, error } = await supabase.functions.invoke('check-link-status', {
             body: { url: link.url }
           });
@@ -64,7 +61,6 @@ const TNJLinks = () => {
 
           const newStatus = data.isUp ? 'up' : 'down';
           
-          // Only update if status has changed
           if (link.status !== newStatus) {
             await supabase
               .from('tnj_links')
@@ -77,7 +73,6 @@ const TNJLinks = () => {
             queryClient.invalidateQueries({ queryKey: ['tnj-links'] });
           }
         } catch (error) {
-          // Only update if status isn't already down
           if (link.status !== 'down') {
             await supabase
               .from('tnj_links')
@@ -102,13 +97,10 @@ const TNJLinks = () => {
     return <div>Loading...</div>;
   }
 
-  const bgColor = theme === 'light' ? 'bg-white' : 'bg-black/50';
-  const textColor = theme === 'light' ? 'text-black' : 'text-white';
-
   return (
-    <Card className={`w-full ${bgColor} border border-gray-200 dark:border-white/10`}>
+    <Card className="w-full bg-black/50 border border-white/10">
       <CardHeader>
-        <CardTitle className={`${textColor} text-lg sm:text-xl`}>TNJ Links</CardTitle>
+        <CardTitle className="text-white text-lg sm:text-xl">TNJ Links</CardTitle>
         <AddLinkDialog 
           onLinkAdded={() => queryClient.invalidateQueries({ queryKey: ['tnj-links'] })}
           lastOrder={links.length > 0 ? Math.max(...links.map(l => l.display_order)) : 0}
@@ -123,7 +115,6 @@ const TNJLinks = () => {
               url={link.url}
               status={link.status}
               onDelete={() => deleteLinkMutation.mutate(link.id)}
-              theme={theme}
             />
           ))}
         </div>

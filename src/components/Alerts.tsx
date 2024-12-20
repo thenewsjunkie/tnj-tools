@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Edit2, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import EditAlertDialog from "./EditAlertDialog";
-import UsernameDialog from "./dialogs/UsernameDialog";
+import EditAlertDialog from "./alerts/EditAlertDialog";
+import UsernameDialog from "./alerts/dialogs/UsernameDialog";
 import { useToast } from "@/components/ui/use-toast";
 
 interface AlertButtonProps {

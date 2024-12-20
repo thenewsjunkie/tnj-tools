@@ -44,7 +44,7 @@ const EditAlertDialog = ({ alert, open, onOpenChange, onAlertUpdated }: EditAler
         const fileExt = file.name.split('.').pop();
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
         
-        const { error: uploadError, data } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from('alert_media')
           .upload(fileName, file);
 
@@ -101,9 +101,9 @@ const EditAlertDialog = ({ alert, open, onOpenChange, onAlertUpdated }: EditAler
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-foreground">Edit Alert</DialogTitle>
+          <DialogTitle>Edit Alert</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="space-y-2">
@@ -112,7 +112,6 @@ const EditAlertDialog = ({ alert, open, onOpenChange, onAlertUpdated }: EditAler
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              className="text-foreground bg-background border-input"
             />
           </div>
           <div className="flex items-center space-x-2">
@@ -121,7 +120,7 @@ const EditAlertDialog = ({ alert, open, onOpenChange, onAlertUpdated }: EditAler
               checked={messageEnabled}
               onCheckedChange={setMessageEnabled}
             />
-            <Label htmlFor="message-enabled" className="text-foreground">Enable Alert Message</Label>
+            <Label htmlFor="message-enabled">Enable Alert Message</Label>
           </div>
           {messageEnabled && (
             <>
@@ -130,32 +129,29 @@ const EditAlertDialog = ({ alert, open, onOpenChange, onAlertUpdated }: EditAler
                   placeholder="Alert Message"
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
-                  className="text-foreground bg-background border-input"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-foreground">Font Size (px)</Label>
+                <Label>Font Size (px)</Label>
                 <Input
                   type="number"
                   min="12"
                   max="72"
                   value={fontSize}
                   onChange={(e) => setFontSize(Number(e.target.value))}
-                  className="text-foreground bg-background border-input"
                 />
               </div>
             </>
           )}
           <div className="space-y-2">
-            <Label className="text-foreground">Current Media: {alert.media_type}</Label>
+            <Label>Current Media: {alert.media_type}</Label>
             <Input
               type="file"
               accept="image/gif,video/webm"
-              className="text-foreground bg-background border-input"
             />
             <p className="text-sm text-muted-foreground">Leave empty to keep current media</p>
           </div>
-          <Button type="submit" className="w-full dark:text-white text-black" disabled={isUploading}>
+          <Button type="submit" className="w-full" disabled={isUploading}>
             {isUploading ? "Updating..." : "Update Alert"}
           </Button>
         </form>

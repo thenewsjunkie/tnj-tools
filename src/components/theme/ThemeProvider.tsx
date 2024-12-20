@@ -28,7 +28,7 @@ export function ThemeProvider({
     root.classList.add("dark")
   }, [])
 
-  const value = {
+  const value: ThemeProviderState = {
     theme: "dark",
   }
 
