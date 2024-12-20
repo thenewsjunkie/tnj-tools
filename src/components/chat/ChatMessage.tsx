@@ -29,10 +29,14 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
   };
 
   const renderMessage = (text: string) => {
+    console.log("[ChatMessage] Rendering message:", text);
+    console.log("[ChatMessage] Message metadata:", message.metadata);
+
     if (!text) return "";
 
     // Handle Twitch emotes if present in metadata
-    if (message.source === "twitch" && typeof message.metadata === 'object' && message.metadata !== null && 'emotes' in message.metadata) {
+    if (typeof message.metadata === 'object' && message.metadata !== null && 'emotes' in message.metadata) {
+      console.log("[ChatMessage] Processing message with emotes");
       let result: React.ReactNode = text;
       const emotes = message.metadata.emotes as TwitchEmotes;
       
@@ -43,10 +47,13 @@ const ChatMessage = ({ message, isPinned = false }: ChatMessageProps) => {
         return posB - posA;
       });
 
+      console.log("[ChatMessage] Sorted emotes:", sortedEmotes);
+
       for (const [emoteId, positions] of sortedEmotes) {
         for (const position of positions) {
           const [start, end] = position.split('-').map(Number);
           const emoteText = text.slice(start, end + 1);
+          console.log("[ChatMessage] Replacing emote:", emoteText, "with ID:", emoteId);
           
           // Create img element for emote
           const emoteImg = (

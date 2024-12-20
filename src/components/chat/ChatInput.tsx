@@ -52,13 +52,17 @@ export const ChatInput = () => {
     if (!newMessage.trim()) return;
 
     try {
+      console.log("[ChatInput] Processing message:", newMessage);
+      
       // Create emotes metadata for known Twitch emotes
       const messageWords = newMessage.trim().split(' ');
       const emoteMetadata: { [key: string]: string[] } = {};
       
       messageWords.forEach((word, index) => {
+        console.log("[ChatInput] Checking word for emote:", word);
         const emote = emotes.find(e => e.symbol === word);
         if (emote) {
+          console.log("[ChatInput] Found emote:", emote);
           if (!emoteMetadata[emote.name]) {
             emoteMetadata[emote.name] = [];
           }
@@ -67,6 +71,8 @@ export const ChatInput = () => {
           emoteMetadata[emote.name].push(`${start}-${end}`);
         }
       });
+
+      console.log("[ChatInput] Final emote metadata:", emoteMetadata);
 
       const { error } = await supabase
         .from("chat_messages")
@@ -81,7 +87,7 @@ export const ChatInput = () => {
         .single();
 
       if (error) {
-        console.error("Error inserting message:", error);
+        console.error("[ChatInput] Error inserting message:", error);
         toast({
           title: "Error sending message",
           description: error.message,
@@ -92,7 +98,7 @@ export const ChatInput = () => {
 
       setNewMessage("");
     } catch (error) {
-      console.error("Unexpected error:", error);
+      console.error("[ChatInput] Unexpected error:", error);
       toast({
         title: "Error sending message",
         description: "An unexpected error occurred",
