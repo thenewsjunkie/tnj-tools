@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import EmojiPicker from "./EmojiPicker";
 import { ViewerCount } from "./ViewerCount";
+import { emotes } from "./emoji-data/emotes";
 
 export const ChatInput = () => {
   const [newMessage, setNewMessage] = useState("");
@@ -51,6 +52,22 @@ export const ChatInput = () => {
     if (!newMessage.trim()) return;
 
     try {
+      // Create emotes metadata for known Twitch emotes
+      const messageWords = newMessage.trim().split(' ');
+      const emoteMetadata: { [key: string]: string[] } = {};
+      
+      messageWords.forEach((word, index) => {
+        const emote = emotes.find(e => e.symbol === word);
+        if (emote) {
+          if (!emoteMetadata[emote.name]) {
+            emoteMetadata[emote.name] = [];
+          }
+          const start = newMessage.indexOf(word, index);
+          const end = start + word.length - 1;
+          emoteMetadata[emote.name].push(`${start}-${end}`);
+        }
+      });
+
       const { error } = await supabase
         .from("chat_messages")
         .insert({
@@ -58,6 +75,7 @@ export const ChatInput = () => {
           username: "MegaChat",
           message: newMessage.trim(),
           message_type: "chat",
+          metadata: Object.keys(emoteMetadata).length > 0 ? { emotes: emoteMetadata } : {},
         })
         .select()
         .single();
