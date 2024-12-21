@@ -8,6 +8,8 @@ const corsHeaders = {
 };
 
 let botInstance: TwitchBot | null = null;
+let lastHeartbeat: number = Date.now();
+const HEARTBEAT_INTERVAL = 30000; // 30 seconds
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -32,9 +34,19 @@ serve(async (req) => {
     }
 
     if (action === "status") {
+      // Update heartbeat timestamp
+      lastHeartbeat = Date.now();
+      
+      // Check if bot needs to be restarted
+      if (botInstance && Date.now() - lastHeartbeat > HEARTBEAT_INTERVAL * 2) {
+        console.log("[TwitchBot] Bot appears inactive, attempting restart...");
+        await botInstance.disconnect();
+        botInstance = null;
+      }
+
       const status = botInstance?.getStatus() || "disconnected";
       return new Response(
-        JSON.stringify({ status }),
+        JSON.stringify({ status, lastHeartbeat }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -48,16 +60,19 @@ serve(async (req) => {
       console.log("[TwitchBot] Creating new bot instance...");
       botInstance = new TwitchBot(config);
       
-      // Start connection in background
-      botInstance.connect().catch(error => {
+      try {
+        await botInstance.connect();
+        lastHeartbeat = Date.now();
+        
+        return new Response(
+          JSON.stringify({ status: "connected", lastHeartbeat }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      } catch (error) {
         console.error("[TwitchBot] Connection error:", error);
         botInstance = null;
-      });
-
-      return new Response(
-        JSON.stringify({ status: "starting" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+        throw error;
+      }
     }
 
     if (action === "stop") {

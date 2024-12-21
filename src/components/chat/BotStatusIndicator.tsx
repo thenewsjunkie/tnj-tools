@@ -11,6 +11,7 @@ interface BotStatusIndicatorProps {
 
 const BotStatusIndicator = ({ botType, icon, status, setStatus }: BotStatusIndicatorProps) => {
   const { toast } = useToast();
+  const [lastCheck, setLastCheck] = useState<Date>(new Date());
 
   useEffect(() => {
     const checkStatus = async () => {
@@ -25,7 +26,19 @@ const BotStatusIndicator = ({ botType, icon, status, setStatus }: BotStatusIndic
           return;
         }
 
-        setStatus(data?.status === "connected" ? "connected" : "disconnected");
+        setLastCheck(new Date());
+        const newStatus = data?.status === "connected" ? "connected" : "disconnected";
+        
+        // If status changed from connected to disconnected, show toast
+        if (status === "connected" && newStatus === "disconnected") {
+          toast({
+            title: `${botType === "twitch" ? "Twitch" : "YouTube"} Bot Disconnected`,
+            description: "Attempting to reconnect...",
+            variant: "destructive",
+          });
+        }
+        
+        setStatus(newStatus);
       } catch (error) {
         console.error(`[BotStatusIndicator] Error checking ${botType} status:`, error);
         setStatus("disconnected");
@@ -33,9 +46,10 @@ const BotStatusIndicator = ({ botType, icon, status, setStatus }: BotStatusIndic
     };
 
     checkStatus();
-    const interval = setInterval(checkStatus, 30000);
+    // Check status more frequently (every 10 seconds) to detect disconnections faster
+    const interval = setInterval(checkStatus, 10000);
     return () => clearInterval(interval);
-  }, [botType, setStatus]);
+  }, [botType, setStatus, status, toast]);
 
   return (
     <div className="flex items-center gap-2">
@@ -48,6 +62,9 @@ const BotStatusIndicator = ({ botType, icon, status, setStatus }: BotStatusIndic
       />
       <span className="text-sm text-gray-400">
         {status === "connected" ? "Connected" : "Disconnected"}
+      </span>
+      <span className="text-xs text-gray-400">
+        (Last check: {lastCheck.toLocaleTimeString()})
       </span>
     </div>
   );
