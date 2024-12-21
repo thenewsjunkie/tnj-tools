@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Zap, Plus, Edit2, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { Zap, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { TriggerDialog } from "./triggers/TriggerDialog";
-import { TriggerGrid } from "./triggers/TriggerGrid";
 
 interface Trigger {
   id: string;
@@ -162,6 +161,11 @@ const Companion = () => {
     }
   };
 
+  const openEditDialog = (trigger: Trigger) => {
+    setEditingTrigger(trigger);
+    setIsDialogOpen(true);
+  };
+
   return (
     <Card className="w-full bg-background border border-gray-200 dark:border-white/10">
       <CardHeader>
@@ -170,50 +174,90 @@ const Companion = () => {
             <Zap className="h-5 w-5 text-foreground" />
             Triggers
           </div>
-          <DialogTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={() => {
-                setEditingTrigger(null);
-                setNewTitle("");
-                setNewLink("");
-                setIsDialogOpen(true);
-              }}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </DialogTrigger>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => {
+                  setEditingTrigger(null);
+                  setNewTitle("");
+                  setNewLink("");
+                }}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="text-foreground dark:text-white">
+                  {editingTrigger ? 'Edit Trigger' : 'Add New Trigger'}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Input
+                    placeholder="Trigger Title"
+                    value={editingTrigger ? editingTrigger.title : newTitle}
+                    onChange={(e) => editingTrigger 
+                      ? setEditingTrigger({...editingTrigger, title: e.target.value})
+                      : setNewTitle(e.target.value)
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Input
+                    placeholder="Trigger Link"
+                    value={editingTrigger ? editingTrigger.link : newLink}
+                    onChange={(e) => editingTrigger
+                      ? setEditingTrigger({...editingTrigger, link: e.target.value})
+                      : setNewLink(e.target.value)
+                    }
+                  />
+                </div>
+                <Button 
+                  onClick={editingTrigger ? handleEditTrigger : handleAddTrigger} 
+                  className="w-full"
+                >
+                  {editingTrigger ? 'Update Trigger' : 'Add Trigger'}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <TriggerGrid
-          triggers={triggers}
-          onTriggerClick={handleTriggerClick}
-          onEditClick={(trigger) => {
-            setEditingTrigger(trigger);
-            setIsDialogOpen(true);
-          }}
-          onDeleteClick={handleDeleteTrigger}
-        />
-        <TriggerDialog
-          isOpen={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
-          title={editingTrigger ? editingTrigger.title : newTitle}
-          onTitleChange={(value) => 
-            editingTrigger 
-              ? setEditingTrigger({...editingTrigger, title: value})
-              : setNewTitle(value)
-          }
-          link={editingTrigger ? editingTrigger.link : newLink}
-          onLinkChange={(value) => 
-            editingTrigger
-              ? setEditingTrigger({...editingTrigger, link: value})
-              : setNewLink(value)
-          }
-          onSave={editingTrigger ? handleEditTrigger : handleAddTrigger}
-          mode={editingTrigger ? "edit" : "add"}
-        />
+      <CardContent className="space-y-2">
+        {triggers.map((trigger) => (
+          <div key={trigger.id} className="grid grid-cols-[1fr,auto,auto] gap-2">
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              onClick={() => handleTriggerClick(trigger.link)}
+            >
+              {trigger.title}
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => openEditDialog(trigger)}
+            >
+              <Edit2 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => handleDeleteTrigger(trigger.id)}
+              className="text-destructive hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+        {triggers.length === 0 && (
+          <div className="text-sm text-muted-foreground text-center py-4">
+            No triggers added yet
+          </div>
+        )}
       </CardContent>
     </Card>
   );
