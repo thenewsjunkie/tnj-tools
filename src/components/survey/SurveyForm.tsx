@@ -1,30 +1,11 @@
 import { useState } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ChevronRight, ChevronLeft, CheckCircle2 } from "lucide-react";
-
-type FormData = {
-  email: string;
-  age: number;
-  gender: string;
-  employment_status: "full_time" | "part_time" | "self_employed" | "unemployed" | "student" | "retired";
-  income_bracket: "under_25k" | "25k_50k" | "50k_75k" | "75k_100k" | "100k_150k" | "over_150k";
-  marital_status: "single" | "married" | "divorced" | "widowed" | "separated" | "domestic_partnership";
-  children_count: number;
-  car_make: string;
-  car_year: number;
-  zip_code: string;
-  education_level: string;
-  home_ownership: string;
-  preferred_social_media: string[];
-  shopping_preferences: string[];
-  favorite_stores: string[];
-  media_consumption_habits: Record<string, any>;
-};
+import { ContactStep, DemographicsStep, EmploymentStep, VehicleStep } from "./SurveyStep";
+import { FormData, SurveyStepProps } from "./types";
 
 const initialFormData: FormData = {
   email: "",
@@ -45,147 +26,6 @@ const initialFormData: FormData = {
   media_consumption_habits: {}
 };
 
-  const steps: SurveyStep[] = [
-    {
-      id: "contact",
-      title: "Contact Information",
-      component: (
-        <div className="space-y-4">
-          <Input
-            type="email"
-            placeholder="Email Address"
-            value={formData.email}
-            onChange={(e) => handleInputChange("email", e.target.value)}
-          />
-          <Input
-            type="text"
-            placeholder="ZIP Code"
-            value={formData.zip_code}
-            onChange={(e) => handleInputChange("zip_code", e.target.value)}
-          />
-        </div>
-      )
-    },
-    {
-      id: "demographics",
-      title: "About You",
-      component: (
-        <div className="space-y-4">
-          <Input
-            type="number"
-            placeholder="Age"
-            value={formData.age}
-            onChange={(e) => handleInputChange("age", parseInt(e.target.value))}
-          />
-          <Select
-            value={formData.gender}
-            onValueChange={(value) => handleInputChange("gender", value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select Gender" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="male">Male</SelectItem>
-              <SelectItem value="female">Female</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
-              <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      )
-    },
-    {
-      id: "employment",
-      title: "Employment & Income",
-      component: (
-        <div className="space-y-4">
-          <Select
-            value={formData.employment_status}
-            onValueChange={(value) => handleInputChange("employment_status", value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Employment Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="full_time">Full Time</SelectItem>
-              <SelectItem value="part_time">Part Time</SelectItem>
-              <SelectItem value="self_employed">Self Employed</SelectItem>
-              <SelectItem value="unemployed">Unemployed</SelectItem>
-              <SelectItem value="student">Student</SelectItem>
-              <SelectItem value="retired">Retired</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select
-            value={formData.income_bracket}
-            onValueChange={(value) => handleInputChange("income_bracket", value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Annual Income" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="under_25k">Under $25,000</SelectItem>
-              <SelectItem value="25k_50k">$25,000 - $50,000</SelectItem>
-              <SelectItem value="50k_75k">$50,000 - $75,000</SelectItem>
-              <SelectItem value="75k_100k">$75,000 - $100,000</SelectItem>
-              <SelectItem value="100k_150k">$100,000 - $150,000</SelectItem>
-              <SelectItem value="over_150k">Over $150,000</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      )
-    },
-    {
-      id: "family",
-      title: "Family Status",
-      component: (
-        <div className="space-y-4">
-          <Select
-            value={formData.marital_status}
-            onValueChange={(value) => handleInputChange("marital_status", value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Marital Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="single">Single</SelectItem>
-              <SelectItem value="married">Married</SelectItem>
-              <SelectItem value="divorced">Divorced</SelectItem>
-              <SelectItem value="widowed">Widowed</SelectItem>
-              <SelectItem value="separated">Separated</SelectItem>
-              <SelectItem value="domestic_partnership">Domestic Partnership</SelectItem>
-            </SelectContent>
-          </Select>
-          <Input
-            type="number"
-            placeholder="Number of Children"
-            value={formData.children_count}
-            onChange={(e) => handleInputChange("children_count", parseInt(e.target.value))}
-          />
-        </div>
-      )
-    },
-    {
-      id: "vehicle",
-      title: "Vehicle Information",
-      component: (
-        <div className="space-y-4">
-          <Input
-            type="text"
-            placeholder="Car Make"
-            value={formData.car_make}
-            onChange={(e) => handleInputChange("car_make", e.target.value)}
-          />
-          <Input
-            type="number"
-            placeholder="Car Year"
-            value={formData.car_year}
-            onChange={(e) => handleInputChange("car_year", parseInt(e.target.value))}
-          />
-        </div>
-      )
-    }
-  ];
-
 const SurveyForm = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -193,13 +33,31 @@ const SurveyForm = () => {
   const [formData, setFormData] = useState<FormData>(initialFormData);
 
   const handleInputChange = (field: keyof FormData, value: any) => {
-    setFormData(prev => {
-      if (field === 'age' || field === 'children_count' || field === 'car_year') {
-        return { ...prev, [field]: parseInt(value) || 0 };
-      }
-      return { ...prev, [field]: value };
-    });
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
+
+  const steps: SurveyStepProps[] = [
+    {
+      id: "contact",
+      title: "Contact Information",
+      component: <ContactStep formData={formData} handleInputChange={handleInputChange} />
+    },
+    {
+      id: "demographics",
+      title: "About You",
+      component: <DemographicsStep formData={formData} handleInputChange={handleInputChange} />
+    },
+    {
+      id: "employment",
+      title: "Employment & Income",
+      component: <EmploymentStep formData={formData} handleInputChange={handleInputChange} />
+    },
+    {
+      id: "vehicle",
+      title: "Vehicle Information",
+      component: <VehicleStep formData={formData} handleInputChange={handleInputChange} />
+    }
+  ];
 
   const handleSubmit = async () => {
     try {
