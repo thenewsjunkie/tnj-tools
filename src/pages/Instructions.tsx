@@ -82,7 +82,7 @@ const Instructions = () => {
     <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8">
       <nav className="flex justify-between items-center mb-8">
         <Link
-          to="/settings"
+          to="/admin/settings"
           className="text-foreground hover:text-primary transition-colors flex items-center gap-2"
         >
           <ArrowLeft className="h-5 w-5" />
