@@ -138,8 +138,17 @@ export const useTriggers = () => {
       console.log('Companion: Attempting to fetch:', link);
       const response = await fetch(link, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        mode: 'cors',
       });
       console.log('Companion: Fetch response:', response);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       toast({
         title: "Success",
         description: "Trigger executed successfully",
