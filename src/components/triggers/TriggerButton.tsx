@@ -1,5 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Edit2, Trash2 } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface TriggerButtonProps {
   title: string;
@@ -10,29 +16,36 @@ interface TriggerButtonProps {
 
 const TriggerButton = ({ title, onTriggerClick, onEdit, onDelete }: TriggerButtonProps) => {
   return (
-    <div className="flex gap-2 items-center">
+    <div className="flex items-center gap-2 group">
       <Button
         variant="outline"
-        className="min-w-[100px]"
+        className="flex-1 min-w-[120px]"
         onClick={onTriggerClick}
       >
         {title}
       </Button>
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={onEdit}
-      >
-        <Edit2 className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={onDelete}
-        className="text-destructive hover:text-destructive"
-      >
-        <Trash2 className="h-4 w-4" />
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={onEdit}>
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={onDelete}
+            className="text-destructive"
+          >
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 };
