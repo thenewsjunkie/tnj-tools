@@ -61,8 +61,31 @@ const Companion = () => {
               </div>
             </AccordionTrigger>
             <AccordionContent>
-              <div className="py-2 space-y-2">
-                {/* Light controls will go here */}
+              <div className="py-2 grid grid-cols-2 gap-2">
+                <Button variant="outline" className="w-full justify-start">
+                  <LampDesk className="h-4 w-4 mr-2" />
+                  Studio Main 1
+                </Button>
+                <Button variant="outline" className="w-full justify-start">
+                  <LampDesk className="h-4 w-4 mr-2" />
+                  Studio Main 2
+                </Button>
+                <Button variant="outline" className="w-full justify-start">
+                  <LampDesk className="h-4 w-4 mr-2" />
+                  Effects
+                </Button>
+                <Button variant="outline" className="w-full justify-start">
+                  <LampDesk className="h-4 w-4 mr-2" />
+                  LED Wall 1
+                </Button>
+                <Button variant="outline" className="w-full justify-start">
+                  <LampDesk className="h-4 w-4 mr-2" />
+                  LED Wall 2
+                </Button>
+                <Button variant="outline" className="w-full justify-start">
+                  <LampDesk className="h-4 w-4 mr-2" />
+                  Behind Shawn
+                </Button>
               </div>
             </AccordionContent>
           </AccordionItem>
