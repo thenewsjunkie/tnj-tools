@@ -16,8 +16,6 @@ import Reviews from "./pages/Reviews";
 import Alerts from "./pages/Alerts";
 import Settings from "./pages/Settings";
 import Instructions from "./pages/Instructions";
-import Chat from "./pages/Chat";
-import ChatSettings from "./pages/ChatSettings";
 import QueueHistory from "./pages/QueueHistory";
 
 const queryClient = new QueryClient({
@@ -152,7 +150,6 @@ const App = () => (
             <Route path="/notes" element={<Notes />} />
             <Route path="/reviews" element={<Reviews />} />
             <Route path="/alerts" element={<Alerts />} />
-            <Route path="/chat" element={<Chat />} />
             <Route path="/alerts/queue/:action" element={<Alerts />} />
             <Route path="/alerts/:alertSlug" element={<Alerts />} />
             <Route path="/alerts/:alertSlug/:username" element={<Alerts />} />
@@ -162,7 +159,6 @@ const App = () => (
             <Route path="/admin/ai" element={<AdminRoute><AI /></AdminRoute>} />
             <Route path="/admin/settings" element={<AdminRoute><Settings /></AdminRoute>} />
             <Route path="/admin/instructions" element={<AdminRoute><Instructions /></AdminRoute>} />
-            <Route path="/admin/settings/chat" element={<AdminRoute><ChatSettings /></AdminRoute>} />
             <Route path="/admin/queue-history" element={<AdminRoute><QueueHistory /></AdminRoute>} />
           </Routes>
         </BrowserRouter>
