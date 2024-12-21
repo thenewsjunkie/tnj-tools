@@ -56,15 +56,15 @@ const Admin = () => {
           <Alerts />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+          <ShowNotes />
+          <Companion />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
           <Reviews 
             showViewAllLink={true} 
             simpleView={true} 
             limit={5} 
           />
-          <Companion />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
-          <ShowNotes />
           <NewsRoundup />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
