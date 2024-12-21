@@ -104,6 +104,36 @@ export type Database = {
         }
         Relationships: []
       }
+      bot_instances: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          id: string
+          last_heartbeat: string | null
+          status: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          last_heartbeat?: string | null
+          status?: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          last_heartbeat?: string | null
+          status?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       call_sessions: {
         Row: {
           caller_name: string
