@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Camera, LampDesk, List } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const Companion = () => {
   return (
@@ -23,8 +24,31 @@ const Companion = () => {
               </div>
             </AccordionTrigger>
             <AccordionContent>
-              <div className="py-2 space-y-2">
-                {/* Camera buttons will go here */}
+              <div className="py-2 grid grid-cols-2 gap-2">
+                <Button variant="outline" className="w-full justify-start">
+                  <Camera className="h-4 w-4 mr-2" />
+                  Shawn
+                </Button>
+                <Button variant="outline" className="w-full justify-start">
+                  <Camera className="h-4 w-4 mr-2" />
+                  Sabrina
+                </Button>
+                <Button variant="outline" className="w-full justify-start">
+                  <Camera className="h-4 w-4 mr-2" />
+                  C-Lane
+                </Button>
+                <Button variant="outline" className="w-full justify-start">
+                  <Camera className="h-4 w-4 mr-2" />
+                  Guest
+                </Button>
+                <Button variant="outline" className="w-full justify-start">
+                  <Camera className="h-4 w-4 mr-2" />
+                  Wide
+                </Button>
+                <Button variant="outline" className="w-full justify-start">
+                  <Camera className="h-4 w-4 mr-2" />
+                  PTZ 2
+                </Button>
               </div>
             </AccordionContent>
           </AccordionItem>
