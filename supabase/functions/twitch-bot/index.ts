@@ -10,6 +10,7 @@ const corsHeaders = {
 let botInstance: TwitchBot | null = null;
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
