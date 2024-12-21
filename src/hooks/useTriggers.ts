@@ -32,15 +32,6 @@ export const useTriggers = () => {
   };
 
   const addTrigger = async (title: string, link: string) => {
-    if (!title || !link) {
-      toast({
-        title: "Error",
-        description: "Both title and link are required",
-        variant: "destructive",
-      });
-      return false;
-    }
-
     try {
       const { error } = await supabase
         .from('triggers')
@@ -67,22 +58,10 @@ export const useTriggers = () => {
   };
 
   const editTrigger = async (trigger: Trigger) => {
-    if (!trigger.title || !trigger.link) {
-      toast({
-        title: "Error",
-        description: "Both title and link are required",
-        variant: "destructive",
-      });
-      return false;
-    }
-
     try {
       const { error } = await supabase
         .from('triggers')
-        .update({ 
-          title: trigger.title, 
-          link: trigger.link 
-        })
+        .update({ title: trigger.title, link: trigger.link })
         .eq('id', trigger.id);
 
       if (error) throw error;
@@ -138,8 +117,17 @@ export const useTriggers = () => {
       console.log('Companion: Attempting to fetch:', link);
       const response = await fetch(link, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
+      
       console.log('Companion: Fetch response:', response);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       toast({
         title: "Success",
         description: "Trigger executed successfully",
