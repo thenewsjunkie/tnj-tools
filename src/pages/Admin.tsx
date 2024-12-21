@@ -14,9 +14,11 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 
 const Admin = () => {
   const { theme } = useTheme();
+  
+  console.log("[Admin] Rendering Admin page, theme:", theme);
 
   return (
-    <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8">
+    <div className="min-h-screen bg-background text-foreground p-4 sm:p-6 md:p-8">
       <nav className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
         <Link 
           to="/" 
@@ -36,7 +38,7 @@ const Admin = () => {
           </a>
           <ThemeToggle />
           <h1 className="text-foreground text-xl sm:text-2xl digital">TNJ Tools</h1>
-          <Link to="/settings">
+          <Link to="/admin/settings">
             <Button
               variant="ghost"
               size="icon"
