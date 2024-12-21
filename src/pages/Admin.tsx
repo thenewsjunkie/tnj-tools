@@ -63,7 +63,7 @@ const Admin = () => {
           <Reviews 
             showViewAllLink={true} 
             simpleView={true} 
-            limit={5} 
+            limit={10} 
           />
           <NewsRoundup />
         </div>
