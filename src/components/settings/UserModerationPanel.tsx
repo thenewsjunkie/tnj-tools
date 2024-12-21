@@ -13,55 +13,35 @@ import {
 } from "@/components/ui/pagination";
 import { UsersTable } from "./UsersTable";
 import type { Profile } from "./types";
-import { useAuth } from "@/hooks/useAuth";
 
 const USERS_PER_PAGE = 20;
 
 export const UserModerationPanel = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
-  const { session } = useAuth();
 
-  const { data, isLoading, error, refetch } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ['profiles', currentPage],
     queryFn: async () => {
-      if (!session?.user) {
-        throw new Error('Not authenticated');
-      }
-
-      // First check if the current user is an admin
-      const { data: currentUserProfile, error: profileError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single();
-
-      if (profileError) {
-        throw new Error('Error fetching user role');
-      }
-
-      if (currentUserProfile.role !== 'admin') {
-        throw new Error('Unauthorized: Admin access required');
-      }
-
       const start = (currentPage - 1) * USERS_PER_PAGE;
       const end = start + USERS_PER_PAGE - 1;
 
-      const { data, error: fetchError, count } = await supabase
+      const { data, error, count } = await supabase
         .from('profiles')
         .select('*', { count: 'exact' })
         .order('created_at', { ascending: false })
         .range(start, end);
 
-      if (fetchError) {
-        console.error('Error fetching profiles:', fetchError);
-        throw fetchError;
+      if (error) {
+        console.error('Error fetching profiles:', error);
+        throw error;
       }
 
       return { profiles: data as Profile[], total: count || 0 };
     },
-    enabled: !!session?.user,
   });
+
+  const totalPages = data ? Math.ceil(data.total / USERS_PER_PAGE) : 0;
 
   const handleApprove = async (userId: string) => {
     const { error } = await supabase
@@ -114,35 +94,9 @@ export const UserModerationPanel = () => {
     refetch();
   };
 
-  if (!session?.user) {
-    return (
-      <div className="border rounded-lg p-4">
-        <div className="text-center text-muted-foreground">
-          Please sign in to access the moderation panel
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="border rounded-lg p-4">
-        <div className="text-center text-destructive">
-          {error instanceof Error ? error.message : 'An error occurred'}
-        </div>
-      </div>
-    );
-  }
-
   if (isLoading) {
-    return (
-      <div className="border rounded-lg p-4">
-        <div className="text-center text-muted-foreground">Loading...</div>
-      </div>
-    );
+    return <div>Loading...</div>;
   }
-
-  const totalPages = data ? Math.ceil(data.total / USERS_PER_PAGE) : 0;
 
   return (
     <div className="border rounded-lg p-4">
