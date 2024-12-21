@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { Plus, Link, Pause, Play } from "lucide-react";
+import { Plus, Link, Pause, Play, History } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { Link as RouterLink } from "react-router-dom";
 
 interface AlertsHeaderProps {
   isPaused: boolean;
@@ -24,6 +25,15 @@ const AlertsHeader = ({ isPaused, togglePause, openDialog }: AlertsHeaderProps) 
           >
             {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
           </Button>
+          <RouterLink to="/admin/queue-history">
+            <Button
+              variant="outline"
+              size="icon"
+              className="alert-icon hover:text-neon-red hover:bg-white/10"
+            >
+              <History className="h-4 w-4" />
+            </Button>
+          </RouterLink>
           <a
             href="/alerts"
             target="_blank"
