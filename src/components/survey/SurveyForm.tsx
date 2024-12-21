@@ -7,39 +7,43 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ChevronRight, ChevronLeft, CheckCircle2 } from "lucide-react";
 
-type SurveyStep = {
-  id: string;
-  title: string;
-  component: React.ReactNode;
+type FormData = {
+  email: string;
+  age: number;
+  gender: string;
+  employment_status: "full_time" | "part_time" | "self_employed" | "unemployed" | "student" | "retired";
+  income_bracket: "under_25k" | "25k_50k" | "50k_75k" | "75k_100k" | "100k_150k" | "over_150k";
+  marital_status: "single" | "married" | "divorced" | "widowed" | "separated" | "domestic_partnership";
+  children_count: number;
+  car_make: string;
+  car_year: number;
+  zip_code: string;
+  education_level: string;
+  home_ownership: string;
+  preferred_social_media: string[];
+  shopping_preferences: string[];
+  favorite_stores: string[];
+  media_consumption_habits: Record<string, any>;
 };
 
-const SurveyForm = () => {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const { toast } = useToast();
-  
-  const [formData, setFormData] = useState({
-    email: "",
-    age: "",
-    gender: "",
-    employment_status: "",
-    income_bracket: "",
-    marital_status: "",
-    children_count: "",
-    car_make: "",
-    car_year: "",
-    zip_code: "",
-    education_level: "",
-    home_ownership: "",
-    preferred_social_media: [],
-    shopping_preferences: [],
-    favorite_stores: [],
-    media_consumption_habits: {}
-  });
-
-  const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+const initialFormData: FormData = {
+  email: "",
+  age: 0,
+  gender: "",
+  employment_status: "full_time",
+  income_bracket: "25k_50k",
+  marital_status: "single",
+  children_count: 0,
+  car_make: "",
+  car_year: new Date().getFullYear(),
+  zip_code: "",
+  education_level: "",
+  home_ownership: "",
+  preferred_social_media: [],
+  shopping_preferences: [],
+  favorite_stores: [],
+  media_consumption_habits: {}
+};
 
   const steps: SurveyStep[] = [
     {
@@ -181,6 +185,21 @@ const SurveyForm = () => {
       )
     }
   ];
+
+const SurveyForm = () => {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const { toast } = useToast();
+  const [formData, setFormData] = useState<FormData>(initialFormData);
+
+  const handleInputChange = (field: keyof FormData, value: any) => {
+    setFormData(prev => {
+      if (field === 'age' || field === 'children_count' || field === 'car_year') {
+        return { ...prev, [field]: parseInt(value) || 0 };
+      }
+      return { ...prev, [field]: value };
+    });
+  };
 
   const handleSubmit = async () => {
     try {

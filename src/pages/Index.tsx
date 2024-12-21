@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { useTheme } from "@/components/theme/ThemeProvider";
-import SurveyForm from "@/components/survey/SurveyForm";
+import { ClipboardList } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const { theme } = useTheme();
@@ -28,12 +29,16 @@ const Index = () => {
         TNJ Tools
       </div>
 
-      <div className="w-full max-w-md mx-auto bg-card rounded-lg shadow-lg p-6 mb-8">
-        <h2 className="text-xl font-semibold text-center mb-6">
+      <Link to="/survey">
+        <Button 
+          variant="outline" 
+          size="lg"
+          className="gap-2 text-lg hover:text-neon-red transition-colors"
+        >
+          <ClipboardList className="w-6 h-6" />
           Audience Survey
-        </h2>
-        <SurveyForm />
-      </div>
+        </Button>
+      </Link>
       
       <div className={`fixed bottom-8 ${theme === 'light' ? 'text-black' : 'text-white/50'} text-sm`}>
         tnjtools.com
