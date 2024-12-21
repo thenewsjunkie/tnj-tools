@@ -228,10 +228,10 @@ const Companion = () => {
       </CardHeader>
       <CardContent className="space-y-2">
         {triggers.map((trigger) => (
-          <div key={trigger.id} className="flex gap-2">
+          <div key={trigger.id} className="grid grid-cols-[1fr,auto,auto] gap-2">
             <Button
               variant="outline"
-              className="flex-1 justify-start"
+              className="w-full justify-start"
               onClick={() => handleTriggerClick(trigger.link)}
             >
               {trigger.title}
