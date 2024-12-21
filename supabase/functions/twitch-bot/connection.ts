@@ -7,14 +7,17 @@ export class TwitchConnection {
   private isConnected: boolean = false;
   private reconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 5;
+  config: BotConfig;
 
   constructor(
-    private config: BotConfig,
+    config: BotConfig,
     private onMessage: (message: string) => void,
     private onConnectionChange: (status: boolean) => void
-  ) {}
+  ) {
+    this.config = config;
+  }
 
-  async connect(accessToken: string, username: string) {
+  async connect(accessToken?: string, username?: string) {
     try {
       console.log("[TwitchConnection] Starting connection attempt...");
       this.ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443/");
@@ -50,7 +53,13 @@ export class TwitchConnection {
     }
   }
 
-  private authenticate(accessToken: string, username: string) {
+  private authenticate(accessToken?: string, username?: string) {
+    if (!accessToken || !username) {
+      console.error("[TwitchConnection] Missing authentication credentials");
+      this.handleDisconnect();
+      return;
+    }
+
     console.log("[TwitchConnection] Sending authentication commands...");
     this.ws?.send("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership");
     this.ws?.send(`PASS oauth:${accessToken}`);

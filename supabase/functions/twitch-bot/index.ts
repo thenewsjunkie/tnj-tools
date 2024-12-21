@@ -48,11 +48,17 @@ serve(async (req) => {
         await botInstance.disconnect();
       }
 
+      // Create new bot instance
       botInstance = new TwitchBot(config);
-      await botInstance.connect();
+      
+      // Connect in the background to avoid timeout
+      botInstance.connect().catch(error => {
+        console.error("[TwitchBot] Connection error:", error);
+        botInstance = null;
+      });
       
       return new Response(
-        JSON.stringify({ status: "Twitch bot started" }),
+        JSON.stringify({ status: "Twitch bot starting" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

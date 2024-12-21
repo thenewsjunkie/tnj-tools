@@ -1,3 +1,4 @@
 project_id = "gpmandlkcdompmdvethh"
 [functions.twitch-bot]
 verify_jwt = false
+timeout_seconds = 300
