@@ -141,7 +141,6 @@ export const useTriggers = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        mode: 'cors',
       });
       console.log('Companion: Fetch response:', response);
       
