@@ -135,18 +135,18 @@ export const useTriggers = () => {
   const executeTrigger = async (link: string) => {
     console.log('Companion: Trigger clicked with link:', link);
     try {
-      console.log('Companion: Attempting to fetch:', link);
-      const response = await fetch(link, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      console.log('Companion: Fetch response:', response);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      // Extract alert slug from the link
+      const alertSlug = link.split('/alerts/')[1];
+      if (!alertSlug) {
+        throw new Error('Invalid alert link');
       }
+
+      // Use Supabase function to trigger alert
+      const { data, error } = await supabase.functions.invoke('trigger-alert', {
+        body: { alertSlug }
+      });
+
+      if (error) throw error;
       
       toast({
         title: "Success",
