@@ -15,12 +15,17 @@ interface TriggerButtonProps {
 }
 
 const TriggerButton = ({ title, onTriggerClick, onEdit, onDelete }: TriggerButtonProps) => {
+  const handleClick = () => {
+    console.log('TriggerButton: Button clicked for trigger:', title);
+    onTriggerClick();
+  };
+
   return (
     <div className="flex items-center gap-2 group">
       <Button
         variant="outline"
         className="flex-1 min-w-[120px]"
-        onClick={onTriggerClick}
+        onClick={handleClick}
       >
         {title}
       </Button>

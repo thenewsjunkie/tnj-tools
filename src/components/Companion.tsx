@@ -146,8 +146,11 @@ const Companion = () => {
   };
 
   const handleTriggerClick = async (link: string) => {
+    console.log('Companion: Trigger clicked with link:', link);
     try {
-      await fetch(link);
+      console.log('Companion: Attempting to fetch:', link);
+      const response = await fetch(link);
+      console.log('Companion: Fetch response:', response);
       toast({
         title: "Success",
         description: "Trigger executed successfully",
