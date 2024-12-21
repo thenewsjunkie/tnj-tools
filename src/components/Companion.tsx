@@ -3,9 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Zap, Plus, Edit2, Trash2 } from "lucide-react";
+import { Zap, Plus } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import TriggerButton from "./triggers/TriggerButton";
 
 interface Trigger {
   id: string;
@@ -226,33 +227,18 @@ const Companion = () => {
           </Dialog>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2">
-        {triggers.map((trigger) => (
-          <div key={trigger.id} className="grid grid-cols-[1fr,auto,auto] gap-2">
-            <Button
-              variant="outline"
-              className="w-full justify-start"
-              onClick={() => handleTriggerClick(trigger.link)}
-            >
-              {trigger.title}
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => openEditDialog(trigger)}
-            >
-              <Edit2 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => handleDeleteTrigger(trigger.id)}
-              className="text-destructive hover:text-destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        ))}
+      <CardContent>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+          {triggers.map((trigger) => (
+            <TriggerButton
+              key={trigger.id}
+              title={trigger.title}
+              onTriggerClick={() => handleTriggerClick(trigger.link)}
+              onEdit={() => openEditDialog(trigger)}
+              onDelete={() => handleDeleteTrigger(trigger.id)}
+            />
+          ))}
+        </div>
         {triggers.length === 0 && (
           <div className="text-sm text-muted-foreground text-center py-4">
             No triggers added yet
