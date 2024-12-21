@@ -7,6 +7,11 @@ export const BotControls = () => {
   const [twitchStatus, setTwitchStatus] = useState<"connected" | "disconnected">("disconnected");
   const [youtubeStatus, setYoutubeStatus] = useState<"connected" | "disconnected">("disconnected");
 
+  const handleStartYouTube = async (videoId: string) => {
+    setIsLoading(true);
+    // The actual start logic is handled in BotActions
+  };
+
   return (
     <div className="space-y-6">
       <BotStatus 
@@ -14,10 +19,7 @@ export const BotControls = () => {
         youtubeStatus={youtubeStatus}
         setTwitchStatus={setTwitchStatus}
         setYoutubeStatus={setYoutubeStatus}
-        onStartYouTube={(videoId) => {
-          setIsLoading(true);
-          // The actual start logic is handled in BotActions
-        }}
+        onStartYouTube={handleStartYouTube}
       />
       <BotActions 
         isLoading={isLoading}

@@ -1,4 +1,4 @@
-import { Twitch } from "lucide-react";
+import { Twitch, Youtube } from "lucide-react";
 import BotStatusIndicator from "@/components/chat/BotStatusIndicator";
 import YouTubeSettings from "@/components/chat/YouTubeSettings";
 
@@ -7,7 +7,7 @@ interface BotStatusProps {
   youtubeStatus: "connected" | "disconnected";
   setTwitchStatus: (status: "connected" | "disconnected") => void;
   setYoutubeStatus: (status: "connected" | "disconnected") => void;
-  onStartYouTube: (videoId: string) => void;
+  onStartYouTube: (videoId: string) => Promise<void>;
 }
 
 export const BotStatus = ({ 
