@@ -73,7 +73,7 @@ const Instructions = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8">
-        <div className="max-w-4xl mx-auto">Loading...</div>
+        <div className="max-w-4xl mx-auto text-foreground">Loading...</div>
       </div>
     );
   }
@@ -93,7 +93,7 @@ const Instructions = () => {
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <h2 className="text-2xl font-semibold tracking-tight">Instructions</h2>
+            <h2 className="text-2xl font-semibold tracking-tight dark:text-white">Instructions</h2>
             <p className="text-sm text-muted-foreground">
               Website usage instructions and guidelines
             </p>
