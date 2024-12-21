@@ -112,7 +112,7 @@ const Companion = () => {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add New Trigger</DialogTitle>
+                <DialogTitle className="text-foreground dark:text-white">Add New Trigger</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 pt-4">
                 <div className="space-y-2">
