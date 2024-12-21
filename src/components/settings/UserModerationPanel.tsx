@@ -101,8 +101,8 @@ export const UserModerationPanel = () => {
   return (
     <div className="border rounded-lg p-4">
       <div className="flex items-center gap-2 mb-4">
-        <Shield className="h-5 w-5" />
-        <h3 className="text-lg font-semibold">User Moderation</h3>
+        <Shield className="h-5 w-5 dark:text-white" />
+        <h3 className="text-lg font-semibold dark:text-white">User Moderation</h3>
       </div>
 
       <UsersTable
