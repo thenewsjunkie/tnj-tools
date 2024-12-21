@@ -18,15 +18,21 @@ const Instructions = () => {
   const { data: instructions, isLoading } = useQuery({
     queryKey: ["instructions"],
     queryFn: async () => {
+      console.log("[Instructions] Fetching instructions");
       const { data, error } = await supabase
         .from("instructions")
         .select("*")
-        .single();
+        .limit(1)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error("[Instructions] Error fetching:", error);
+        throw error;
+      }
+      
+      console.log("[Instructions] Fetched data:", data);
       return data;
     },
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
   useEffect(() => {
@@ -37,10 +43,14 @@ const Instructions = () => {
 
   const updateInstructions = useMutation({
     mutationFn: async (newContent: string) => {
+      if (!instructions?.id) {
+        throw new Error("No instructions record found");
+      }
+
       const { error } = await supabase
         .from("instructions")
         .update({ content: newContent })
-        .eq("id", instructions?.id);
+        .eq("id", instructions.id);
 
       if (error) throw error;
     },
@@ -52,7 +62,8 @@ const Instructions = () => {
       });
       setIsEditing(false);
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("[Instructions] Save error:", error);
       toast({
         title: "Error",
         description: "Failed to save instructions",
