@@ -518,6 +518,75 @@ export type Database = {
         }
         Relationships: []
       }
+      survey_responses: {
+        Row: {
+          age: number | null
+          car_make: string | null
+          car_year: number | null
+          children_count: number | null
+          created_at: string | null
+          education_level: string | null
+          email: string | null
+          employment_status:
+            | Database["public"]["Enums"]["employment_status"]
+            | null
+          favorite_stores: string[] | null
+          gender: string | null
+          home_ownership: string | null
+          id: string
+          income_bracket: Database["public"]["Enums"]["income_bracket"] | null
+          marital_status: Database["public"]["Enums"]["marital_status"] | null
+          media_consumption_habits: Json | null
+          preferred_social_media: string[] | null
+          shopping_preferences: string[] | null
+          zip_code: string | null
+        }
+        Insert: {
+          age?: number | null
+          car_make?: string | null
+          car_year?: number | null
+          children_count?: number | null
+          created_at?: string | null
+          education_level?: string | null
+          email?: string | null
+          employment_status?:
+            | Database["public"]["Enums"]["employment_status"]
+            | null
+          favorite_stores?: string[] | null
+          gender?: string | null
+          home_ownership?: string | null
+          id?: string
+          income_bracket?: Database["public"]["Enums"]["income_bracket"] | null
+          marital_status?: Database["public"]["Enums"]["marital_status"] | null
+          media_consumption_habits?: Json | null
+          preferred_social_media?: string[] | null
+          shopping_preferences?: string[] | null
+          zip_code?: string | null
+        }
+        Update: {
+          age?: number | null
+          car_make?: string | null
+          car_year?: number | null
+          children_count?: number | null
+          created_at?: string | null
+          education_level?: string | null
+          email?: string | null
+          employment_status?:
+            | Database["public"]["Enums"]["employment_status"]
+            | null
+          favorite_stores?: string[] | null
+          gender?: string | null
+          home_ownership?: string | null
+          id?: string
+          income_bracket?: Database["public"]["Enums"]["income_bracket"] | null
+          marital_status?: Database["public"]["Enums"]["marital_status"] | null
+          media_consumption_habits?: Json | null
+          preferred_social_media?: string[] | null
+          shopping_preferences?: string[] | null
+          zip_code?: string | null
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
           key: string
@@ -636,6 +705,27 @@ export type Database = {
     Enums: {
       call_status: "waiting" | "connected" | "ended"
       chat_source: "youtube" | "twitch" | "megachat"
+      employment_status:
+        | "full_time"
+        | "part_time"
+        | "self_employed"
+        | "unemployed"
+        | "student"
+        | "retired"
+      income_bracket:
+        | "under_25k"
+        | "25k_50k"
+        | "50k_75k"
+        | "75k_100k"
+        | "100k_150k"
+        | "over_150k"
+      marital_status:
+        | "single"
+        | "married"
+        | "divorced"
+        | "widowed"
+        | "separated"
+        | "domestic_partnership"
       message_type: "chat" | "subscription" | "superchat"
       review_type: "television" | "movie" | "food" | "product"
     }
