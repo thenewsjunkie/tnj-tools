@@ -6,7 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Zap, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { TriggerDialog } from "./triggers/TriggerDialog";
-import { TriggerList } from "./triggers/TriggerList";
+import { TriggerGrid } from "./triggers/TriggerGrid";
 
 interface Trigger {
   id: string;
@@ -187,7 +187,7 @@ const Companion = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <TriggerList
+        <TriggerGrid
           triggers={triggers}
           onTriggerClick={handleTriggerClick}
           onEditClick={(trigger) => {
