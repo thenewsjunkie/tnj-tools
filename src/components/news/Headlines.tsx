@@ -20,23 +20,18 @@ const Headlines = ({ headlines }: HeadlinesProps) => {
       <h3 className="text-lg font-semibold border-b pb-2">Latest Headlines</h3>
       <div className="space-y-2 text-left">
         {visibleHeadlines.map((headline, index) => (
-          <div key={index} className="flex items-center justify-between group">
-            <span className="flex-1">{headline.text}</span>
-            <Button
-              variant="ghost"
-              size="icon"
-              asChild
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
+          <div key={index} className="flex items-center gap-2">
+            <span>{headline.text}</span>
+            <a 
+              href={headline.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-neon-red hover:text-tnj-light transition-colors inline-flex items-center gap-1"
             >
-              <a 
-                href={headline.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary"
-              >
-                <ExternalLink className="h-4 w-4" />
-              </a>
-            </Button>
+              <span className="text-sm">[Link</span>
+              <ExternalLink className="h-3 w-3" />
+              <span className="text-sm">]</span>
+            </a>
           </div>
         ))}
       </div>
