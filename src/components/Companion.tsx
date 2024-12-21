@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bot } from "lucide-react";
+import { Bot, AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Companion = () => {
   const [iframeError, setIframeError] = useState(false);
 
   const handleIframeError = () => {
-    console.log("[Companion] Failed to load iframe content");
+    console.log("[Companion] Failed to load iframe content due to mixed content restrictions");
     setIframeError(true);
   };
 
@@ -22,14 +23,26 @@ const Companion = () => {
       </CardHeader>
       <CardContent>
         {iframeError ? (
-          <div className="text-sm text-muted-foreground">
-            Unable to connect to Companion. Please ensure:
-            <ul className="list-disc pl-4 mt-2">
-              <li>Companion is running on your network</li>
-              <li>You can access http://192.168.1.229:8888 directly</li>
-              <li>You're connected to the correct network</li>
-            </ul>
-          </div>
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Security Restriction</AlertTitle>
+            <AlertDescription className="mt-2">
+              Unable to load Companion due to browser security restrictions. To resolve this:
+              <ul className="list-disc pl-4 mt-2 space-y-1">
+                <li>Access this page using HTTP instead of HTTPS (locally)</li>
+                <li>Or configure Companion to use HTTPS (recommended)</li>
+                <li>Or access Companion directly at: <a 
+                    href="http://192.168.1.229:8888/tablet?cols=6&pages=90&rows=3" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    http://192.168.1.229:8888
+                  </a>
+                </li>
+              </ul>
+            </AlertDescription>
+          </Alert>
         ) : (
           <iframe 
             src="http://192.168.1.229:8888/tablet?cols=6&pages=90&rows=3"
