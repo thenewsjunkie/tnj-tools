@@ -46,23 +46,32 @@ export async function scrapeHeadlines(): Promise<string> {
 
       if (source.url.includes('dailymail.co.uk')) {
         doc.querySelectorAll('.linkro-darkred').forEach(el => {
-          const text = el.textContent?.trim();
-          if (text) {
-            headlines.push(`${text} - ${source.url}`);
+          const anchor = el.closest('a');
+          if (anchor) {
+            const text = el.textContent?.trim();
+            const href = anchor.getAttribute('href');
+            if (text && href) {
+              const fullUrl = href.startsWith('http') ? href : `https://www.dailymail.co.uk${href}`;
+              headlines.push(`${text} - ${fullUrl}`);
+            }
           }
         });
       } else if (source.url.includes('nypost.com')) {
-        doc.querySelectorAll('h2.story__headline, h3.story__headline').forEach(el => {
+        doc.querySelectorAll('h2.story__headline a, h3.story__headline a').forEach(el => {
           const text = el.textContent?.trim();
-          if (text) {
-            headlines.push(`${text} - ${source.url}`);
+          const href = el.getAttribute('href');
+          if (text && href) {
+            const fullUrl = href.startsWith('http') ? href : `https://nypost.com${href}`;
+            headlines.push(`${text} - ${fullUrl}`);
           }
         });
       } else if (source.url.includes('businessinsider.com')) {
-        doc.querySelectorAll('h2.headline').forEach(el => {
+        doc.querySelectorAll('h2.headline a').forEach(el => {
           const text = el.textContent?.trim();
-          if (text) {
-            headlines.push(`${text} - ${source.url}`);
+          const href = el.getAttribute('href');
+          if (text && href) {
+            const fullUrl = href.startsWith('http') ? href : `https://www.businessinsider.com${href}`;
+            headlines.push(`${text} - ${fullUrl}`);
           }
         });
       }
