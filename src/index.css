@@ -62,105 +62,110 @@
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 0 86% 97%;
+
+    /* Dark mode dialog styles */
+    [data-radix-dialog-title] {
+      @apply text-white;
+    }
+
+    /* Dark mode select styles */
+    .dark [data-radix-select-trigger] {
+      @apply bg-black/50 text-white border-white/10;
+    }
+
+    .dark [data-radix-select-content] {
+      @apply bg-black text-white border-white/10;
+    }
+
+    .dark [data-radix-select-item] {
+      @apply text-white focus:bg-white/10 data-[highlighted]:bg-white/10;
+    }
+
+    /* Dark mode table styles for Alert Queue History */
+    .dark .queue-history-table {
+      @apply bg-black/50 border-white/10;
+    }
+
+    .dark .queue-history-table th {
+      @apply bg-black/70 text-white/90 border-white/10;
+    }
+
+    .dark .queue-history-table td {
+      @apply text-white/80 border-white/10 bg-black/30;
+    }
+
+    .dark .queue-history-table tr:hover td {
+      @apply bg-white/5;
+    }
+
+    /* Status badge in dark mode */
+    .dark .queue-history-table [role="status"] {
+      @apply bg-black text-black;
+    }
+
+    /* Dark mode background and text for Alert Queue History page */
+    .dark .queue-history-page {
+      @apply bg-black text-white;
+    }
+
+    /* Default link styles */
+    a {
+      @apply text-neon-red hover:text-neon-red transition-colors;
+    }
   }
 
-  /* Dark mode select styles */
-  .dark [data-radix-select-trigger] {
-    @apply bg-black/50 text-white border-white/10;
+  .digital {
+    font-family: 'Digital-7', monospace;
+    font-display: swap;
   }
 
-  .dark [data-radix-select-content] {
-    @apply bg-black text-white border-white/10;
+  /* Override note borders */
+  .dark .note-card {
+    @apply bg-black/50 border border-white/5;
   }
 
-  .dark [data-radix-select-item] {
-    @apply text-white focus:bg-white/10 data-[highlighted]:bg-white/10;
+  .note-card {
+    @apply border-0;
   }
 
-  /* Dark mode table styles for Alert Queue History */
-  .dark .queue-history-table {
-    @apply bg-black/50 border-white/10;
+  /* TNJ AI text color in dark mode */
+  .dark .tnj-ai-title {
+    @apply text-tnj-light;
   }
 
-  .dark .queue-history-table th {
-    @apply bg-black/70 text-white/90 border-white/10;
+  /* Alert icons in light mode */
+  .light .alert-icon {
+    @apply text-tnj-dark;
   }
 
-  .dark .queue-history-table td {
-    @apply text-white/80 border-white/10 bg-black/30;
+  /* Make all links match TNJ TOOLS color */
+  .dark a {
+    @apply text-neon-red hover:text-tnj-light transition-colors;
   }
 
-  .dark .queue-history-table tr:hover td {
-    @apply bg-white/5;
-  }
-
-  /* Status badge in dark mode */
-  .dark .queue-history-table [role="status"] {
-    @apply bg-black text-black;
-  }
-
-  /* Dark mode background and text for Alert Queue History page */
-  .dark .queue-history-page {
-    @apply bg-black text-white;
+  /* Light mode specific link styles for show notes */
+  .light .note-card a {
+    @apply text-neon-red hover:text-neon-red visited:text-neon-red transition-colors;
   }
 
   /* Default link styles */
   a {
     @apply text-neon-red hover:text-neon-red transition-colors;
   }
-}
 
-.digital {
-  font-family: 'Digital-7', monospace;
-  font-display: swap;
-}
+  /* Light mode card styles */
+  .light .Card {
+    @apply border border-gray-200;
+  }
 
-/* Override note borders */
-.dark .note-card {
-  @apply bg-black/50 border border-white/5;
-}
+  /* Dark mode textarea styles */
+  .dark textarea {
+    @apply text-white bg-black/50;
+  }
 
-.note-card {
-  @apply border-0;
-}
-
-/* TNJ AI text color in dark mode */
-.dark .tnj-ai-title {
-  @apply text-tnj-light;
-}
-
-/* Alert icons in light mode */
-.light .alert-icon {
-  @apply text-tnj-dark;
-}
-
-/* Make all links match TNJ TOOLS color */
-.dark a {
-  @apply text-neon-red hover:text-tnj-light transition-colors;
-}
-
-/* Light mode specific link styles for show notes */
-.light .note-card a {
-  @apply text-neon-red hover:text-neon-red visited:text-neon-red transition-colors;
-}
-
-/* Default link styles */
-a {
-  @apply text-neon-red hover:text-neon-red transition-colors;
-}
-
-/* Light mode card styles */
-.light .Card {
-  @apply border border-gray-200;
-}
-
-/* Dark mode textarea styles */
-.dark textarea {
-  @apply text-white bg-black/50;
-}
-
-/* Preload font for OBS */
-.alert-message-font {
-  font-family: 'Radiate Sans Extra Bold', system-ui, -apple-system, sans-serif !important;
-  font-weight: 800 !important;
+  /* Preload font for OBS */
+  .alert-message-font {
+    font-family: 'Radiate Sans Extra Bold', system-ui, -apple-system, sans-serif !important;
+    font-weight: 800 !important;
+  }
 }
