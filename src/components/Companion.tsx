@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Zap, Plus } from "lucide-react";
+import { Zap, Plus, Edit2, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -17,6 +17,7 @@ const Companion = () => {
   const [triggers, setTriggers] = useState<Trigger[]>([]);
   const [newTitle, setNewTitle] = useState("");
   const [newLink, setNewLink] = useState("");
+  const [editingTrigger, setEditingTrigger] = useState<Trigger | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
@@ -79,6 +80,70 @@ const Companion = () => {
     }
   };
 
+  const handleEditTrigger = async () => {
+    if (!editingTrigger || !editingTrigger.title || !editingTrigger.link) {
+      toast({
+        title: "Error",
+        description: "Both title and link are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('triggers')
+        .update({ 
+          title: editingTrigger.title, 
+          link: editingTrigger.link 
+        })
+        .eq('id', editingTrigger.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Trigger updated successfully",
+      });
+
+      setEditingTrigger(null);
+      setIsDialogOpen(false);
+      fetchTriggers();
+    } catch (error) {
+      console.error('Error updating trigger:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update trigger",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteTrigger = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('triggers')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Trigger deleted successfully",
+      });
+
+      fetchTriggers();
+    } catch (error) {
+      console.error('Error deleting trigger:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete trigger",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleTriggerClick = async (link: string) => {
     try {
       await fetch(link);
@@ -96,6 +161,11 @@ const Companion = () => {
     }
   };
 
+  const openEditDialog = (trigger: Trigger) => {
+    setEditingTrigger(trigger);
+    setIsDialogOpen(true);
+  };
+
   return (
     <Card className="w-full bg-background border border-gray-200 dark:border-white/10">
       <CardHeader>
@@ -106,31 +176,50 @@ const Companion = () => {
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => {
+                  setEditingTrigger(null);
+                  setNewTitle("");
+                  setNewLink("");
+                }}
+              >
                 <Plus className="h-4 w-4" />
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle className="text-foreground dark:text-white">Add New Trigger</DialogTitle>
+                <DialogTitle className="text-foreground dark:text-white">
+                  {editingTrigger ? 'Edit Trigger' : 'Add New Trigger'}
+                </DialogTitle>
               </DialogHeader>
               <div className="space-y-4 pt-4">
                 <div className="space-y-2">
                   <Input
                     placeholder="Trigger Title"
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
+                    value={editingTrigger ? editingTrigger.title : newTitle}
+                    onChange={(e) => editingTrigger 
+                      ? setEditingTrigger({...editingTrigger, title: e.target.value})
+                      : setNewTitle(e.target.value)
+                    }
                   />
                 </div>
                 <div className="space-y-2">
                   <Input
                     placeholder="Trigger Link"
-                    value={newLink}
-                    onChange={(e) => setNewLink(e.target.value)}
+                    value={editingTrigger ? editingTrigger.link : newLink}
+                    onChange={(e) => editingTrigger
+                      ? setEditingTrigger({...editingTrigger, link: e.target.value})
+                      : setNewLink(e.target.value)
+                    }
                   />
                 </div>
-                <Button onClick={handleAddTrigger} className="w-full">
-                  Add Trigger
+                <Button 
+                  onClick={editingTrigger ? handleEditTrigger : handleAddTrigger} 
+                  className="w-full"
+                >
+                  {editingTrigger ? 'Update Trigger' : 'Add Trigger'}
                 </Button>
               </div>
             </DialogContent>
@@ -139,14 +228,30 @@ const Companion = () => {
       </CardHeader>
       <CardContent className="space-y-2">
         {triggers.map((trigger) => (
-          <Button
-            key={trigger.id}
-            variant="outline"
-            className="w-full justify-start"
-            onClick={() => handleTriggerClick(trigger.link)}
-          >
-            {trigger.title}
-          </Button>
+          <div key={trigger.id} className="flex gap-2">
+            <Button
+              variant="outline"
+              className="flex-1 justify-start"
+              onClick={() => handleTriggerClick(trigger.link)}
+            >
+              {trigger.title}
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => openEditDialog(trigger)}
+            >
+              <Edit2 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => handleDeleteTrigger(trigger.id)}
+              className="text-destructive hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         ))}
         {triggers.length === 0 && (
           <div className="text-sm text-muted-foreground text-center py-4">
