@@ -638,6 +638,27 @@ export type Database = {
         }
         Relationships: []
       }
+      triggers: {
+        Row: {
+          created_at: string
+          id: string
+          link: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          link: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          link?: string
+          title?: string
+        }
+        Relationships: []
+      }
       twitch_channel_emotes: {
         Row: {
           created_at: string | null

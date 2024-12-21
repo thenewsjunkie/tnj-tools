@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Zap, Plus } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Trigger {
+  id: string;
   title: string;
   link: string;
 }
@@ -15,9 +17,33 @@ const Companion = () => {
   const [triggers, setTriggers] = useState<Trigger[]>([]);
   const [newTitle, setNewTitle] = useState("");
   const [newLink, setNewLink] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
-  const handleAddTrigger = () => {
+  useEffect(() => {
+    fetchTriggers();
+  }, []);
+
+  const fetchTriggers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('triggers')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setTriggers(data || []);
+    } catch (error) {
+      console.error('Error fetching triggers:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load triggers",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddTrigger = async () => {
     if (!newTitle || !newLink) {
       toast({
         title: "Error",
@@ -27,9 +53,30 @@ const Companion = () => {
       return;
     }
 
-    setTriggers([...triggers, { title: newTitle, link: newLink }]);
-    setNewTitle("");
-    setNewLink("");
+    try {
+      const { error } = await supabase
+        .from('triggers')
+        .insert([{ title: newTitle, link: newLink }]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Trigger added successfully",
+      });
+
+      setNewTitle("");
+      setNewLink("");
+      setIsDialogOpen(false);
+      fetchTriggers();
+    } catch (error) {
+      console.error('Error adding trigger:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add trigger",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleTriggerClick = async (link: string) => {
@@ -40,6 +87,7 @@ const Companion = () => {
         description: "Trigger executed successfully",
       });
     } catch (error) {
+      console.error('Error executing trigger:', error);
       toast({
         title: "Error",
         description: "Failed to execute trigger",
@@ -56,7 +104,7 @@ const Companion = () => {
             <Zap className="h-5 w-5 text-foreground" />
             Triggers
           </div>
-          <Dialog>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="ghost" size="icon">
                 <Plus className="h-4 w-4" />
@@ -90,9 +138,9 @@ const Companion = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
-        {triggers.map((trigger, index) => (
+        {triggers.map((trigger) => (
           <Button
-            key={index}
+            key={trigger.id}
             variant="outline"
             className="w-full justify-start"
             onClick={() => handleTriggerClick(trigger.link)}
