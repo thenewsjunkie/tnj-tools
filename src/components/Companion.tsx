@@ -13,9 +13,11 @@ const Companion = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-sm text-muted-foreground">
-          Coming soon...
-        </div>
+        <iframe 
+          src="http://192.168.1.229:8888/tablet?cols=6&pages=90&rows=3"
+          className="w-full h-[500px] border-0 rounded-md"
+          title="Bitfocus Companion Interface"
+        />
       </CardContent>
     </Card>
   );
