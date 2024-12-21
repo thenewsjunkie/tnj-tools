@@ -28,12 +28,11 @@ serve(async (req) => {
 
     // Validate config
     if (!config.channel || !config.clientId || !config.clientSecret) {
-      console.error("[TwitchBot] Missing required environment variables");
       throw new Error("Missing Twitch configuration. Please check environment variables.");
     }
 
     if (action === "status") {
-      const status = botInstance?.getStatus() === "Connected" ? "connected" : "disconnected";
+      const status = botInstance?.getStatus() || "disconnected";
       return new Response(
         JSON.stringify({ status }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -41,24 +40,22 @@ serve(async (req) => {
     }
 
     if (action === "start") {
-      console.log("[TwitchBot] Starting bot with channel:", config.channel);
-      
       if (botInstance) {
-        console.log("[TwitchBot] Already running, stopping first...");
+        console.log("[TwitchBot] Stopping existing instance...");
         await botInstance.disconnect();
       }
 
-      // Create new bot instance
+      console.log("[TwitchBot] Creating new bot instance...");
       botInstance = new TwitchBot(config);
       
-      // Connect in the background to avoid timeout
+      // Start connection in background
       botInstance.connect().catch(error => {
         console.error("[TwitchBot] Connection error:", error);
         botInstance = null;
       });
-      
+
       return new Response(
-        JSON.stringify({ status: "Twitch bot starting" }),
+        JSON.stringify({ status: "starting" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -70,7 +67,7 @@ serve(async (req) => {
         botInstance = null;
       }
       return new Response(
-        JSON.stringify({ status: "Twitch bot stopped" }),
+        JSON.stringify({ status: "stopped" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

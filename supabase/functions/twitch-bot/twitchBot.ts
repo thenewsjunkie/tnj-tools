@@ -9,50 +9,55 @@ export class TwitchBot {
   private isConnected: boolean = false;
 
   constructor(config: BotConfig) {
+    console.log("[TwitchBot] Initializing with channel:", config.channel);
     this.connection = new TwitchConnection(
       config,
       this.handleMessage.bind(this),
       this.handleConnectionChange.bind(this)
     );
-    console.log("[TwitchBot] Constructor called with channel:", config.channel);
   }
 
   private async handleMessage(message: string) {
-    console.log("[TwitchBot] Received IRC message:", message);
+    try {
+      console.log("[TwitchBot] Processing message:", message);
 
-    if (message.includes("USERNOTICE")) {
-      console.log("[TwitchBot] Processing subscription message:", message);
-      const subInfo = MessageParser.parseSubscriptionMessage(message);
-      if (subInfo) {
-        await forwardToWebhook({
-          type: "subscription",
-          username: subInfo.username,
-          message: subInfo.message,
-          channel: this.connection.config.channel
-        });
+      if (message.includes("USERNOTICE")) {
+        console.log("[TwitchBot] Processing subscription message");
+        const subInfo = MessageParser.parseSubscriptionMessage(message);
+        if (subInfo) {
+          await forwardToWebhook({
+            type: "subscription",
+            username: subInfo.username,
+            message: subInfo.message,
+            channel: this.connection.config.channel
+          });
+        }
+        return;
       }
-      return;
-    }
 
-    if (message.includes("PRIVMSG")) {
-      console.log("[TwitchBot] Processing chat message:", message);
-      const parsedMessage = MessageParser.parseMessage(message);
-      if (parsedMessage) {
-        await forwardToWebhook({
-          type: "chat",
-          ...parsedMessage
-        });
+      if (message.includes("PRIVMSG")) {
+        console.log("[TwitchBot] Processing chat message");
+        const parsedMessage = MessageParser.parseMessage(message);
+        if (parsedMessage) {
+          await forwardToWebhook({
+            type: "chat",
+            ...parsedMessage
+          });
+        }
       }
+    } catch (error) {
+      console.error("[TwitchBot] Error handling message:", error);
     }
   }
 
   private handleConnectionChange(status: boolean) {
+    console.log("[TwitchBot] Connection status changed:", status);
     this.isConnected = status;
   }
 
   async connect() {
     try {
-      console.log("[TwitchBot] Starting connection attempt...");
+      console.log("[TwitchBot] Initiating connection...");
       
       const tokenResponse = await fetch('https://id.twitch.tv/oauth2/token', {
         method: 'POST',
@@ -76,12 +81,13 @@ export class TwitchBot {
       const botUsername = "justinfan" + Math.floor(Math.random() * 100000);
       await this.connection.connect(access_token, botUsername);
     } catch (error) {
-      console.error("[TwitchBot] Error in connect method:", error);
+      console.error("[TwitchBot] Connection error:", error);
       throw error;
     }
   }
 
   async disconnect() {
+    console.log("[TwitchBot] Disconnecting...");
     await this.connection.disconnect();
   }
 
