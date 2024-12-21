@@ -68,6 +68,11 @@
       @apply text-white;
     }
 
+    /* Dark mode input styles */
+    input {
+      @apply text-white bg-black/50 border-white/10 placeholder:text-white/50;
+    }
+
     /* Dark mode select styles */
     .dark [data-radix-select-trigger] {
       @apply bg-black/50 text-white border-white/10;
