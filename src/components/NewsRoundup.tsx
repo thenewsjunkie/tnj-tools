@@ -7,21 +7,11 @@ import { useToast } from "@/components/ui/use-toast";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import Headlines from "./news/Headlines";
 import Trends from "./news/Trends";
-import BoxOffice from "./news/BoxOffice";
-
-interface BoxOfficeMovie {
-  title: string;
-  earnings: number;
-}
-
-interface NewsRoundupSources {
-  boxOffice?: BoxOfficeMovie[];
-}
 
 interface NewsRoundupData {
   id: string;
   content: string;
-  sources: NewsRoundupSources;
+  sources: any;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -42,13 +32,7 @@ const NewsRoundup = () => {
       if (error) throw error;
       if (!data || data.length === 0) return null;
       
-      // Ensure sources is properly parsed
-      const roundup = data[0] as NewsRoundupData;
-      if (typeof roundup.sources === 'string') {
-        roundup.sources = JSON.parse(roundup.sources);
-      }
-      
-      return roundup;
+      return data[0] as NewsRoundupData;
     }
   });
 
@@ -113,12 +97,7 @@ const NewsRoundup = () => {
     return (
       <div className="space-y-8">
         {headlines.length > 0 && <Headlines headlines={headlines} />}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {trends.length > 0 && <Trends trends={trends} />}
-          {newsRoundup?.sources?.boxOffice && newsRoundup.sources.boxOffice.length > 0 && (
-            <BoxOffice movies={newsRoundup.sources.boxOffice} />
-          )}
-        </div>
+        {trends.length > 0 && <Trends trends={trends} />}
       </div>
     );
   };
