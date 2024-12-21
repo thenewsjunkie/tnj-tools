@@ -76,7 +76,7 @@ export async function scrapeHeadlines(): Promise<string> {
         });
       }
 
-      allHeadlines = [...allHeadlines, ...headlines.slice(0, 3)];
+      allHeadlines = [...allHeadlines, ...headlines.slice(0, 4)];
     } catch (error) {
       console.error(`Error scraping ${source.url}:`, error);
       continue;
@@ -84,8 +84,9 @@ export async function scrapeHeadlines(): Promise<string> {
   }
 
   // Filter out empty headlines and join with newlines
+  // Now taking up to 12 headlines (4 from each source)
   return allHeadlines
     .filter(h => h.length > 0)
-    .slice(0, 5)
+    .slice(0, 12)
     .join('\n');
 }

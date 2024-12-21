@@ -13,7 +13,7 @@ interface HeadlinesProps {
 
 const Headlines = ({ headlines }: HeadlinesProps) => {
   const [showAllHeadlines, setShowAllHeadlines] = useState(false);
-  const visibleHeadlines = showAllHeadlines ? headlines : headlines.slice(0, 3);
+  const visibleHeadlines = showAllHeadlines ? headlines : headlines.slice(0, 5);
 
   return (
     <div className="space-y-4">
@@ -40,7 +40,7 @@ const Headlines = ({ headlines }: HeadlinesProps) => {
           </div>
         ))}
       </div>
-      {headlines.length > 3 && (
+      {headlines.length > 5 && (
         <Button
           variant="ghost"
           size="sm"
