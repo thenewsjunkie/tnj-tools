@@ -34,7 +34,7 @@ const Settings = () => {
           Back to Admin
         </Link>
         <div className="flex items-center gap-4">
-          <Link to="/instructions">
+          <Link to="/admin/instructions">
             <Button
               variant="ghost"
               className="text-foreground hover:text-primary hover:bg-white/10 flex items-center gap-2"
