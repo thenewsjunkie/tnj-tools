@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Robot } from "lucide-react";
+import { Bot } from "lucide-react";
 
 const Companion = () => {
   return (
@@ -7,7 +7,7 @@ const Companion = () => {
       <CardHeader>
         <CardTitle className="flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <Robot className="h-5 w-5 text-foreground" />
+            <Bot className="h-5 w-5 text-foreground" />
             Companion
           </div>
         </CardTitle>
