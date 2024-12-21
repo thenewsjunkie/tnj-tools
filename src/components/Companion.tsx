@@ -1,167 +1,28 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Zap, Plus } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import TriggerButton from "./triggers/TriggerButton";
-
-interface Trigger {
-  id: string;
-  title: string;
-  link: string;
-}
+import TriggerDialog from "./triggers/TriggerDialog";
+import { useTriggers, type Trigger } from "@/hooks/useTriggers";
 
 const Companion = () => {
-  const [triggers, setTriggers] = useState<Trigger[]>([]);
-  const [newTitle, setNewTitle] = useState("");
-  const [newLink, setNewLink] = useState("");
+  const { triggers, addTrigger, editTrigger, deleteTrigger, executeTrigger } = useTriggers();
   const [editingTrigger, setEditingTrigger] = useState<Trigger | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { toast } = useToast();
 
-  useEffect(() => {
-    fetchTriggers();
-  }, []);
-
-  const fetchTriggers = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('triggers')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setTriggers(data || []);
-    } catch (error) {
-      console.error('Error fetching triggers:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load triggers",
-        variant: "destructive",
-      });
+  const handleSubmit = async (title: string, link: string) => {
+    let success;
+    if (editingTrigger) {
+      success = await editTrigger({ ...editingTrigger, title, link });
+    } else {
+      success = await addTrigger(title, link);
     }
-  };
-
-  const handleAddTrigger = async () => {
-    if (!newTitle || !newLink) {
-      toast({
-        title: "Error",
-        description: "Both title and link are required",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('triggers')
-        .insert([{ title: newTitle, link: newLink }]);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Trigger added successfully",
-      });
-
-      setNewTitle("");
-      setNewLink("");
-      setIsDialogOpen(false);
-      fetchTriggers();
-    } catch (error) {
-      console.error('Error adding trigger:', error);
-      toast({
-        title: "Error",
-        description: "Failed to add trigger",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleEditTrigger = async () => {
-    if (!editingTrigger || !editingTrigger.title || !editingTrigger.link) {
-      toast({
-        title: "Error",
-        description: "Both title and link are required",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('triggers')
-        .update({ 
-          title: editingTrigger.title, 
-          link: editingTrigger.link 
-        })
-        .eq('id', editingTrigger.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Trigger updated successfully",
-      });
-
+    
+    if (success) {
       setEditingTrigger(null);
       setIsDialogOpen(false);
-      fetchTriggers();
-    } catch (error) {
-      console.error('Error updating trigger:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update trigger",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDeleteTrigger = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('triggers')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Trigger deleted successfully",
-      });
-
-      fetchTriggers();
-    } catch (error) {
-      console.error('Error deleting trigger:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete trigger",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleTriggerClick = async (link: string) => {
-    console.log('Companion: Trigger clicked with link:', link);
-    try {
-      console.log('Companion: Attempting to fetch:', link);
-      const response = await fetch(link);
-      console.log('Companion: Fetch response:', response);
-      toast({
-        title: "Success",
-        description: "Trigger executed successfully",
-      });
-    } catch (error) {
-      console.error('Error executing trigger:', error);
-      toast({
-        title: "Error",
-        description: "Failed to execute trigger",
-        variant: "destructive",
-      });
     }
   };
 
@@ -185,48 +46,15 @@ const Companion = () => {
                 size="icon"
                 onClick={() => {
                   setEditingTrigger(null);
-                  setNewTitle("");
-                  setNewLink("");
                 }}
               >
                 <Plus className="h-4 w-4" />
               </Button>
             </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle className="text-foreground dark:text-white">
-                  {editingTrigger ? 'Edit Trigger' : 'Add New Trigger'}
-                </DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 pt-4">
-                <div className="space-y-2">
-                  <Input
-                    placeholder="Trigger Title"
-                    value={editingTrigger ? editingTrigger.title : newTitle}
-                    onChange={(e) => editingTrigger 
-                      ? setEditingTrigger({...editingTrigger, title: e.target.value})
-                      : setNewTitle(e.target.value)
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Input
-                    placeholder="Trigger Link"
-                    value={editingTrigger ? editingTrigger.link : newLink}
-                    onChange={(e) => editingTrigger
-                      ? setEditingTrigger({...editingTrigger, link: e.target.value})
-                      : setNewLink(e.target.value)
-                    }
-                  />
-                </div>
-                <Button 
-                  onClick={editingTrigger ? handleEditTrigger : handleAddTrigger} 
-                  className="w-full"
-                >
-                  {editingTrigger ? 'Update Trigger' : 'Add Trigger'}
-                </Button>
-              </div>
-            </DialogContent>
+            <TriggerDialog
+              trigger={editingTrigger}
+              onSubmit={handleSubmit}
+            />
           </Dialog>
         </CardTitle>
       </CardHeader>
@@ -236,9 +64,9 @@ const Companion = () => {
             <TriggerButton
               key={trigger.id}
               title={trigger.title}
-              onTriggerClick={() => handleTriggerClick(trigger.link)}
+              onTriggerClick={() => executeTrigger(trigger.link)}
               onEdit={() => openEditDialog(trigger)}
-              onDelete={() => handleDeleteTrigger(trigger.id)}
+              onDelete={() => deleteTrigger(trigger.id)}
             />
           ))}
         </div>
