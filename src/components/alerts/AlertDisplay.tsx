@@ -40,7 +40,7 @@ export const AlertDisplay = ({
   }
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center">
+    <div className="fixed inset-0 flex items-start justify-center pt-16">
       <div className="max-h-[90vh] flex flex-col items-center">
         <div className="relative">
           {currentAlert.media_type.startsWith('video') ? (
