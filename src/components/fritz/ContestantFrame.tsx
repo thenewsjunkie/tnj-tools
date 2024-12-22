@@ -59,13 +59,13 @@ const ContestantFrame = ({
         value={name || ''}
         onChange={(e) => onNameChange(e.target.value)}
         placeholder="Enter name"
-        className="w-full max-w-[256px] bg-black text-white placeholder:text-white/50 text-center"
+        className="w-full max-w-[256px] bg-black text-white placeholder:text-white/50 text-center border-white/10"
       />
 
       <Button
         variant="ghost"
         onClick={onClear}
-        className="text-black hover:bg-black/10"
+        className="text-white hover:bg-white/10"
       >
         Clear
       </Button>
