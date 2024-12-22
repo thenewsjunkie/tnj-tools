@@ -2,6 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import ScoreControls from "./ScoreControls";
 import ClearButton from "./ClearButton";
+import { useTheme } from "@/components/theme/ThemeProvider";
 
 interface ContestantFrameProps {
   imageUrl: string | null;
@@ -24,6 +25,8 @@ const ContestantFrame = ({
   onClear,
   onImageClear,
 }: ContestantFrameProps) => {
+  const { theme } = useTheme();
+  
   return (
     <div className="flex flex-col items-center space-y-4">
       <ScoreControls score={score} onScoreChange={onScoreChange} />
@@ -59,7 +62,9 @@ const ContestantFrame = ({
         value={name || ''}
         onChange={(e) => onNameChange(e.target.value)}
         placeholder="Enter name"
-        className="w-full max-w-[256px] bg-black text-white placeholder:text-white/50 text-center border-white/10"
+        className={`w-full max-w-[256px] text-center border-white/10 ${
+          theme === 'dark' ? 'bg-black text-white placeholder:text-white/50' : 'text-black placeholder:text-black/50'
+        }`}
       />
 
       <Button
