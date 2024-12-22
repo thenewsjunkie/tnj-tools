@@ -100,11 +100,23 @@ const Fritz = () => {
       position = emptyPosition;
     }
 
+    // Fetch the default contestant's image if no image URL is provided
+    if (!imageUrl) {
+      const { data: defaultContestant } = await supabase
+        .from('fritz_default_contestants')
+        .select('image_url')
+        .eq('name', name)
+        .single();
+      
+      imageUrl = defaultContestant?.image_url || null;
+    }
+
     const { error: updateError } = await supabase
       .from('fritz_contestants')
       .update({ 
         name,
-        score: 0
+        score: 0,
+        image_url: imageUrl
       })
       .eq('position', position);
 
@@ -125,7 +137,8 @@ const Fritz = () => {
         c.position === position ? { 
           ...c, 
           name,
-          score: 0 
+          score: 0,
+          image_url: imageUrl
         } : c
       );
       console.log('Updated contestants state:', updated);
@@ -141,7 +154,7 @@ const Fritz = () => {
             console.log('ContestantSelector selected:', { name, imageUrl });
             const nextEmptyPosition = contestants.findIndex(c => !c.name || c.name === 'Custom');
             if (nextEmptyPosition !== -1) {
-              updateContestant(nextEmptyPosition + 1, name, null);
+              updateContestant(nextEmptyPosition + 1, name, imageUrl);
             }
           }} 
         />
