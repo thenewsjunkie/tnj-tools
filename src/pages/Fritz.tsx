@@ -100,27 +100,10 @@ const Fritz = () => {
       position = emptyPosition;
     }
 
-    const { data: defaultContestant, error: fetchError } = await supabase
-      .from('fritz_default_contestants')
-      .select('*')
-      .eq('name', name)
-      .single();
-
-    if (fetchError) {
-      console.error('Error fetching default contestant:', fetchError);
-      return;
-    }
-
-    console.log('Found default contestant:', defaultContestant);
-
-    const finalImageUrl = defaultContestant?.image_url || imageUrl;
-    console.log('Using finalImageUrl:', finalImageUrl);
-
     const { error: updateError } = await supabase
       .from('fritz_contestants')
       .update({ 
         name,
-        image_url: finalImageUrl,
         score: 0
       })
       .eq('position', position);
@@ -141,8 +124,7 @@ const Fritz = () => {
       const updated = prev.map(c => 
         c.position === position ? { 
           ...c, 
-          name, 
-          image_url: finalImageUrl, 
+          name,
           score: 0 
         } : c
       );
@@ -159,7 +141,7 @@ const Fritz = () => {
             console.log('ContestantSelector selected:', { name, imageUrl });
             const nextEmptyPosition = contestants.findIndex(c => !c.name || c.name === 'Custom');
             if (nextEmptyPosition !== -1) {
-              updateContestant(nextEmptyPosition + 1, name, imageUrl);
+              updateContestant(nextEmptyPosition + 1, name, null);
             }
           }} 
         />
