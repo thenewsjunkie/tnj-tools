@@ -65,7 +65,7 @@ const ContestantFrame = ({
       <Button
         variant="ghost"
         onClick={onClear}
-        className="text-black dark:text-white hover:bg-black/10 dark:hover:bg-white/10"
+        className="text-black hover:bg-black/10"
       >
         Clear
       </Button>
