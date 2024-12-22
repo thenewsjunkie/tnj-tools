@@ -1,0 +1,82 @@
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { FritzContestant } from "@/integrations/supabase/types/tables/fritz";
+
+const CurrentScore = () => {
+  const [contestants, setContestants] = useState<FritzContestant[]>([]);
+
+  useEffect(() => {
+    fetchContestants();
+    
+    // Subscribe to realtime updates
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'fritz_contestants'
+        },
+        (payload) => {
+          console.log('Change received!', payload);
+          fetchContestants();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const fetchContestants = async () => {
+    const { data: contestants, error } = await supabase
+      .from('fritz_contestants')
+      .select('*')
+      .order('position');
+    
+    if (error) {
+      console.error('Error fetching contestants:', error);
+      return;
+    }
+
+    setContestants(contestants || []);
+  };
+
+  return (
+    <div className="min-h-screen bg-black text-white p-0">
+      <div className="flex">
+        {contestants.filter(c => c.name).map((contestant) => (
+          <div key={contestant.id} className="relative w-[400px] h-[400px]">
+            {contestant.image_url ? (
+              <img
+                src={contestant.image_url}
+                alt={contestant.name || ''}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-900" />
+            )}
+            
+            {/* Score Overlay */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-[150px] font-['Digital-7'] text-neon-red animate-led-flicker">
+                {contestant.score || 0}
+              </span>
+            </div>
+            
+            {/* Name Overlay */}
+            <div className="absolute bottom-0 left-0 right-0 bg-black/80 p-4">
+              <h2 className="text-3xl text-center font-bold text-white">
+                {contestant.name}
+              </h2>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default CurrentScore;
