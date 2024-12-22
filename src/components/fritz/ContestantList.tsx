@@ -7,6 +7,7 @@ interface ContestantListProps {
   onNameChange: (position: number, name: string) => void;
   onScoreChange: (position: number, increment: boolean) => void;
   onClear: (position: number) => void;
+  onImageClear: (position: number) => void;
 }
 
 const ContestantList = ({
@@ -15,6 +16,7 @@ const ContestantList = ({
   onNameChange,
   onScoreChange,
   onClear,
+  onImageClear,
 }: ContestantListProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -37,6 +39,7 @@ const ContestantList = ({
             onNameChange={(name) => onNameChange(position, name)}
             onScoreChange={(increment) => onScoreChange(position, increment)}
             onClear={() => onClear(position)}
+            onImageClear={() => onImageClear(position)}
           />
         );
       })}

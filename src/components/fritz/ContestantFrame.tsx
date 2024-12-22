@@ -1,4 +1,5 @@
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import ScoreControls from "./ScoreControls";
 import ClearButton from "./ClearButton";
 
@@ -10,6 +11,7 @@ interface ContestantFrameProps {
   onNameChange: (name: string) => void;
   onScoreChange: (increment: boolean) => void;
   onClear: () => void;
+  onImageClear: () => void;
 }
 
 const ContestantFrame = ({
@@ -20,6 +22,7 @@ const ContestantFrame = ({
   onNameChange,
   onScoreChange,
   onClear,
+  onImageClear,
 }: ContestantFrameProps) => {
   return (
     <div className="flex flex-col items-center space-y-4">
@@ -33,7 +36,7 @@ const ContestantFrame = ({
               alt={name || ''}
               className="w-full h-full object-cover"
             />
-            <ClearButton onClick={onClear} />
+            <ClearButton onClick={onImageClear} />
           </>
         ) : (
           <div className="w-full h-full bg-black/20 flex items-center justify-center">
@@ -58,6 +61,14 @@ const ContestantFrame = ({
         placeholder="Enter name"
         className="w-full max-w-[256px] bg-black/20 text-white placeholder:text-white/50 text-center"
       />
+
+      <Button
+        variant="ghost"
+        onClick={onClear}
+        className="text-black dark:text-white hover:bg-black/10 dark:hover:bg-white/10"
+      >
+        Clear
+      </Button>
     </div>
   );
 };

@@ -112,7 +112,50 @@ const Fritz = () => {
     });
   };
 
+  const clearContestantImage = async (position: number) => {
+    const { error } = await supabase
+      .from('fritz_contestants')
+      .update({ image_url: null })
+      .eq('position', position);
+
+    if (error) {
+      console.error('Error clearing contestant image:', error);
+      return;
+    }
+
+    setContestants(prev => 
+      prev.map(c => c.position === position ? { ...c, image_url: null } : c)
+    );
+  };
+
   const updateContestant = async (position: number, name: string, imageUrl: string | null) => {
+    // Check if all positions are filled
+    const filledPositions = contestants.filter(c => c.name).length;
+    const currentContestant = contestants.find(c => c.position === position);
+    
+    if (filledPositions === 3 && !currentContestant?.name) {
+      toast({
+        title: "All positions are full",
+        description: "Clear a position before adding a new contestant",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Find the first empty position if none specified
+    if (!position) {
+      const emptyPosition = contestants.find(c => !c.name)?.position;
+      if (!emptyPosition) {
+        toast({
+          title: "All positions are full",
+          description: "Clear a position before adding a new contestant",
+          variant: "destructive"
+        });
+        return;
+      }
+      position = emptyPosition;
+    }
+
     const { error } = await supabase
       .from('fritz_contestants')
       .update({ 
@@ -192,6 +235,7 @@ const Fritz = () => {
         }}
         onScoreChange={updateScore}
         onClear={clearContestant}
+        onImageClear={clearContestantImage}
       />
     </div>
   );
