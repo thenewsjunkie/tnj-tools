@@ -15,7 +15,7 @@ const Header = ({ onReset }: HeaderProps) => {
         variant="ghost"
         size="icon"
         onClick={onReset}
-        className="text-white hover:bg-white/10"
+        className="text-black hover:bg-white/10"
       >
         <RefreshCw className="h-6 w-6" />
       </Button>
