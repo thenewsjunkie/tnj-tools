@@ -17,14 +17,16 @@ const StreamGraphicButtons = () => {
           Stream Graphic 1
         </Button>
       </Link>
-      <Button
-        variant="ghost"
-        className={`${
-          theme === 'dark' ? 'bg-black text-white' : 'text-black'
-        } hover:text-neon-red transition-colors px-4 py-2 border border-white/20 rounded`}
-      >
-        Stream Graphic 2
-      </Button>
+      <Link to="/fritz/total-score">
+        <Button
+          variant="ghost"
+          className={`${
+            theme === 'dark' ? 'bg-black text-white' : 'text-black'
+          } hover:text-neon-red transition-colors px-4 py-2 border border-white/20 rounded`}
+        >
+          Stream Graphic 2
+        </Button>
+      </Link>
     </div>
   );
 };

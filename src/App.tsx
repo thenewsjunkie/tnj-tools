@@ -19,6 +19,7 @@ import Instructions from "./pages/Instructions";
 import QueueHistory from "./pages/QueueHistory";
 import Fritz from "./pages/Fritz";
 import CurrentScore from "./pages/CurrentScore";
+import TotalScore from "./pages/TotalScore";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -157,6 +158,7 @@ const App = () => (
             <Route path="/alerts/:alertSlug/:username" element={<Alerts />} />
             <Route path="/fritz" element={<Fritz />} />
             <Route path="/fritz/current-score" element={<CurrentScore />} />
+            <Route path="/fritz/total-score" element={<TotalScore />} />
 
             {/* Protected Admin Routes */}
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
