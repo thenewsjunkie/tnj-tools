@@ -11,7 +11,7 @@ const AlertMessage = ({ message, fontSize = 24 }: AlertMessageProps) => {
 
   return (
     <div 
-      className="text-white alert-message-font mt-2"
+      className="text-white alert-message-font mt-2 text-center"
       style={{ 
         fontSize: `${fontSize}px`,
         textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
