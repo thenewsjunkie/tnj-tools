@@ -8,7 +8,6 @@ const CurrentScore = () => {
   useEffect(() => {
     fetchContestants();
     
-    // Subscribe to realtime updates for both contestants and yearly scores
     const channel = supabase
       .channel('fritz-score-changes')
       .on(
@@ -18,14 +17,17 @@ const CurrentScore = () => {
           schema: 'public',
           table: 'fritz_contestants'
         },
-        () => {
-          console.log('Contestant change detected, fetching updated data');
+        (payload) => {
+          console.log('Real-time update received:', payload);
           fetchContestants();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Subscription status:', status);
+      });
 
     return () => {
+      console.log('Cleaning up subscription');
       supabase.removeChannel(channel);
     };
   }, []);
@@ -41,6 +43,7 @@ const CurrentScore = () => {
       return;
     }
 
+    console.log('Fetched contestants:', contestants);
     setContestants(contestants || []);
   };
 
