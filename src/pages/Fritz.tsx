@@ -3,8 +3,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { FritzContestant } from "@/integrations/supabase/types/tables/fritz";
 import Header from "@/components/fritz/Header";
-import ContestantFrame from "@/components/fritz/ContestantFrame";
 import ContestantSelector from "@/components/fritz/ContestantSelector";
+import ContestantList from "@/components/fritz/ContestantList";
 
 const DEFAULT_CONTESTANTS = ['Shawn', 'Sabrina', 'C-Lane'];
 
@@ -17,7 +17,6 @@ const Fritz = () => {
   }, []);
 
   const fetchContestants = async () => {
-    // First, try to get existing contestants
     const { data: existingContestants, error: fetchError } = await supabase
       .from('fritz_contestants')
       .select('*')
@@ -28,51 +27,43 @@ const Fritz = () => {
       return;
     }
 
-    // If we don't have exactly 3 contestants, initialize with defaults
     if (!existingContestants || existingContestants.length < 3) {
-      const positions = [1, 2, 3];
-      const existingPositions = new Set(existingContestants?.map(c => c.position) || []);
-      
-      // Create missing contestants with default names
-      for (const position of positions) {
-        if (!existingPositions.has(position)) {
-          const defaultName = DEFAULT_CONTESTANTS[position - 1];
-          const { data: defaultContestant } = await supabase
-            .from('fritz_default_contestants')
-            .select('*')
-            .eq('name', defaultName)
-            .single();
-
-          const { error: insertError } = await supabase
-            .from('fritz_contestants')
-            .insert({
-              position,
-              score: 0,
-              name: defaultName,
-              image_url: defaultContestant?.image_url || null
-            });
-
-          if (insertError) {
-            console.error(`Error creating contestant for position ${position}:`, insertError);
-          }
-        }
-      }
-
-      // Fetch all contestants again after initialization
-      const { data: finalContestants, error: finalError } = await supabase
-        .from('fritz_contestants')
-        .select('*')
-        .order('position');
-
-      if (finalError) {
-        console.error('Error fetching final contestants:', finalError);
-        return;
-      }
-
-      setContestants(finalContestants || []);
+      await initializeDefaultContestants(existingContestants || []);
     } else {
       setContestants(existingContestants);
     }
+  };
+
+  const initializeDefaultContestants = async (existingContestants: FritzContestant[]) => {
+    const positions = [1, 2, 3];
+    const existingPositions = new Set(existingContestants?.map(c => c.position));
+    
+    for (const position of positions) {
+      if (!existingPositions.has(position)) {
+        const defaultName = DEFAULT_CONTESTANTS[position - 1];
+        const { data: defaultContestant } = await supabase
+          .from('fritz_default_contestants')
+          .select('*')
+          .eq('name', defaultName)
+          .single();
+
+        await supabase
+          .from('fritz_contestants')
+          .insert({
+            position,
+            score: 0,
+            name: defaultName,
+            image_url: defaultContestant?.image_url || null
+          });
+      }
+    }
+
+    const { data: finalContestants } = await supabase
+      .from('fritz_contestants')
+      .select('*')
+      .order('position');
+
+    setContestants(finalContestants || []);
   };
 
   const updateScore = async (position: number, increment: boolean) => {
@@ -96,21 +87,28 @@ const Fritz = () => {
     );
   };
 
-  const resetScores = async () => {
+  const clearContestant = async (position: number) => {
     const { error } = await supabase
       .from('fritz_contestants')
-      .update({ score: 0 })
-      .in('position', [1, 2, 3]);
+      .update({ 
+        name: null,
+        image_url: null,
+        score: 0
+      })
+      .eq('position', position);
 
     if (error) {
-      console.error('Error resetting scores:', error);
+      console.error('Error clearing contestant:', error);
       return;
     }
 
-    setContestants(prev => prev.map(c => ({ ...c, score: 0 })));
+    setContestants(prev => 
+      prev.map(c => c.position === position ? { ...c, name: null, image_url: null, score: 0 } : c)
+    );
+
     toast({
-      title: "Scores Reset",
-      description: "All scores have been reset to 0",
+      title: "Contestant Cleared",
+      description: `Position ${position} has been cleared`,
     });
   };
 
@@ -182,32 +180,19 @@ const Fritz = () => {
             }
           }} 
         />
-        <Header onReset={resetScores} />
+        <Header onReset={() => contestants.forEach(c => updateScore(c.position || 0, false))} />
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {[1, 2, 3].map((position) => {
-          const contestant = contestants.find(c => c.position === position) || {
-            id: `temp-${position}`,
-            name: '',
-            score: 0,
-            image_url: null,
-            position
-          };
-
-          return (
-            <ContestantFrame
-              key={position}
-              imageUrl={contestant.image_url}
-              name={contestant.name}
-              score={contestant.score || 0}
-              onImageUpload={(file) => uploadImage(position, file)}
-              onNameChange={(name) => updateContestant(position, name, contestant.image_url)}
-              onScoreChange={(increment) => updateScore(position, increment)}
-            />
-          );
-        })}
-      </div>
+      <ContestantList
+        contestants={contestants}
+        onImageUpload={uploadImage}
+        onNameChange={(position, name) => {
+          const contestant = contestants.find(c => c.position === position);
+          updateContestant(position, name, contestant?.image_url || null);
+        }}
+        onScoreChange={updateScore}
+        onClear={clearContestant}
+      />
     </div>
   );
 };

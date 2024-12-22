@@ -17,7 +17,7 @@ const ScoreControls = ({ score, onScoreChange }: ScoreControlsProps) => {
       >
         <ArrowUp className="h-6 w-6" />
       </Button>
-      <div className="text-4xl font-['Digital-7'] text-white w-16 text-center">
+      <div className="text-4xl font-['Digital-7'] text-neon-red w-16 text-center">
         {score}
       </div>
       <Button
