@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import VideoAlert from "./media/VideoAlert";
 import ImageAlert from "./media/ImageAlert";
 import AlertMessage from "./AlertMessage";
@@ -18,8 +18,19 @@ export const AlertDisplay = ({
   currentAlert,
   onComplete,
 }: AlertDisplayProps) => {
+  const completedRef = useRef(false);
+
+  const handleComplete = () => {
+    if (!completedRef.current) {
+      completedRef.current = true;
+      console.log('[AlertDisplay] Triggering completion callback');
+      onComplete();
+    }
+  };
+
   useEffect(() => {
     console.log('[AlertDisplay] Component mounted or alert changed');
+    completedRef.current = false;
     
     if (!currentAlert) {
       console.log('[AlertDisplay] No alert to display');
@@ -32,10 +43,10 @@ export const AlertDisplay = ({
       messageText: currentAlert.message_text
     });
 
-    // Add a backup completion timer for OBS context
+    // Add a backup completion timer
     const backupTimer = setTimeout(() => {
       console.log('[AlertDisplay] Backup timer triggered - forcing completion');
-      onComplete();
+      handleComplete();
     }, 15000); // 15 seconds for both video and image alerts
     
     return () => {
@@ -46,7 +57,7 @@ export const AlertDisplay = ({
 
   const handleImageError = (error: any) => {
     console.error('[AlertDisplay] Image error:', error);
-    onComplete();
+    handleComplete();
   };
 
   if (!currentAlert) {
@@ -60,12 +71,12 @@ export const AlertDisplay = ({
         {currentAlert.media_type.startsWith('video') ? (
           <VideoAlert 
             mediaUrl={currentAlert.media_url}
-            onComplete={onComplete}
+            onComplete={handleComplete}
           />
         ) : (
           <ImageAlert 
             mediaUrl={currentAlert.media_url}
-            onComplete={onComplete}
+            onComplete={handleComplete}
             onError={handleImageError}
           />
         )}

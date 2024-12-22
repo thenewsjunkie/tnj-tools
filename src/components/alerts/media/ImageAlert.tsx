@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 interface ImageAlertProps {
   mediaUrl: string;
@@ -7,11 +7,23 @@ interface ImageAlertProps {
 }
 
 const ImageAlert = ({ mediaUrl, onComplete, onError }: ImageAlertProps) => {
+  const completedRef = useRef(false);
+
+  const handleComplete = () => {
+    if (!completedRef.current) {
+      completedRef.current = true;
+      console.log('[ImageAlert] Triggering completion callback');
+      onComplete();
+    }
+  };
+
   useEffect(() => {
     console.log('[ImageAlert] Setting up image timer');
+    completedRef.current = false;
+    
     const timer = setTimeout(() => {
       console.log('[ImageAlert] Image timer completed, calling onComplete');
-      onComplete();
+      handleComplete();
     }, 5000);
     
     return () => {
@@ -26,6 +38,7 @@ const ImageAlert = ({ mediaUrl, onComplete, onError }: ImageAlertProps) => {
 
   const handleImageError = (error: any) => {
     console.error('[ImageAlert] Image error:', error);
+    handleComplete();
     onError(error);
   };
 
