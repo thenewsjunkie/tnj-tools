@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { FritzContestant } from "@/integrations/supabase/types/tables/fritz";
 import Header from "@/components/fritz/Header";
 import ContestantSelector from "@/components/fritz/ContestantSelector";
-import ContestantList from "@/components/fritz/ContestantList";
+import FritzContestantManager from "@/components/fritz/FritzContestantManager";
 
 const DEFAULT_CONTESTANTS = ['Shawn', 'Sabrina', 'C-Lane'];
 
@@ -66,75 +66,11 @@ const Fritz = () => {
     setContestants(finalContestants || []);
   };
 
-  const updateScore = async (position: number, increment: boolean) => {
-    const contestant = contestants.find(c => c.position === position);
-    if (!contestant) return;
-
-    const newScore = increment ? (contestant.score || 0) + 1 : (contestant.score || 0) - 1;
-    
-    const { error } = await supabase
-      .from('fritz_contestants')
-      .update({ score: newScore })
-      .eq('position', position);
-
-    if (error) {
-      console.error('Error updating score:', error);
-      return;
-    }
-
-    setContestants(prev => 
-      prev.map(c => c.position === position ? { ...c, score: newScore } : c)
-    );
-  };
-
   const handleReset = async () => {
-    // Fetch contestants again to ensure we have the latest data
     await fetchContestants();
   };
 
-  const clearContestant = async (position: number) => {
-    const { error } = await supabase
-      .from('fritz_contestants')
-      .update({ 
-        name: null,
-        image_url: null,
-        score: 0
-      })
-      .eq('position', position);
-
-    if (error) {
-      console.error('Error clearing contestant:', error);
-      return;
-    }
-
-    setContestants(prev => 
-      prev.map(c => c.position === position ? { ...c, name: null, image_url: null, score: 0 } : c)
-    );
-
-    toast({
-      title: "Contestant Cleared",
-      description: `Position ${position} has been cleared`,
-    });
-  };
-
-  const clearContestantImage = async (position: number) => {
-    const { error } = await supabase
-      .from('fritz_contestants')
-      .update({ image_url: null })
-      .eq('position', position);
-
-    if (error) {
-      console.error('Error clearing contestant image:', error);
-      return;
-    }
-
-    setContestants(prev => 
-      prev.map(c => c.position === position ? { ...c, image_url: null } : c)
-    );
-  };
-
   const updateContestant = async (position: number, name: string, imageUrl: string | null) => {
-    // Check if all positions are filled
     const filledPositions = contestants.filter(c => c.name).length;
     const currentContestant = contestants.find(c => c.position === position);
     
@@ -147,7 +83,6 @@ const Fritz = () => {
       return;
     }
 
-    // Find the first empty position if none specified
     if (!position) {
       const emptyPosition = contestants.find(c => !c.name)?.position;
       if (!emptyPosition) {
@@ -165,7 +100,8 @@ const Fritz = () => {
       .from('fritz_contestants')
       .update({ 
         name,
-        image_url: imageUrl
+        image_url: imageUrl,
+        score: 0
       })
       .eq('position', position);
 
@@ -180,40 +116,7 @@ const Fritz = () => {
     }
 
     setContestants(prev => 
-      prev.map(c => c.position === position ? { ...c, name, image_url: imageUrl } : c)
-    );
-  };
-
-  const uploadImage = async (position: number, file: File) => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${position}-${Math.random()}.${fileExt}`;
-    const filePath = `${fileName}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('fritz_images')
-      .upload(filePath, file);
-
-    if (uploadError) {
-      console.error('Error uploading image:', uploadError);
-      return;
-    }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('fritz_images')
-      .getPublicUrl(filePath);
-
-    const { error: updateError } = await supabase
-      .from('fritz_contestants')
-      .update({ image_url: publicUrl })
-      .eq('position', position);
-
-    if (updateError) {
-      console.error('Error updating image URL:', updateError);
-      return;
-    }
-
-    setContestants(prev => 
-      prev.map(c => c.position === position ? { ...c, image_url: publicUrl } : c)
+      prev.map(c => c.position === position ? { ...c, name, image_url: imageUrl, score: 0 } : c)
     );
   };
 
@@ -231,16 +134,9 @@ const Fritz = () => {
         <Header onReset={handleReset} />
       </div>
       
-      <ContestantList
+      <FritzContestantManager 
         contestants={contestants}
-        onImageUpload={uploadImage}
-        onNameChange={(position, name) => {
-          const contestant = contestants.find(c => c.position === position);
-          updateContestant(position, name, contestant?.image_url || null);
-        }}
-        onScoreChange={updateScore}
-        onClear={clearContestant}
-        onImageClear={clearContestantImage}
+        setContestants={setContestants}
       />
     </div>
   );
