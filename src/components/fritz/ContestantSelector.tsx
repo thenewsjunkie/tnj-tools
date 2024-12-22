@@ -25,6 +25,7 @@ const ContestantSelector = ({ onSelectContestant }: ContestantSelectorProps) => 
       return;
     }
 
+    console.log('Fetched default contestants:', data);
     setDefaultContestants(data || []);
   };
 
@@ -34,7 +35,10 @@ const ContestantSelector = ({ onSelectContestant }: ContestantSelectorProps) => 
         <Button
           key={contestant.id}
           variant="outline"
-          onClick={() => onSelectContestant(contestant.name, contestant.image_url)}
+          onClick={() => {
+            console.log('Selecting contestant:', contestant);
+            onSelectContestant(contestant.name, contestant.image_url);
+          }}
           className="text-white hover:text-white hover:bg-gray-700"
         >
           {contestant.name}
