@@ -8,7 +8,7 @@ export const useContestantClear = (
   setContestants: (contestants: FritzContestant[]) => void
 ) => {
   const { toast } = useToast();
-  const { deleteImage, updateDefaultContestantImage } = useContestantImage();
+  const { deleteImage } = useContestantImage();
 
   const clearContestant = async (position: number) => {
     console.log('Clearing contestant at position:', position);
@@ -20,10 +20,9 @@ export const useContestantClear = (
       return;
     }
 
-    // Delete the image if it exists and update default contestant
+    // Only delete the image from storage if it exists
     if (contestant.image_url) {
       await deleteImage(contestant.image_url);
-      await updateDefaultContestantImage(contestant.name, null);
     }
 
     const { error } = await supabase
@@ -66,11 +65,8 @@ export const useContestantClear = (
       return;
     }
 
-    // Delete the image from storage and update default contestant
+    // Delete the image from storage
     await deleteImage(contestant.image_url);
-    if (contestant.name) {
-      await updateDefaultContestantImage(contestant.name, null);
-    }
 
     const { error } = await supabase
       .from('fritz_contestants')
