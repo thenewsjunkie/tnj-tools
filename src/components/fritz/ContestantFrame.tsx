@@ -50,7 +50,7 @@ const ContestantFrame = ({
         value={name || ''}
         onChange={(e) => onNameChange(e.target.value)}
         placeholder="Enter name"
-        className="bg-black/20 border-white/20 text-white placeholder:text-white/50 text-center"
+        className="w-full max-w-[256px] bg-black/20 text-white placeholder:text-white/50 text-center"
       />
     </div>
   );
