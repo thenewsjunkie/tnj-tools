@@ -17,7 +17,7 @@ const YearlyScores = () => {
         .from('fritz_yearly_scores')
         .select('*')
         .eq('year', currentYear)
-        .order('contestant_name');
+        .order('total_score', { ascending: false });
 
       if (error) {
         console.error('Error fetching yearly scores:', error);
@@ -28,6 +28,28 @@ const YearlyScores = () => {
     };
 
     fetchYearlyScores();
+
+    // Subscribe to real-time changes
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'fritz_yearly_scores',
+          filter: `year=eq.${currentYear}`
+        },
+        () => {
+          // Refetch scores when any changes occur
+          fetchYearlyScores();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [currentYear]);
 
   return (
