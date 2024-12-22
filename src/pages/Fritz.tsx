@@ -71,6 +71,8 @@ const Fritz = () => {
   };
 
   const updateContestant = async (position: number, name: string, imageUrl: string | null) => {
+    console.log('updateContestant called with:', { position, name, imageUrl });
+    
     const filledPositions = contestants.filter(c => c.name).length;
     const currentContestant = contestants.find(c => c.position === position);
     
@@ -97,16 +99,24 @@ const Fritz = () => {
     }
 
     // First, get the default contestant data to ensure we have the correct image URL
-    const { data: defaultContestant } = await supabase
+    const { data: defaultContestant, error: fetchError } = await supabase
       .from('fritz_default_contestants')
       .select('*')
       .eq('name', name)
       .single();
 
+    if (fetchError) {
+      console.error('Error fetching default contestant:', fetchError);
+      return;
+    }
+
+    console.log('Found default contestant:', defaultContestant);
+
     // Use the default contestant's image URL if available
     const finalImageUrl = defaultContestant?.image_url || imageUrl;
+    console.log('Using finalImageUrl:', finalImageUrl);
 
-    const { error } = await supabase
+    const { error: updateError } = await supabase
       .from('fritz_contestants')
       .update({ 
         name,
@@ -115,8 +125,8 @@ const Fritz = () => {
       })
       .eq('position', position);
 
-    if (error) {
-      console.error('Error updating contestant:', error);
+    if (updateError) {
+      console.error('Error updating contestant:', updateError);
       toast({
         title: "Error",
         description: "Failed to update contestant",
@@ -125,14 +135,20 @@ const Fritz = () => {
       return;
     }
 
-    setContestants(prev => 
-      prev.map(c => c.position === position ? { 
-        ...c, 
-        name, 
-        image_url: finalImageUrl, 
-        score: 0 
-      } : c)
-    );
+    console.log('Database update successful');
+
+    setContestants(prev => {
+      const updated = prev.map(c => 
+        c.position === position ? { 
+          ...c, 
+          name, 
+          image_url: finalImageUrl, 
+          score: 0 
+        } : c
+      );
+      console.log('Updated contestants state:', updated);
+      return updated;
+    });
   };
 
   return (
@@ -140,6 +156,7 @@ const Fritz = () => {
       <div className="flex justify-between items-center mb-8">
         <ContestantSelector 
           onSelectContestant={(name, imageUrl) => {
+            console.log('ContestantSelector selected:', { name, imageUrl });
             const nextEmptyPosition = contestants.findIndex(c => !c.name || c.name === 'Custom');
             if (nextEmptyPosition !== -1) {
               updateContestant(nextEmptyPosition + 1, name, imageUrl);
