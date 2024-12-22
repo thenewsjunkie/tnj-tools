@@ -7,12 +7,14 @@ import ContestantSelector from "@/components/fritz/ContestantSelector";
 import FritzContestantManager from "@/components/fritz/FritzContestantManager";
 import YearlyScores from "@/components/fritz/YearlyScores";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "@/components/theme/ThemeProvider";
 
 const DEFAULT_CONTESTANTS = ['Shawn', 'Sabrina', 'C-Lane'];
 
 const Fritz = () => {
   const [contestants, setContestants] = useState<FritzContestant[]>([]);
   const { toast } = useToast();
+  const { theme } = useTheme();
 
   useEffect(() => {
     fetchContestants();
@@ -176,13 +178,17 @@ const Fritz = () => {
       <div className="fixed bottom-8 left-8 flex flex-col space-y-4">
         <Button
           variant="ghost"
-          className="text-white hover:text-neon-red transition-colors px-4 py-2 border border-white/20 rounded"
+          className={`${
+            theme === 'light' ? 'text-black' : 'text-white'
+          } hover:text-neon-red transition-colors px-4 py-2 border border-white/20 rounded`}
         >
           Stream Graphic 1
         </Button>
         <Button
           variant="ghost"
-          className="text-white hover:text-neon-red transition-colors px-4 py-2 border border-white/20 rounded"
+          className={`${
+            theme === 'light' ? 'text-black' : 'text-white'
+          } hover:text-neon-red transition-colors px-4 py-2 border border-white/20 rounded`}
         >
           Stream Graphic 2
         </Button>
