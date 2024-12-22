@@ -65,10 +65,10 @@ const TotalScore = () => {
   return (
     <div className="min-h-screen">
       <div className="fixed top-8 left-0 bg-black/80 p-4 backdrop-blur-sm">
-        <h3 className="text-xl font-bold mb-2 text-black">Total Score {currentYear}</h3>
+        <h3 className="text-xl font-bold mb-2 text-white">Total Score {currentYear}</h3>
         <div className="space-y-1">
           {scores.map((score) => (
-            <div key={score.contestant_name} className="flex justify-between text-black bg-black/50 px-2 py-1 rounded">
+            <div key={score.contestant_name} className="flex justify-between text-white bg-black px-2 py-1 rounded">
               <span>{score.contestant_name}:</span>
               <span className="ml-4">{score.total_score}</span>
             </div>
