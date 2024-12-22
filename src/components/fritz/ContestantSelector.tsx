@@ -30,7 +30,7 @@ const ContestantSelector = ({ onSelectContestant }: ContestantSelectorProps) => 
   };
 
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-wrap gap-2 justify-center md:justify-start">
       {defaultContestants.map((contestant) => (
         <Button
           key={contestant.id}

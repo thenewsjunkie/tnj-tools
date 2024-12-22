@@ -34,8 +34,8 @@ const Header = ({ onReset }: HeaderProps) => {
   };
 
   return (
-    <div className="flex justify-between items-center mb-8">
-      <h1 className="text-4xl font-['Radiate Sans Extra Bold'] text-black">
+    <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
+      <h1 className="text-3xl md:text-4xl font-['Radiate Sans Extra Bold'] text-black text-center md:text-left">
         Fritz on the Street
       </h1>
       <Button

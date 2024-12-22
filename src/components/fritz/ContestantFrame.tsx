@@ -28,10 +28,10 @@ const ContestantFrame = ({
   const { theme } = useTheme();
   
   return (
-    <div className="flex flex-col items-center space-y-4">
+    <div className="flex flex-col items-center space-y-4 w-full md:w-auto">
       <ScoreControls score={score} onScoreChange={onScoreChange} />
       
-      <div className="relative w-64 h-64 border-4 border-white/20 rounded-lg overflow-hidden">
+      <div className="relative w-full md:w-64 h-64 border-4 border-white/20 rounded-lg overflow-hidden">
         {imageUrl ? (
           <>
             <img
@@ -72,7 +72,7 @@ const ContestantFrame = ({
       <Button
         variant="ghost"
         onClick={onClear}
-        className={`hover:bg-white/10 ${theme === 'dark' ? 'text-black' : 'text-white'}`}
+        className={`hover:bg-white/10 ${theme === 'dark' ? 'text-white' : 'text-black'}`}
       >
         Clear
       </Button>

@@ -19,7 +19,7 @@ const ContestantList = ({
   onImageClear,
 }: ContestantListProps) => {
   return (
-    <div className="flex flex-col md:flex-row md:justify-center md:space-x-1">
+    <div className="flex flex-col md:flex-row md:justify-center gap-8 md:gap-4">
       {[1, 2, 3].map((position) => {
         const contestant = contestants.find(c => c.position === position) || {
           id: `temp-${position}`,

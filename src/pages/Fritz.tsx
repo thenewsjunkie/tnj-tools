@@ -152,8 +152,8 @@ const Fritz = () => {
   };
 
   return (
-    <div className="min-h-screen bg-transparent p-8">
-      <div className="flex justify-between items-center mb-8">
+    <div className="min-h-screen bg-transparent p-4 md:p-8">
+      <div className="flex flex-col md:flex-row md:justify-between items-center gap-4 mb-8">
         <ContestantSelector 
           onSelectContestant={(name, imageUrl) => {
             console.log('ContestantSelector selected:', { name, imageUrl });
