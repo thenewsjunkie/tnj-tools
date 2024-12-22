@@ -13,7 +13,7 @@ const ScoreControls = ({ score, onScoreChange }: ScoreControlsProps) => {
         variant="ghost"
         size="icon"
         onClick={() => onScoreChange(true)}
-        className="text-white hover:bg-white/10"
+        className="text-black hover:bg-white/10"
       >
         <ArrowUp className="h-6 w-6" />
       </Button>
@@ -24,7 +24,7 @@ const ScoreControls = ({ score, onScoreChange }: ScoreControlsProps) => {
         variant="ghost"
         size="icon"
         onClick={() => onScoreChange(false)}
-        className="text-white hover:bg-white/10"
+        className="text-black hover:bg-white/10"
       >
         <ArrowDown className="h-6 w-6" />
       </Button>
