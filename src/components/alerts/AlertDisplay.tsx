@@ -36,7 +36,7 @@ export const AlertDisplay = ({
     const backupTimer = setTimeout(() => {
       console.log('[AlertDisplay] Backup timer triggered - forcing completion');
       onComplete();
-    }, currentAlert.media_type.startsWith('video') ? 30000 : 5000);
+    }, 15000); // 15 seconds for both video and image alerts
     
     return () => {
       console.log('[AlertDisplay] Component cleanup - clearing backup timer');
