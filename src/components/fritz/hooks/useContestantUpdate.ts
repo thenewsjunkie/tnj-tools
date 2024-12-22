@@ -43,11 +43,16 @@ export const useContestantUpdate = (
     console.log('Updating contestant name:', { position, name });
     
     // Fetch the default contestant's image
-    const { data: defaultContestant } = await supabase
+    const { data: defaultContestant, error: fetchError } = await supabase
       .from('fritz_default_contestants')
       .select('image_url')
       .eq('name', name)
       .single();
+
+    if (fetchError) {
+      console.error('Error fetching default contestant:', fetchError);
+      return;
+    }
 
     console.log('Found default contestant:', defaultContestant);
 
