@@ -28,8 +28,10 @@ const FritzContestantManager = ({ contestants, setContestants }: FritzContestant
       return;
     }
 
-    setContestants(prev => 
-      prev.map(c => c.position === position ? { ...c, score: newScore } : c)
+    setContestants(
+      contestants.map(c => 
+        c.position === position ? { ...c, score: newScore } : c
+      )
     );
   };
 
@@ -48,8 +50,10 @@ const FritzContestantManager = ({ contestants, setContestants }: FritzContestant
       return;
     }
 
-    setContestants(prev => 
-      prev.map(c => c.position === position ? { ...c, name: null, image_url: null, score: 0 } : c)
+    setContestants(
+      contestants.map(c => 
+        c.position === position ? { ...c, name: null, image_url: null, score: 0 } : c
+      )
     );
 
     toast({
@@ -69,8 +73,10 @@ const FritzContestantManager = ({ contestants, setContestants }: FritzContestant
       return;
     }
 
-    setContestants(prev => 
-      prev.map(c => c.position === position ? { ...c, image_url: null } : c)
+    setContestants(
+      contestants.map(c => 
+        c.position === position ? { ...c, image_url: null } : c
+      )
     );
   };
 
@@ -102,8 +108,43 @@ const FritzContestantManager = ({ contestants, setContestants }: FritzContestant
       return;
     }
 
-    setContestants(prev => 
-      prev.map(c => c.position === position ? { ...c, image_url: publicUrl } : c)
+    setContestants(
+      contestants.map(c => 
+        c.position === position ? { ...c, image_url: publicUrl } : c
+      )
+    );
+  };
+
+  const updateContestantName = async (position: number, name: string) => {
+    const { data: defaultContestant } = await supabase
+      .from('fritz_default_contestants')
+      .select('*')
+      .eq('name', name)
+      .single();
+
+    const { error } = await supabase
+      .from('fritz_contestants')
+      .update({ 
+        name,
+        image_url: defaultContestant?.image_url || null,
+        score: 0
+      })
+      .eq('position', position);
+
+    if (error) {
+      console.error('Error updating contestant:', error);
+      return;
+    }
+
+    setContestants(
+      contestants.map(c => 
+        c.position === position ? { 
+          ...c, 
+          name, 
+          image_url: defaultContestant?.image_url || null, 
+          score: 0 
+        } : c
+      )
     );
   };
 
@@ -111,10 +152,7 @@ const FritzContestantManager = ({ contestants, setContestants }: FritzContestant
     <ContestantList
       contestants={contestants}
       onImageUpload={uploadImage}
-      onNameChange={(position, name) => {
-        const contestant = contestants.find(c => c.position === position);
-        updateContestant(position, name, contestant?.image_url || null);
-      }}
+      onNameChange={updateContestantName}
       onScoreChange={updateScore}
       onClear={clearContestant}
       onImageClear={clearContestantImage}
