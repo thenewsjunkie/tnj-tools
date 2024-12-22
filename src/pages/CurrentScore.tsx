@@ -49,24 +49,29 @@ const CurrentScore = () => {
       <div className="flex">
         {contestants.filter(c => c.name).map((contestant) => (
           <div key={contestant.id} className="relative w-[400px] h-[400px]">
-            {contestant.image_url ? (
-              <img
-                src={contestant.image_url}
-                alt={contestant.name || ''}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gray-900" />
-            )}
+            {/* Background Image with Overlay */}
+            <div className="absolute inset-0">
+              {contestant.image_url ? (
+                <img
+                  src={contestant.image_url}
+                  alt={contestant.name || ''}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-900" />
+              )}
+              {/* Dark overlay for better score visibility */}
+              <div className="absolute inset-0 bg-black/60" />
+            </div>
             
-            {/* Score Overlay */}
+            {/* Score Overlay - Made larger and more prominent */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-[150px] font-['Digital-7'] text-neon-red animate-led-flicker">
+              <span className="text-[200px] font-['Digital-7'] text-neon-red animate-led-flicker drop-shadow-[0_0_10px_rgba(255,0,0,0.7)]">
                 {contestant.score || 0}
               </span>
             </div>
             
-            {/* Name Overlay */}
+            {/* Name Overlay - Made more visible */}
             <div className="absolute bottom-0 left-0 right-0 bg-black/80 p-4">
               <h2 className="text-3xl text-center font-bold text-white">
                 {contestant.name}
