@@ -72,8 +72,8 @@ const Fritz = () => {
     await fetchContestants();
   };
 
-  const updateContestant = async (position: number, name: string, imageUrl: string | null) => {
-    console.log('updateContestant called with:', { position, name, imageUrl });
+  const updateContestant = async (position: number, name: string) => {
+    console.log('updateContestant called with:', { position, name });
     
     const filledPositions = contestants.filter(c => c.name).length;
     const currentContestant = contestants.find(c => c.position === position);
@@ -100,16 +100,14 @@ const Fritz = () => {
       position = emptyPosition;
     }
 
-    // Fetch the default contestant's image if no image URL is provided
-    if (!imageUrl) {
-      const { data: defaultContestant } = await supabase
-        .from('fritz_default_contestants')
-        .select('image_url')
-        .eq('name', name)
-        .single();
-      
-      imageUrl = defaultContestant?.image_url || null;
-    }
+    const { data: defaultContestant } = await supabase
+      .from('fritz_default_contestants')
+      .select('image_url')
+      .eq('name', name)
+      .single();
+    
+    const imageUrl = defaultContestant?.image_url || null;
+    console.log('Fetched default contestant image:', imageUrl);
 
     const { error: updateError } = await supabase
       .from('fritz_contestants')
@@ -150,11 +148,11 @@ const Fritz = () => {
     <div className="min-h-screen bg-transparent p-4 md:p-8">
       <div className="flex flex-col md:flex-row md:justify-between items-center gap-4 mb-8">
         <ContestantSelector 
-          onSelectContestant={(name, imageUrl) => {
-            console.log('ContestantSelector selected:', { name, imageUrl });
+          onSelectContestant={(name) => {
+            console.log('ContestantSelector selected:', { name });
             const nextEmptyPosition = contestants.findIndex(c => !c.name || c.name === 'Custom');
             if (nextEmptyPosition !== -1) {
-              updateContestant(nextEmptyPosition + 1, name, imageUrl);
+              updateContestant(nextEmptyPosition + 1, name);
             }
           }} 
         />

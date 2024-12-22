@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { FritzDefaultContestant } from "@/integrations/supabase/types/tables/fritz";
 
 interface ContestantSelectorProps {
-  onSelectContestant: (name: string, imageUrl: string | null) => void;
+  onSelectContestant: (name: string) => void;
 }
 
 const ContestantSelector = ({ onSelectContestant }: ContestantSelectorProps) => {
@@ -36,8 +36,8 @@ const ContestantSelector = ({ onSelectContestant }: ContestantSelectorProps) => 
           key={contestant.id}
           variant="outline"
           onClick={() => {
-            console.log('Selecting contestant:', contestant);
-            onSelectContestant(contestant.name, contestant.image_url);
+            console.log('Selecting contestant:', contestant.name);
+            onSelectContestant(contestant.name);
           }}
           className="text-white hover:text-white hover:bg-gray-700"
         >
