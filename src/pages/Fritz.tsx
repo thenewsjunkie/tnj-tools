@@ -14,17 +14,55 @@ const Fritz = () => {
   }, []);
 
   const fetchContestants = async () => {
-    const { data, error } = await supabase
+    // First, try to get existing contestants
+    const { data: existingContestants, error: fetchError } = await supabase
       .from('fritz_contestants')
       .select('*')
       .order('position');
     
-    if (error) {
-      console.error('Error fetching contestants:', error);
+    if (fetchError) {
+      console.error('Error fetching contestants:', fetchError);
       return;
     }
 
-    setContestants(data || []);
+    // If we don't have exactly 3 contestants, initialize missing ones
+    if (!existingContestants || existingContestants.length < 3) {
+      const positions = [1, 2, 3];
+      const existingPositions = new Set(existingContestants?.map(c => c.position) || []);
+      
+      // Create missing contestants
+      for (const position of positions) {
+        if (!existingPositions.has(position)) {
+          const { error: insertError } = await supabase
+            .from('fritz_contestants')
+            .insert({
+              position,
+              score: 0,
+              name: '',
+              image_url: null
+            });
+
+          if (insertError) {
+            console.error(`Error creating contestant for position ${position}:`, insertError);
+          }
+        }
+      }
+
+      // Fetch all contestants again after initialization
+      const { data: finalContestants, error: finalError } = await supabase
+        .from('fritz_contestants')
+        .select('*')
+        .order('position');
+
+      if (finalError) {
+        console.error('Error fetching final contestants:', finalError);
+        return;
+      }
+
+      setContestants(finalContestants || []);
+    } else {
+      setContestants(existingContestants);
+    }
   };
 
   const updateScore = async (position: number, increment: boolean) => {
@@ -73,13 +111,8 @@ const Fritz = () => {
 
     const { error } = await supabase
       .from('fritz_contestants')
-      .upsert({ 
-        id: contestant.id || undefined,
-        position,
-        name,
-        score: contestant.score || 0,
-        image_url: contestant.image_url
-      });
+      .update({ name })
+      .eq('position', position);
 
     if (error) {
       console.error('Error updating name:', error);
@@ -114,16 +147,10 @@ const Fritz = () => {
       .from('fritz_images')
       .getPublicUrl(filePath);
 
-    const contestant = contestants.find(c => c.position === position);
     const { error: updateError } = await supabase
       .from('fritz_contestants')
-      .upsert({ 
-        id: contestant?.id || undefined,
-        position,
-        name: contestant?.name || '',
-        score: contestant?.score || 0,
-        image_url: publicUrl
-      });
+      .update({ image_url: publicUrl })
+      .eq('position', position);
 
     if (updateError) {
       console.error('Error updating image URL:', updateError);
