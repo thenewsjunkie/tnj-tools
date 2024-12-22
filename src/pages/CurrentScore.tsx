@@ -48,7 +48,7 @@ const CurrentScore = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-0">
+    <div className="min-h-screen text-white p-0">
       <div className="flex">
         {contestants.filter(c => c.name).map((contestant) => (
           <div key={contestant.id} className="relative w-[400px] h-[400px]">
