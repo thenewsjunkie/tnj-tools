@@ -9,7 +9,19 @@ interface YearlyScore {
 
 const YearlyScores = () => {
   const [scores, setScores] = useState<YearlyScore[]>([]);
-  const currentYear = new Date().getFullYear();
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+
+  useEffect(() => {
+    // Check for year change every minute
+    const interval = setInterval(() => {
+      const newYear = new Date().getFullYear();
+      if (newYear !== currentYear) {
+        setCurrentYear(newYear);
+      }
+    }, 60000); // Check every minute
+
+    return () => clearInterval(interval);
+  }, [currentYear]);
 
   useEffect(() => {
     const fetchYearlyScores = async () => {
