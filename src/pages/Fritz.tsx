@@ -87,6 +87,11 @@ const Fritz = () => {
     );
   };
 
+  const handleReset = async () => {
+    // Fetch contestants again to ensure we have the latest data
+    await fetchContestants();
+  };
+
   const clearContestant = async (position: number) => {
     const { error } = await supabase
       .from('fritz_contestants')
@@ -223,7 +228,7 @@ const Fritz = () => {
             }
           }} 
         />
-        <Header onReset={() => contestants.forEach(c => updateScore(c.position || 0, false))} />
+        <Header onReset={handleReset} />
       </div>
       
       <ContestantList
