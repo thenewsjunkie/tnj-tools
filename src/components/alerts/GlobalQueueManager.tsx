@@ -6,9 +6,10 @@ import { RealtimeChannel } from "@supabase/supabase-js";
 
 const GlobalQueueManager = () => {
   const { isPaused } = useQueueState();
-  const { currentAlert, processNextAlert } = useAlertQueue();
+  const { currentAlert, processNextAlert, handleAlertComplete } = useAlertQueue();
   const channelRef = useRef<RealtimeChannel | null>(null);
   const isInitializedRef = useRef(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (isInitializedRef.current) return;
@@ -46,8 +47,37 @@ const GlobalQueueManager = () => {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
     };
   }, [isPaused, currentAlert, processNextAlert]);
+
+  // Set up timer when current alert changes
+  useEffect(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+
+    if (currentAlert && !isPaused) {
+      console.log('[GlobalQueueManager] Setting up completion timer for alert:', currentAlert.id);
+      
+      // Calculate timeout based on media type
+      const timeout = currentAlert.alert.media_type.startsWith('video') ? 15000 : 5000;
+      
+      timerRef.current = setTimeout(() => {
+        console.log('[GlobalQueueManager] Alert timeout reached, marking as complete');
+        handleAlertComplete();
+      }, timeout);
+    }
+
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, [currentAlert, isPaused, handleAlertComplete]);
 
   return null;
 };
