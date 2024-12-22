@@ -5,6 +5,7 @@ import type { FritzContestant } from "@/integrations/supabase/types/tables/fritz
 import Header from "@/components/fritz/Header";
 import ContestantSelector from "@/components/fritz/ContestantSelector";
 import FritzContestantManager from "@/components/fritz/FritzContestantManager";
+import YearlyScores from "@/components/fritz/YearlyScores";
 
 const DEFAULT_CONTESTANTS = ['Shawn', 'Sabrina', 'C-Lane'];
 
@@ -98,7 +99,6 @@ const Fritz = () => {
       position = emptyPosition;
     }
 
-    // First, get the default contestant data to ensure we have the correct image URL
     const { data: defaultContestant, error: fetchError } = await supabase
       .from('fritz_default_contestants')
       .select('*')
@@ -112,7 +112,6 @@ const Fritz = () => {
 
     console.log('Found default contestant:', defaultContestant);
 
-    // Use the default contestant's image URL if available
     const finalImageUrl = defaultContestant?.image_url || imageUrl;
     console.log('Using finalImageUrl:', finalImageUrl);
 
@@ -170,6 +169,8 @@ const Fritz = () => {
         contestants={contestants}
         setContestants={setContestants}
       />
+      
+      <YearlyScores />
     </div>
   );
 };

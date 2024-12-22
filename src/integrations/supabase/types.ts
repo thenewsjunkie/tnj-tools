@@ -344,6 +344,33 @@ export type Database = {
         }
         Relationships: []
       }
+      fritz_yearly_scores: {
+        Row: {
+          contestant_name: string
+          created_at: string | null
+          id: string
+          total_score: number | null
+          updated_at: string | null
+          year: number
+        }
+        Insert: {
+          contestant_name: string
+          created_at?: string | null
+          id?: string
+          total_score?: number | null
+          updated_at?: string | null
+          year: number
+        }
+        Update: {
+          contestant_name?: string
+          created_at?: string | null
+          id?: string
+          total_score?: number | null
+          updated_at?: string | null
+          year?: number
+        }
+        Relationships: []
+      }
       instructions: {
         Row: {
           content: string
