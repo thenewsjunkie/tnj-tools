@@ -31,7 +31,7 @@ const YearlyScores = () => {
 
     // Subscribe to real-time changes
     const channel = supabase
-      .channel('schema-db-changes')
+      .channel('yearly-scores-changes')
       .on(
         'postgres_changes',
         {
@@ -40,9 +40,9 @@ const YearlyScores = () => {
           table: 'fritz_yearly_scores',
           filter: `year=eq.${currentYear}`
         },
-        () => {
-          // Refetch scores when any changes occur
-          fetchYearlyScores();
+        (payload) => {
+          console.log('Received real-time update:', payload);
+          fetchYearlyScores(); // Refetch all scores to ensure correct ordering
         }
       )
       .subscribe();
