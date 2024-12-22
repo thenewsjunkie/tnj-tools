@@ -17,6 +17,7 @@ import Alerts from "./pages/Alerts";
 import Settings from "./pages/Settings";
 import Instructions from "./pages/Instructions";
 import QueueHistory from "./pages/QueueHistory";
+import Fritz from "./pages/Fritz";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -153,6 +154,7 @@ const App = () => (
             <Route path="/alerts/queue/:action" element={<Alerts />} />
             <Route path="/alerts/:alertSlug" element={<Alerts />} />
             <Route path="/alerts/:alertSlug/:username" element={<Alerts />} />
+            <Route path="/fritz" element={<Fritz />} />
 
             {/* Protected Admin Routes */}
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
