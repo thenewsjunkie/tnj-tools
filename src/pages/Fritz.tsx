@@ -96,11 +96,21 @@ const Fritz = () => {
       position = emptyPosition;
     }
 
+    // First, get the default contestant data to ensure we have the correct image URL
+    const { data: defaultContestant } = await supabase
+      .from('fritz_default_contestants')
+      .select('*')
+      .eq('name', name)
+      .single();
+
+    // Use the default contestant's image URL if available
+    const finalImageUrl = defaultContestant?.image_url || imageUrl;
+
     const { error } = await supabase
       .from('fritz_contestants')
       .update({ 
         name,
-        image_url: imageUrl,
+        image_url: finalImageUrl,
         score: 0
       })
       .eq('position', position);
@@ -116,7 +126,12 @@ const Fritz = () => {
     }
 
     setContestants(prev => 
-      prev.map(c => c.position === position ? { ...c, name, image_url: imageUrl, score: 0 } : c)
+      prev.map(c => c.position === position ? { 
+        ...c, 
+        name, 
+        image_url: finalImageUrl, 
+        score: 0 
+      } : c)
     );
   };
 
