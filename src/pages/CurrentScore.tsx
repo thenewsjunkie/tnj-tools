@@ -8,9 +8,9 @@ const CurrentScore = () => {
   useEffect(() => {
     fetchContestants();
     
-    // Subscribe to realtime updates
+    // Subscribe to realtime updates for both contestants and yearly scores
     const channel = supabase
-      .channel('schema-db-changes')
+      .channel('fritz-score-changes')
       .on(
         'postgres_changes',
         {
@@ -18,8 +18,8 @@ const CurrentScore = () => {
           schema: 'public',
           table: 'fritz_contestants'
         },
-        (payload) => {
-          console.log('Change received!', payload);
+        () => {
+          console.log('Contestant change detected, fetching updated data');
           fetchContestants();
         }
       )
