@@ -26,8 +26,23 @@ export const AlertDisplay = ({
       return;
     }
 
-    console.log('[AlertDisplay] Setting up media:', currentAlert.media_type);
-  }, [currentAlert]);
+    console.log('[AlertDisplay] Current alert details:', {
+      mediaType: currentAlert.media_type,
+      hasMessage: currentAlert.message_enabled,
+      messageText: currentAlert.message_text
+    });
+
+    // Add a backup completion timer for OBS context
+    const backupTimer = setTimeout(() => {
+      console.log('[AlertDisplay] Backup timer triggered - forcing completion');
+      onComplete();
+    }, currentAlert.media_type.startsWith('video') ? 30000 : 5000);
+    
+    return () => {
+      console.log('[AlertDisplay] Component cleanup - clearing backup timer');
+      clearTimeout(backupTimer);
+    };
+  }, [currentAlert, onComplete]);
 
   const handleImageError = (error: any) => {
     console.error('[AlertDisplay] Image error:', error);
