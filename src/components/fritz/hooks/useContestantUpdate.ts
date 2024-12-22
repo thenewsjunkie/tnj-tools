@@ -42,11 +42,21 @@ export const useContestantUpdate = (
   const updateContestantName = async (position: number, name: string) => {
     console.log('Updating contestant name:', { position, name });
     
+    // Fetch the default contestant's image
+    const { data: defaultContestant } = await supabase
+      .from('fritz_default_contestants')
+      .select('image_url')
+      .eq('name', name)
+      .single();
+
+    console.log('Found default contestant:', defaultContestant);
+
     const { error } = await supabase
       .from('fritz_contestants')
       .update({ 
         name,
-        score: 0
+        score: 0,
+        image_url: defaultContestant?.image_url || null
       })
       .eq('position', position);
 
@@ -83,7 +93,8 @@ export const useContestantUpdate = (
         c.position === position ? { 
           ...c, 
           name,
-          score: 0 
+          score: 0,
+          image_url: defaultContestant?.image_url || null
         } : c
       )
     );
