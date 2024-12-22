@@ -4,17 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-
-interface Contestant {
-  id: string;
-  name: string;
-  score: number;
-  image_url: string;
-  position: number;
-}
+import type { FritzContestant } from "@/integrations/supabase/types/tables/fritz";
 
 const Fritz = () => {
-  const [contestants, setContestants] = useState<Contestant[]>([]);
+  const [contestants, setContestants] = useState<FritzContestant[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -39,7 +32,7 @@ const Fritz = () => {
     const contestant = contestants.find(c => c.position === position);
     if (!contestant) return;
 
-    const newScore = increment ? contestant.score + 1 : contestant.score - 1;
+    const newScore = increment ? (contestant.score || 0) + 1 : (contestant.score || 0) - 1;
     
     const { error } = await supabase
       .from('fritz_contestants')
@@ -161,7 +154,7 @@ const Fritz = () => {
                   <ArrowUp className="h-6 w-6" />
                 </Button>
                 <div className="text-4xl font-['Digital-7'] text-white w-16 text-center">
-                  {contestant.score}
+                  {contestant.score || 0}
                 </div>
                 <Button
                   variant="ghost"
@@ -177,7 +170,7 @@ const Fritz = () => {
                 {contestant.image_url ? (
                   <img
                     src={contestant.image_url}
-                    alt={contestant.name}
+                    alt={contestant.name || ''}
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -198,7 +191,7 @@ const Fritz = () => {
 
               <Input
                 type="text"
-                value={contestant.name}
+                value={contestant.name || ''}
                 onChange={(e) => updateName(position, e.target.value)}
                 placeholder="Enter name"
                 className="bg-black/20 border-white/20 text-white placeholder:text-white/50 text-center"

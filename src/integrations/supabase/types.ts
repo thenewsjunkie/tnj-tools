@@ -290,6 +290,36 @@ export type Database = {
         }
         Relationships: []
       }
+      fritz_contestants: {
+        Row: {
+          created_at: string | null
+          id: string
+          image_url: string | null
+          name: string | null
+          position: number | null
+          score: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string | null
+          position?: number | null
+          score?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string | null
+          position?: number | null
+          score?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       instructions: {
         Row: {
           content: string

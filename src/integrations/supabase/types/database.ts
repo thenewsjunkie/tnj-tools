@@ -26,6 +26,7 @@ import {
   TnjLinksTable,
 } from './tables/system';
 import { InterviewRequestsTable } from './tables/interviews';
+import { FritzContestantsTable } from './tables/fritz';
 import { DatabaseFunctions } from './functions';
 import { DatabaseEnums } from './enums';
 
@@ -38,6 +39,7 @@ export interface Database {
       call_sessions: CallSessionsTable
       code_implementations: CodeImplementationsTable
       code_versions: CodeVersionsTable
+      fritz_contestants: FritzContestantsTable
       interview_requests: InterviewRequestsTable
       news_roundups: NewsRoundupsTable
       news_sources: NewsSourcesTable
