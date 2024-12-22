@@ -6,12 +6,17 @@ export const useContestantUpdate = (
   contestants: FritzContestant[],
   setContestants: (contestants: FritzContestant[]) => void
 ) => {
-  const { uploadImage } = useContestantImage();
+  const { uploadImage, updateDefaultContestantImage } = useContestantImage();
   const currentYear = new Date().getFullYear();
 
   const handleImageUpload = async (position: number, file: File) => {
     const publicUrl = await uploadImage(position, file);
     if (!publicUrl) return;
+
+    const contestant = contestants.find(c => c.position === position);
+    if (contestant?.name) {
+      await updateDefaultContestantImage(contestant.name, publicUrl);
+    }
 
     const { error: updateError } = await supabase
       .from('fritz_contestants')
@@ -37,8 +42,6 @@ export const useContestantUpdate = (
   const updateContestantName = async (position: number, name: string) => {
     console.log('Updating contestant name:', { position, name });
     
-    // Important: Don't get the default contestant image if we're just updating the name
-    // This prevents the old image from reappearing
     const { error } = await supabase
       .from('fritz_contestants')
       .update({ 

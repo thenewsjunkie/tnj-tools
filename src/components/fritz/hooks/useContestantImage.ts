@@ -52,8 +52,26 @@ export const useContestantImage = () => {
     return false;
   };
 
+  const updateDefaultContestantImage = async (name: string, imageUrl: string | null) => {
+    console.log('Updating default contestant image:', { name, imageUrl });
+    
+    const { error } = await supabase
+      .from('fritz_default_contestants')
+      .update({ image_url: imageUrl })
+      .eq('name', name);
+
+    if (error) {
+      console.error('Error updating default contestant image:', error);
+      return false;
+    }
+
+    console.log('Successfully updated default contestant image');
+    return true;
+  };
+
   return {
     uploadImage,
-    deleteImage
+    deleteImage,
+    updateDefaultContestantImage
   };
 };
