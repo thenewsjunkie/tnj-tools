@@ -53,11 +53,11 @@ const YearlyScores = () => {
   }, [currentYear]);
 
   return (
-    <div className="fixed bottom-8 right-8 bg-black/20 p-4 rounded-lg backdrop-blur-sm">
+    <div className="fixed bottom-8 right-8 bg-black/80 p-4 rounded-lg backdrop-blur-sm">
       <h3 className="text-xl font-bold mb-2 text-white">Total Score {currentYear}</h3>
       <div className="space-y-1">
         {scores.map((score) => (
-          <div key={score.contestant_name} className="flex justify-between text-white">
+          <div key={score.contestant_name} className="flex justify-between text-white bg-black px-2 py-1 rounded">
             <span>{score.contestant_name}:</span>
             <span className="ml-4">{score.total_score}</span>
           </div>
