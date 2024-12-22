@@ -17,11 +17,35 @@ const YearlyScores = () => {
       const newYear = new Date().getFullYear();
       if (newYear !== currentYear) {
         setCurrentYear(newYear);
+        initializeYearlyScores(newYear);
       }
     }, 60000); // Check every minute
 
     return () => clearInterval(interval);
   }, [currentYear]);
+
+  const initializeYearlyScores = async (year: number) => {
+    // Get all unique contestant names from the previous year
+    const { data: previousScores } = await supabase
+      .from('fritz_yearly_scores')
+      .select('contestant_name')
+      .eq('year', year - 1);
+
+    if (previousScores) {
+      // Create new entries for each contestant with 0 score for the new year
+      const newEntries = previousScores.map(score => ({
+        contestant_name: score.contestant_name,
+        total_score: 0,
+        year: year
+      }));
+
+      if (newEntries.length > 0) {
+        await supabase
+          .from('fritz_yearly_scores')
+          .insert(newEntries);
+      }
+    }
+  };
 
   useEffect(() => {
     const fetchYearlyScores = async () => {
