@@ -57,6 +57,20 @@ const FritzContestantManager = ({ contestants, setContestants }: FritzContestant
     const contestant = contestants.find(c => c.position === position);
     if (!contestant || !contestant.name) return;
 
+    // First, delete any images associated with this position from storage
+    if (contestant.image_url) {
+      const imagePath = contestant.image_url.split('/').pop();
+      if (imagePath) {
+        const { error: storageError } = await supabase.storage
+          .from('fritz_images')
+          .remove([imagePath]);
+
+        if (storageError) {
+          console.error('Error removing image from storage:', storageError);
+        }
+      }
+    }
+
     const { error } = await supabase
       .from('fritz_contestants')
       .update({ 
@@ -84,6 +98,21 @@ const FritzContestantManager = ({ contestants, setContestants }: FritzContestant
   };
 
   const clearContestantImage = async (position: number) => {
+    const contestant = contestants.find(c => c.position === position);
+    if (!contestant || !contestant.image_url) return;
+
+    // Delete the image from storage
+    const imagePath = contestant.image_url.split('/').pop();
+    if (imagePath) {
+      const { error: storageError } = await supabase.storage
+        .from('fritz_images')
+        .remove([imagePath]);
+
+      if (storageError) {
+        console.error('Error removing image from storage:', storageError);
+      }
+    }
+
     const { error } = await supabase
       .from('fritz_contestants')
       .update({ image_url: null })
