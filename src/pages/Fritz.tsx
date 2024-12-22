@@ -4,6 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import type { FritzContestant } from "@/integrations/supabase/types/tables/fritz";
 import Header from "@/components/fritz/Header";
 import ContestantFrame from "@/components/fritz/ContestantFrame";
+import ContestantSelector from "@/components/fritz/ContestantSelector";
+
+const DEFAULT_CONTESTANTS = ['Shawn', 'Sabrina', 'C-Lane'];
 
 const Fritz = () => {
   const [contestants, setContestants] = useState<FritzContestant[]>([]);
@@ -25,21 +28,28 @@ const Fritz = () => {
       return;
     }
 
-    // If we don't have exactly 3 contestants, initialize missing ones
+    // If we don't have exactly 3 contestants, initialize with defaults
     if (!existingContestants || existingContestants.length < 3) {
       const positions = [1, 2, 3];
       const existingPositions = new Set(existingContestants?.map(c => c.position) || []);
       
-      // Create missing contestants
+      // Create missing contestants with default names
       for (const position of positions) {
         if (!existingPositions.has(position)) {
+          const defaultName = DEFAULT_CONTESTANTS[position - 1];
+          const { data: defaultContestant } = await supabase
+            .from('fritz_default_contestants')
+            .select('*')
+            .eq('name', defaultName)
+            .single();
+
           const { error: insertError } = await supabase
             .from('fritz_contestants')
             .insert({
               position,
               score: 0,
-              name: '',
-              image_url: null
+              name: defaultName,
+              image_url: defaultContestant?.image_url || null
             });
 
           if (insertError) {
@@ -97,7 +107,6 @@ const Fritz = () => {
       return;
     }
 
-    // Only update scores in the state, preserve names and images
     setContestants(prev => prev.map(c => ({ ...c, score: 0 })));
     toast({
       title: "Scores Reset",
@@ -105,27 +114,27 @@ const Fritz = () => {
     });
   };
 
-  const updateName = async (position: number, name: string) => {
-    const contestant = contestants.find(c => c.position === position);
-    if (!contestant) return;
-
+  const updateContestant = async (position: number, name: string, imageUrl: string | null) => {
     const { error } = await supabase
       .from('fritz_contestants')
-      .update({ name })
+      .update({ 
+        name,
+        image_url: imageUrl
+      })
       .eq('position', position);
 
     if (error) {
-      console.error('Error updating name:', error);
+      console.error('Error updating contestant:', error);
       toast({
         title: "Error",
-        description: "Failed to update contestant name",
+        description: "Failed to update contestant",
         variant: "destructive"
       });
       return;
     }
 
     setContestants(prev => 
-      prev.map(c => c.position === position ? { ...c, name } : c)
+      prev.map(c => c.position === position ? { ...c, name, image_url: imageUrl } : c)
     );
   };
 
@@ -164,7 +173,17 @@ const Fritz = () => {
 
   return (
     <div className="min-h-screen bg-transparent p-8">
-      <Header onReset={resetScores} />
+      <div className="flex justify-between items-center mb-8">
+        <ContestantSelector 
+          onSelectContestant={(name, imageUrl) => {
+            const nextEmptyPosition = contestants.findIndex(c => !c.name || c.name === 'Custom');
+            if (nextEmptyPosition !== -1) {
+              updateContestant(nextEmptyPosition + 1, name, imageUrl);
+            }
+          }} 
+        />
+        <Header onReset={resetScores} />
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {[1, 2, 3].map((position) => {
@@ -172,7 +191,7 @@ const Fritz = () => {
             id: `temp-${position}`,
             name: '',
             score: 0,
-            image_url: '',
+            image_url: null,
             position
           };
 
@@ -183,7 +202,7 @@ const Fritz = () => {
               name={contestant.name}
               score={contestant.score || 0}
               onImageUpload={(file) => uploadImage(position, file)}
-              onNameChange={(name) => updateName(position, name)}
+              onNameChange={(name) => updateContestant(position, name, contestant.image_url)}
               onScoreChange={(increment) => updateScore(position, increment)}
             />
           );

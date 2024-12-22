@@ -320,6 +320,30 @@ export type Database = {
         }
         Relationships: []
       }
+      fritz_default_contestants: {
+        Row: {
+          created_at: string | null
+          id: string
+          image_url: string | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       instructions: {
         Row: {
           content: string
