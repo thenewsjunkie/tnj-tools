@@ -59,6 +59,7 @@ const Fritz = () => {
       return;
     }
 
+    // Only update scores in the state, preserve names and images
     setContestants(prev => prev.map(c => ({ ...c, score: 0 })));
     toast({
       title: "Scores Reset",
@@ -67,13 +68,26 @@ const Fritz = () => {
   };
 
   const updateName = async (position: number, name: string) => {
+    const contestant = contestants.find(c => c.position === position);
+    if (!contestant) return;
+
     const { error } = await supabase
       .from('fritz_contestants')
-      .update({ name })
-      .eq('position', position);
+      .upsert({ 
+        id: contestant.id || undefined,
+        position,
+        name,
+        score: contestant.score || 0,
+        image_url: contestant.image_url
+      });
 
     if (error) {
       console.error('Error updating name:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update contestant name",
+        variant: "destructive"
+      });
       return;
     }
 
@@ -100,10 +114,16 @@ const Fritz = () => {
       .from('fritz_images')
       .getPublicUrl(filePath);
 
+    const contestant = contestants.find(c => c.position === position);
     const { error: updateError } = await supabase
       .from('fritz_contestants')
-      .update({ image_url: publicUrl })
-      .eq('position', position);
+      .upsert({ 
+        id: contestant?.id || undefined,
+        position,
+        name: contestant?.name || '',
+        score: contestant?.score || 0,
+        image_url: publicUrl
+      });
 
     if (updateError) {
       console.error('Error updating image URL:', updateError);
