@@ -15,6 +15,7 @@ export const useContestantUpdate = (
 
     const contestant = contestants.find(c => c.position === position);
     if (contestant?.name) {
+      // Update the default contestant's image if it exists
       await updateDefaultContestantImage(contestant.name, publicUrl);
     }
 
@@ -42,24 +43,29 @@ export const useContestantUpdate = (
   const updateContestantName = async (position: number, name: string) => {
     console.log('Updating contestant name:', { position, name });
     
-    // Fetch the default contestant's image
-    const { data: defaultContestant, error: fetchError } = await supabase
-      .from('fritz_default_contestants')
-      .select('image_url')
-      .eq('name', name)
-      .single();
+    const isCustom = name === 'Custom';
+    let defaultContestant;
 
-    if (fetchError) {
-      console.error('Error fetching default contestant:', fetchError);
-      return;
+    if (!isCustom) {
+      // Fetch the default contestant's image
+      const { data, error: fetchError } = await supabase
+        .from('fritz_default_contestants')
+        .select('image_url')
+        .eq('name', name)
+        .single();
+
+      if (fetchError && fetchError.code !== 'PGRST116') { // Ignore "not found" errors
+        console.error('Error fetching default contestant:', fetchError);
+        return;
+      }
+
+      defaultContestant = data;
     }
-
-    console.log('Found default contestant:', defaultContestant);
 
     const { error } = await supabase
       .from('fritz_contestants')
       .update({ 
-        name,
+        name: isCustom ? null : name,
         score: 0,
         image_url: defaultContestant?.image_url || null
       })
@@ -72,32 +78,34 @@ export const useContestantUpdate = (
 
     console.log('Successfully updated contestant in database');
 
-    // Create or update yearly score entry
-    const { data: yearlyScore } = await supabase
-      .from('fritz_yearly_scores')
-      .select('*')
-      .eq('contestant_name', name)
-      .eq('year', currentYear)
-      .single();
-
-    console.log('Found yearly score:', yearlyScore);
-
-    if (!yearlyScore) {
-      await supabase
+    if (!isCustom) {
+      // Create or update yearly score entry
+      const { data: yearlyScore } = await supabase
         .from('fritz_yearly_scores')
-        .insert({
-          contestant_name: name,
-          total_score: 0,
-          year: currentYear
-        });
-      console.log('Created new yearly score entry');
+        .select('*')
+        .eq('contestant_name', name)
+        .eq('year', currentYear)
+        .single();
+
+      console.log('Found yearly score:', yearlyScore);
+
+      if (!yearlyScore) {
+        await supabase
+          .from('fritz_yearly_scores')
+          .insert({
+            contestant_name: name,
+            total_score: 0,
+            year: currentYear
+          });
+        console.log('Created new yearly score entry');
+      }
     }
 
     setContestants(
       contestants.map(c => 
         c.position === position ? { 
           ...c, 
-          name,
+          name: isCustom ? null : name,
           score: 0,
           image_url: defaultContestant?.image_url || null
         } : c
@@ -107,8 +115,45 @@ export const useContestantUpdate = (
     console.log('Updated contestants state');
   };
 
+  const saveCustomContestant = async (name: string, imageUrl: string | null) => {
+    console.log('Saving custom contestant:', { name, imageUrl });
+
+    // First, check if the contestant already exists
+    const { data: existing } = await supabase
+      .from('fritz_default_contestants')
+      .select('*')
+      .eq('name', name)
+      .single();
+
+    if (existing) {
+      // Update existing contestant
+      const { error } = await supabase
+        .from('fritz_default_contestants')
+        .update({ image_url: imageUrl })
+        .eq('name', name);
+
+      if (error) {
+        console.error('Error updating custom contestant:', error);
+        return false;
+      }
+    } else {
+      // Create new contestant
+      const { error } = await supabase
+        .from('fritz_default_contestants')
+        .insert({ name, image_url: imageUrl });
+
+      if (error) {
+        console.error('Error creating custom contestant:', error);
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   return {
     handleImageUpload,
-    updateContestantName
+    updateContestantName,
+    saveCustomContestant
   };
 };
