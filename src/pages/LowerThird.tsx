@@ -64,25 +64,29 @@ const LowerThird = () => {
   return (
     <div className="fixed top-0 left-0 w-full">
       <div className="flex items-start gap-2 max-w-4xl">
-        {/* Guest image (if available) */}
-        {type === "guest" && guest_image_url && (
-          <div className="bg-black/90 p-2">
-            <img 
-              src={guest_image_url} 
-              alt="Guest"
-              style={{ 
-                width: '120px', 
-                height: '160px', // Changed to 4:3 portrait ratio
-                objectFit: 'cover',
-                objectPosition: 'center top' // Focus on the upper part of the image for better portrait framing
+        {/* Guest image and type indicator container */}
+        <div className="relative">
+          {type === "guest" && guest_image_url && (
+            <div 
+              className="absolute top-0 left-0 z-10 bg-black/90"
+              style={{
+                width: '160px',
+                height: '200px',
               }}
-            />
+            >
+              <img 
+                src={guest_image_url} 
+                alt="Guest"
+                className="w-full h-full object-cover object-center-top"
+                style={{
+                  objectPosition: 'center 20%'
+                }}
+              />
+            </div>
+          )}
+          <div className="bg-black/90 text-white px-4 py-2 text-sm font-bold uppercase relative z-0">
+            {type}
           </div>
-        )}
-
-        {/* Type indicator */}
-        <div className="bg-black/90 text-white px-4 py-2 text-sm font-bold uppercase">
-          {type}
         </div>
 
         {/* Main content */}
