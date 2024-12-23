@@ -5,9 +5,11 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { Plus, Save } from "lucide-react";
+import { Plus, Save, Upload } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { Json } from "@/integrations/supabase/types/helpers";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 type LowerThirdType = Tables<"lower_thirds">["type"];
 
@@ -24,6 +26,7 @@ const defaultStyleConfig = {
 } as Json;
 
 const LowerThirdForm = ({ initialData, onSubmit, submitLabel = "Create Lower Third" }: LowerThirdFormProps) => {
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     title: initialData?.title ?? "",
     type: initialData?.type ?? "news",
@@ -33,7 +36,37 @@ const LowerThirdForm = ({ initialData, onSubmit, submitLabel = "Create Lower Thi
     show_time: initialData?.show_time ?? false,
     is_active: initialData?.is_active ?? false,
     style_config: initialData?.style_config ?? defaultStyleConfig,
+    guest_image_url: initialData?.guest_image_url ?? "",
   });
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const { data, error } = await supabase.functions.invoke('upload-show-note-image', {
+        body: formData,
+      });
+
+      if (error) throw error;
+
+      setFormData(prev => ({ ...prev, guest_image_url: data.url }));
+      toast({
+        title: "Success",
+        description: "Guest image uploaded successfully",
+      });
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload guest image",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,6 +108,28 @@ const LowerThirdForm = ({ initialData, onSubmit, submitLabel = "Create Lower Thi
               </SelectContent>
             </Select>
           </div>
+
+          {formData.type === "guest" && (
+            <div className="space-y-2 col-span-2">
+              <Label htmlFor="guest_image">Guest Photo</Label>
+              <div className="flex items-center gap-4">
+                <Input
+                  id="guest_image"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="flex-1"
+                />
+                {formData.guest_image_url && (
+                  <img 
+                    src={formData.guest_image_url} 
+                    alt="Guest preview" 
+                    className="w-16 h-16 object-cover rounded-full"
+                  />
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="primary_text">Primary Text</Label>

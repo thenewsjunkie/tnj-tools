@@ -425,6 +425,7 @@ export type Database = {
       lower_thirds: {
         Row: {
           created_at: string | null
+          guest_image_url: string | null
           id: string
           is_active: boolean | null
           primary_text: string | null
@@ -438,6 +439,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          guest_image_url?: string | null
           id?: string
           is_active?: boolean | null
           primary_text?: string | null
@@ -451,6 +453,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          guest_image_url?: string | null
           id?: string
           is_active?: boolean | null
           primary_text?: string | null

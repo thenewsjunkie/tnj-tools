@@ -23,6 +23,13 @@ const LowerThirdItem = ({
         <div className="space-y-2">
           <h3 className="font-bold">{lowerThird.title}</h3>
           <p className="text-sm text-muted-foreground">Type: {lowerThird.type}</p>
+          {lowerThird.type === "guest" && lowerThird.guest_image_url && (
+            <img 
+              src={lowerThird.guest_image_url} 
+              alt="Guest" 
+              className="w-16 h-16 object-cover rounded-full"
+            />
+          )}
           {lowerThird.primary_text && (
             <p className="text-sm">Primary: {lowerThird.primary_text}</p>
           )}
