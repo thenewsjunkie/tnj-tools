@@ -6,7 +6,7 @@ import NewsRoundup from "@/components/NewsRoundup";
 import TNJAi from "@/components/AudioChat";
 import Alerts from "@/components/Alerts";
 import Companion from "@/components/Companion";
-import { Edit2, Settings, Type, ExternalLink } from "lucide-react";
+import { Settings, Type, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { useTheme } from "@/components/theme/ThemeProvider";
@@ -82,20 +82,6 @@ const Admin = () => {
           ← Home
         </Link>
         <div className="flex items-center gap-4">
-          <Link
-            to="/lower-third"
-            className="flex items-center gap-2 text-foreground hover:text-primary transition-colors"
-          >
-            <ExternalLink className="h-5 w-5" />
-            <span className="hidden sm:inline">Preview</span>
-          </Link>
-          <Link
-            to="/admin/lower-thirds"
-            className="flex items-center gap-2 text-foreground hover:text-primary transition-colors"
-          >
-            <Type className="h-5 w-5" />
-            <span className="hidden sm:inline">Lower Thirds</span>
-          </Link>
           <a
             href="https://github.com/thenewsjunkie/tnj-tools"
             target="_blank"
@@ -129,15 +115,27 @@ const Admin = () => {
             <CardHeader>
               <CardTitle className="flex justify-between items-center">
                 Lower Thirds
-                <Link to="/admin/lower-thirds">
-                  <Button 
-                    size="sm"
-                    className="bg-neon-red text-white border-2 border-tnj-dark hover:bg-neon-red"
-                  >
-                    <Type className="h-4 w-4 mr-2" />
-                    Manage
-                  </Button>
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link to="/lower-third" className="text-sm">
+                    <Button 
+                      size="sm"
+                      variant="outline"
+                      className="flex items-center gap-2"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      Preview
+                    </Button>
+                  </Link>
+                  <Link to="/admin/lower-thirds">
+                    <Button 
+                      size="sm"
+                      className="bg-neon-red text-white border-2 border-tnj-dark hover:bg-neon-red"
+                    >
+                      <Type className="h-4 w-4 mr-2" />
+                      Manage
+                    </Button>
+                  </Link>
+                </div>
               </CardTitle>
             </CardHeader>
             <CardContent>
