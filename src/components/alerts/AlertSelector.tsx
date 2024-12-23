@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Edit2, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import AlertButton from "./AlertButton";
-import { Alert } from "@/hooks/useAlerts";
+import EditAlertDialog from "./EditAlertDialog";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import UsernameDialog from "./dialogs/UsernameDialog";
 
 interface AlertSelectorProps {
   selectedAlert: Alert;
@@ -23,6 +25,10 @@ const AlertSelector = ({
   onAlertDeleted 
 }: AlertSelectorProps) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [isNameDialogOpen, setIsNameDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isQueuing, setIsQueuing] = useState(false);
+  const { toast } = useToast();
 
   // Load selected alert from localStorage on mount
   useEffect(() => {
@@ -37,59 +43,151 @@ const AlertSelector = ({
 
   const handleAlertSelect = (alert: Alert) => {
     onAlertSelect(alert);
-    // Save selected alert ID to localStorage
     localStorage.setItem('selectedAlertId', alert.id);
     setDropdownOpen(false);
   };
 
+  const handleDelete = async () => {
+    console.log('[AlertSelector] Deleting alert:', selectedAlert.title);
+    const { error } = await supabase
+      .from('alerts')
+      .delete()
+      .eq('id', selectedAlert.id);
+
+    if (error) {
+      console.error('[AlertSelector] Error deleting alert:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete alert",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    console.log('[AlertSelector] Alert deleted successfully');
+    toast({
+      title: "Success",
+      description: "Alert deleted successfully",
+    });
+    
+    localStorage.removeItem('selectedAlertId');
+    onAlertDeleted();
+    if (alerts && alerts.length > 0 && alerts[0].id !== selectedAlert.id) {
+      onAlertSelect(alerts[0]);
+      localStorage.setItem('selectedAlertId', alerts[0].id);
+    }
+  };
+
+  const queueAlert = async (username?: string) => {
+    if (isQueuing) return;
+    setIsQueuing(true);
+
+    try {
+      console.log('[AlertSelector] Queueing alert:', selectedAlert.title);
+      const { error } = await supabase
+        .from('alert_queue')
+        .insert({
+          alert_id: selectedAlert.id,
+          username,
+          status: 'pending'
+        });
+
+      if (error) {
+        console.error('[AlertSelector] Error queueing alert:', error);
+        toast({
+          title: "Error",
+          description: "Failed to queue alert",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('[AlertSelector] Alert queued successfully');
+      toast({
+        title: "Success",
+        description: "Alert queued successfully",
+      });
+
+      setIsNameDialogOpen(false);
+    } finally {
+      setIsQueuing(false);
+    }
+  };
+
+  const handleClick = () => {
+    if (selectedAlert.message_enabled) {
+      setIsNameDialogOpen(true);
+    } else {
+      queueAlert();
+    }
+  };
+
   return (
     <div className="flex gap-2">
-      <Button 
-        variant="outline" 
-        className="flex-1"
-        onClick={() => {}}
-      >
-        {selectedAlert.title}
-      </Button>
-      
-      <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            size="icon"
-            className="shrink-0"
-          >
-            <ChevronDown className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent 
-          align="end" 
-          className="w-[200px] bg-background border-border"
-        >
-          {alerts?.map((alert) => (
+      <div className="flex-1 flex gap-2">
+        <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+          <DropdownMenuTrigger asChild>
             <Button
-              key={alert.id}
-              variant="ghost"
-              className="w-full justify-start px-2 py-1.5 text-sm"
-              onClick={() => handleAlertSelect(alert)}
+              variant="outline"
+              className="flex-1 justify-between"
             >
-              {alert.title}
+              <span className="truncate">{selectedAlert.title}</span>
+              <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
             </Button>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent 
+            align="start" 
+            className="w-[200px] bg-background border-border"
+          >
+            {alerts?.map((alert) => (
+              <Button
+                key={alert.id}
+                variant="ghost"
+                className="w-full justify-start px-2 py-1.5 text-sm"
+                onClick={() => handleAlertSelect(alert)}
+              >
+                {alert.title}
+              </Button>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-      <AlertButton 
-        alert={selectedAlert} 
-        onAlertDeleted={() => {
-          localStorage.removeItem('selectedAlertId');
-          onAlertDeleted();
-          // After deletion, if there are other alerts, select the first one
-          if (alerts && alerts.length > 0 && alerts[0].id !== selectedAlert.id) {
-            onAlertSelect(alerts[0]);
-            localStorage.setItem('selectedAlertId', alerts[0].id);
-          }
-        }}
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setIsEditDialogOpen(true)}
+        >
+          <Edit2 className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handleDelete}
+          className="text-destructive hover:text-destructive"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <Button 
+        variant="outline"
+        onClick={handleClick}
+        disabled={isQueuing}
+      >
+        Queue Alert
+      </Button>
+
+      <UsernameDialog
+        open={isNameDialogOpen}
+        onOpenChange={setIsNameDialogOpen}
+        onSubmit={queueAlert}
+      />
+
+      <EditAlertDialog
+        alert={selectedAlert}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onAlertUpdated={onAlertDeleted}
       />
     </div>
   );
