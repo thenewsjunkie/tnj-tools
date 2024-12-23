@@ -145,27 +145,31 @@ const Fritz = () => {
   };
 
   return (
-    <div className="min-h-screen bg-transparent p-4 md:p-8">
-      <div className="flex flex-col md:flex-row md:justify-between items-center gap-4 mb-8">
-        <ContestantSelector 
-          onSelectContestant={(name) => {
-            console.log('ContestantSelector selected:', { name });
-            const nextEmptyPosition = contestants.findIndex(c => !c.name || c.name === 'Custom');
-            if (nextEmptyPosition !== -1) {
-              updateContestant(nextEmptyPosition + 1, name);
-            }
-          }} 
+    <div className="min-h-screen bg-gradient-to-b from-black/95 to-black/90 p-4 md:p-8">
+      <div className="flex flex-col space-y-8">
+        <div className="flex flex-col md:flex-row md:justify-between items-start gap-4">
+          <div className="w-full md:w-auto bg-black/80 p-4 rounded-lg backdrop-blur-sm">
+            <ContestantSelector 
+              onSelectContestant={(name) => {
+                console.log('ContestantSelector selected:', { name });
+                const nextEmptyPosition = contestants.findIndex(c => !c.name || c.name === 'Custom');
+                if (nextEmptyPosition !== -1) {
+                  updateContestant(nextEmptyPosition + 1, name);
+                }
+              }} 
+            />
+          </div>
+          <Header onReset={handleReset} />
+        </div>
+        
+        <FritzContestantManager 
+          contestants={contestants}
+          setContestants={setContestants}
         />
-        <Header onReset={handleReset} />
+        
+        <YearlyScores />
+        <StreamGraphicButtons />
       </div>
-      
-      <FritzContestantManager 
-        contestants={contestants}
-        setContestants={setContestants}
-      />
-      
-      <YearlyScores />
-      <StreamGraphicButtons />
     </div>
   );
 };

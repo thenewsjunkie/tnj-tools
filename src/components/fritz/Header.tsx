@@ -34,18 +34,21 @@ const Header = ({ onReset }: HeaderProps) => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
-      <h1 className="text-3xl md:text-4xl font-['Radiate Sans Extra Bold'] text-black text-center md:text-left">
-        Fritz on the Street
-      </h1>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={handleReset}
-        className="text-black hover:bg-white/10"
-      >
-        <RefreshCw className="h-6 w-6" />
-      </Button>
+    <div className="relative px-6 py-4 bg-gradient-to-r from-black via-black/90 to-black/80 rounded-lg backdrop-blur-sm">
+      <div className="flex flex-col md:flex-row md:justify-between items-center gap-4">
+        <h1 className="text-3xl md:text-4xl font-['Radiate Sans Extra Bold'] text-white text-center md:text-left tracking-wider uppercase">
+          Fritz on the Street
+        </h1>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleReset}
+          className="text-white hover:bg-white/10"
+        >
+          <RefreshCw className="h-6 w-6" />
+        </Button>
+      </div>
+      <div className="h-1 bg-neon-red mt-2 mx-auto w-2/3 rounded-full shadow-[0_0_10px_rgba(242,21,22,0.7)]" />
     </div>
   );
 };

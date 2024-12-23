@@ -10,9 +10,7 @@ const StreamGraphicButtons = () => {
       <Link to="/fritz/current-score">
         <Button
           variant="ghost"
-          className={`${
-            theme === 'dark' ? 'bg-black text-white' : 'text-black'
-          } hover:text-neon-red transition-colors px-4 py-2 border border-white/20 rounded w-full md:w-auto`}
+          className="w-full md:w-auto bg-black/80 text-white hover:text-neon-red transition-colors px-6 py-3 border border-white/20 rounded-lg backdrop-blur-sm uppercase tracking-wider"
         >
           Stream Graphic 1
         </Button>
@@ -20,9 +18,7 @@ const StreamGraphicButtons = () => {
       <Link to="/fritz/total-score">
         <Button
           variant="ghost"
-          className={`${
-            theme === 'dark' ? 'bg-black text-white' : 'text-black'
-          } hover:text-neon-red transition-colors px-4 py-2 border border-white/20 rounded w-full md:w-auto`}
+          className="w-full md:w-auto bg-black/80 text-white hover:text-neon-red transition-colors px-6 py-3 border border-white/20 rounded-lg backdrop-blur-sm uppercase tracking-wider"
         >
           Stream Graphic 2
         </Button>

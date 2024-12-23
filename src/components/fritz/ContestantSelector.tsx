@@ -39,7 +39,7 @@ const ContestantSelector = ({ onSelectContestant }: ContestantSelectorProps) => 
             console.log('Selecting contestant:', contestant.name);
             onSelectContestant(contestant.name);
           }}
-          className="text-white hover:text-white hover:bg-gray-700"
+          className="text-white border-white/20 hover:bg-white/10 hover:text-neon-red transition-colors uppercase tracking-wide"
         >
           {contestant.name}
         </Button>
