@@ -10,6 +10,7 @@ import EditAlertDialog from "./EditAlertDialog";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import UsernameDialog from "./dialogs/UsernameDialog";
+import { Alert } from "@/hooks/useAlerts";
 
 interface AlertSelectorProps {
   selectedAlert: Alert;
