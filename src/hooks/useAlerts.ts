@@ -1,6 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+export interface Alert {
+  id: string;
+  title: string;
+  media_url: string;
+  media_type: string;
+  message_text?: string | null;
+  message_enabled?: boolean | null;
+  font_size?: number | null;
+}
+
 export const useAlerts = () => {
   const { data: alerts, refetch } = useQuery({
     queryKey: ['alerts'],
