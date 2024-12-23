@@ -63,7 +63,7 @@ const LowerThird = () => {
 
   return (
     <div className="fixed top-0 left-0 w-full">
-      <div className="flex items-start gap-2 max-w-4xl">
+      <div className="flex items-start gap-2 max-w-[90vw]">
         {type === "guest" && guest_image_url ? (
           <div className="relative">
             <div 
@@ -95,12 +95,12 @@ const LowerThird = () => {
         {/* Main content */}
         <div className="flex-1 bg-white/90 text-black p-4">
           <div className="flex justify-between items-start">
-            <div className="space-y-2 flex-1">
+            <div className="space-y-2 flex-1 min-w-0">
               {primary_text && (
                 <h1 className="text-7xl font-bold leading-tight">{primary_text}</h1>
               )}
               {secondary_text && (
-                <p className="text-5xl text-black/80">{secondary_text}</p>
+                <p className="text-5xl text-black/80 whitespace-nowrap overflow-hidden text-ellipsis">{secondary_text}</p>
               )}
             </div>
             {show_time && (
