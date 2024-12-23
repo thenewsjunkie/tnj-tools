@@ -69,8 +69,8 @@ const LowerThird = () => {
           <div className="bg-black/90 p-2">
             <img 
               src={guest_image_url} 
-              alt="Guest" 
-              className="w-16 h-16 object-cover"
+              alt="Guest"
+              style={{ width: '120px', height: '90px', objectFit: 'cover' }}
             />
           </div>
         )}
