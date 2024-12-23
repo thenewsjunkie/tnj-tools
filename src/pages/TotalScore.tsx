@@ -64,13 +64,35 @@ const TotalScore = () => {
 
   return (
     <div className="min-h-screen">
-      <div className="fixed top-8 left-0 bg-black/80 p-4 backdrop-blur-sm">
-        <h3 className="text-xl font-bold mb-2 text-white">Total Score {currentYear}</h3>
-        <div className="space-y-1">
+      <div className="fixed top-8 left-8 w-[300px] bg-black/80 rounded-lg overflow-hidden backdrop-blur-sm">
+        {/* Title Bar */}
+        <div className="relative px-6 py-4 bg-gradient-to-r from-black via-black/90 to-black/80">
+          <h3 className="text-2xl font-bold text-white text-center tracking-wider uppercase">
+            Total Score {currentYear}
+          </h3>
+          {/* Accent line under title */}
+          <div className="h-1 bg-neon-red mt-2 mx-auto w-2/3 rounded-full shadow-[0_0_10px_rgba(242,21,22,0.7)]" />
+        </div>
+
+        {/* Scores List */}
+        <div className="space-y-3 p-4">
           {scores.map((score) => (
-            <div key={score.contestant_name} className="flex justify-between text-white bg-black px-2 py-1 rounded">
-              <span>{score.contestant_name}:</span>
-              <span className="ml-4">{score.total_score}</span>
+            <div 
+              key={score.contestant_name} 
+              className="relative flex justify-between items-center bg-black/60 px-4 py-3 rounded-lg backdrop-blur-sm"
+            >
+              {/* Name */}
+              <span className="text-lg font-semibold text-white tracking-wide uppercase">
+                {score.contestant_name}
+              </span>
+              
+              {/* Score with glow effect */}
+              <div className="relative">
+                <div className="absolute inset-0 blur-lg bg-neon-red/30 animate-pulse" />
+                <span className="relative text-4xl font-['Digital-7'] text-neon-red animate-led-flicker drop-shadow-[0_0_10px_rgba(255,0,0,0.7)]">
+                  {score.total_score}
+                </span>
+              </div>
             </div>
           ))}
         </div>
