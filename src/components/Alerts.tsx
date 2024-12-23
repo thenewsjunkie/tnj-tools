@@ -1,27 +1,20 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { ChevronDown } from "lucide-react";
 import AddAlertDialog from "./alerts/AddAlertDialog";
-import AlertButton from "./alerts/AlertButton";
 import AlertsHeader from "./alerts/AlertsHeader";
 import QueueManager from "./alerts/QueueManager";
+import AlertSelector from "./alerts/AlertSelector";
+import AlertStatus from "./alerts/AlertStatus";
 import { useQueueState } from "@/hooks/useQueueState";
 import { useAlerts } from "@/hooks/useAlerts";
 import { useAlertQueue } from "@/hooks/useAlertQueue";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 
 const Alerts = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [totalAlertsSent, setTotalAlertsSent] = useState(0);
   const [selectedAlert, setSelectedAlert] = useState<any>(null);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const { toast } = useToast();
   const { isPaused, togglePause } = useQueueState();
   const { alerts, refetch } = useAlerts();
@@ -93,11 +86,6 @@ const Alerts = () => {
     }
   };
 
-  const handleAlertSelect = (alert: any) => {
-    setSelectedAlert(alert);
-    setDropdownOpen(false);
-  };
-
   const bgColor = theme === 'light' ? 'bg-white' : 'bg-black/50';
 
   return (
@@ -117,48 +105,19 @@ const Alerts = () => {
 
       <div className="p-6 pt-0">
         {selectedAlert && (
-          <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
-            <DropdownMenuTrigger asChild>
-              <div className="flex gap-2">
-                <AlertButton 
-                  alert={selectedAlert} 
-                  onAlertDeleted={handleAlertDeleted}
-                />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="shrink-0"
-                >
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent 
-              align="end" 
-              className="w-[200px] bg-background border-border"
-            >
-              {alerts?.map((alert) => (
-                <Button
-                  key={alert.id}
-                  variant="ghost"
-                  className="w-full justify-start px-2 py-1.5 text-sm"
-                  onClick={() => handleAlertSelect(alert)}
-                >
-                  {alert.title}
-                </Button>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <AlertSelector
+            selectedAlert={selectedAlert}
+            alerts={alerts}
+            onAlertSelect={setSelectedAlert}
+            onAlertDeleted={handleAlertDeleted}
+          />
         )}
       </div>
 
-      <div className="absolute bottom-3 left-4 text-xs text-muted-foreground">
-        Queue Status: {isPaused ? 'Paused' : 'Playing'}
-      </div>
-
-      <div className="absolute bottom-3 right-4 text-xs text-muted-foreground">
-        Total Alerts Sent: {totalAlertsSent}
-      </div>
+      <AlertStatus 
+        isPaused={isPaused}
+        totalAlertsSent={totalAlertsSent}
+      />
 
       <AddAlertDialog
         open={isDialogOpen}
