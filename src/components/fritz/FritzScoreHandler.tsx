@@ -50,17 +50,30 @@ const FritzScoreHandler = () => {
           throw new Error('Failed to update score');
         }
 
-        // Update yearly score
-        const { error: yearlyError } = await supabase
+        // Get current yearly score
+        const { data: yearlyData, error: yearlyFetchError } = await supabase
           .from('fritz_yearly_scores')
-          .update({ 
-            total_score: supabase.sql`total_score + ${isIncrement ? 1 : -1}` 
-          })
+          .select('total_score')
+          .eq('contestant_name', formattedName)
+          .eq('year', currentYear)
+          .single();
+
+        if (yearlyFetchError) {
+          console.error('[FritzScoreHandler] Error fetching yearly score:', yearlyFetchError);
+          throw new Error('Failed to fetch yearly score');
+        }
+
+        const newYearlyScore = (yearlyData?.total_score || 0) + (isIncrement ? 1 : -1);
+
+        // Update yearly score
+        const { error: yearlyUpdateError } = await supabase
+          .from('fritz_yearly_scores')
+          .update({ total_score: newYearlyScore })
           .eq('contestant_name', formattedName)
           .eq('year', currentYear);
 
-        if (yearlyError) {
-          console.error('[FritzScoreHandler] Error updating yearly score:', yearlyError);
+        if (yearlyUpdateError) {
+          console.error('[FritzScoreHandler] Error updating yearly score:', yearlyUpdateError);
           throw new Error('Failed to update yearly score');
         }
 
