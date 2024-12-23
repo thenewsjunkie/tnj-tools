@@ -81,13 +81,13 @@ const LowerThird = () => {
                   objectPosition: 'center 20%'
                 }}
               />
-              <div className="absolute bottom-0 left-0 w-full bg-black/90 text-white py-2 text-base font-bold uppercase text-center">
+              <div className="absolute bottom-0 left-0 w-full bg-black/90 text-white py-2 text-lg font-bold uppercase text-center">
                 {type}
               </div>
             </div>
           </div>
         ) : (
-          <div className="bg-black/90 text-white px-4 py-2 text-base font-bold uppercase">
+          <div className="bg-black/90 text-white px-4 py-2 text-lg font-bold uppercase">
             {type}
           </div>
         )}
@@ -95,16 +95,16 @@ const LowerThird = () => {
         {/* Main content */}
         <div className="flex-1 bg-white/90 text-black p-4">
           <div className="flex justify-between items-start">
-            <div className="space-y-1 flex-1">
+            <div className="space-y-2 flex-1">
               {primary_text && (
-                <h1 className="text-3xl font-bold leading-tight">{primary_text}</h1>
+                <h1 className="text-4xl font-bold leading-tight">{primary_text}</h1>
               )}
               {secondary_text && (
-                <p className="text-xl text-black/80">{secondary_text}</p>
+                <p className="text-2xl text-black/80">{secondary_text}</p>
               )}
             </div>
             {show_time && (
-              <div className="text-neon-red font-bold ml-4 text-xl">
+              <div className="text-neon-red font-bold ml-4 text-2xl">
                 {format(currentTime, "HH:mm:ss")}
               </div>
             )}
@@ -115,7 +115,7 @@ const LowerThird = () => {
       {/* Ticker */}
       {ticker_text && (
         <div className="mt-2 bg-black/90 text-white p-2 max-w-4xl">
-          <p className="animate-marquee whitespace-nowrap">
+          <p className="animate-marquee whitespace-nowrap text-xl">
             {ticker_text}
           </p>
         </div>
