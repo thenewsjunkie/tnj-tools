@@ -61,6 +61,9 @@ const LowerThird = () => {
 
   const { primary_text, secondary_text, ticker_text, show_time, type, guest_image_url } = lowerThird;
 
+  // Use 12-hour format for news type
+  const timeFormat = type === 'news' ? 'hh:mm:ss' : 'HH:mm:ss';
+
   return (
     <div className="fixed top-0 left-0 w-full">
       <div className="flex items-start gap-2 max-w-[90vw]">
@@ -105,7 +108,8 @@ const LowerThird = () => {
             </div>
             {show_time && (
               <div className="text-neon-red font-bold ml-4 text-2xl">
-                {format(currentTime, "HH:mm:ss")}
+                {format(currentTime, timeFormat)}
+                {type === 'news' && format(currentTime, 'a')}
               </div>
             )}
           </div>
@@ -114,7 +118,7 @@ const LowerThird = () => {
 
       {/* Ticker */}
       {ticker_text && (
-        <div className="mt-2 bg-black/90 text-white p-2 max-w-4xl">
+        <div className="mt-2 bg-black/90 text-white p-2 w-full">
           <p className="animate-marquee whitespace-nowrap text-xl">
             {ticker_text}
           </p>
