@@ -30,13 +30,13 @@ const AlertSelector = ({
   };
 
   return (
-    <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
-      <DropdownMenuTrigger asChild>
-        <div className="flex gap-2">
-          <AlertButton 
-            alert={selectedAlert} 
-            onAlertDeleted={onAlertDeleted}
-          />
+    <div className="flex gap-2">
+      <AlertButton 
+        alert={selectedAlert} 
+        onAlertDeleted={onAlertDeleted}
+      />
+      <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+        <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
             size="icon"
@@ -44,24 +44,24 @@ const AlertSelector = ({
           >
             <ChevronDown className="h-4 w-4" />
           </Button>
-        </div>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent 
-        align="end" 
-        className="w-[200px] bg-background border-border"
-      >
-        {alerts?.map((alert) => (
-          <Button
-            key={alert.id}
-            variant="ghost"
-            className="w-full justify-start px-2 py-1.5 text-sm"
-            onClick={() => handleAlertSelect(alert)}
-          >
-            {alert.title}
-          </Button>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent 
+          align="end" 
+          className="w-[200px] bg-background border-border"
+        >
+          {alerts?.map((alert) => (
+            <Button
+              key={alert.id}
+              variant="ghost"
+              className="w-full justify-start px-2 py-1.5 text-sm"
+              onClick={() => handleAlertSelect(alert)}
+            >
+              {alert.title}
+            </Button>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 };
 
