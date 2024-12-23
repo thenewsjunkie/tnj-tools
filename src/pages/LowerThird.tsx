@@ -24,6 +24,7 @@ const LowerThird = () => {
         return;
       }
 
+      console.log("Active lower third:", data); // Debug log
       setLowerThird(data);
     };
 
@@ -69,7 +70,7 @@ const LowerThird = () => {
             <img 
               src={guest_image_url} 
               alt="Guest" 
-              className="w-16 h-16 object-cover rounded-full"
+              className="w-16 h-16 object-cover"
             />
           </div>
         )}
