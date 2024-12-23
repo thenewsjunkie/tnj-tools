@@ -422,6 +422,48 @@ export type Database = {
         }
         Relationships: []
       }
+      lower_thirds: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          primary_text: string | null
+          secondary_text: string | null
+          show_time: boolean | null
+          style_config: Json | null
+          ticker_text: string | null
+          title: string
+          type: Database["public"]["Enums"]["lower_third_type"]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          primary_text?: string | null
+          secondary_text?: string | null
+          show_time?: boolean | null
+          style_config?: Json | null
+          ticker_text?: string | null
+          title: string
+          type?: Database["public"]["Enums"]["lower_third_type"]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          primary_text?: string | null
+          secondary_text?: string | null
+          show_time?: boolean | null
+          style_config?: Json | null
+          ticker_text?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["lower_third_type"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       news_roundups: {
         Row: {
           content: string
@@ -821,6 +863,7 @@ export type Database = {
         | "75k_100k"
         | "100k_150k"
         | "over_150k"
+      lower_third_type: "news" | "guest" | "topic" | "breaking"
       marital_status:
         | "single"
         | "married"

@@ -7,7 +7,7 @@ import NewsRoundup from "@/components/NewsRoundup";
 import TNJAi from "@/components/AudioChat";
 import Alerts from "@/components/Alerts";
 import Companion from "@/components/Companion";
-import { Edit2, Settings } from "lucide-react";
+import { Edit2, Settings, Type } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { useTheme } from "@/components/theme/ThemeProvider";
@@ -27,6 +27,13 @@ const Admin = () => {
           ← Home
         </Link>
         <div className="flex items-center gap-4">
+          <Link
+            to="/admin/lower-thirds"
+            className="flex items-center gap-2 text-foreground hover:text-primary transition-colors"
+          >
+            <Type className="h-5 w-5" />
+            <span className="hidden sm:inline">Lower Thirds</span>
+          </Link>
           <a
             href="https://github.com/thenewsjunkie/tnj-tools"
             target="_blank"

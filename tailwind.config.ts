@@ -66,9 +66,14 @@ export default {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.95" },
         },
+        marquee: {
+          '0%': { transform: 'translateX(100%)' },
+          '100%': { transform: 'translateX(-100%)' },
+        },
       },
       animation: {
         "led-flicker": "led-flicker 2s ease-in-out infinite",
+        "marquee": "marquee 20s linear infinite",
       },
     },
   },

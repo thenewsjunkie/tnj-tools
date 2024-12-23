@@ -21,6 +21,8 @@ import Fritz from "./pages/Fritz";
 import CurrentScore from "./pages/CurrentScore";
 import TotalScore from "./pages/TotalScore";
 import FritzScoreHandler from "./components/fritz/FritzScoreHandler";
+import LowerThird from "./pages/LowerThird";
+import LowerThirds from "./pages/Admin/LowerThirds";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -161,6 +163,7 @@ const App = () => (
             <Route path="/fritz/current-score" element={<CurrentScore />} />
             <Route path="/fritz/total-score" element={<TotalScore />} />
             <Route path="/fritz/:contestant/:action" element={<FritzScoreHandler />} />
+            <Route path="/lower-third" element={<LowerThird />} />
 
             {/* Protected Admin Routes */}
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
@@ -168,6 +171,7 @@ const App = () => (
             <Route path="/admin/settings" element={<AdminRoute><Settings /></AdminRoute>} />
             <Route path="/admin/instructions" element={<AdminRoute><Instructions /></AdminRoute>} />
             <Route path="/admin/queue-history" element={<AdminRoute><QueueHistory /></AdminRoute>} />
+            <Route path="/admin/lower-thirds" element={<AdminRoute><LowerThirds /></AdminRoute>} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
