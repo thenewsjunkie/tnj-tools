@@ -44,6 +44,7 @@ const LowerThirdForm = ({ initialData, onSubmit, submitLabel = "Create Lower Thi
     if (!file) return;
 
     try {
+      console.log("Starting image upload...");
       const formData = new FormData();
       formData.append('file', file);
 
@@ -51,8 +52,12 @@ const LowerThirdForm = ({ initialData, onSubmit, submitLabel = "Create Lower Thi
         body: formData,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Upload error:', error);
+        throw error;
+      }
 
+      console.log("Upload successful, received URL:", data.url);
       setFormData(prev => ({ ...prev, guest_image_url: data.url }));
       toast({
         title: "Success",
@@ -70,6 +75,7 @@ const LowerThirdForm = ({ initialData, onSubmit, submitLabel = "Create Lower Thi
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Submitting form data:", formData);
     onSubmit(formData);
   };
 
@@ -124,7 +130,7 @@ const LowerThirdForm = ({ initialData, onSubmit, submitLabel = "Create Lower Thi
                   <img 
                     src={formData.guest_image_url} 
                     alt="Guest preview" 
-                    className="w-16 h-16 object-cover rounded-full"
+                    className="w-24 h-24 object-cover"
                   />
                 )}
               </div>
