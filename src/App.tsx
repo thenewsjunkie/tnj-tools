@@ -20,6 +20,7 @@ import QueueHistory from "./pages/QueueHistory";
 import Fritz from "./pages/Fritz";
 import CurrentScore from "./pages/CurrentScore";
 import TotalScore from "./pages/TotalScore";
+import FritzScoreHandler from "./components/fritz/FritzScoreHandler";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -159,6 +160,7 @@ const App = () => (
             <Route path="/fritz" element={<Fritz />} />
             <Route path="/fritz/current-score" element={<CurrentScore />} />
             <Route path="/fritz/total-score" element={<TotalScore />} />
+            <Route path="/fritz/:contestant/:action" element={<FritzScoreHandler />} />
 
             {/* Protected Admin Routes */}
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
