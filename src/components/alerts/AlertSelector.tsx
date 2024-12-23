@@ -124,56 +124,59 @@ const AlertSelector = ({
   };
 
   return (
-    <div className="flex gap-2">
-      <div className="flex-1 flex gap-2">
-        <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              className="flex-1 justify-between"
-            >
-              <span className="truncate">{selectedAlert.title}</span>
-              <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent 
-            align="start" 
-            className="w-[200px] bg-background border-border"
-          >
-            {alerts?.map((alert) => (
+    <div className="flex flex-col space-y-2">
+      <div className="flex gap-2">
+        <div className="flex-1 flex gap-2">
+          <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+            <DropdownMenuTrigger asChild>
               <Button
-                key={alert.id}
-                variant="ghost"
-                className="w-full justify-start px-2 py-1.5 text-sm"
-                onClick={() => handleAlertSelect(alert)}
+                variant="outline"
+                className="flex-1 justify-between"
               >
-                {alert.title}
+                <span className="truncate">{selectedAlert.title}</span>
+                <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
               </Button>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent 
+              align="start" 
+              className="w-[200px] bg-background border-border"
+            >
+              {alerts?.map((alert) => (
+                <Button
+                  key={alert.id}
+                  variant="ghost"
+                  className="w-full justify-start px-2 py-1.5 text-sm"
+                  onClick={() => handleAlertSelect(alert)}
+                >
+                  {alert.title}
+                </Button>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => setIsEditDialogOpen(true)}
-        >
-          <Edit2 className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={handleDelete}
-          className="text-destructive hover:text-destructive"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setIsEditDialogOpen(true)}
+          >
+            <Edit2 className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleDelete}
+            className="text-destructive hover:text-destructive"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       <Button 
         variant="outline"
         onClick={handleClick}
         disabled={isQueuing}
+        className="w-full sm:w-auto"
       >
         Queue Alert
       </Button>
