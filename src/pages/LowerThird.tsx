@@ -97,10 +97,10 @@ const LowerThird = () => {
           <div className="flex justify-between items-start">
             <div className="space-y-2 flex-1">
               {primary_text && (
-                <h1 className="text-4xl font-bold leading-tight">{primary_text}</h1>
+                <h1 className="text-5xl font-bold leading-tight">{primary_text}</h1>
               )}
               {secondary_text && (
-                <p className="text-2xl text-black/80">{secondary_text}</p>
+                <p className="text-3xl text-black/80">{secondary_text}</p>
               )}
             </div>
             {show_time && (
