@@ -2,7 +2,10 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Tables } from "@/integrations/supabase/types";
-import { Edit2, X } from "lucide-react";
+import { Edit2, X, ChevronDown, ChevronUp } from "lucide-react";
+import { useState } from "react";
+import LowerThirdForm from "./LowerThirdForm";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface LowerThirdItemProps {
   lowerThird: Tables<"lower_thirds">;
@@ -17,52 +20,69 @@ const LowerThirdItem = ({
   onDelete,
   onEdit,
 }: LowerThirdItemProps) => {
+  const [isEditing, setIsEditing] = useState(false);
+
+  const handleEdit = (updatedData: Omit<Tables<"lower_thirds">, "id" | "created_at" | "updated_at">) => {
+    onEdit({ ...lowerThird, ...updatedData });
+    setIsEditing(false);
+  };
+
   return (
     <Card key={lowerThird.id} className="p-4">
-      <div className="flex justify-between items-start">
-        <div className="space-y-2">
-          <h3 className="font-bold">{lowerThird.title}</h3>
-          <p className="text-sm text-muted-foreground">Type: {lowerThird.type}</p>
-          {lowerThird.type === "guest" && lowerThird.guest_image_url && (
-            <img 
-              src={lowerThird.guest_image_url} 
-              alt="Guest" 
-              className="w-16 h-16 object-cover rounded-full"
+      <Collapsible open={isEditing} onOpenChange={setIsEditing}>
+        <div className="flex justify-between items-start">
+          <div className="space-y-2">
+            <h3 className="font-bold">{lowerThird.title}</h3>
+            <p className="text-sm text-muted-foreground">Type: {lowerThird.type}</p>
+            {lowerThird.type === "guest" && lowerThird.guest_image_url && (
+              <img 
+                src={lowerThird.guest_image_url} 
+                alt="Guest" 
+                className="w-16 h-16 object-cover rounded-full"
+              />
+            )}
+            {lowerThird.primary_text && (
+              <p className="text-sm">Primary: {lowerThird.primary_text}</p>
+            )}
+            {lowerThird.secondary_text && (
+              <p className="text-sm">Secondary: {lowerThird.secondary_text}</p>
+            )}
+            {lowerThird.ticker_text && (
+              <p className="text-sm">Ticker: {lowerThird.ticker_text}</p>
+            )}
+          </div>
+          <div className="flex items-center space-x-2">
+            <Switch
+              checked={lowerThird.is_active}
+              onCheckedChange={(checked) =>
+                onToggleActive(lowerThird.id, checked)
+              }
             />
-          )}
-          {lowerThird.primary_text && (
-            <p className="text-sm">Primary: {lowerThird.primary_text}</p>
-          )}
-          {lowerThird.secondary_text && (
-            <p className="text-sm">Secondary: {lowerThird.secondary_text}</p>
-          )}
-          {lowerThird.ticker_text && (
-            <p className="text-sm">Ticker: {lowerThird.ticker_text}</p>
-          )}
+            <CollapsibleTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+              >
+                {isEditing ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </Button>
+            </CollapsibleTrigger>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onDelete(lowerThird.id)}
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <Switch
-            checked={lowerThird.is_active}
-            onCheckedChange={(checked) =>
-              onToggleActive(lowerThird.id, checked)
-            }
+        <CollapsibleContent className="mt-4">
+          <LowerThirdForm
+            initialData={lowerThird}
+            onSubmit={handleEdit}
+            submitLabel="Save Changes"
           />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onEdit(lowerThird)}
-          >
-            <Edit2 className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onDelete(lowerThird.id)}
-          >
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
+        </CollapsibleContent>
+      </Collapsible>
     </Card>
   );
 };

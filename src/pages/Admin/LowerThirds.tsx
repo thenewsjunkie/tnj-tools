@@ -12,7 +12,6 @@ type NewLowerThird = Omit<LowerThird, "id" | "created_at" | "updated_at">;
 const LowerThirds = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [editingLowerThird, setEditingLowerThird] = useState<LowerThird | null>(null);
 
   // Fetch all lower thirds
   const { data: lowerThirds, isLoading } = useQuery({
@@ -63,6 +62,7 @@ const LowerThirds = () => {
           show_time: lowerThird.show_time,
           is_active: lowerThird.is_active,
           style_config: lowerThird.style_config,
+          guest_image_url: lowerThird.guest_image_url,
         })
         .eq("id", lowerThird.id);
 
@@ -70,7 +70,6 @@ const LowerThirds = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lower-thirds"] });
-      setEditingLowerThird(null);
       toast({
         title: "Lower third updated",
         description: "The lower third has been updated successfully.",
@@ -120,11 +119,7 @@ const LowerThirds = () => {
   });
 
   const handleSubmit = (data: NewLowerThird) => {
-    if (editingLowerThird) {
-      updateMutation.mutate({ ...editingLowerThird, ...data });
-    } else {
-      createMutation.mutate(data);
-    }
+    createMutation.mutate(data);
   };
 
   if (isLoading) {
@@ -136,9 +131,8 @@ const LowerThirds = () => {
       <h1 className="text-2xl font-bold mb-6">Lower Thirds Manager</h1>
 
       <LowerThirdForm
-        initialData={editingLowerThird ?? undefined}
         onSubmit={handleSubmit}
-        submitLabel={editingLowerThird ? "Update Lower Third" : "Create Lower Third"}
+        submitLabel="Create Lower Third"
       />
 
       <div className="space-y-4">
@@ -150,7 +144,7 @@ const LowerThirds = () => {
               toggleActiveMutation.mutate({ id, isActive })
             }
             onDelete={(id) => deleteMutation.mutate(id)}
-            onEdit={(lt) => setEditingLowerThird(lt)}
+            onEdit={(lt) => updateMutation.mutate(lt)}
           />
         ))}
       </div>
