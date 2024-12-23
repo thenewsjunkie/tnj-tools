@@ -58,11 +58,22 @@ const LowerThird = () => {
 
   if (!lowerThird) return null;
 
-  const { primary_text, secondary_text, ticker_text, show_time, type } = lowerThird;
+  const { primary_text, secondary_text, ticker_text, show_time, type, guest_image_url } = lowerThird;
 
   return (
     <div className="fixed top-0 left-0 w-full">
       <div className="flex items-start gap-2 max-w-4xl">
+        {/* Guest image (if available) */}
+        {type === "guest" && guest_image_url && (
+          <div className="bg-black/90 p-2">
+            <img 
+              src={guest_image_url} 
+              alt="Guest" 
+              className="w-16 h-16 object-cover rounded-full"
+            />
+          </div>
+        )}
+
         {/* Type indicator */}
         <div className="bg-black/90 text-white px-4 py-2 text-sm font-bold uppercase">
           {type}
