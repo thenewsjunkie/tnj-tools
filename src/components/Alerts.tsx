@@ -21,6 +21,7 @@ const Alerts = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [totalAlertsSent, setTotalAlertsSent] = useState(0);
   const [selectedAlert, setSelectedAlert] = useState<any>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const { toast } = useToast();
   const { isPaused, togglePause } = useQueueState();
   const { alerts, refetch } = useAlerts();
@@ -92,6 +93,11 @@ const Alerts = () => {
     }
   };
 
+  const handleAlertSelect = (alert: any) => {
+    setSelectedAlert(alert);
+    setDropdownOpen(false);
+  };
+
   const bgColor = theme === 'light' ? 'bg-white' : 'bg-black/50';
 
   return (
@@ -111,7 +117,7 @@ const Alerts = () => {
 
       <div className="p-6 pt-0">
         {selectedAlert && (
-          <DropdownMenu>
+          <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
             <DropdownMenuTrigger asChild>
               <div className="flex gap-2">
                 <AlertButton 
@@ -136,7 +142,7 @@ const Alerts = () => {
                   key={alert.id}
                   variant="ghost"
                   className="w-full justify-start px-2 py-1.5 text-sm"
-                  onClick={() => setSelectedAlert(alert)}
+                  onClick={() => handleAlertSelect(alert)}
                 >
                   {alert.title}
                 </Button>
