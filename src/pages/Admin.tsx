@@ -88,7 +88,7 @@ const Admin = () => {
             rel="noopener noreferrer"
             className="flex items-center gap-2 text-foreground hover:text-primary transition-colors"
           >
-            <Edit2 className="h-5 w-5" />
+            <Settings className="h-5 w-5" />
             <span className="hidden sm:inline">Edit</span>
           </a>
           <ThemeToggle />
