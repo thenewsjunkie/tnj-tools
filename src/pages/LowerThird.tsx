@@ -64,28 +64,31 @@ const LowerThird = () => {
   return (
     <div className="fixed top-0 left-0 w-full">
       <div className="flex items-start gap-2 max-w-4xl">
-        {/* Type indicator */}
-        <div className="bg-black/90 text-white px-4 py-2 text-sm font-bold uppercase">
-          {type}
-        </div>
-
-        {/* Guest image (if available) */}
-        {type === "guest" && guest_image_url && (
-          <div 
-            className="bg-black/90"
-            style={{
-              width: '160px',
-              height: '200px',
-            }}
-          >
-            <img 
-              src={guest_image_url} 
-              alt="Guest"
-              className="w-full h-full object-cover"
+        {type === "guest" && guest_image_url ? (
+          <div className="relative">
+            <div 
+              className="bg-black/90"
               style={{
-                objectPosition: 'center 20%'
+                width: '140px',
+                height: '180px',
               }}
-            />
+            >
+              <img 
+                src={guest_image_url} 
+                alt="Guest"
+                className="w-full h-full object-cover"
+                style={{
+                  objectPosition: 'center 20%'
+                }}
+              />
+              <div className="absolute bottom-0 left-0 w-full bg-black/90 text-white px-4 py-2 text-base font-bold uppercase">
+                {type}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-black/90 text-white px-4 py-2 text-base font-bold uppercase">
+            {type}
           </div>
         )}
 
@@ -94,14 +97,14 @@ const LowerThird = () => {
           <div className="flex justify-between items-start">
             <div className="space-y-1 flex-1">
               {primary_text && (
-                <h1 className="text-2xl font-bold leading-tight">{primary_text}</h1>
+                <h1 className="text-3xl font-bold leading-tight">{primary_text}</h1>
               )}
               {secondary_text && (
-                <p className="text-lg text-black/80">{secondary_text}</p>
+                <p className="text-xl text-black/80">{secondary_text}</p>
               )}
             </div>
             {show_time && (
-              <div className="text-neon-red font-bold ml-4">
+              <div className="text-neon-red font-bold ml-4 text-xl">
                 {format(currentTime, "HH:mm:ss")}
               </div>
             )}
