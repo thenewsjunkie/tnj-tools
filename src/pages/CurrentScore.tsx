@@ -48,10 +48,10 @@ const CurrentScore = () => {
   };
 
   return (
-    <div className="min-h-screen text-white p-0">
+    <div className="min-h-screen bg-black/90 p-0">
       <div className="flex">
         {contestants.filter(c => c.name).map((contestant) => (
-          <div key={contestant.id} className="relative w-[400px] h-[400px]">
+          <div key={contestant.id} className="relative w-[400px] h-[400px] group">
             {/* Background Image with Overlay */}
             <div className="absolute inset-0">
               {contestant.image_url ? (
@@ -63,22 +63,32 @@ const CurrentScore = () => {
               ) : (
                 <div className="w-full h-full bg-gray-900" />
               )}
-              {/* Dark overlay for better score visibility */}
-              <div className="absolute inset-0 bg-black/60" />
+              {/* Gradient overlay for better text visibility */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
             </div>
             
-            {/* Score Overlay - Made larger and more prominent */}
+            {/* Score Display */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-[200px] font-['Digital-7'] text-neon-red animate-led-flicker drop-shadow-[0_0_10px_rgba(255,0,0,0.7)]">
-                {contestant.score || 0}
-              </span>
+              <div className="relative">
+                {/* Score glow effect */}
+                <div className="absolute inset-0 blur-lg bg-neon-red/30 animate-pulse" />
+                <span className="relative text-[200px] font-['Digital-7'] text-neon-red animate-led-flicker drop-shadow-[0_0_10px_rgba(255,0,0,0.7)]">
+                  {contestant.score || 0}
+                </span>
+              </div>
             </div>
             
-            {/* Name Overlay - Made more visible */}
-            <div className="absolute bottom-0 left-0 right-0 bg-black/80 p-4">
-              <h2 className="text-3xl text-center font-bold text-white">
-                {contestant.name}
-              </h2>
+            {/* Name Display */}
+            <div className="absolute bottom-0 left-0 right-0">
+              {/* Name background with gradient */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/90 to-transparent h-32" />
+              <div className="relative px-6 py-4">
+                <h2 className="text-4xl font-bold text-white text-center tracking-wider uppercase">
+                  {contestant.name}
+                </h2>
+                {/* Accent line under name */}
+                <div className="h-1 bg-neon-red mt-2 mx-auto w-2/3 rounded-full shadow-[0_0_10px_rgba(242,21,22,0.7)]" />
+              </div>
             </div>
           </div>
         ))}
