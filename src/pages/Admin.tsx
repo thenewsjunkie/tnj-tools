@@ -6,7 +6,7 @@ import NewsRoundup from "@/components/NewsRoundup";
 import TNJAi from "@/components/AudioChat";
 import Alerts from "@/components/Alerts";
 import Companion from "@/components/Companion";
-import { Settings, Type, ExternalLink } from "lucide-react";
+import { Settings, Type, ExternalLink, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { useTheme } from "@/components/theme/ThemeProvider";
@@ -88,7 +88,7 @@ const Admin = () => {
             rel="noopener noreferrer"
             className="flex items-center gap-2 text-foreground hover:text-primary transition-colors"
           >
-            <Settings className="h-5 w-5" />
+            <Edit2 className="h-5 w-5" />
             <span className="hidden sm:inline">Edit</span>
           </a>
           <ThemeToggle />
