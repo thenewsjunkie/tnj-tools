@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Tables } from "@/integrations/supabase/types";
+import { Tables, Enums } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,12 +11,23 @@ import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { Plus, X } from "lucide-react";
 
+type LowerThirdType = Enums<"lower_third_type">;
+
+interface NewLowerThird {
+  title: string;
+  type: LowerThirdType;
+  primary_text: string;
+  secondary_text: string;
+  ticker_text: string;
+  show_time: boolean;
+}
+
 const LowerThirds = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [newLowerThird, setNewLowerThird] = useState({
+  const [newLowerThird, setNewLowerThird] = useState<NewLowerThird>({
     title: "",
-    type: "news" as const,
+    type: "news",
     primary_text: "",
     secondary_text: "",
     ticker_text: "",
@@ -33,13 +44,13 @@ const LowerThirds = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data as Tables<"lower_thirds">[];
     },
   });
 
   // Create mutation
   const createMutation = useMutation({
-    mutationFn: async (newLowerThird: Partial<Tables<"lower_thirds">>) => {
+    mutationFn: async (newLowerThird: NewLowerThird) => {
       const { data, error } = await supabase
         .from("lower_thirds")
         .insert([newLowerThird])
@@ -145,7 +156,7 @@ const LowerThirds = () => {
               <Label htmlFor="type">Type</Label>
               <Select
                 value={newLowerThird.type}
-                onValueChange={(value: "news" | "guest" | "topic" | "breaking") =>
+                onValueChange={(value: LowerThirdType) =>
                   setNewLowerThird((prev) => ({ ...prev, type: value }))
                 }
               >
