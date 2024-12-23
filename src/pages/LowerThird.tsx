@@ -8,12 +8,10 @@ const LowerThird = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
-    // Update time every second
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
 
-    // Get initial active lower third
     const fetchActiveLowerThird = async () => {
       const { data, error } = await supabase
         .from("lower_thirds")
@@ -31,7 +29,6 @@ const LowerThird = () => {
 
     fetchActiveLowerThird();
 
-    // Subscribe to changes
     const channel = supabase
       .channel("schema-db-changes")
       .on(
@@ -64,8 +61,8 @@ const LowerThird = () => {
   const { primary_text, secondary_text, ticker_text, show_time, type } = lowerThird;
 
   return (
-    <div className="fixed bottom-0 left-0 w-full p-4 font-sans">
-      <div className="flex items-end gap-2 max-w-4xl animate-fade-in">
+    <div className="fixed bottom-0 left-0 w-full">
+      <div className="flex items-end gap-2 max-w-4xl">
         {/* Type indicator */}
         <div className="bg-black/90 text-white px-4 py-2 text-sm font-bold uppercase">
           {type}
@@ -93,7 +90,7 @@ const LowerThird = () => {
 
       {/* Ticker */}
       {ticker_text && (
-        <div className="mt-2 bg-black/90 text-white p-2 max-w-4xl animate-slide-in-right">
+        <div className="mt-2 bg-black/90 text-white p-2 max-w-4xl">
           <p className="animate-marquee whitespace-nowrap">
             {ticker_text}
           </p>
