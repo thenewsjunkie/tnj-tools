@@ -24,7 +24,7 @@ const LowerThird = () => {
         return;
       }
 
-      console.log("Active lower third:", data); // Debug log
+      console.log("Active lower third:", data);
       setLowerThird(data);
     };
 
@@ -70,7 +70,12 @@ const LowerThird = () => {
             <img 
               src={guest_image_url} 
               alt="Guest"
-              style={{ width: '120px', height: '90px', objectFit: 'cover' }}
+              style={{ 
+                width: '120px', 
+                height: '160px', // Changed to 4:3 portrait ratio
+                objectFit: 'cover',
+                objectPosition: 'center top' // Focus on the upper part of the image for better portrait framing
+              }}
             />
           </div>
         )}
