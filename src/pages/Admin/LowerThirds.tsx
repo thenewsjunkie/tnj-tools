@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
@@ -128,6 +129,15 @@ const LowerThirds = () => {
 
   return (
     <div className="p-4 space-y-6">
+      <nav className="mb-6">
+        <Link 
+          to="/admin" 
+          className="text-foreground hover:text-neon-red transition-colors"
+        >
+          ← Back to Admin
+        </Link>
+      </nav>
+
       <h1 className="text-2xl font-bold mb-6">Lower Thirds Manager</h1>
 
       <LowerThirdForm
