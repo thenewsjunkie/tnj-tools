@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,14 @@ const EditAlertDialog = ({ alert, open, onOpenChange, onAlertUpdated }: EditAler
   const [fontSize, setFontSize] = useState(alert.font_size || 24);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
+
+  // Reset form state when alert changes
+  useEffect(() => {
+    setTitle(alert.title);
+    setMessageEnabled(alert.message_enabled || false);
+    setMessageText(alert.message_text || "");
+    setFontSize(alert.font_size || 24);
+  }, [alert]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
