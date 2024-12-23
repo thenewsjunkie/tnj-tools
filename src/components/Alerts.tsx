@@ -22,8 +22,18 @@ const Alerts = () => {
   const { theme } = useTheme();
 
   useEffect(() => {
-    if (alerts && alerts.length > 0 && !selectedAlert) {
+    if (alerts && alerts.length > 0) {
+      const savedAlertId = localStorage.getItem('selectedAlertId');
+      if (savedAlertId) {
+        const savedAlert = alerts.find(alert => alert.id === savedAlertId);
+        if (savedAlert) {
+          setSelectedAlert(savedAlert);
+          return;
+        }
+      }
+      // If no saved alert or saved alert not found, select first alert
       setSelectedAlert(alerts[0]);
+      localStorage.setItem('selectedAlertId', alerts[0].id);
     }
   }, [alerts]);
 
@@ -76,6 +86,7 @@ const Alerts = () => {
       setSelectedAlert(alerts[0]);
     } else {
       setSelectedAlert(null);
+      localStorage.removeItem('selectedAlertId');
     }
   };
 
