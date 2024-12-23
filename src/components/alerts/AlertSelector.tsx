@@ -33,7 +33,13 @@ const AlertSelector = ({
     <div className="flex gap-2">
       <AlertButton 
         alert={selectedAlert} 
-        onAlertDeleted={onAlertDeleted}
+        onAlertDeleted={() => {
+          onAlertDeleted();
+          // After deletion, if there are other alerts, select the first one
+          if (alerts && alerts.length > 0 && alerts[0].id !== selectedAlert.id) {
+            onAlertSelect(alerts[0]);
+          }
+        }}
       />
       <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
         <DropdownMenuTrigger asChild>
