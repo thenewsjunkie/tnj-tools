@@ -27,6 +27,24 @@ const ContestantFrame = ({
 }: ContestantFrameProps) => {
   const { theme } = useTheme();
   
+  // If there's no name, show the empty slot placeholder
+  if (!name) {
+    return (
+      <div className="flex flex-col items-center space-y-4 w-full md:w-auto">
+        <div className="relative w-full md:w-64 bg-black/80 rounded-lg overflow-hidden backdrop-blur-sm p-4">
+          <div className="flex flex-col items-center justify-center space-y-2">
+            <div className="w-full h-64 border-2 border-white/20 rounded-lg overflow-hidden bg-black/20 flex items-center justify-center">
+              <span className="text-white/50">Empty Slot</span>
+            </div>
+            <div className="text-white/50 text-center mt-4">
+              Use the contestant selector above to fill this slot
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="flex flex-col items-center space-y-4 w-full md:w-auto">
       <div className="relative w-full md:w-64 bg-black/80 rounded-lg overflow-hidden backdrop-blur-sm p-4">
@@ -37,7 +55,7 @@ const ContestantFrame = ({
             <>
               <img
                 src={imageUrl}
-                alt={name || ''}
+                alt={name}
                 className="w-full h-full object-cover"
               />
               <ClearButton onClick={onImageClear} />
@@ -61,7 +79,7 @@ const ContestantFrame = ({
         <div className="mt-4">
           <Input
             type="text"
-            value={name || ''}
+            value={name}
             onChange={(e) => onNameChange(e.target.value)}
             placeholder="Enter name"
             className={`w-full text-center border-white/10 dark:!bg-black/50 uppercase tracking-wider ${
