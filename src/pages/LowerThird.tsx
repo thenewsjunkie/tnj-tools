@@ -81,7 +81,7 @@ const LowerThird = () => {
                   objectPosition: 'center 20%'
                 }}
               />
-              <div className="absolute bottom-0 left-0 w-full bg-black/90 text-white px-4 py-2 text-base font-bold uppercase">
+              <div className="absolute bottom-0 left-0 w-full bg-black/90 text-white py-2 text-base font-bold uppercase text-center">
                 {type}
               </div>
             </div>
