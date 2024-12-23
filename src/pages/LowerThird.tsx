@@ -61,8 +61,8 @@ const LowerThird = () => {
 
   const { primary_text, secondary_text, ticker_text, show_time, type, guest_image_url } = lowerThird;
 
-  // Use 12-hour format for news type
-  const timeFormat = type === 'news' ? 'hh:mm:ss' : 'HH:mm:ss';
+  // Use simplified 12-hour format for news type, full 24-hour format for others
+  const timeFormat = type === 'news' ? 'h:mm' : 'HH:mm:ss';
 
   return (
     <div className="fixed top-0 left-0 w-full">
