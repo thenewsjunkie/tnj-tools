@@ -61,8 +61,8 @@ const LowerThird = () => {
   const { primary_text, secondary_text, ticker_text, show_time, type } = lowerThird;
 
   return (
-    <div className="fixed bottom-0 left-0 w-full">
-      <div className="flex items-end gap-2 max-w-4xl">
+    <div className="fixed top-0 left-0 w-full">
+      <div className="flex items-start gap-2 max-w-4xl">
         {/* Type indicator */}
         <div className="bg-black/90 text-white px-4 py-2 text-sm font-bold uppercase">
           {type}
