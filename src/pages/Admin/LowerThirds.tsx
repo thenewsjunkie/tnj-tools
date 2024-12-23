@@ -6,10 +6,13 @@ import { useToast } from "@/components/ui/use-toast";
 import LowerThirdForm from "@/components/lower-thirds/LowerThirdForm";
 import LowerThirdItem from "@/components/lower-thirds/LowerThirdItem";
 
+type LowerThird = Tables<"lower_thirds">;
+type NewLowerThird = Omit<LowerThird, "id" | "created_at" | "updated_at">;
+
 const LowerThirds = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [editingLowerThird, setEditingLowerThird] = useState<Tables<"lower_thirds"> | null>(null);
+  const [editingLowerThird, setEditingLowerThird] = useState<LowerThird | null>(null);
 
   // Fetch all lower thirds
   const { data: lowerThirds, isLoading } = useQuery({
@@ -21,13 +24,13 @@ const LowerThirds = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as Tables<"lower_thirds">[];
+      return data as LowerThird[];
     },
   });
 
   // Create mutation
   const createMutation = useMutation({
-    mutationFn: async (newLowerThird: Omit<Tables<"lower_thirds">, "id" | "created_at" | "updated_at">) => {
+    mutationFn: async (newLowerThird: NewLowerThird) => {
       const { data, error } = await supabase
         .from("lower_thirds")
         .insert([newLowerThird])
@@ -48,11 +51,20 @@ const LowerThirds = () => {
 
   // Update mutation
   const updateMutation = useMutation({
-    mutationFn: async ({ id, ...data }: Tables<"lower_thirds">) => {
+    mutationFn: async (lowerThird: LowerThird) => {
       const { error } = await supabase
         .from("lower_thirds")
-        .update(data)
-        .eq("id", id);
+        .update({
+          title: lowerThird.title,
+          type: lowerThird.type,
+          primary_text: lowerThird.primary_text,
+          secondary_text: lowerThird.secondary_text,
+          ticker_text: lowerThird.ticker_text,
+          show_time: lowerThird.show_time,
+          is_active: lowerThird.is_active,
+          style_config: lowerThird.style_config,
+        })
+        .eq("id", lowerThird.id);
 
       if (error) throw error;
     },
@@ -107,9 +119,9 @@ const LowerThirds = () => {
     },
   });
 
-  const handleSubmit = (data: Omit<Tables<"lower_thirds">, "id" | "created_at" | "updated_at">) => {
+  const handleSubmit = (data: NewLowerThird) => {
     if (editingLowerThird) {
-      updateMutation.mutate({ ...data, id: editingLowerThird.id });
+      updateMutation.mutate({ ...editingLowerThird, ...data });
     } else {
       createMutation.mutate(data);
     }

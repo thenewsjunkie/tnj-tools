@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card } from "@/components/ui/card";
 import { Plus, Save } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
+import { Json } from "@/integrations/supabase/types/helpers";
 
 type LowerThirdType = Tables<"lower_thirds">["type"];
 
@@ -15,6 +16,12 @@ interface LowerThirdFormProps {
   onSubmit: (data: Omit<Tables<"lower_thirds">, "id" | "created_at" | "updated_at">) => void;
   submitLabel?: string;
 }
+
+const defaultStyleConfig = {
+  duration: 5000,
+  position: "bottom",
+  animation: "slide"
+} as Json;
 
 const LowerThirdForm = ({ initialData, onSubmit, submitLabel = "Create Lower Third" }: LowerThirdFormProps) => {
   const [formData, setFormData] = useState({
@@ -25,6 +32,7 @@ const LowerThirdForm = ({ initialData, onSubmit, submitLabel = "Create Lower Thi
     ticker_text: initialData?.ticker_text ?? "",
     show_time: initialData?.show_time ?? false,
     is_active: initialData?.is_active ?? false,
+    style_config: initialData?.style_config ?? defaultStyleConfig,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
