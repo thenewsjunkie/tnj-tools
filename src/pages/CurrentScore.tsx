@@ -58,13 +58,13 @@ const CurrentScore = () => {
                 <img
                   src={contestant.image_url}
                   alt={contestant.name || ''}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover opacity-60"
                 />
               ) : (
                 <div className="w-full h-full bg-gray-900" />
               )}
-              {/* Gradient overlay for better text visibility */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+              {/* Enhanced gradient overlay for better text visibility */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/75 to-black/40" />
             </div>
             
             {/* Score Display */}
