@@ -89,25 +89,17 @@ const LowerThird = () => {
     <div className="fixed top-0 left-0 w-full">
       <div className="flex items-start gap-2 w-full">
         {type === "guest" && guest_image_url ? (
-          <div className="relative">
-            <div 
-              className="bg-black/85"
+          <div className="relative bg-black/85" style={{ width: '180px', height: '220px' }}>
+            <img 
+              src={guest_image_url} 
+              alt="Guest"
+              className="w-full h-full object-cover"
               style={{
-                width: '180px',  // Increased from 140px
-                height: '220px', // Increased from 180px
+                objectPosition: 'center 20%'
               }}
-            >
-              <img 
-                src={guest_image_url} 
-                alt="Guest"
-                className="w-full h-full object-cover"
-                style={{
-                  objectPosition: 'center 20%'
-                }}
-              />
-              <div className="absolute bottom-0 left-0 w-full bg-black/85 text-white py-3 text-xl font-bold uppercase text-center">
-                {type}
-              </div>
+            />
+            <div className="absolute bottom-0 left-0 w-full bg-black/85 text-white py-3 text-xl font-bold uppercase text-center">
+              {type}
             </div>
           </div>
         ) : (
