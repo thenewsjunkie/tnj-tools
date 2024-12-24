@@ -88,8 +88,13 @@ const LowerThird = () => {
             </div>
           </div>
         ) : (
-          <div className="bg-black/90 text-white px-4 py-2 text-lg font-bold uppercase">
-            {type}
+          <div className="flex flex-col">
+            <div className="bg-black/90 text-white px-4 py-2 text-lg font-bold uppercase">
+              {type}
+            </div>
+            {show_time && (
+              <TimeDisplay currentTime={currentTime} show={show_time} />
+            )}
           </div>
         )}
 
@@ -104,16 +109,13 @@ const LowerThird = () => {
               </p>
             )}
           </div>
-          <div className="flex items-center gap-2 ml-auto">
-            <TimeDisplay currentTime={currentTime} show={show_time} />
-            {logo_url && (
-              <img 
-                src={logo_url} 
-                alt="Logo"
-                className="h-40 w-auto object-contain"
-              />
-            )}
-          </div>
+          {logo_url && (
+            <img 
+              src={logo_url} 
+              alt="Logo"
+              className="h-40 w-auto object-contain"
+            />
+          )}
         </div>
       </div>
 
