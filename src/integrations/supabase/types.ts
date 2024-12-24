@@ -299,6 +299,7 @@ export type Database = {
           position: number | null
           score: number | null
           updated_at: string | null
+          version: number | null
         }
         Insert: {
           created_at?: string | null
@@ -308,6 +309,7 @@ export type Database = {
           position?: number | null
           score?: number | null
           updated_at?: string | null
+          version?: number | null
         }
         Update: {
           created_at?: string | null
@@ -317,6 +319,7 @@ export type Database = {
           position?: number | null
           score?: number | null
           updated_at?: string | null
+          version?: number | null
         }
         Relationships: []
       }
@@ -850,6 +853,18 @@ export type Database = {
           viewer_connected: boolean | null
           viewer_device_id: string | null
         }
+      }
+      update_contestant_score: {
+        Args: {
+          p_contestant_name: string
+          p_increment: boolean
+          p_current_version: number
+        }
+        Returns: {
+          success: boolean
+          new_score: number
+          new_version: number
+        }[]
       }
     }
     Enums: {

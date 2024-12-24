@@ -6,6 +6,7 @@ export interface FritzContestant {
   position: number | null;
   created_at: string | null;
   updated_at: string | null;
+  version: number;
 }
 
 export interface FritzDefaultContestant {
@@ -26,6 +27,7 @@ export interface FritzContestantsTable {
     position?: number | null;
     created_at?: string | null;
     updated_at?: string | null;
+    version?: number;
   };
   Update: {
     id?: string;
@@ -35,6 +37,7 @@ export interface FritzContestantsTable {
     position?: number | null;
     created_at?: string | null;
     updated_at?: string | null;
+    version?: number;
   };
   Relationships: [];
 }

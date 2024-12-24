@@ -1,44 +1,60 @@
 import { supabase } from "@/integrations/supabase/client";
 import { FritzContestant } from "@/integrations/supabase/types/tables/fritz";
+import { useToast } from "@/components/ui/use-toast";
 
 export const useContestantScore = (
   contestants: FritzContestant[],
   setContestants: (contestants: FritzContestant[]) => void
 ) => {
-  const currentYear = new Date().getFullYear();
+  const { toast } = useToast();
 
   const updateScore = async (position: number, increment: boolean) => {
     const contestant = contestants.find(c => c.position === position);
     if (!contestant || !contestant.name) return;
 
-    const newScore = increment ? (contestant.score || 0) + 1 : (contestant.score || 0) - 1;
-    
-    const { error } = await supabase
-      .from('fritz_contestants')
-      .update({ score: newScore })
-      .eq('position', position);
+    const { data, error } = await supabase
+      .rpc('update_contestant_score', {
+        p_contestant_name: contestant.name,
+        p_increment: increment,
+        p_current_version: contestant.version
+      });
 
     if (error) {
       console.error('Error updating score:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update score. Please try again.",
+        variant: "destructive"
+      });
       return;
     }
 
-    // Update yearly score
-    const { data: yearlyScore } = await supabase
-      .from('fritz_yearly_scores')
-      .select('total_score')
-      .eq('contestant_name', contestant.name)
-      .eq('year', currentYear)
-      .single();
-
-    if (yearlyScore) {
-      const newYearlyScore = yearlyScore.total_score + (increment ? 1 : -1);
-      await supabase
-        .from('fritz_yearly_scores')
-        .update({ total_score: newYearlyScore })
-        .eq('contestant_name', contestant.name)
-        .eq('year', currentYear);
+    if (!data.success) {
+      console.log('Score was updated by another user, refreshing...');
+      const { data: refreshedData } = await supabase
+        .from('fritz_contestants')
+        .select('*')
+        .order('position');
+      
+      if (refreshedData) {
+        setContestants(refreshedData);
+      }
+      
+      toast({
+        title: "Score Changed",
+        description: "The score was just updated by someone else. The display has been refreshed.",
+      });
+      return;
     }
+
+    // Update local state with new score and version
+    setContestants(prev => 
+      prev.map(c => 
+        c.position === position 
+          ? { ...c, score: data.new_score, version: data.new_version }
+          : c
+      )
+    );
   };
 
   return { updateScore };

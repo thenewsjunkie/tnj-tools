@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -7,28 +7,25 @@ const FritzScoreHandler = () => {
   const { contestant, action } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const processingRef = useRef(false);
 
   useEffect(() => {
     const updateScore = async () => {
-      if (processingRef.current || !contestant || !action) return;
+      if (!contestant || !action) return;
       
-      processingRef.current = true;
       console.log(`[FritzScoreHandler] Updating score for ${contestant}: ${action}`);
 
       const isIncrement = action === 'up';
-      const currentYear = new Date().getFullYear();
-
+      
       try {
         // Format contestant name to match database format
         const formattedName = contestant === 'c-lane' ? 'C-Lane' : 
           contestant === 'custom' ? 'Custom' :
           contestant.charAt(0).toUpperCase() + contestant.slice(1);
 
-        // Get current contestant data
+        // Get current contestant data for version
         const { data: contestantData, error: fetchError } = await supabase
           .from('fritz_contestants')
-          .select('score, position')
+          .select('version')
           .eq('name', formattedName)
           .single();
 
@@ -37,44 +34,22 @@ const FritzScoreHandler = () => {
           throw new Error('Contestant not found');
         }
 
-        const newScore = (contestantData.score || 0) + (isIncrement ? 1 : -1);
+        const { data, error } = await supabase
+          .rpc('update_contestant_score', {
+            p_contestant_name: formattedName,
+            p_increment: isIncrement,
+            p_current_version: contestantData.version
+          });
 
-        // Update contestant score
-        const { error: updateError } = await supabase
-          .from('fritz_contestants')
-          .update({ score: newScore })
-          .eq('name', formattedName);
+        if (error) throw error;
 
-        if (updateError) {
-          console.error('[FritzScoreHandler] Error updating score:', updateError);
-          throw new Error('Failed to update score');
-        }
-
-        // Get current yearly score
-        const { data: yearlyData, error: yearlyFetchError } = await supabase
-          .from('fritz_yearly_scores')
-          .select('total_score')
-          .eq('contestant_name', formattedName)
-          .eq('year', currentYear)
-          .single();
-
-        if (yearlyFetchError) {
-          console.error('[FritzScoreHandler] Error fetching yearly score:', yearlyFetchError);
-          throw new Error('Failed to fetch yearly score');
-        }
-
-        const newYearlyScore = (yearlyData?.total_score || 0) + (isIncrement ? 1 : -1);
-
-        // Update yearly score
-        const { error: yearlyUpdateError } = await supabase
-          .from('fritz_yearly_scores')
-          .update({ total_score: newYearlyScore })
-          .eq('contestant_name', formattedName)
-          .eq('year', currentYear);
-
-        if (yearlyUpdateError) {
-          console.error('[FritzScoreHandler] Error updating yearly score:', yearlyUpdateError);
-          throw new Error('Failed to update yearly score');
+        if (!data.success) {
+          toast({
+            title: "Score Changed",
+            description: "The score was just updated by someone else. Please try again.",
+            variant: "destructive"
+          });
+          return;
         }
 
         toast({
@@ -90,7 +65,6 @@ const FritzScoreHandler = () => {
           variant: "destructive",
         });
       } finally {
-        processingRef.current = false;
         navigate('/fritz');
       }
     };
