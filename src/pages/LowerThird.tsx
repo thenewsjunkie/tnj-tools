@@ -32,13 +32,12 @@ const LowerThird = () => {
 
     fetchActiveLowerThird();
 
-    // Listen for all changes to the active lower third
     const channel = supabase
       .channel("schema-db-changes")
       .on(
         "postgres_changes",
         {
-          event: "*", // Listen to all events (INSERT, UPDATE, DELETE)
+          event: "*",
           schema: "public",
           table: "lower_thirds",
           filter: "is_active=eq.true",
@@ -54,7 +53,6 @@ const LowerThird = () => {
       )
       .subscribe();
 
-    // Also listen for updates to any currently active lower third
     const updateChannel = supabase
       .channel("active-lower-third-updates")
       .on(
@@ -65,7 +63,6 @@ const LowerThird = () => {
           table: "lower_thirds",
         },
         (payload) => {
-          // If this is our current lower third, update it
           if (lowerThird && payload.old.id === lowerThird.id) {
             if (!payload.new.is_active) {
               setLowerThird(null);
@@ -84,7 +81,6 @@ const LowerThird = () => {
     };
   }, [lowerThird?.id]);
 
-  // Return null if there's no active lower third
   if (!lowerThird) return null;
 
   const { primary_text, secondary_text, ticker_text, show_time, type, guest_image_url, logo_url } = lowerThird;
@@ -95,7 +91,7 @@ const LowerThird = () => {
         {type === "guest" && guest_image_url ? (
           <div className="relative">
             <div 
-              className="bg-black/90"
+              className="bg-black/85"
               style={{
                 width: '140px',
                 height: '180px',
@@ -109,21 +105,21 @@ const LowerThird = () => {
                   objectPosition: 'center 20%'
                 }}
               />
-              <div className="absolute bottom-0 left-0 w-full bg-black/90 text-white py-2 text-lg font-bold uppercase text-center">
+              <div className="absolute bottom-0 left-0 w-full bg-black/85 text-white py-2 text-lg font-bold uppercase text-center">
                 {type}
               </div>
             </div>
           </div>
         ) : (
-          <div className="bg-black/90 text-white px-4 py-2 text-lg font-bold uppercase">
+          <div className="bg-black/85 text-white px-4 py-2 text-lg font-bold uppercase">
             {type}
           </div>
         )}
 
-        <div className="flex-1 bg-white/90 text-black p-4 flex justify-between items-start w-full">
+        <div className="flex-1 bg-white/85 text-black p-4 flex justify-between items-start w-full">
           <div className="space-y-2 flex-1 min-w-0">
             {primary_text && (
-              <h1 className={`text-7xl font-bold leading-tight ${type === 'guest' ? 'border-b-4 border-neon-red inline-block pr-6 -mr-6' : ''}`}>
+              <h1 className={`text-7xl font-bold leading-tight ${type === 'guest' ? 'border-b-4 border-neon-red pr-6 -mr-6' : ''}`}>
                 {primary_text}
               </h1>
             )}
