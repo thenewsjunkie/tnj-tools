@@ -59,8 +59,8 @@ const SortableLowerThirds = ({
       try {
         // Update display_order for affected items
         const updates = newItems.map((item, index) => ({
-          id: item.id,
-          display_order: index,
+          ...item, // Spread all existing properties
+          display_order: index, // Update the display_order
         }));
 
         const { error } = await supabase
