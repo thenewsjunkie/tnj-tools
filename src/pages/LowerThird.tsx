@@ -58,6 +58,7 @@ const LowerThird = () => {
     };
   }, []);
 
+  // Return null if there's no active lower third
   if (!lowerThird) return null;
 
   const { primary_text, secondary_text, ticker_text, show_time, type, guest_image_url, logo_url } = lowerThird;
