@@ -31,8 +31,6 @@ interface SortableLowerThirdsProps {
 const SortableLowerThirds = ({
   lowerThirds,
   onToggleActive,
-  onDelete,
-  onEdit,
   onQuickEdit,
 }: SortableLowerThirdsProps) => {
   const [items, setItems] = useState(lowerThirds);
@@ -59,8 +57,8 @@ const SortableLowerThirds = ({
       try {
         // Update display_order for affected items
         const updates = newItems.map((item, index) => ({
-          ...item, // Spread all existing properties
-          display_order: index, // Update the display_order
+          ...item,
+          display_order: index,
         }));
 
         const { error } = await supabase
@@ -102,8 +100,6 @@ const SortableLowerThirds = ({
               key={lowerThird.id}
               lowerThird={lowerThird}
               onToggleActive={onToggleActive}
-              onDelete={onDelete}
-              onEdit={onEdit}
               onQuickEdit={onQuickEdit}
             />
           ))}
