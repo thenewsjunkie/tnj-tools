@@ -5,6 +5,7 @@ import { LogOut, ArrowLeft, BookOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { UserModerationPanel } from "@/components/settings/UserModerationPanel";
+import { LowerThirdSettings } from "@/components/settings/LowerThirdSettings";
 
 const Settings = () => {
   const { toast } = useToast();
@@ -64,6 +65,7 @@ const Settings = () => {
           </div>
         </div>
 
+        <LowerThirdSettings />
         <UserModerationPanel />
       </div>
     </div>
