@@ -40,6 +40,7 @@ const LowerThirdForm = ({ initialData, onSubmit, submitLabel = "Create Lower Thi
     style_config: initialData?.style_config ?? defaultStyleConfig,
     guest_image_url: initialData?.guest_image_url ?? "",
     logo_url: initialData?.logo_url ?? "",
+    display_order: initialData?.display_order ?? 0,
   });
 
   const [defaultLogo, setDefaultLogo] = useState<string>("");
@@ -53,7 +54,6 @@ const LowerThirdForm = ({ initialData, onSubmit, submitLabel = "Create Lower Thi
         .single();
 
       if (!error && data?.value) {
-        // First cast to unknown, then to DefaultLogoConfig to satisfy TypeScript
         const logoConfig = (data.value as unknown) as DefaultLogoConfig;
         if (logoConfig.url) {
           setDefaultLogo(logoConfig.url);
@@ -64,7 +64,23 @@ const LowerThirdForm = ({ initialData, onSubmit, submitLabel = "Create Lower Thi
       }
     };
 
+    const fetchMaxDisplayOrder = async () => {
+      if (!initialData) {  // Only fetch for new items
+        const { data, error } = await supabase
+          .from('lower_thirds')
+          .select('display_order')
+          .order('display_order', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (!error && data) {
+          setFormData(prev => ({ ...prev, display_order: (data.display_order || 0) + 1 }));
+        }
+      }
+    };
+
     fetchDefaultLogo();
+    fetchMaxDisplayOrder();
   }, [initialData?.logo_url]);
 
   const handleFieldChange = (field: string, value: any) => {
