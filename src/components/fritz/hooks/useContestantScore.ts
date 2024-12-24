@@ -57,13 +57,11 @@ export const useContestantScore = (
     }
 
     // Update local state with new score and version
-    setContestants(prev => 
-      prev.map(c => 
-        c.position === position 
-          ? { ...c, score: result.new_score, version: result.new_version }
-          : c
-      )
-    );
+    setContestants(contestants.map(c => 
+      c.position === position 
+        ? { ...c, score: result.new_score, version: result.new_version }
+        : c
+    ));
   };
 
   return { updateScore };
