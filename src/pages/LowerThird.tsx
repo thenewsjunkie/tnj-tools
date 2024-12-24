@@ -64,7 +64,7 @@ const LowerThird = () => {
 
   return (
     <div className="fixed top-0 left-0 w-full">
-      <div className="flex items-start gap-2 max-w-[90vw]">
+      <div className="flex items-start gap-2 w-full">
         {type === "guest" && guest_image_url ? (
           <div className="relative">
             <div 
@@ -93,28 +93,26 @@ const LowerThird = () => {
           </div>
         )}
 
-        <div className="flex-1 bg-white/90 text-black p-4">
-          <div className="flex justify-between items-start">
-            <div className="space-y-2 flex-1 min-w-0 mr-4">
-              {primary_text && (
-                <h1 className="text-7xl font-bold leading-tight">{primary_text}</h1>
-              )}
-              {secondary_text && (
-                <p className="text-5xl text-black/80 whitespace-nowrap overflow-hidden text-ellipsis">
-                  {secondary_text}
-                </p>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <TimeDisplay currentTime={currentTime} show={show_time} />
-              {logo_url && (
-                <img 
-                  src={logo_url} 
-                  alt="Logo"
-                  className="h-40 w-auto object-contain"
-                />
-              )}
-            </div>
+        <div className="flex-1 bg-white/90 text-black p-4 flex justify-between items-start w-full">
+          <div className="space-y-2 flex-1 min-w-0">
+            {primary_text && (
+              <h1 className="text-7xl font-bold leading-tight">{primary_text}</h1>
+            )}
+            {secondary_text && (
+              <p className="text-5xl text-black/80 whitespace-nowrap overflow-hidden text-ellipsis">
+                {secondary_text}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-2 ml-auto">
+            <TimeDisplay currentTime={currentTime} show={show_time} />
+            {logo_url && (
+              <img 
+                src={logo_url} 
+                alt="Logo"
+                className="h-40 w-auto object-contain"
+              />
+            )}
           </div>
         </div>
       </div>
