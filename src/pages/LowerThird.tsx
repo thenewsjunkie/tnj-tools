@@ -60,7 +60,7 @@ const LowerThird = () => {
 
   if (!lowerThird) return null;
 
-  const { primary_text, secondary_text, ticker_text, show_time, type, guest_image_url } = lowerThird;
+  const { primary_text, secondary_text, ticker_text, show_time, type, guest_image_url, logo_url } = lowerThird;
 
   return (
     <div className="fixed top-0 left-0 w-full">
@@ -105,7 +105,16 @@ const LowerThird = () => {
                 </p>
               )}
             </div>
-            <TimeDisplay currentTime={currentTime} show={show_time} />
+            <div className="flex items-center gap-4">
+              <TimeDisplay currentTime={currentTime} show={show_time} />
+              {logo_url && (
+                <img 
+                  src={logo_url} 
+                  alt="Logo"
+                  className="h-16 w-auto object-contain"
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>

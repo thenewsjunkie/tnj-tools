@@ -37,14 +37,15 @@ const LowerThirdForm = ({ initialData, onSubmit, submitLabel = "Create Lower Thi
     is_active: initialData?.is_active ?? false,
     style_config: initialData?.style_config ?? defaultStyleConfig,
     guest_image_url: initialData?.guest_image_url ?? "",
+    logo_url: initialData?.logo_url ?? "",
   });
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'guest' | 'logo') => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     try {
-      console.log("Starting image upload...");
+      console.log(`Starting ${type} image upload...`);
       const formData = new FormData();
       formData.append('file', file);
 
@@ -58,16 +59,19 @@ const LowerThirdForm = ({ initialData, onSubmit, submitLabel = "Create Lower Thi
       }
 
       console.log("Upload successful, received URL:", data.url);
-      setFormData(prev => ({ ...prev, guest_image_url: data.url }));
+      setFormData(prev => ({
+        ...prev,
+        [type === 'guest' ? 'guest_image_url' : 'logo_url']: data.url
+      }));
       toast({
         title: "Success",
-        description: "Guest image uploaded successfully",
+        description: `${type === 'guest' ? 'Guest' : 'Logo'} image uploaded successfully`,
       });
     } catch (error) {
       console.error('Upload error:', error);
       toast({
         title: "Error",
-        description: "Failed to upload guest image",
+        description: `Failed to upload ${type === 'guest' ? 'guest' : 'logo'} image`,
         variant: "destructive",
       });
     }
@@ -123,7 +127,7 @@ const LowerThirdForm = ({ initialData, onSubmit, submitLabel = "Create Lower Thi
                   id="guest_image"
                   type="file"
                   accept="image/*"
-                  onChange={handleImageUpload}
+                  onChange={(e) => handleImageUpload(e, 'guest')}
                   className="flex-1"
                 />
                 {formData.guest_image_url && (
@@ -136,6 +140,26 @@ const LowerThirdForm = ({ initialData, onSubmit, submitLabel = "Create Lower Thi
               </div>
             </div>
           )}
+
+          <div className="space-y-2 col-span-2">
+            <Label htmlFor="logo">Logo</Label>
+            <div className="flex items-center gap-4">
+              <Input
+                id="logo"
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleImageUpload(e, 'logo')}
+                className="flex-1"
+              />
+              {formData.logo_url && (
+                <img 
+                  src={formData.logo_url} 
+                  alt="Logo preview" 
+                  className="w-24 h-24 object-contain"
+                />
+              )}
+            </div>
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="primary_text">Primary Text</Label>

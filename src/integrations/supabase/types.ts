@@ -428,6 +428,7 @@ export type Database = {
           guest_image_url: string | null
           id: string
           is_active: boolean | null
+          logo_url: string | null
           primary_text: string | null
           secondary_text: string | null
           show_time: boolean | null
@@ -442,6 +443,7 @@ export type Database = {
           guest_image_url?: string | null
           id?: string
           is_active?: boolean | null
+          logo_url?: string | null
           primary_text?: string | null
           secondary_text?: string | null
           show_time?: boolean | null
@@ -456,6 +458,7 @@ export type Database = {
           guest_image_url?: string | null
           id?: string
           is_active?: boolean | null
+          logo_url?: string | null
           primary_text?: string | null
           secondary_text?: string | null
           show_time?: boolean | null
