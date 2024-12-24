@@ -7,17 +7,17 @@ import NewsRoundup from "@/components/NewsRoundup";
 import TNJAi from "@/components/AudioChat";
 import Alerts from "@/components/Alerts";
 import Companion from "@/components/Companion";
-import { Settings, Type, ExternalLink, Edit2, Pencil } from "lucide-react";
+import { Settings, Type, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
 import { useToast } from "@/components/ui/use-toast";
 import QuickEditDialog from "@/components/lower-thirds/QuickEditDialog";
+import SortableLowerThirds from "@/components/lower-thirds/SortableLowerThirds";
 
 const Admin = () => {
   const { theme } = useTheme();
@@ -35,6 +35,7 @@ const Admin = () => {
       const { data, error } = await supabase
         .from("lower_thirds")
         .select("*")
+        .order("display_order", { ascending: true })
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -76,6 +77,32 @@ const Admin = () => {
     },
   });
 
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("lower_thirds")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lower-thirds"] });
+      toast({
+        title: "Success",
+        description: "Lower third deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to delete lower third",
+        variant: "destructive",
+      });
+    },
+  });
+
   return (
     <div className="min-h-screen bg-background text-foreground p-4 sm:p-6 md:p-8">
       <nav className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
@@ -92,8 +119,8 @@ const Admin = () => {
             rel="noopener noreferrer"
             className="flex items-center gap-2 text-foreground hover:text-primary transition-colors"
           >
-            <Edit2 className="h-5 w-5" />
-            <span className="hidden sm:inline">Edit</span>
+            <Settings className="h-5 w-5" />
+            <span className="hidden sm:inline">Settings</span>
           </a>
           <ThemeToggle />
           <h1 className="text-foreground text-xl sm:text-2xl digital">TNJ Tools</h1>
@@ -143,41 +170,22 @@ const Admin = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {isLoading ? (
-                  <div>Loading...</div>
-                ) : (
-                  lowerThirds.map((lt) => (
-                    <div key={lt.id} className="flex items-center justify-between p-3 bg-secondary rounded-md">
-                      <div>
-                        <h3 className="font-medium">{lt.title}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {lt.type} - {lt.primary_text}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setSelectedLowerThird(lt);
-                            setIsQuickEditOpen(true);
-                          }}
-                          className="text-muted-foreground hover:text-foreground"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Switch
-                          checked={lt.is_active}
-                          onCheckedChange={(checked) =>
-                            toggleActiveMutation.mutate({ id: lt.id, isActive: checked })
-                          }
-                        />
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
+              {isLoading ? (
+                <div>Loading...</div>
+              ) : (
+                <SortableLowerThirds
+                  lowerThirds={lowerThirds}
+                  onToggleActive={(id, isActive) =>
+                    toggleActiveMutation.mutate({ id, isActive })
+                  }
+                  onDelete={(id) => deleteMutation.mutate(id)}
+                  onEdit={() => {}}
+                  onQuickEdit={(lt) => {
+                    setSelectedLowerThird(lt);
+                    setIsQuickEditOpen(true);
+                  }}
+                />
+              )}
             </CardContent>
           </Card>
           <Companion />
