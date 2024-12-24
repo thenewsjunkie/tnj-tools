@@ -28,9 +28,30 @@ serve(async (req) => {
     );
 
     // Parse request body
-    const { contestant, increment } = await req.json();
-    console.log(`Updating score for ${contestant}, increment: ${increment}`);
+    const { contestant, increment, action } = await req.json();
+    console.log(`Request received:`, { contestant, increment, action });
 
+    // Handle clear action
+    if (action === 'clear') {
+      const { error: clearError } = await supabase
+        .from('fritz_contestants')
+        .update({ score: 0 })
+        .not('position', 'is', null);
+
+      if (clearError) {
+        console.error('Error clearing scores:', clearError);
+        return new Response(JSON.stringify({ error: 'Failed to clear scores' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Handle score update (existing functionality)
     if (!contestant) {
       return new Response(JSON.stringify({ error: 'Contestant name is required' }), {
         status: 400,
