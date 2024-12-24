@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { FritzContestant } from "@/integrations/supabase/types/tables/fritz";
 import { useToast } from "@/components/ui/use-toast";
 
-interface ScoreUpdateResult {
+interface UpdateScoreResult {
   success: boolean;
   new_score: number;
   new_version: number;
@@ -26,33 +26,21 @@ export const useContestantScore = (
       });
 
     if (error) {
-      console.error('Error updating score:', error);
+      console.error('[useContestantScore] Error updating score:', error);
       toast({
         title: "Error",
-        description: "Failed to update score. Please try again.",
-        variant: "destructive"
+        description: "Failed to update score",
+        variant: "destructive",
       });
       return;
     }
 
-    // Get first row of the result since it's returned as an array
-    const result = data[0] as ScoreUpdateResult;
+    // Get first row of result
+    const result = data[0] as UpdateScoreResult;
 
     if (!result.success) {
-      console.log('Score was updated by another user, refreshing...');
-      const { data: refreshedData } = await supabase
-        .from('fritz_contestants')
-        .select('*')
-        .order('position');
-      
-      if (refreshedData) {
-        setContestants(refreshedData);
-      }
-      
-      toast({
-        title: "Score Changed",
-        description: "The score was just updated by someone else. The display has been refreshed.",
-      });
+      // Score was updated by someone else, just update local state
+      // No toast notification needed
       return;
     }
 
