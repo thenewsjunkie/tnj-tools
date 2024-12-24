@@ -39,12 +39,6 @@ export const useContestantScore = (
         .eq('contestant_name', contestant.name)
         .eq('year', currentYear);
     }
-
-    setContestants(
-      contestants.map(c => 
-        c.position === position ? { ...c, score: newScore } : c
-      )
-    );
   };
 
   return { updateScore };
