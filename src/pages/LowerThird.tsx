@@ -94,12 +94,9 @@ const LowerThird = () => {
         )}
 
         <div className="flex-1 bg-white/90 text-black p-4 flex justify-between items-start w-full">
-          <div className="space-y-1 flex-1 min-w-0">
-            {show_time && (
-              <TimeDisplay currentTime={currentTime} show={show_time} />
-            )}
+          <div className="space-y-2 flex-1 min-w-0">
             {primary_text && (
-              <h1 className="text-7xl font-bold leading-tight mt-1">{primary_text}</h1>
+              <h1 className="text-7xl font-bold leading-tight">{primary_text}</h1>
             )}
             {secondary_text && (
               <p className="text-5xl text-black/80 whitespace-nowrap overflow-hidden text-ellipsis">
@@ -107,13 +104,16 @@ const LowerThird = () => {
               </p>
             )}
           </div>
-          {logo_url && (
-            <img 
-              src={logo_url} 
-              alt="Logo"
-              className="h-30 w-auto object-contain"
-            />
-          )}
+          <div className="flex items-center gap-2 ml-auto">
+            <TimeDisplay currentTime={currentTime} show={show_time} />
+            {logo_url && (
+              <img 
+                src={logo_url} 
+                alt="Logo"
+                className="h-40 w-auto object-contain"
+              />
+            )}
+          </div>
         </div>
       </div>
 
