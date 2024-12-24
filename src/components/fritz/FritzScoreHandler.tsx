@@ -14,7 +14,7 @@ const FritzScoreHandler = () => {
       if (processingRef.current || !contestant || !action) return;
       
       processingRef.current = true;
-      console.log(`[FritzScoreHandler] Processing score update for ${contestant}: ${action}`);
+      console.log(`[FritzScoreHandler] Updating score for ${contestant}: ${action}`);
 
       const isIncrement = action === 'up';
       const currentYear = new Date().getFullYear();
@@ -25,9 +25,7 @@ const FritzScoreHandler = () => {
           contestant === 'custom' ? 'Custom' :
           contestant.charAt(0).toUpperCase() + contestant.slice(1);
 
-        console.log(`[FritzScoreHandler] Fetching current score for ${formattedName}`);
-        
-        // Get current contestant data with FOR UPDATE lock
+        // Get current contestant data
         const { data: contestantData, error: fetchError } = await supabase
           .from('fritz_contestants')
           .select('score, position')
@@ -40,7 +38,6 @@ const FritzScoreHandler = () => {
         }
 
         const newScore = (contestantData.score || 0) + (isIncrement ? 1 : -1);
-        console.log(`[FritzScoreHandler] Updating score from ${contestantData.score} to ${newScore}`);
 
         // Update contestant score
         const { error: updateError } = await supabase
@@ -53,8 +50,6 @@ const FritzScoreHandler = () => {
           throw new Error('Failed to update score');
         }
 
-        console.log(`[FritzScoreHandler] Fetching yearly score for ${formattedName}`);
-        
         // Get current yearly score
         const { data: yearlyData, error: yearlyFetchError } = await supabase
           .from('fritz_yearly_scores')
@@ -69,7 +64,6 @@ const FritzScoreHandler = () => {
         }
 
         const newYearlyScore = (yearlyData?.total_score || 0) + (isIncrement ? 1 : -1);
-        console.log(`[FritzScoreHandler] Updating yearly score from ${yearlyData?.total_score} to ${newYearlyScore}`);
 
         // Update yearly score
         const { error: yearlyUpdateError } = await supabase
@@ -83,8 +77,6 @@ const FritzScoreHandler = () => {
           throw new Error('Failed to update yearly score');
         }
 
-        console.log('[FritzScoreHandler] Score update completed successfully');
-        
         toast({
           title: "Score Updated",
           description: `${formattedName}'s score has been ${isIncrement ? 'increased' : 'decreased'} by 1`,

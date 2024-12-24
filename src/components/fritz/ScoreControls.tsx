@@ -1,6 +1,5 @@
 import { ArrowUp, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
 
 interface ScoreControlsProps {
   score: number;
@@ -8,26 +7,13 @@ interface ScoreControlsProps {
 }
 
 const ScoreControls = ({ score, onScoreChange }: ScoreControlsProps) => {
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  const handleScoreChange = (increment: boolean) => {
-    if (isProcessing) return;
-    
-    setIsProcessing(true);
-    onScoreChange(increment);
-    
-    // Reset processing state after a short delay
-    setTimeout(() => setIsProcessing(false), 500);
-  };
-
   return (
     <div className="flex items-center justify-center space-x-4 bg-black/60 p-4 rounded-lg backdrop-blur-sm">
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => handleScoreChange(true)}
-        disabled={isProcessing}
-        className="text-white hover:bg-white/10 disabled:opacity-50"
+        onClick={() => onScoreChange(true)}
+        className="text-white hover:bg-white/10"
       >
         <ArrowUp className="h-6 w-6" />
       </Button>
@@ -40,9 +26,8 @@ const ScoreControls = ({ score, onScoreChange }: ScoreControlsProps) => {
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => handleScoreChange(false)}
-        disabled={isProcessing}
-        className="text-white hover:bg-white/10 disabled:opacity-50"
+        onClick={() => onScoreChange(false)}
+        className="text-white hover:bg-white/10"
       >
         <ArrowDown className="h-6 w-6" />
       </Button>
