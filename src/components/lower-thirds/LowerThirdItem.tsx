@@ -52,7 +52,7 @@ const LowerThirdItem = ({
                 <img 
                   src={lowerThird.logo_url} 
                   alt="Logo" 
-                  className="w-16 h-16 object-contain"
+                  className="w-32 h-32 object-contain" // Increased from w-16 h-16
                 />
               </div>
             )}

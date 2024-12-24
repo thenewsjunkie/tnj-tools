@@ -111,7 +111,7 @@ const LowerThird = () => {
                 <img 
                   src={logo_url} 
                   alt="Logo"
-                  className="h-16 w-auto object-contain"
+                  className="h-32 w-auto object-contain" // Increased from h-16
                 />
               )}
             </div>
