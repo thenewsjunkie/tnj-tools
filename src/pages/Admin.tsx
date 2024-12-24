@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Stopwatch from "@/components/Stopwatch";
 import TNJLinks from "@/components/TNJLinks";
 import Reviews from "@/components/reviews/Reviews";
@@ -42,6 +42,29 @@ const Admin = () => {
       return data as Tables<"lower_thirds">[];
     },
   });
+
+  // Subscribe to real-time updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('lower-thirds-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'lower_thirds'
+        },
+        () => {
+          console.log('[Admin] Lower thirds changed, invalidating query');
+          queryClient.invalidateQueries({ queryKey: ["lower-thirds"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   // Toggle active state mutation
   const toggleActiveMutation = useMutation({
