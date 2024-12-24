@@ -23,7 +23,12 @@ const LowerThirdItem = ({
   const [isEditing, setIsEditing] = useState(false);
 
   const handleEdit = (updatedData: Omit<Tables<"lower_thirds">, "id" | "created_at" | "updated_at">) => {
-    onEdit({ ...lowerThird, ...updatedData });
+    // Include all fields, including logo_url, in the update
+    onEdit({
+      ...lowerThird,
+      ...updatedData,
+      logo_url: updatedData.logo_url // Explicitly include logo_url
+    });
     setIsEditing(false);
   };
 
