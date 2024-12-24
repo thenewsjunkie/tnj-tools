@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
-import { format } from "date-fns";
+import TimeDisplay from "@/components/lower-thirds/TimeDisplay";
+import TickerText from "@/components/lower-thirds/TickerText";
 
 const LowerThird = () => {
   const [lowerThird, setLowerThird] = useState<Tables<"lower_thirds"> | null>(null);
@@ -92,7 +93,6 @@ const LowerThird = () => {
           </div>
         )}
 
-        {/* Main content */}
         <div className="flex-1 bg-white/90 text-black p-4">
           <div className="flex justify-between items-start">
             <div className="space-y-2 flex-1 min-w-0">
@@ -100,41 +100,17 @@ const LowerThird = () => {
                 <h1 className="text-7xl font-bold leading-tight">{primary_text}</h1>
               )}
               {secondary_text && (
-                <p className="text-5xl text-black/80 whitespace-nowrap overflow-hidden text-ellipsis">{secondary_text}</p>
+                <p className="text-5xl text-black/80 whitespace-nowrap overflow-hidden text-ellipsis">
+                  {secondary_text}
+                </p>
               )}
             </div>
-            {show_time && (
-              <div className="text-neon-red font-bold ml-4 text-2xl">
-                {format(currentTime, 'h:mm')}{format(currentTime, 'a')}
-              </div>
-            )}
+            <TimeDisplay currentTime={currentTime} show={show_time} />
           </div>
         </div>
       </div>
 
-      {/* Ticker */}
-      {ticker_text && (
-        <div className="mt-2 bg-black/90 text-white p-2 w-full overflow-hidden whitespace-nowrap">
-          <div 
-            className="inline-block whitespace-nowrap animate-[marquee_20s_linear_infinite]"
-            style={{
-              animation: 'marquee 20s linear infinite',
-              paddingRight: '50px' // Add spacing between repetitions
-            }}
-          >
-            {ticker_text}
-          </div>
-          <div 
-            className="inline-block whitespace-nowrap animate-[marquee_20s_linear_infinite]"
-            style={{
-              animation: 'marquee 20s linear infinite',
-              paddingRight: '50px' // Add spacing between repetitions
-            }}
-          >
-            {ticker_text}
-          </div>
-        </div>
-      )}
+      <TickerText text={ticker_text} />
     </div>
   );
 };
