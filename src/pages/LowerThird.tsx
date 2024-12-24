@@ -123,7 +123,7 @@ const LowerThird = () => {
         <div className="flex-1 bg-white/90 text-black p-4 flex justify-between items-start w-full">
           <div className="space-y-2 flex-1 min-w-0">
             {primary_text && (
-              <h1 className={`text-7xl font-bold leading-tight ${type === 'guest' ? 'border-b-4 border-neon-red inline-block px-6 -mx-6' : ''}`}>
+              <h1 className={`text-7xl font-bold leading-tight ${type === 'guest' ? 'border-b-4 border-neon-red inline-block pr-6 -mr-6' : ''}`}>
                 {primary_text}
               </h1>
             )}
