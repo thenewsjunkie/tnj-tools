@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface QuickEditDialogProps {
   lowerThird: Tables<"lower_thirds"> | null;
@@ -19,6 +20,7 @@ const QuickEditDialog = ({ lowerThird, open, onOpenChange }: QuickEditDialogProp
   const [tickerText, setTickerText] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (lowerThird) {
@@ -89,6 +91,9 @@ const QuickEditDialog = ({ lowerThird, open, onOpenChange }: QuickEditDialogProp
         .eq("id", lowerThird.id);
 
       if (error) throw error;
+
+      // Invalidate the query cache to trigger a refetch
+      await queryClient.invalidateQueries({ queryKey: ["lower-thirds"] });
 
       toast({
         title: "Success",
