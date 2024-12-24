@@ -73,7 +73,7 @@ export default {
       },
       animation: {
         "led-flicker": "led-flicker 2s ease-in-out infinite",
-        "marquee": "marquee 20s linear infinite",
+        "marquee": "marquee 30s linear infinite",
       },
     },
   },
