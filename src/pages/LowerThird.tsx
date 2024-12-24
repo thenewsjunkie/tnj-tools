@@ -22,6 +22,7 @@ const LowerThird = () => {
 
       if (error) {
         console.error("Error fetching lower third:", error);
+        setLowerThird(null);
         return;
       }
 
@@ -36,7 +37,7 @@ const LowerThird = () => {
       .on(
         "postgres_changes",
         {
-          event: "*",
+          event: "*", // Listen to all events (INSERT, UPDATE, DELETE)
           schema: "public",
           table: "lower_thirds",
           filter: "is_active=eq.true",
@@ -52,11 +53,31 @@ const LowerThird = () => {
       )
       .subscribe();
 
+    // Also listen for updates to any currently active lower third
+    const updateChannel = supabase
+      .channel("active-lower-third-updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "lower_thirds",
+        },
+        (payload) => {
+          // If this is our current lower third and it was deactivated
+          if (lowerThird && payload.old.id === lowerThird.id && !payload.new.is_active) {
+            setLowerThird(null);
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       clearInterval(timer);
       supabase.removeChannel(channel);
+      supabase.removeChannel(updateChannel);
     };
-  }, []);
+  }, [lowerThird?.id]);
 
   // Return null if there's no active lower third
   if (!lowerThird) return null;
