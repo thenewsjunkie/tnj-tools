@@ -104,7 +104,7 @@ const LowerThird = () => {
               </p>
             )}
           </div>
-          <div className="flex flex-col items-end gap-2">
+          <div className="flex items-center gap-2 ml-auto">
             <TimeDisplay currentTime={currentTime} show={show_time} />
             {logo_url && (
               <img 
