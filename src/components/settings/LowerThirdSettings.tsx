@@ -21,8 +21,11 @@ export const LowerThirdSettings = () => {
         .single();
 
       if (!error && data?.value) {
-        const logoConfig = data.value as DefaultLogoConfig;
-        setDefaultLogo(logoConfig.url);
+        // First cast to unknown, then to DefaultLogoConfig to satisfy TypeScript
+        const logoConfig = (data.value as unknown) as DefaultLogoConfig;
+        if (logoConfig.url) {
+          setDefaultLogo(logoConfig.url);
+        }
       }
     };
 
