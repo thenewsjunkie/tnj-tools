@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useState } from "react";
 import Stopwatch from "@/components/Stopwatch";
 import TNJLinks from "@/components/TNJLinks";
 import Reviews from "@/components/reviews/Reviews";
@@ -6,7 +7,7 @@ import NewsRoundup from "@/components/NewsRoundup";
 import TNJAi from "@/components/AudioChat";
 import Alerts from "@/components/Alerts";
 import Companion from "@/components/Companion";
-import { Settings, Type, ExternalLink, Edit2 } from "lucide-react";
+import { Settings, Type, ExternalLink, Edit2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { useTheme } from "@/components/theme/ThemeProvider";
@@ -16,11 +17,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
 import { useToast } from "@/components/ui/use-toast";
+import QuickEditDialog from "@/components/lower-thirds/QuickEditDialog";
 
 const Admin = () => {
   const { theme } = useTheme();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [selectedLowerThird, setSelectedLowerThird] = useState<Tables<"lower_thirds"> | null>(null);
+  const [isQuickEditOpen, setIsQuickEditOpen] = useState(false);
   
   console.log("[Admin] Rendering Admin page, theme:", theme);
 
@@ -151,12 +155,25 @@ const Admin = () => {
                           {lt.type} - {lt.primary_text}
                         </p>
                       </div>
-                      <Switch
-                        checked={lt.is_active}
-                        onCheckedChange={(checked) =>
-                          toggleActiveMutation.mutate({ id: lt.id, isActive: checked })
-                        }
-                      />
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setSelectedLowerThird(lt);
+                            setIsQuickEditOpen(true);
+                          }}
+                          className="text-muted-foreground hover:text-foreground"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Switch
+                          checked={lt.is_active}
+                          onCheckedChange={(checked) =>
+                            toggleActiveMutation.mutate({ id: lt.id, isActive: checked })
+                          }
+                        />
+                      </div>
                     </div>
                   ))
                 )}
@@ -178,6 +195,12 @@ const Admin = () => {
           <TNJLinks />
         </div>
       </div>
+
+      <QuickEditDialog
+        lowerThird={selectedLowerThird}
+        open={isQuickEditOpen}
+        onOpenChange={setIsQuickEditOpen}
+      />
     </div>
   );
 };
