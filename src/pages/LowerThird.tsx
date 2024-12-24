@@ -114,8 +114,23 @@ const LowerThird = () => {
 
       {/* Ticker */}
       {ticker_text && (
-        <div className="mt-2 bg-black/90 text-white p-2 w-full overflow-hidden">
-          <div className="animate-marquee whitespace-nowrap text-xl">
+        <div className="mt-2 bg-black/90 text-white p-2 w-full overflow-hidden whitespace-nowrap">
+          <div 
+            className="inline-block whitespace-nowrap animate-[marquee_20s_linear_infinite]"
+            style={{
+              animation: 'marquee 20s linear infinite',
+              paddingRight: '50px' // Add spacing between repetitions
+            }}
+          >
+            {ticker_text}
+          </div>
+          <div 
+            className="inline-block whitespace-nowrap animate-[marquee_20s_linear_infinite]"
+            style={{
+              animation: 'marquee 20s linear infinite',
+              paddingRight: '50px' // Add spacing between repetitions
+            }}
+          >
             {ticker_text}
           </div>
         </div>

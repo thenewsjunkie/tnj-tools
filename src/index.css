@@ -173,4 +173,14 @@
     font-family: 'Radiate Sans Extra Bold', system-ui, -apple-system, sans-serif !important;
     font-weight: 800 !important;
   }
+
+  /* Add marquee animation */
+  @keyframes marquee {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-100%);
+    }
+  }
 }
