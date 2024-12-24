@@ -95,7 +95,7 @@ const LowerThird = () => {
 
         <div className="flex-1 bg-white/90 text-black p-4">
           <div className="flex justify-between items-start">
-            <div className="space-y-2 flex-1 min-w-0">
+            <div className="space-y-2 flex-1 min-w-0 mr-8">
               {primary_text && (
                 <h1 className="text-7xl font-bold leading-tight">{primary_text}</h1>
               )}
@@ -105,13 +105,13 @@ const LowerThird = () => {
                 </p>
               )}
             </div>
-            <div className="flex items-center gap-8">
+            <div className="flex items-center gap-4 ml-auto">
               <TimeDisplay currentTime={currentTime} show={show_time} />
               {logo_url && (
                 <img 
                   src={logo_url} 
                   alt="Logo"
-                  className="h-40 w-auto object-contain" // Increased from h-32 and added more gap
+                  className="h-40 w-auto object-contain"
                 />
               )}
             </div>
