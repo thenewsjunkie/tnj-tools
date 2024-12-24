@@ -4,13 +4,11 @@ import { Tables } from "@/integrations/supabase/types";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Pencil } from "lucide-react";
+import { GripVertical, Pencil } from "lucide-react";
 
 interface SortableLowerThirdItemProps {
   lowerThird: Tables<"lower_thirds">;
   onToggleActive: (id: string, isActive: boolean) => void;
-  onDelete: (id: string) => void;
-  onEdit: (lowerThird: Tables<"lower_thirds">) => void;
   onQuickEdit: (lowerThird: Tables<"lower_thirds">) => void;
 }
 
@@ -38,21 +36,32 @@ const SortableLowerThirdItem = ({
     <Card
       ref={setNodeRef}
       style={style}
-      className="p-4 cursor-move bg-background"
+      className="p-4 bg-background"
     >
       <div className="flex justify-between items-center gap-4">
-        <div className="flex-1">
-          <h3 className="font-bold">{lowerThird.title}</h3>
-          <p className="text-sm text-muted-foreground">Type: {lowerThird.type}</p>
-          {lowerThird.primary_text && (
-            <p className="text-sm mt-2">Primary: {lowerThird.primary_text}</p>
-          )}
-          {lowerThird.secondary_text && (
-            <p className="text-sm">Secondary: {lowerThird.secondary_text}</p>
-          )}
-          {lowerThird.ticker_text && (
-            <p className="text-sm">Ticker: {lowerThird.ticker_text}</p>
-          )}
+        <div className="flex items-center gap-4 flex-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="cursor-grab active:cursor-grabbing"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="h-4 w-4" />
+          </Button>
+          <div className="flex-1">
+            <h3 className="font-bold">{lowerThird.title}</h3>
+            <p className="text-sm text-muted-foreground">Type: {lowerThird.type}</p>
+            {lowerThird.primary_text && (
+              <p className="text-sm">Primary: {lowerThird.primary_text}</p>
+            )}
+            {lowerThird.secondary_text && (
+              <p className="text-sm">Secondary: {lowerThird.secondary_text}</p>
+            )}
+            {lowerThird.ticker_text && (
+              <p className="text-sm">Ticker: {lowerThird.ticker_text}</p>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <Switch
