@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const FritzScoreHandler = () => {
   const { contestant, action } = useParams();
@@ -14,13 +15,12 @@ const FritzScoreHandler = () => {
       console.log(`[FritzScoreHandler] Updating score for ${contestant}: ${action}`);
       
       try {
-        const response = await fetch(`/fritz/${contestant}/${action}`);
-        const data = await response.json();
-        
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to update score');
-        }
+        const { data, error } = await supabase.functions.invoke('update-fritz-score', {
+          body: { contestant, increment: action === 'up' }
+        });
 
+        if (error) throw error;
+        
         toast({
           title: "Score Updated",
           description: `Score has been ${action === 'up' ? 'increased' : 'decreased'} by 1`,
