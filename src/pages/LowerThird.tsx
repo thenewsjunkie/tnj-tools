@@ -88,18 +88,16 @@ const LowerThird = () => {
             </div>
           </div>
         ) : (
-          <div className="flex flex-col">
-            <div className="bg-black/90 text-white px-4 py-2 text-lg font-bold uppercase">
-              {type}
-            </div>
-            {show_time && (
-              <TimeDisplay currentTime={currentTime} show={show_time} />
-            )}
+          <div className="bg-black/90 text-white px-4 py-2 text-lg font-bold uppercase">
+            {type}
           </div>
         )}
 
         <div className="flex-1 bg-white/90 text-black p-4 flex justify-between items-start w-full">
           <div className="space-y-2 flex-1 min-w-0">
+            {show_time && (
+              <TimeDisplay currentTime={currentTime} show={show_time} />
+            )}
             {primary_text && (
               <h1 className="text-7xl font-bold leading-tight">{primary_text}</h1>
             )}
