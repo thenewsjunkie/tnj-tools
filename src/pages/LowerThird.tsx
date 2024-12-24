@@ -93,8 +93,8 @@ const LowerThird = () => {
             <div 
               className="bg-black/85"
               style={{
-                width: '140px',
-                height: '180px',
+                width: '180px',  // Increased from 140px
+                height: '220px', // Increased from 180px
               }}
             >
               <img 
@@ -105,7 +105,7 @@ const LowerThird = () => {
                   objectPosition: 'center 20%'
                 }}
               />
-              <div className="absolute bottom-0 left-0 w-full bg-black/85 text-white py-2 text-lg font-bold uppercase text-center">
+              <div className="absolute bottom-0 left-0 w-full bg-black/85 text-white py-3 text-xl font-bold uppercase text-center">
                 {type}
               </div>
             </div>
