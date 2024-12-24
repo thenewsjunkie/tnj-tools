@@ -89,24 +89,26 @@ const LowerThird = () => {
     <div className="fixed bottom-0 left-0 w-full">
       <div className="flex items-start gap-2 w-full">
         {type === "guest" && guest_image_url ? (
-          <div 
-            className="relative bg-black/85 overflow-hidden rounded-lg" 
-            style={{ 
-              width: '240px',
-              minHeight: '280px',
-              marginBottom: '0'
-            }}
-          >
-            <img 
-              src={guest_image_url} 
-              alt="Guest"
-              className="w-full h-full object-cover"
-              style={{
-                objectPosition: 'center 20%'
+          <div className="flex flex-col">
+            <div 
+              className="relative bg-black/85 overflow-hidden rounded-lg" 
+              style={{ 
+                width: '240px',
+                minHeight: '280px',
+                marginBottom: '0'
               }}
-            />
-            <div className="absolute bottom-0 left-0 w-full bg-black/85 text-white py-3 text-xl font-bold uppercase text-center">
-              {type}
+            >
+              <img 
+                src={guest_image_url} 
+                alt="Guest"
+                className="w-full h-full object-cover"
+                style={{
+                  objectPosition: 'center 20%'
+                }}
+              />
+              <div className="absolute bottom-0 left-0 w-full bg-black/85 text-white py-3 text-xl font-bold uppercase text-center">
+                {type}
+              </div>
             </div>
           </div>
         ) : (
@@ -115,7 +117,7 @@ const LowerThird = () => {
           </div>
         )}
 
-        <div className="flex-1 bg-white/85 text-black p-4 pt-8">
+        <div className="flex-1 bg-white/85 text-black p-4 pt-8 self-end">
           <div className="flex justify-between items-start w-full">
             <div className="space-y-2 flex-1 min-w-0">
               {primary_text && (
