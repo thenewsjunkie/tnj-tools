@@ -53,7 +53,8 @@ const LowerThirdForm = ({ initialData, onSubmit, submitLabel = "Create Lower Thi
         .single();
 
       if (!error && data?.value) {
-        const logoConfig = data.value as DefaultLogoConfig;
+        // First cast to unknown, then to DefaultLogoConfig to satisfy TypeScript
+        const logoConfig = (data.value as unknown) as DefaultLogoConfig;
         if (logoConfig.url) {
           setDefaultLogo(logoConfig.url);
           if (!initialData?.logo_url) {
