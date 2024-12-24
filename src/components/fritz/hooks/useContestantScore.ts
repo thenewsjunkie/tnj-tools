@@ -2,6 +2,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { FritzContestant } from "@/integrations/supabase/types/tables/fritz";
 import { useToast } from "@/components/ui/use-toast";
 
+interface ScoreUpdateResult {
+  success: boolean;
+  new_score: number;
+  new_version: number;
+}
+
 export const useContestantScore = (
   contestants: FritzContestant[],
   setContestants: (contestants: FritzContestant[]) => void
@@ -29,7 +35,10 @@ export const useContestantScore = (
       return;
     }
 
-    if (!data.success) {
+    // Get first row of the result since it's returned as an array
+    const result = data[0] as ScoreUpdateResult;
+
+    if (!result.success) {
       console.log('Score was updated by another user, refreshing...');
       const { data: refreshedData } = await supabase
         .from('fritz_contestants')
@@ -51,7 +60,7 @@ export const useContestantScore = (
     setContestants(prev => 
       prev.map(c => 
         c.position === position 
-          ? { ...c, score: data.new_score, version: data.new_version }
+          ? { ...c, score: result.new_score, version: result.new_version }
           : c
       )
     );

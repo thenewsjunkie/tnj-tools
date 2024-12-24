@@ -43,7 +43,10 @@ const FritzScoreHandler = () => {
 
         if (error) throw error;
 
-        if (!data.success) {
+        // Get first row of the result since it's returned as an array
+        const result = data[0];
+        
+        if (!result.success) {
           toast({
             title: "Score Changed",
             description: "The score was just updated by someone else. Please try again.",
