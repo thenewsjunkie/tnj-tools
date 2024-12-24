@@ -19,6 +19,7 @@ const FritzContestantManager = ({ contestants, setContestants }: FritzContestant
   return (
     <ContestantList
       contestants={contestants}
+      setContestants={setContestants}
       onImageUpload={handleImageUpload}
       onNameChange={updateContestantName}
       onScoreChange={updateScore}
