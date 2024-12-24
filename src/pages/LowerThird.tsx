@@ -105,13 +105,13 @@ const LowerThird = () => {
                 </p>
               )}
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
               <TimeDisplay currentTime={currentTime} show={show_time} />
               {logo_url && (
                 <img 
                   src={logo_url} 
                   alt="Logo"
-                  className="h-40 w-auto object-contain mr-2"
+                  className="h-40 w-auto object-contain"
                 />
               )}
             </div>
