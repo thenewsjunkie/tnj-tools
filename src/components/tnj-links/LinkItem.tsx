@@ -1,17 +1,19 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Trash2 } from "lucide-react";
+import { ExternalLink, Trash2, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface LinkItemProps {
   title: string;
   url: string;
   status: string;
+  target: string;
   onDelete: () => void;
+  onEdit: () => void;
   theme: string;
 }
 
-const LinkItem = ({ title, url, status, onDelete, theme }: LinkItemProps) => {
+const LinkItem = ({ title, url, status, target, onDelete, onEdit, theme }: LinkItemProps) => {
   const textColor = theme === 'light' ? 'text-black' : 'text-white';
   const bgColor = theme === 'light' ? 'bg-gray-50' : 'bg-white/5';
   
@@ -32,8 +34,8 @@ const LinkItem = ({ title, url, status, onDelete, theme }: LinkItemProps) => {
         <ExternalLink className={`w-4 h-4 sm:w-5 sm:h-5 ${textColor} opacity-50 group-hover:opacity-100 transition-opacity`} />
         <a 
           href={url} 
-          target="_blank" 
-          rel="noopener noreferrer"
+          target={target}
+          rel={target === '_blank' ? "noopener noreferrer" : undefined}
           className={`${textColor} text-sm sm:text-base hover:text-primary transition-colors`}
         >
           {title}
@@ -46,6 +48,14 @@ const LinkItem = ({ title, url, status, onDelete, theme }: LinkItemProps) => {
         >
           {status}
         </Badge>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onEdit}
+          className={`${textColor} opacity-50 hover:text-blue-500 hover:bg-blue-500/10 hover:opacity-100`}
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
         <Button
           variant="ghost"
           size="icon"

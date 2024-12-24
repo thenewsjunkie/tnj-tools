@@ -747,6 +747,7 @@ export type Database = {
           id: string
           last_checked: string | null
           status: string
+          target: string
           title: string
           updated_at: string | null
           url: string
@@ -757,6 +758,7 @@ export type Database = {
           id?: string
           last_checked?: string | null
           status?: string
+          target?: string
           title: string
           updated_at?: string | null
           url: string
@@ -767,6 +769,7 @@ export type Database = {
           id?: string
           last_checked?: string | null
           status?: string
+          target?: string
           title?: string
           updated_at?: string | null
           url?: string

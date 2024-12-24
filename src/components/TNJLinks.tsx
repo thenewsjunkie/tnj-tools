@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,11 +6,14 @@ import { useToast } from "@/components/ui/use-toast";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import LinkItem from "./tnj-links/LinkItem";
 import AddLinkDialog from "./tnj-links/AddLinkDialog";
+import EditLinkDialog from "./tnj-links/EditLinkDialog";
 
 const TNJLinks = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { theme } = useTheme();
+  const [selectedLink, setSelectedLink] = useState<any>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const { data: links = [], isLoading } = useQuery({
     queryKey: ['tnj-links'],
@@ -122,12 +125,27 @@ const TNJLinks = () => {
               title={link.title}
               url={link.url}
               status={link.status}
+              target={link.target}
               onDelete={() => deleteLinkMutation.mutate(link.id)}
+              onEdit={() => {
+                setSelectedLink(link);
+                setIsEditDialogOpen(true);
+              }}
               theme={theme}
             />
           ))}
         </div>
       </CardContent>
+
+      <EditLinkDialog
+        link={selectedLink}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onLinkUpdated={() => {
+          queryClient.invalidateQueries({ queryKey: ['tnj-links'] });
+          setSelectedLink(null);
+        }}
+      />
     </Card>
   );
 };
