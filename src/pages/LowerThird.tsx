@@ -110,7 +110,7 @@ const LowerThird = () => {
               <img 
                 src={logo_url} 
                 alt="Logo"
-                className="h-40 w-auto object-contain mt-auto"
+                className="h-30 w-auto object-contain mt-auto" // Changed from h-40 to h-30 (25% reduction)
               />
             )}
           </div>
