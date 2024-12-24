@@ -61,9 +61,6 @@ const LowerThird = () => {
 
   const { primary_text, secondary_text, ticker_text, show_time, type, guest_image_url } = lowerThird;
 
-  // Use simplified 12-hour format for news type, full 24-hour format for others
-  const timeFormat = type === 'news' ? 'h:mm' : 'HH:mm:ss';
-
   return (
     <div className="fixed top-0 left-0 w-full">
       <div className="flex items-start gap-2 max-w-[90vw]">
@@ -108,8 +105,7 @@ const LowerThird = () => {
             </div>
             {show_time && (
               <div className="text-neon-red font-bold ml-4 text-2xl">
-                {format(currentTime, timeFormat)}
-                {type === 'news' && format(currentTime, 'a')}
+                {format(currentTime, 'h:mm')}{format(currentTime, 'a')}
               </div>
             )}
           </div>
