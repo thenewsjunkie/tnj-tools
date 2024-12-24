@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Tables } from "@/integrations/supabase/types";
-import { Edit2, X, ChevronDown, ChevronUp } from "lucide-react";
+import { Edit2, X, ChevronDown, ChevronUp, Hash } from "lucide-react";
 import { useState } from "react";
 import LowerThirdForm from "./LowerThirdForm";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -23,11 +23,10 @@ const LowerThirdItem = ({
   const [isEditing, setIsEditing] = useState(false);
 
   const handleEdit = (updatedData: Omit<Tables<"lower_thirds">, "id" | "created_at" | "updated_at">) => {
-    // Include all fields, including logo_url, in the update
     onEdit({
       ...lowerThird,
       ...updatedData,
-      logo_url: updatedData.logo_url // Explicitly include logo_url
+      logo_url: updatedData.logo_url
     });
     setIsEditing(false);
   };
@@ -37,7 +36,13 @@ const LowerThirdItem = ({
       <Collapsible open={isEditing} onOpenChange={setIsEditing}>
         <div className="flex justify-between items-start">
           <div className="space-y-2">
-            <h3 className="font-bold">{lowerThird.title}</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-bold">{lowerThird.title}</h3>
+              <div className="flex items-center text-sm text-muted-foreground">
+                <Hash className="h-4 w-4" />
+                <span>{lowerThird.id}</span>
+              </div>
+            </div>
             <p className="text-sm text-muted-foreground">Type: {lowerThird.type}</p>
             {lowerThird.type === "guest" && lowerThird.guest_image_url && (
               <img 
