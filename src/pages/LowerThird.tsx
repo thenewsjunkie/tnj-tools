@@ -32,6 +32,7 @@ const LowerThird = () => {
 
     fetchActiveLowerThird();
 
+    // Listen for all changes to the active lower third
     const channel = supabase
       .channel("schema-db-changes")
       .on(
@@ -64,9 +65,13 @@ const LowerThird = () => {
           table: "lower_thirds",
         },
         (payload) => {
-          // If this is our current lower third and it was deactivated
-          if (lowerThird && payload.old.id === lowerThird.id && !payload.new.is_active) {
-            setLowerThird(null);
+          // If this is our current lower third, update it
+          if (lowerThird && payload.old.id === lowerThird.id) {
+            if (!payload.new.is_active) {
+              setLowerThird(null);
+            } else {
+              setLowerThird(payload.new as Tables<"lower_thirds">);
+            }
           }
         }
       )
