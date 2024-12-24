@@ -41,6 +41,16 @@ const LowerThirdItem = ({
                 className="w-16 h-16 object-cover rounded-full"
               />
             )}
+            {lowerThird.logo_url && (
+              <div>
+                <p className="text-sm text-muted-foreground">Logo:</p>
+                <img 
+                  src={lowerThird.logo_url} 
+                  alt="Logo" 
+                  className="w-16 h-16 object-contain"
+                />
+              </div>
+            )}
             {lowerThird.primary_text && (
               <p className="text-sm">Primary: {lowerThird.primary_text}</p>
             )}

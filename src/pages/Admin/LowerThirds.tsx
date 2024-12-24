@@ -64,6 +64,7 @@ const LowerThirds = () => {
           is_active: lowerThird.is_active,
           style_config: lowerThird.style_config,
           guest_image_url: lowerThird.guest_image_url,
+          logo_url: lowerThird.logo_url, // Add this line to include logo_url in updates
         })
         .eq("id", lowerThird.id);
 
