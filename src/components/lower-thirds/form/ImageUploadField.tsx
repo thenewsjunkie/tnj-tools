@@ -1,16 +1,25 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { Undo2 } from "lucide-react";
 
 interface ImageUploadFieldProps {
   id: string;
   label: string;
   imageUrl?: string;
+  defaultImageUrl?: string;
   onImageUpload: (url: string) => void;
 }
 
-const ImageUploadField = ({ id, label, imageUrl, onImageUpload }: ImageUploadFieldProps) => {
+const ImageUploadField = ({ 
+  id, 
+  label, 
+  imageUrl, 
+  defaultImageUrl,
+  onImageUpload 
+}: ImageUploadFieldProps) => {
   const { toast } = useToast();
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -47,6 +56,18 @@ const ImageUploadField = ({ id, label, imageUrl, onImageUpload }: ImageUploadFie
     }
   };
 
+  const handleResetToDefault = () => {
+    if (defaultImageUrl) {
+      onImageUpload(defaultImageUrl);
+      toast({
+        title: "Reset successful",
+        description: `${label} reset to default`,
+      });
+    }
+  };
+
+  const displayUrl = imageUrl || defaultImageUrl;
+
   return (
     <div className="space-y-2">
       <Label htmlFor={id}>{label}</Label>
@@ -58,9 +79,20 @@ const ImageUploadField = ({ id, label, imageUrl, onImageUpload }: ImageUploadFie
           onChange={handleImageUpload}
           className="flex-1"
         />
-        {imageUrl && (
+        {defaultImageUrl && imageUrl !== defaultImageUrl && (
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={handleResetToDefault}
+            title="Reset to default logo"
+          >
+            <Undo2 className="h-4 w-4" />
+          </Button>
+        )}
+        {displayUrl && (
           <img 
-            src={imageUrl} 
+            src={displayUrl} 
             alt={`${label} preview`} 
             className="w-24 h-24 object-contain"
           />

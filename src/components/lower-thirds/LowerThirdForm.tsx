@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Plus, Save } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { Json } from "@/integrations/supabase/types/helpers";
+import { supabase } from "@/integrations/supabase/client";
 import ImageUploadField from "./form/ImageUploadField";
 import TextFields from "./form/TextFields";
 import TypeSelector from "./form/TypeSelector";
@@ -36,6 +37,27 @@ const LowerThirdForm = ({ initialData, onSubmit, submitLabel = "Create Lower Thi
     guest_image_url: initialData?.guest_image_url ?? "",
     logo_url: initialData?.logo_url ?? "",
   });
+
+  const [defaultLogo, setDefaultLogo] = useState<string>("");
+
+  useEffect(() => {
+    const fetchDefaultLogo = async () => {
+      const { data, error } = await supabase
+        .from('system_settings')
+        .select('value')
+        .eq('key', 'default_lower_third_logo')
+        .single();
+
+      if (!error && data?.value?.url) {
+        setDefaultLogo(data.value.url);
+        if (!initialData?.logo_url) {
+          setFormData(prev => ({ ...prev, logo_url: data.value.url }));
+        }
+      }
+    };
+
+    fetchDefaultLogo();
+  }, [initialData?.logo_url]);
 
   const handleFieldChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -77,6 +99,7 @@ const LowerThirdForm = ({ initialData, onSubmit, submitLabel = "Create Lower Thi
               id="logo"
               label="Logo"
               imageUrl={formData.logo_url}
+              defaultImageUrl={defaultLogo}
               onImageUpload={(url) => handleFieldChange("logo_url", url)}
             />
           </div>
