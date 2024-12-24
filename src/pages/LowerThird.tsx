@@ -87,7 +87,7 @@ const LowerThird = () => {
 
   return (
     <div className="fixed bottom-0 left-0 w-full">
-      <div className="flex items-end gap-2 w-full">
+      <div className="flex items-start gap-2 w-full">
         {type === "guest" && guest_image_url ? (
           <div 
             className="relative bg-black/85 overflow-hidden rounded-lg" 
@@ -110,7 +110,7 @@ const LowerThird = () => {
             </div>
           </div>
         ) : (
-          <div className="bg-black/85 text-white px-4 py-2 text-lg font-bold uppercase self-end">
+          <div className="bg-black/85 text-white px-4 py-2 text-lg font-bold uppercase">
             {type}
           </div>
         )}
