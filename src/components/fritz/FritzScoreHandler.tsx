@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
 const FritzScoreHandler = () => {
@@ -13,51 +12,18 @@ const FritzScoreHandler = () => {
       if (!contestant || !action) return;
       
       console.log(`[FritzScoreHandler] Updating score for ${contestant}: ${action}`);
-
-      const isIncrement = action === 'up';
       
       try {
-        // Format contestant name to match database format
-        const formattedName = contestant === 'c-lane' ? 'C-Lane' : 
-          contestant === 'custom' ? 'Custom' :
-          contestant.charAt(0).toUpperCase() + contestant.slice(1);
-
-        // Get current contestant data for version
-        const { data: contestantData, error: fetchError } = await supabase
-          .from('fritz_contestants')
-          .select('version')
-          .eq('name', formattedName)
-          .single();
-
-        if (fetchError) {
-          console.error('[FritzScoreHandler] Error fetching contestant:', fetchError);
-          throw new Error('Contestant not found');
-        }
-
-        const { data, error } = await supabase
-          .rpc('update_contestant_score', {
-            p_contestant_name: formattedName,
-            p_increment: isIncrement,
-            p_current_version: contestantData.version
-          });
-
-        if (error) throw error;
-
-        // Get first row of the result since it's returned as an array
-        const result = data[0];
+        const response = await fetch(`/fritz/${contestant}/${action}`);
+        const data = await response.json();
         
-        if (!result.success) {
-          toast({
-            title: "Score Changed",
-            description: "The score was just updated by someone else. Please try again.",
-            variant: "destructive"
-          });
-          return;
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to update score');
         }
 
         toast({
           title: "Score Updated",
-          description: `${formattedName}'s score has been ${isIncrement ? 'increased' : 'decreased'} by 1`,
+          description: `Score has been ${action === 'up' ? 'increased' : 'decreased'} by 1`,
         });
 
       } catch (error) {
