@@ -18,6 +18,10 @@ interface LowerThirdFormProps {
   submitLabel?: string;
 }
 
+interface DefaultLogoConfig {
+  url: string;
+}
+
 const defaultStyleConfig = {
   duration: 5000,
   position: "bottom",
@@ -48,10 +52,13 @@ const LowerThirdForm = ({ initialData, onSubmit, submitLabel = "Create Lower Thi
         .eq('key', 'default_lower_third_logo')
         .single();
 
-      if (!error && data?.value?.url) {
-        setDefaultLogo(data.value.url);
-        if (!initialData?.logo_url) {
-          setFormData(prev => ({ ...prev, logo_url: data.value.url }));
+      if (!error && data?.value) {
+        const logoConfig = data.value as DefaultLogoConfig;
+        if (logoConfig.url) {
+          setDefaultLogo(logoConfig.url);
+          if (!initialData?.logo_url) {
+            setFormData(prev => ({ ...prev, logo_url: logoConfig.url }));
+          }
         }
       }
     };
