@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   DndContext,
   closestCenter,
@@ -36,6 +36,33 @@ const SortableLowerThirds = ({
   const [items, setItems] = useState(lowerThirds);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Update items when lowerThirds prop changes
+  useEffect(() => {
+    setItems(lowerThirds);
+  }, [lowerThirds]);
+
+  // Subscribe to real-time updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('lower-thirds-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'lower_thirds'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["lower-thirds"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -97,7 +124,7 @@ const SortableLowerThirds = ({
         <div className="space-y-4">
           {items.map((lowerThird) => (
             <SortableLowerThirdItem
-              key={lowerThird.id}
+              key={`${lowerThird.id}-${lowerThird.is_active}`}
               lowerThird={lowerThird}
               onToggleActive={onToggleActive}
               onQuickEdit={onQuickEdit}

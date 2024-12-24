@@ -32,11 +32,6 @@ const SortableLowerThirdItem = ({
     opacity: isDragging ? 0.5 : 1,
   };
 
-  // Handle toggle with proper state management
-  const handleToggle = async (checked: boolean) => {
-    onToggleActive(lowerThird.id, checked);
-  };
-
   return (
     <Card
       ref={setNodeRef}
@@ -71,8 +66,8 @@ const SortableLowerThirdItem = ({
         <div className="flex items-center gap-2">
           <Switch
             checked={lowerThird.is_active}
-            onCheckedChange={handleToggle}
-            key={`${lowerThird.id}-${lowerThird.is_active}`}
+            onCheckedChange={(checked) => onToggleActive(lowerThird.id, checked)}
+            key={`switch-${lowerThird.id}-${lowerThird.is_active}`}
           />
           <Button
             variant="ghost"
