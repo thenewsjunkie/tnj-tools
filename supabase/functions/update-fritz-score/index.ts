@@ -21,9 +21,10 @@ serve(async (req) => {
       });
     }
 
+    // Create Supabase client with anon key instead of service role key
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     );
 
     // Parse request body
