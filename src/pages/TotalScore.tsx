@@ -7,9 +7,12 @@ interface YearlyScore {
   year: number;
 }
 
+const DEFAULT_CONTESTANTS = ['Shawn', 'Sabrina', 'C-Lane'];
+
 const TotalScore = () => {
   const [scores, setScores] = useState<YearlyScore[]>([]);
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [activeContestants, setActiveContestants] = useState<string[]>([]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -23,6 +26,16 @@ const TotalScore = () => {
   }, [currentYear]);
 
   useEffect(() => {
+    const fetchActiveContestants = async () => {
+      const { data: contestants } = await supabase
+        .from('fritz_contestants')
+        .select('name')
+        .not('name', 'is', null);
+
+      const activeNames = contestants?.map(c => c.name) || [];
+      setActiveContestants(activeNames as string[]);
+    };
+
     const fetchYearlyScores = async () => {
       const { data, error } = await supabase
         .from('fritz_yearly_scores')
@@ -35,9 +48,17 @@ const TotalScore = () => {
         return;
       }
 
-      setScores(data);
+      // Filter scores to only show default contestants plus Josh or Custom if they're active
+      const filteredScores = data.filter(score => {
+        const name = score.contestant_name;
+        return DEFAULT_CONTESTANTS.includes(name) || 
+               (activeContestants.includes(name) && (name === 'Josh' || name === 'Custom'));
+      });
+
+      setScores(filteredScores);
     };
 
+    fetchActiveContestants();
     fetchYearlyScores();
 
     const channel = supabase
@@ -50,8 +71,24 @@ const TotalScore = () => {
           table: 'fritz_yearly_scores',
           filter: `year=eq.${currentYear}`
         },
-        (payload) => {
-          console.log('Received real-time update:', payload);
+        () => {
+          fetchYearlyScores();
+        }
+      )
+      .subscribe();
+
+    // Also listen for changes to active contestants
+    const contestantsChannel = supabase
+      .channel('contestants-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'fritz_contestants'
+        },
+        () => {
+          fetchActiveContestants();
           fetchYearlyScores();
         }
       )
@@ -59,8 +96,9 @@ const TotalScore = () => {
 
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(contestantsChannel);
     };
-  }, [currentYear]);
+  }, [currentYear, activeContestants]);
 
   return (
     <div className="min-h-screen">
