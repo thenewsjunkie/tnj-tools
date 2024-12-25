@@ -3,15 +3,12 @@ import type { Review } from "./types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { Json } from "@/integrations/supabase/types";
 
 interface ReviewCardProps {
   review: Review;
   onClick: () => void;
   Icon: LucideIcon;
-}
-
-interface ActiveReviewSettings {
-  review_id: string | null;
 }
 
 const ReviewCard = ({ review, onClick, Icon }: ReviewCardProps) => {
