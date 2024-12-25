@@ -4,6 +4,10 @@ import { Tv, Film, Utensils, Package } from "lucide-react";
 import { format } from "date-fns";
 import type { Review } from "@/components/reviews/types";
 
+interface ActiveReviewSettings {
+  review_id: string | null;
+}
+
 const StreamReview = () => {
   const { data: activeReview } = useQuery({
     queryKey: ['active-review'],
@@ -14,12 +18,12 @@ const StreamReview = () => {
         .eq('key', 'active_review')
         .single();
       
-      if (!settings?.value?.review_id) return null;
+      if (!(settings?.value as ActiveReviewSettings)?.review_id) return null;
 
       const { data: review } = await supabase
         .from('reviews')
         .select('*')
-        .eq('id', settings.value.review_id)
+        .eq('id', (settings.value as ActiveReviewSettings).review_id)
         .single();
 
       return review as Review;

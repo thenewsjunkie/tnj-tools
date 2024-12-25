@@ -10,6 +10,10 @@ interface ReviewCardProps {
   Icon: LucideIcon;
 }
 
+interface ActiveReviewSettings {
+  review_id: string | null;
+}
+
 const ReviewCard = ({ review, onClick, Icon }: ReviewCardProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -23,7 +27,7 @@ const ReviewCard = ({ review, onClick, Icon }: ReviewCardProps) => {
         .eq('key', 'active_review')
         .single();
       
-      return settings?.value?.review_id;
+      return (settings?.value as ActiveReviewSettings)?.review_id;
     },
   });
 
@@ -32,7 +36,7 @@ const ReviewCard = ({ review, onClick, Icon }: ReviewCardProps) => {
   const toggleReviewStream = async (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      const newValue = isActive ? { review_id: null } : { review_id: review.id };
+      const newValue: ActiveReviewSettings = isActive ? { review_id: null } : { review_id: review.id };
       
       const { error } = await supabase
         .from('system_settings')
