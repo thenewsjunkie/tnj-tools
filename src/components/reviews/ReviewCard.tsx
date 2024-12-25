@@ -1,5 +1,8 @@
-import { LucideIcon } from "lucide-react";
+import { LucideIcon, Eye } from "lucide-react";
 import type { Review } from "./types";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 interface ReviewCardProps {
   review: Review;
@@ -8,10 +11,58 @@ interface ReviewCardProps {
 }
 
 const ReviewCard = ({ review, onClick, Icon }: ReviewCardProps) => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  const { data: activeReviewId } = useQuery({
+    queryKey: ['active-review-id'],
+    queryFn: async () => {
+      const { data: settings } = await supabase
+        .from('system_settings')
+        .select('value')
+        .eq('key', 'active_review')
+        .single();
+      
+      return settings?.value?.review_id;
+    },
+  });
+
+  const isActive = activeReviewId === review.id;
+
+  const toggleReviewStream = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const newValue = isActive ? { review_id: null } : { review_id: review.id };
+      
+      const { error } = await supabase
+        .from('system_settings')
+        .upsert({
+          key: 'active_review',
+          value: newValue,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: isActive ? "Review removed from stream" : "Review added to stream",
+        duration: 2000,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['active-review-id'] });
+      queryClient.invalidateQueries({ queryKey: ['active-review'] });
+    } catch (error) {
+      console.error('Error toggling review stream:', error);
+      toast({
+        title: "Error updating stream",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div
       onClick={onClick}
-      className="flex flex-col gap-2 p-3 rounded-lg border border-gray-200 dark:border-white/10 hover:bg-accent cursor-pointer transition-colors"
+      className="flex flex-col gap-2 p-3 rounded-lg border border-gray-200 dark:border-white/10 hover:bg-accent cursor-pointer transition-colors relative group"
     >
       <div className="flex items-center justify-between min-w-0">
         <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
@@ -36,6 +87,15 @@ const ReviewCard = ({ review, onClick, Icon }: ReviewCardProps) => {
       <p className="text-xs text-muted-foreground line-clamp-2">
         {review.content}
       </p>
+
+      <button
+        onClick={toggleReviewStream}
+        className="absolute top-2 right-2 p-1 rounded-full hover:bg-background/50 transition-colors"
+      >
+        <Eye 
+          className={`h-4 w-4 ${isActive ? 'text-neon-red' : 'text-foreground'}`} 
+        />
+      </button>
     </div>
   );
 };

@@ -12,9 +12,10 @@ interface ReviewDialogProps {
   review: Review | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  showControls?: boolean;
 }
 
-const ReviewDialog = ({ review, open, onOpenChange }: ReviewDialogProps) => {
+const ReviewDialog = ({ review, open, onOpenChange, showControls = true }: ReviewDialogProps) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [objectFit, setObjectFit] = useState<'contain' | 'cover'>('contain');
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -56,6 +57,7 @@ const ReviewDialog = ({ review, open, onOpenChange }: ReviewDialogProps) => {
                 title={review.title}
                 objectFit={objectFit}
                 onToggleImageFit={toggleImageFit}
+                showControls={showControls}
               />
             )}
 
@@ -63,20 +65,22 @@ const ReviewDialog = ({ review, open, onOpenChange }: ReviewDialogProps) => {
             
             <div className="flex items-center justify-between text-sm text-muted-foreground">
               <span>Review: {reviewDate}</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsEditDialogOpen(true)}
-                className="hover:bg-accent"
-              >
-                <Edit2 className="h-4 w-4" />
-              </Button>
+              {showControls && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsEditDialogOpen(true)}
+                  className="hover:bg-accent"
+                >
+                  <Edit2 className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      {isFullscreen && review.image_urls?.[selectedImageIndex] && (
+      {isFullscreen && review.image_urls?.[selectedImageIndex] && showControls && (
         <ImageFullscreen
           url={review.image_urls[selectedImageIndex]}
           title={review.title}
@@ -84,16 +88,18 @@ const ReviewDialog = ({ review, open, onOpenChange }: ReviewDialogProps) => {
         />
       )}
 
-      <EditReviewDialog
-        review={review}
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        onReviewUpdated={() => {
-          setIsEditDialogOpen(false);
-          onOpenChange(false);
-          window.location.reload();
-        }}
-      />
+      {showControls && (
+        <EditReviewDialog
+          review={review}
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          onReviewUpdated={() => {
+            setIsEditDialogOpen(false);
+            onOpenChange(false);
+            window.location.reload();
+          }}
+        />
+      )}
     </>
   );
 };

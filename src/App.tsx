@@ -141,6 +141,8 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+import StreamReview from "./pages/StreamReview";
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider defaultTheme="dark">
@@ -155,6 +157,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/notes" element={<Notes />} />
             <Route path="/reviews" element={<Reviews />} />
+            <Route path="/reviews/stream" element={<StreamReview />} />
             <Route path="/alerts" element={<Alerts />} />
             <Route path="/alerts/queue/:action" element={<Alerts />} />
             <Route path="/alerts/:alertSlug" element={<Alerts />} />
