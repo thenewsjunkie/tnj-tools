@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Eye } from "lucide-react";
 import { CardTitle } from "@/components/ui/card";
 import AddReviewDialog from "./AddReviewDialog";
 
@@ -23,7 +23,18 @@ const ReviewHeader = ({ showViewAllLink = false, onReviewAdded }: ReviewHeaderPr
           </Link>
         )}
       </div>
-      <AddReviewDialog onReviewAdded={onReviewAdded} />
+      <div className="flex items-center gap-4">
+        <Link 
+          to="/reviews/stream" 
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Eye className="h-4 w-4" />
+          Stream View
+        </Link>
+        <AddReviewDialog onReviewAdded={onReviewAdded} />
+      </div>
     </CardTitle>
   );
 };
