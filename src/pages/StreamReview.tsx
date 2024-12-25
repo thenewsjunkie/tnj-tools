@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tv, Film, Utensils, Package } from "lucide-react";
-import { format } from "date-fns";
 import type { Review } from "@/components/reviews/types";
 
 interface ActiveReviewSettings {
@@ -42,11 +41,10 @@ const StreamReview = () => {
   };
 
   const Icon = icons[activeReview.type];
-  const reviewDate = format(new Date(activeReview.created_at), "EEEE, MMMM d");
 
   return (
-    <div className="min-h-screen p-4 bg-black/90">
-      <div className="space-y-6 max-w-2xl mx-auto bg-black/60 p-8 rounded-xl backdrop-blur-sm border border-white/10">
+    <div className="min-h-screen bg-black/90 p-8">
+      <div className="space-y-6 max-w-3xl bg-black/60 p-8 rounded-xl backdrop-blur-sm border border-white/10">
         <div className="flex items-center gap-3">
           <Icon className="h-8 w-8 text-neon-red" />
           <h2 className="text-3xl font-semibold text-white/90">{activeReview.title}</h2>
@@ -66,11 +64,7 @@ const StreamReview = () => {
           </div>
         )}
 
-        <p className="text-xl text-white/90 leading-relaxed">{activeReview.content}</p>
-        
-        <div className="text-lg text-white/60">
-          {reviewDate}
-        </div>
+        <p className="text-2xl text-white/90 leading-relaxed">{activeReview.content}</p>
       </div>
     </div>
   );
