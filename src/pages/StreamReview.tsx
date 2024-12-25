@@ -45,11 +45,11 @@ const StreamReview = () => {
   const reviewDate = format(new Date(activeReview.created_at), "EEEE, MMMM d");
 
   return (
-    <div className="min-h-screen p-4">
-      <div className="space-y-4 max-w-2xl">
-        <div className="flex items-center gap-2">
-          <Icon className="h-8 w-8 text-white" />
-          <h2 className="text-3xl font-semibold text-white">{activeReview.title}</h2>
+    <div className="min-h-screen p-4 bg-black/90">
+      <div className="space-y-6 max-w-2xl mx-auto bg-black/60 p-8 rounded-xl backdrop-blur-sm border border-white/10">
+        <div className="flex items-center gap-3">
+          <Icon className="h-8 w-8 text-neon-red" />
+          <h2 className="text-3xl font-semibold text-white/90">{activeReview.title}</h2>
         </div>
         
         <div className="text-3xl text-yellow-500">
@@ -61,14 +61,14 @@ const StreamReview = () => {
             <img 
               src={activeReview.image_urls[0]} 
               alt={activeReview.title}
-              className="rounded-lg w-full h-auto object-contain max-h-[400px]"
+              className="rounded-lg w-full h-auto object-contain max-h-[400px] bg-black/40 p-2"
             />
           </div>
         )}
 
-        <p className="text-xl text-white">{activeReview.content}</p>
+        <p className="text-xl text-white/90 leading-relaxed">{activeReview.content}</p>
         
-        <div className="text-lg text-white/70">
+        <div className="text-lg text-white/60">
           {reviewDate}
         </div>
       </div>
