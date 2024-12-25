@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
+import { Eye } from "lucide-react";
 import ReviewDialog from "./ReviewDialog";
 import ReviewList from "./ReviewList";
 import ReviewHeader from "./ReviewHeader";
@@ -90,11 +92,20 @@ const Reviews = ({ showViewAllLink = false, reviews: propReviews, simpleView = f
 
   return (
     <Card className="w-full bg-background border border-gray-200 dark:border-white/10 relative pb-8">
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
         <ReviewHeader 
           showViewAllLink={showViewAllLink} 
           onReviewAdded={refetch}
         />
+        <Link 
+          to="/reviews/stream" 
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Eye className="h-4 w-4" />
+          Stream View
+        </Link>
       </CardHeader>
       <CardContent>
         <ReviewList
