@@ -100,6 +100,10 @@ const TotalScore = () => {
     };
   }, [currentYear, activeContestants]);
 
+  // Create placeholder scores to maintain consistent height
+  const placeholderCount = Math.max(0, 4 - scores.length);
+  const placeholderScores = Array(placeholderCount).fill(null);
+
   return (
     <div className="min-h-screen">
       <div className="fixed top-8 left-8 w-[300px] bg-black/80 rounded-lg overflow-hidden backdrop-blur-sm">
@@ -129,6 +133,23 @@ const TotalScore = () => {
                 <div className="absolute inset-0 blur-lg bg-neon-red/30 animate-pulse" />
                 <span className="relative text-4xl font-['Digital-7'] text-neon-red animate-led-flicker drop-shadow-[0_0_10px_rgba(255,0,0,0.7)]">
                   {score.total_score}
+                </span>
+              </div>
+            </div>
+          ))}
+          {/* Invisible placeholder scores to maintain height */}
+          {placeholderScores.map((_, index) => (
+            <div 
+              key={`placeholder-${index}`}
+              className="relative flex justify-between items-center px-4 py-3 rounded-lg invisible"
+              aria-hidden="true"
+            >
+              <span className="text-lg font-semibold tracking-wide uppercase">
+                Placeholder
+              </span>
+              <div className="relative">
+                <span className="text-4xl font-['Digital-7']">
+                  0
                 </span>
               </div>
             </div>
