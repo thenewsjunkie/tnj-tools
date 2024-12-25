@@ -27,7 +27,8 @@ const ReviewCard = ({ review, onClick, Icon }: ReviewCardProps) => {
         .eq('key', 'active_review')
         .single();
       
-      return (settings?.value as ActiveReviewSettings)?.review_id;
+      const value = settings?.value as { review_id: string | null } | null;
+      return value?.review_id ?? null;
     },
   });
 
@@ -36,13 +37,13 @@ const ReviewCard = ({ review, onClick, Icon }: ReviewCardProps) => {
   const toggleReviewStream = async (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      const newValue: ActiveReviewSettings = isActive ? { review_id: null } : { review_id: review.id };
+      const value = { review_id: isActive ? null : review.id };
       
       const { error } = await supabase
         .from('system_settings')
         .upsert({
           key: 'active_review',
-          value: newValue,
+          value: value as unknown as Json,
         });
 
       if (error) throw error;

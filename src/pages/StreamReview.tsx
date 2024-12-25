@@ -18,12 +18,13 @@ const StreamReview = () => {
         .eq('key', 'active_review')
         .single();
       
-      if (!(settings?.value as ActiveReviewSettings)?.review_id) return null;
+      const value = settings?.value as { review_id: string | null } | null;
+      if (!value?.review_id) return null;
 
       const { data: review } = await supabase
         .from('reviews')
         .select('*')
-        .eq('id', (settings.value as ActiveReviewSettings).review_id)
+        .eq('id', value.review_id)
         .single();
 
       return review as Review;
