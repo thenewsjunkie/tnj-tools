@@ -53,10 +53,10 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
 
       if (!statsError && existingStats) {
         // Update existing stats
-        const monthlyGifts = { ...existingStats.monthly_gifts };
+        const monthlyGifts: Record<string, number> = existingStats.monthly_gifts || {};
         monthlyGifts[monthKey] = (monthlyGifts[monthKey] || 0) + currentAlert.gift_count;
 
-        const yearlyGifts = { ...existingStats.yearly_gifts };
+        const yearlyGifts: Record<string, number> = existingStats.yearly_gifts || {};
         yearlyGifts[yearKey] = (yearlyGifts[yearKey] || 0) + currentAlert.gift_count;
 
         await supabase
