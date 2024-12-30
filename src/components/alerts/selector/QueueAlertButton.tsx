@@ -14,12 +14,18 @@ const QueueAlertButton = ({ selectedAlert }: QueueAlertButtonProps) => {
   const [isQueuing, setIsQueuing] = useState(false);
   const { toast } = useToast();
 
-  const queueAlert = async (username?: string) => {
+  const queueAlert = async (username?: string, giftCount?: number) => {
     if (isQueuing) return;
     setIsQueuing(true);
 
     try {
       console.log('[QueueAlertButton] Queueing alert:', selectedAlert.title);
+      
+      let messageText = selectedAlert.message_text;
+      if (selectedAlert.is_gift_alert && giftCount) {
+        messageText = `Gifted ${giftCount} Secret Shows Subscriptions!`;
+      }
+
       const { error } = await supabase
         .from('alert_queue')
         .insert({
@@ -73,6 +79,7 @@ const QueueAlertButton = ({ selectedAlert }: QueueAlertButtonProps) => {
         open={isNameDialogOpen}
         onOpenChange={setIsNameDialogOpen}
         onSubmit={queueAlert}
+        isGiftAlert={selectedAlert.is_gift_alert}
       />
     </>
   );
