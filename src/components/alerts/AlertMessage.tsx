@@ -1,4 +1,6 @@
 import GiftCounter from "./GiftCounter";
+import confetti from 'canvas-confetti';
+import { useEffect } from 'react';
 
 interface AlertMessageProps {
   message: string;
@@ -19,6 +21,36 @@ const AlertMessage = ({
   giftTextColor = "#FFFFFF",
   giftCountColor = "#4CDBC4"
 }: AlertMessageProps) => {
+  useEffect(() => {
+    if (isGiftAlert && giftCount > 1) {
+      const duration = 2000;
+      const end = Date.now() + duration;
+
+      const frame = () => {
+        confetti({
+          particleCount: 2,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+          colors: ['#ff0000', '#00ff00', '#0000ff']
+        });
+        confetti({
+          particleCount: 2,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+          colors: ['#ff0000', '#00ff00', '#0000ff']
+        });
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      };
+
+      frame();
+    }
+  }, [isGiftAlert, giftCount]);
+
   if (isGiftAlert) {
     // Extract username from the message
     const username = message.split(' ')[0];
