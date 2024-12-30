@@ -36,9 +36,18 @@ export const AlertDisplay = ({
     onComplete();
   };
 
+  const handleAlertContentComplete = () => {
+    console.log('[AlertDisplay] Alert content completed');
+    if (currentAlert.is_gift_alert) {
+      handleShowLeaderboard();
+    } else {
+      onComplete();
+    }
+  };
+
   const { completedRef } = useAlertTimer({
     currentAlert,
-    onComplete,
+    onComplete: handleAlertContentComplete,
     onShowLeaderboard: handleShowLeaderboard
   });
 
@@ -74,7 +83,7 @@ export const AlertDisplay = ({
   return (
     <AlertContent
       currentAlert={currentAlert}
-      onComplete={onComplete}
+      onComplete={handleAlertContentComplete}
       onError={handleError}
     />
   );

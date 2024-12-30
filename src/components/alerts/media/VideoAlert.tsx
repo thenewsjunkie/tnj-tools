@@ -13,7 +13,7 @@ const VideoAlert = ({ mediaUrl, onComplete, onError }: VideoAlertProps) => {
   const handleComplete = () => {
     if (!completedRef.current) {
       completedRef.current = true;
-      console.log('[VideoAlert] Triggering completion callback');
+      console.log('[VideoAlert] Video completed, triggering completion callback');
       onComplete();
     }
   };

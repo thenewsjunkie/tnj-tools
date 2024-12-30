@@ -24,11 +24,8 @@ export const useAlertTimer = ({ currentAlert, onComplete, onShowLeaderboard }: U
     // For other alerts, use a timer
     const timer = setTimeout(() => {
       console.log('[useAlertTimer] Alert timer completed');
-      if (currentAlert.is_gift_alert && !completedRef.current) {
-        console.log('[useAlertTimer] This is a gift alert, showing leaderboard');
-        onShowLeaderboard();
-      } else {
-        console.log('[useAlertTimer] This is not a gift alert, completing');
+      if (!completedRef.current) {
+        console.log('[useAlertTimer] Triggering completion callback');
         completedRef.current = true;
         onComplete();
       }
