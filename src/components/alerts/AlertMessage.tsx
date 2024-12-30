@@ -43,7 +43,7 @@ const AlertMessage = ({
             color: giftTextColor
           }}
         >
-          {formattedMessage}
+          {username} Gifted {formattedMessage.substring(username.length + 1)}
         </div>
       </div>
     );
