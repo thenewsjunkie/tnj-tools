@@ -36,7 +36,12 @@ const Alerts = () => {
     message_text: currentAlert.username 
       ? `${currentAlert.username} ${currentAlert.alert.message_text}`
       : currentAlert.alert.message_text,
-    font_size: currentAlert.alert.font_size
+    font_size: currentAlert.alert.font_size,
+    is_gift_alert: currentAlert.alert.is_gift_alert,
+    gift_count: currentAlert.gift_count,
+    gift_count_animation_speed: currentAlert.alert.gift_count_animation_speed,
+    gift_text_color: currentAlert.alert.gift_text_color,
+    gift_count_color: currentAlert.alert.gift_count_color
   };
 
   return (

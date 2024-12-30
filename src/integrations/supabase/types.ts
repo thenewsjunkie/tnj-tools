@@ -13,6 +13,7 @@ export type Database = {
         Row: {
           alert_id: string
           created_at: string
+          gift_count: number | null
           id: string
           played_at: string | null
           status: string
@@ -21,6 +22,7 @@ export type Database = {
         Insert: {
           alert_id: string
           created_at?: string
+          gift_count?: number | null
           id?: string
           played_at?: string | null
           status?: string
@@ -29,6 +31,7 @@ export type Database = {
         Update: {
           alert_id?: string
           created_at?: string
+          gift_count?: number | null
           id?: string
           played_at?: string | null
           status?: string

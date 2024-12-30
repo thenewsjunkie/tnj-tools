@@ -27,7 +27,7 @@ const QueueAlertButton = ({ selectedAlert }: QueueAlertButtonProps) => {
           alert_id: selectedAlert.id,
           username,
           status: 'pending',
-          gift_count: giftCount // Store the gift count in the queue
+          gift_count: giftCount
         });
 
       if (error) {
