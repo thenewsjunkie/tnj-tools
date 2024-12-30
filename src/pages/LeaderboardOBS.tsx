@@ -1,13 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Crown } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const LeaderboardOBS = () => {
-  const [isVisible, setIsVisible] = useState(true);
-  
   const { data: giftStats, isLoading } = useQuery({
     queryKey: ['giftStats'],
     queryFn: async () => {
@@ -27,22 +25,59 @@ const LeaderboardOBS = () => {
     },
   });
 
+  const { data: visibility } = useQuery({
+    queryKey: ['leaderboardVisibility'],
+    queryFn: async () => {
+      console.log('[LeaderboardOBS] Fetching visibility state');
+      const { data, error } = await supabase
+        .from('system_settings')
+        .select('value')
+        .eq('key', 'leaderboard_visibility')
+        .single();
+
+      if (error && error.code !== 'PGNF') {
+        console.error('[LeaderboardOBS] Error fetching visibility:', error);
+        throw error;
+      }
+      console.log('[LeaderboardOBS] Fetched visibility state:', data);
+      return data?.value?.isVisible ?? false;
+    },
+  });
+
   useEffect(() => {
-    const handleVisibilityRequest = () => {
+    const handleVisibilityRequest = async () => {
       console.log('[LeaderboardOBS] Received show request');
-      setIsVisible(true);
+      
+      // Update visibility in database
+      const { error } = await supabase
+        .from('system_settings')
+        .upsert({
+          key: 'leaderboard_visibility',
+          value: { isVisible: true },
+          updated_at: new Date().toISOString()
+        });
+
+      if (error) {
+        console.error('[LeaderboardOBS] Error updating visibility:', error);
+        return;
+      }
+
       // Auto-hide after 8 seconds
-      setTimeout(() => {
+      setTimeout(async () => {
         console.log('[LeaderboardOBS] Auto-hiding leaderboard');
-        setIsVisible(false);
+        const { error: hideError } = await supabase
+          .from('system_settings')
+          .upsert({
+            key: 'leaderboard_visibility',
+            value: { isVisible: false },
+            updated_at: new Date().toISOString()
+          });
+
+        if (hideError) {
+          console.error('[LeaderboardOBS] Error hiding leaderboard:', hideError);
+        }
       }, 8000);
     };
-
-    // Initial auto-hide
-    const initialTimer = setTimeout(() => {
-      console.log('[LeaderboardOBS] Initial auto-hide');
-      setIsVisible(false);
-    }, 8000);
 
     // Handle POST requests using a custom event
     const handlePostRequest = async () => {
@@ -68,12 +103,31 @@ const LeaderboardOBS = () => {
       }
     });
 
+    // Set up realtime subscription
+    const channel = supabase.channel('leaderboard-visibility')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'system_settings',
+          filter: 'key=eq.leaderboard_visibility'
+        },
+        (payload) => {
+          console.log('[LeaderboardOBS] Received visibility update:', payload);
+        }
+      )
+      .subscribe((status) => {
+        console.log('[LeaderboardOBS] Subscription status:', status);
+      });
+
     return () => {
-      clearTimeout(initialTimer);
       // Restore original fetch
       if (typeof window !== 'undefined') {
         window.fetch = originalFetchFunction;
       }
+      // Clean up subscription
+      supabase.removeChannel(channel);
     };
   }, []);
 
@@ -87,7 +141,7 @@ const LeaderboardOBS = () => {
     );
   }
 
-  if (!giftStats?.length || !isVisible) {
+  if (!giftStats?.length || !visibility) {
     return null;
   }
 
