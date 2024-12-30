@@ -1,11 +1,12 @@
-import { useRef, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
 
 interface VideoAlertProps {
   mediaUrl: string;
   onComplete: () => void;
+  onError: (error: any) => void;
 }
 
-const VideoAlert = ({ mediaUrl, onComplete }: VideoAlertProps) => {
+const VideoAlert = ({ mediaUrl, onComplete, onError }: VideoAlertProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const completedRef = useRef(false);
 
@@ -27,7 +28,6 @@ const VideoAlert = ({ mediaUrl, onComplete }: VideoAlertProps) => {
       
       videoElement.load();
       videoElement.muted = true;
-      videoElement.loop = true; // Make the video loop
       videoElement.play().catch(error => {
         console.error('[VideoAlert] Initial muted autoplay failed:', error);
         // If autoplay fails, trigger completion
@@ -38,9 +38,14 @@ const VideoAlert = ({ mediaUrl, onComplete }: VideoAlertProps) => {
         console.log('[VideoAlert] Video started playing');
       });
 
+      videoElement.addEventListener('ended', () => {
+        console.log('[VideoAlert] Video ended naturally');
+        handleComplete();
+      });
+
       videoElement.addEventListener('error', (e) => {
         console.error('[VideoAlert] Video error:', e);
-        handleComplete();
+        onError(e);
       });
     }
 
@@ -50,10 +55,11 @@ const VideoAlert = ({ mediaUrl, onComplete }: VideoAlertProps) => {
         const videoElement = videoRef.current;
         videoElement.pause();
         videoElement.removeEventListener('play', () => {});
+        videoElement.removeEventListener('ended', () => {});
         videoElement.removeEventListener('error', () => {});
       }
     };
-  }, [onComplete]);
+  }, [onComplete, onError]);
 
   const handleVideoLoadedMetadata = () => {
     console.log('[VideoAlert] Video metadata loaded');
@@ -70,12 +76,12 @@ const VideoAlert = ({ mediaUrl, onComplete }: VideoAlertProps) => {
       ref={videoRef}
       src={mediaUrl}
       className="max-h-[70vh] w-auto"
-      onError={() => handleComplete()}
+      onError={() => onError}
       onLoadedMetadata={handleVideoLoadedMetadata}
       playsInline
       muted={true}
       controls={false}
-      loop={true}
+      loop={false}
       autoPlay
     />
   );
