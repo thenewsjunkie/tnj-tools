@@ -5,13 +5,15 @@ interface GiftCounterProps {
   animationSpeed?: number;
   textColor?: string;
   countColor?: string;
+  fontSize?: number;
 }
 
 const GiftCounter = ({ 
   targetCount, 
   animationSpeed = 100,
   textColor = "#FFFFFF",
-  countColor = "#4CDBC4"
+  countColor = "#4CDBC4",
+  fontSize = 36
 }: GiftCounterProps) => {
   const [currentCount, setCurrentCount] = useState(0);
 
@@ -27,14 +29,14 @@ const GiftCounter = ({
 
   return (
     <div 
-      className="text-center font-bold text-4xl"
-      style={{ color: textColor }}
+      className="alert-message-font"
+      style={{ 
+        fontSize: `${fontSize}px`,
+        textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
+        color: countColor
+      }}
     >
-      <span>Gifted </span>
-      <span style={{ color: countColor }} className="animate-pulse">
-        {currentCount}
-      </span>
-      <span> Subscriptions!</span>
+      {currentCount}
     </div>
   );
 };

@@ -45,16 +45,13 @@ const AlertMessage = ({
         >
           {username} Gifted
         </div>
-        <div
-          className="alert-message-font"
-          style={{ 
-            fontSize: `${fontSize * 1.5}px`,
-            textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
-            color: giftCountColor
-          }}
-        >
-          {giftCount}
-        </div>
+        <GiftCounter 
+          targetCount={giftCount}
+          animationSpeed={giftCountAnimationSpeed}
+          textColor={giftTextColor}
+          countColor={giftCountColor}
+          fontSize={fontSize * 1.5}
+        />
         <div 
           className="alert-message-font"
           style={{ 
