@@ -15,10 +15,11 @@ const UsernameDialog = ({ open, onOpenChange, onSubmit, isGiftAlert }: UsernameD
   const [username, setUsername] = useState("");
   const [giftCount, setGiftCount] = useState<number>(1);
 
-  // Reset username when dialog opens, but preserve gift count
+  // Reset form when dialog opens
   useEffect(() => {
     if (open) {
       setUsername("");
+      setGiftCount(1); // Reset gift count to 1 when dialog opens
     }
   }, [open]);
 
@@ -27,13 +28,16 @@ const UsernameDialog = ({ open, onOpenChange, onSubmit, isGiftAlert }: UsernameD
     console.log('[UsernameDialog] Submitting with gift count:', giftCount);
     onSubmit(username, isGiftAlert ? giftCount : undefined);
     setUsername("");
+    setGiftCount(1); // Reset gift count after submission
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-foreground">Enter Details</DialogTitle>
+          <DialogTitle className="text-foreground dark:text-white">
+            {isGiftAlert ? 'Enter Gift Details' : 'Enter Username'}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

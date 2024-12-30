@@ -11,6 +11,7 @@ interface AlertDisplayProps {
     message_text?: string;
     font_size?: number;
     is_gift_alert?: boolean;
+    gift_count?: number;
     gift_count_animation_speed?: number;
     gift_text_color?: string;
     gift_count_color?: string;
@@ -45,7 +46,8 @@ export const AlertDisplay = ({
       mediaType: currentAlert.media_type,
       hasMessage: currentAlert.message_enabled,
       messageText: currentAlert.message_text,
-      isGiftAlert: currentAlert.is_gift_alert
+      isGiftAlert: currentAlert.is_gift_alert,
+      giftCount: currentAlert.gift_count
     });
 
     // Add a backup completion timer
@@ -70,11 +72,6 @@ export const AlertDisplay = ({
     return null;
   }
 
-  // Extract gift count from message if it's a gift alert
-  const giftCount = currentAlert.is_gift_alert && currentAlert.message_text
-    ? parseInt(currentAlert.message_text.match(/\d+/)?.[0] || "1", 10)
-    : 1;
-
   return (
     <div className="fixed top-0 left-0 right-0 flex flex-col items-center">
       <div>
@@ -97,7 +94,7 @@ export const AlertDisplay = ({
           message={currentAlert.message_text}
           fontSize={currentAlert.font_size}
           isGiftAlert={currentAlert.is_gift_alert}
-          giftCount={giftCount}
+          giftCount={currentAlert.gift_count || 1}
           giftCountAnimationSpeed={currentAlert.gift_count_animation_speed}
           giftTextColor={currentAlert.gift_text_color}
           giftCountColor={currentAlert.gift_count_color}

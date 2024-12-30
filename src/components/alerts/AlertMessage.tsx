@@ -25,7 +25,7 @@ const AlertMessage = ({
     
     console.log('[AlertMessage] Gift alert details:', {
       username,
-      providedGiftCount: giftCount,
+      giftCount,
       message
     });
     
