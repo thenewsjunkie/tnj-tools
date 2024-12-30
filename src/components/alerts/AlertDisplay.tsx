@@ -50,43 +50,51 @@ export const AlertDisplay = ({
       giftCount: currentAlert.gift_count
     });
 
-    // Calculate timeout based on gift count with progressive scaling
-    const baseTimeout = 15000; // 15 seconds base timeout
-    let giftCountTimeout = 0;
+    // Calculate timeout based on gift count
+    let timeout = 15000; // Base timeout of 15 seconds for non-gift alerts
     
     if (currentAlert.is_gift_alert && currentAlert.gift_count) {
       const giftCount = currentAlert.gift_count;
-      const animationSpeed = currentAlert.gift_count_animation_speed || 100;
+      const baseAnimationSpeed = currentAlert.gift_count_animation_speed || 100;
       
-      // Progressive scaling based on gift count ranges
+      // Calculate total animation time needed based on gift count
+      // Add extra padding time to ensure the animation completes
+      const paddingTime = 3000; // 3 seconds padding
+      
+      // Progressive scaling for different ranges of gift counts
+      let totalAnimationTime = 0;
+      
       if (giftCount <= 30) {
-        giftCountTimeout = giftCount * animationSpeed;
+        totalAnimationTime = giftCount * baseAnimationSpeed;
       } else if (giftCount <= 50) {
-        giftCountTimeout = 30 * animationSpeed + (giftCount - 30) * (animationSpeed * 0.8);
+        totalAnimationTime = (30 * baseAnimationSpeed) + 
+                           ((giftCount - 30) * (baseAnimationSpeed * 0.8));
       } else if (giftCount <= 100) {
-        giftCountTimeout = 30 * animationSpeed + 20 * (animationSpeed * 0.8) + 
-                          (giftCount - 50) * (animationSpeed * 0.6);
+        totalAnimationTime = (30 * baseAnimationSpeed) + 
+                           (20 * (baseAnimationSpeed * 0.8)) +
+                           ((giftCount - 50) * (baseAnimationSpeed * 0.6));
       } else {
-        giftCountTimeout = 30 * animationSpeed + 20 * (animationSpeed * 0.8) + 
-                          50 * (animationSpeed * 0.6) + 
-                          (giftCount - 100) * (animationSpeed * 0.4);
+        totalAnimationTime = (30 * baseAnimationSpeed) + 
+                           (20 * (baseAnimationSpeed * 0.8)) +
+                           (50 * (baseAnimationSpeed * 0.6)) +
+                           ((giftCount - 100) * (baseAnimationSpeed * 0.4));
       }
       
-      // Cap at 60 seconds for very large numbers
-      giftCountTimeout = Math.min(giftCountTimeout, 60000);
+      // Set timeout to total animation time plus padding
+      timeout = totalAnimationTime + paddingTime;
+      
+      // Remove the 60-second cap to ensure all gifts are counted
+      console.log('[AlertDisplay] Calculated timeout for gift alert:', timeout, 'ms');
     }
 
-    const timeout = Math.max(baseTimeout, giftCountTimeout);
-    console.log('[AlertDisplay] Setting timeout:', timeout, 'ms for', currentAlert.gift_count, 'gifts');
-    
-    const backupTimer = setTimeout(() => {
-      console.log('[AlertDisplay] Backup timer triggered - forcing completion');
+    const timer = setTimeout(() => {
+      console.log('[AlertDisplay] Timer completed, triggering alert end');
       handleComplete();
     }, timeout);
     
     return () => {
-      console.log('[AlertDisplay] Component cleanup - clearing backup timer');
-      clearTimeout(backupTimer);
+      console.log('[AlertDisplay] Cleanup - clearing timer');
+      clearTimeout(timer);
     };
   }, [currentAlert, onComplete]);
 
