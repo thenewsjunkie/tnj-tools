@@ -79,7 +79,7 @@ export const AlertDisplay = ({
 
   return (
     <div className="fixed top-0 left-0 right-0">
-      <div className={`flex ${currentAlert.is_gift_alert ? 'items-start gap-8' : 'flex-col items-center'}`}>
+      <div className={`flex ${currentAlert.is_gift_alert ? 'items-center gap-8' : 'flex-col items-center'}`}>
         <div>
           {currentAlert.media_type.startsWith('video') ? (
             <VideoAlert 
