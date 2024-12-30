@@ -27,9 +27,8 @@ const LeaderboardOBS = () => {
     },
   });
 
-  // Handle POST requests to show the leaderboard
   useEffect(() => {
-    const handleVisibilityRequest = async () => {
+    const handleVisibilityRequest = () => {
       console.log('[LeaderboardOBS] Received show request');
       setIsVisible(true);
       // Auto-hide after 8 seconds
@@ -39,30 +38,42 @@ const LeaderboardOBS = () => {
       }, 8000);
     };
 
-    // Create an endpoint to handle POST requests
-    const handlePostRequest = async (event: Event) => {
-      if (event instanceof FetchEvent && event.request.method === 'POST') {
-        handleVisibilityRequest();
-      }
-    };
-
-    // Listen for both POST requests and message events
-    window.addEventListener('fetch', handlePostRequest as any);
-    window.addEventListener('message', (event) => {
-      if (event.data === 'show-leaderboard') {
-        handleVisibilityRequest();
-      }
-    });
-
     // Initial auto-hide
     const initialTimer = setTimeout(() => {
       console.log('[LeaderboardOBS] Initial auto-hide');
       setIsVisible(false);
     }, 8000);
 
+    // Handle POST requests using a custom event
+    const handlePostRequest = async () => {
+      handleVisibilityRequest();
+    };
+
+    // Create a route handler for POST requests
+    if (typeof window !== 'undefined') {
+      const originalFetch = window.fetch;
+      window.fetch = async function(input, init) {
+        if (input === '/leaderboard/obs' && init?.method === 'POST') {
+          handlePostRequest();
+          return new Response(null, { status: 200 });
+        }
+        return originalFetch.apply(this, [input, init]);
+      };
+    }
+
+    // Also listen for message events
+    window.addEventListener('message', (event) => {
+      if (event.data === 'show-leaderboard') {
+        handleVisibilityRequest();
+      }
+    });
+
     return () => {
-      window.removeEventListener('fetch', handlePostRequest as any);
       clearTimeout(initialTimer);
+      // Restore original fetch
+      if (typeof window !== 'undefined') {
+        window.fetch = originalFetch;
+      }
     };
   }, []);
 
