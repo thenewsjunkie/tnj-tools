@@ -54,7 +54,15 @@ export const AlertDisplay = ({
     return null;
   }
 
+  // Add debug logging to help troubleshoot
+  console.log('[AlertDisplay] Current state:', {
+    showingLeaderboard,
+    isGiftAlert: currentAlert.is_gift_alert,
+    currentAlert
+  });
+
   if (showingLeaderboard) {
+    console.log('[AlertDisplay] Rendering gift leaderboard');
     return <GiftLeaderboard limit={5} />;
   }
 
