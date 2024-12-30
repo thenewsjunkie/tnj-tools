@@ -1,13 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Crown } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const LeaderboardOBS = () => {
-  const navigate = useNavigate();
+  const [isVisible, setIsVisible] = useState(true);
   
   const { data: giftStats, isLoading } = useQuery({
     queryKey: ['giftStats'],
@@ -32,11 +31,11 @@ const LeaderboardOBS = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       console.log('[LeaderboardOBS] Auto-hiding leaderboard');
-      navigate('/');
+      setIsVisible(false);
     }, 8000);
 
     return () => clearTimeout(timer);
-  }, [navigate]);
+  }, []);
 
   if (isLoading) {
     return (
@@ -48,7 +47,7 @@ const LeaderboardOBS = () => {
     );
   }
 
-  if (!giftStats?.length) {
+  if (!giftStats?.length || !isVisible) {
     return null;
   }
 
@@ -66,24 +65,14 @@ const LeaderboardOBS = () => {
         <div className="grid gap-2">
           {giftStats.map((stat, index) => (
             <Card key={stat.id} className="p-4 bg-black/20 border-0">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="text-2xl font-bold text-yellow-500 w-8">
-                    #{index + 1}
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold text-white">{stat.username}</h3>
-                    <p className="text-sm text-[#8A898C]">
-                      Total Gifts: {stat.total_gifts}
-                    </p>
-                  </div>
+              <div className="flex items-center gap-4">
+                <div className="text-2xl font-bold text-yellow-500 w-8">
+                  #{index + 1}
                 </div>
-                <div className="text-right">
+                <div>
+                  <h3 className="text-xl font-semibold text-white">{stat.username}</h3>
                   <p className="text-sm text-[#8A898C]">
-                    This Month: {(stat.monthly_gifts as Record<string, number>)[getCurrentMonthKey()] || 0}
-                  </p>
-                  <p className="text-sm text-[#8A898C]">
-                    This Year: {(stat.yearly_gifts as Record<string, number>)[getCurrentYear()] || 0}
+                    Total Gifts: {stat.total_gifts}
                   </p>
                 </div>
               </div>
@@ -93,15 +82,6 @@ const LeaderboardOBS = () => {
       </Card>
     </div>
   );
-};
-
-const getCurrentMonthKey = () => {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-};
-
-const getCurrentYear = () => {
-  return new Date().getFullYear().toString();
 };
 
 export default LeaderboardOBS;
