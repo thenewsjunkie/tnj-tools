@@ -27,14 +27,22 @@ const LeaderboardOBS = () => {
     },
   });
 
-  // Auto-hide after 8 seconds
+  // Handle POST requests to show the leaderboard
   useEffect(() => {
-    const timer = setTimeout(() => {
-      console.log('[LeaderboardOBS] Auto-hiding leaderboard');
-      setIsVisible(false);
-    }, 8000);
+    const handleVisibilityRequest = async (event: MessageEvent) => {
+      if (event.data === 'show-leaderboard') {
+        console.log('[LeaderboardOBS] Received show request');
+        setIsVisible(true);
+        // Auto-hide after 8 seconds
+        setTimeout(() => {
+          console.log('[LeaderboardOBS] Auto-hiding leaderboard');
+          setIsVisible(false);
+        }, 8000);
+      }
+    };
 
-    return () => clearTimeout(timer);
+    window.addEventListener('message', handleVisibilityRequest);
+    return () => window.removeEventListener('message', handleVisibilityRequest);
   }, []);
 
   if (isLoading) {

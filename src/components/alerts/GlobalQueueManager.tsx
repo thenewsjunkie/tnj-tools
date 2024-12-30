@@ -10,7 +10,6 @@ const GlobalQueueManager = () => {
   const channelRef = useRef<RealtimeChannel | null>(null);
   const isInitializedRef = useRef(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const leaderboardWindowRef = useRef<Window | null>(null);
 
   useEffect(() => {
     if (isInitializedRef.current) return;
@@ -51,24 +50,20 @@ const GlobalQueueManager = () => {
     };
   }, [isPaused, currentAlert, processNextAlert]);
 
-  const showLeaderboard = () => {
-    // Close existing window if it exists
-    if (leaderboardWindowRef.current) {
-      leaderboardWindowRef.current.close();
+  const triggerLeaderboard = async () => {
+    try {
+      const response = await fetch('/leaderboard/obs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        console.error('[GlobalQueueManager] Failed to trigger leaderboard');
+      }
+    } catch (error) {
+      console.error('[GlobalQueueManager] Error triggering leaderboard:', error);
     }
-
-    // Calculate position to center the window
-    const width = 400;
-    const height = 500;
-    const left = (window.screen.width - width) / 2;
-    const top = (window.screen.height - height) / 2;
-
-    // Open new window with specific dimensions
-    leaderboardWindowRef.current = window.open(
-      '/leaderboard/obs',
-      'LeaderboardOBS',
-      `width=${width},height=${height},left=${left},top=${top}`
-    );
   };
 
   useEffect(() => {
@@ -92,14 +87,14 @@ const GlobalQueueManager = () => {
         timeout = 5000; // 5 seconds for regular image alerts
       }
       
-      timerRef.current = setTimeout(() => {
+      timerRef.current = setTimeout(async () => {
         console.log('[GlobalQueueManager] Alert timeout reached, marking as complete');
-        handleAlertComplete();
+        await handleAlertComplete();
 
-        // If this was a gift alert, show the leaderboard
+        // If this was a gift alert, trigger the leaderboard
         if (currentAlert.alert.is_gift_alert) {
-          console.log('[GlobalQueueManager] Gift alert completed, showing leaderboard');
-          showLeaderboard();
+          console.log('[GlobalQueueManager] Gift alert completed, triggering leaderboard');
+          await triggerLeaderboard();
         }
       }, timeout);
     }
