@@ -22,21 +22,31 @@ export const useAlertTimer = ({ currentAlert, onComplete, onShowScoreboard }: Us
       return;
     }
 
-    // Calculate timeout based on alert type
-    let timeout = 5000; // Default timeout of 5 seconds for regular alerts
-    
+    // For non-gift alerts, use a fixed duration that matches the video/audio length
+    if (!currentAlert.is_gift_alert) {
+      console.log('[AlertTimer] Regular alert - using fixed duration');
+      const timer = setTimeout(() => {
+        console.log('[AlertTimer] Regular alert completed');
+        completedRef.current = true;
+        onComplete();
+      }, 5000);
+
+      return () => {
+        console.log('[AlertTimer] Cleanup - clearing regular alert timer');
+        clearTimeout(timer);
+      };
+    }
+
+    // Gift alert specific timing logic
     if (currentAlert.is_gift_alert && currentAlert.gift_count) {
+      console.log('[AlertTimer] Gift alert detected - calculating duration');
       const giftCount = currentAlert.gift_count;
       const baseAnimationSpeed = currentAlert.gift_count_animation_speed || 100;
       
       // Calculate total animation time needed based on gift count
       const paddingTime = 5000; // Padding time in milliseconds
-      
-      // Simplified timing calculation to ensure consistent counting
       const totalAnimationTime = giftCount * baseAnimationSpeed;
-      
-      // Set timeout to total animation time plus padding
-      timeout = totalAnimationTime + paddingTime;
+      const timeout = totalAnimationTime + paddingTime;
       
       console.log('[AlertTimer] Gift alert timing details:', {
         giftCount,
@@ -45,22 +55,17 @@ export const useAlertTimer = ({ currentAlert, onComplete, onShowScoreboard }: Us
         paddingTime,
         finalTimeout: timeout
       });
-    }
 
-    const timer = setTimeout(() => {
-      console.log('[AlertTimer] Timer completed');
-      if (currentAlert.is_gift_alert) {
+      const timer = setTimeout(() => {
+        console.log('[AlertTimer] Gift alert completed - showing scoreboard');
         onShowScoreboard();
-      } else {
-        completedRef.current = true;
-        onComplete();
-      }
-    }, timeout);
-    
-    return () => {
-      console.log('[AlertTimer] Cleanup - clearing timer');
-      clearTimeout(timer);
-    };
+      }, timeout);
+      
+      return () => {
+        console.log('[AlertTimer] Cleanup - clearing gift alert timer');
+        clearTimeout(timer);
+      };
+    }
   }, [currentAlert, onComplete, onShowScoreboard]);
 
   return { completedRef };
