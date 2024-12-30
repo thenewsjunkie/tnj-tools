@@ -38,7 +38,6 @@ export const AlertContent: React.FC<AlertContentProps> = ({
               mediaUrl={currentAlert.media_url}
               onComplete={onComplete}
               onError={onError}
-              isGiftAlert={currentAlert.is_gift_alert}
             />
           ) : (
             <ImageAlert 
