@@ -18,7 +18,7 @@ export const useGiftLeaderboardTimer = ({
         console.log('[GiftLeaderboardTimer] Leaderboard display complete');
         completedRef.current = true;
         onComplete();
-      }, 10000); // Increased from 3000 to 10000 (10 seconds)
+      }, 3000); // Reduced to 3 seconds since we're now properly waiting for the count
 
       return () => clearTimeout(leaderboardTimer);
     }

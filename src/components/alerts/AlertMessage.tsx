@@ -9,6 +9,7 @@ interface AlertMessageProps {
   giftCountAnimationSpeed?: number;
   giftTextColor?: string;
   giftCountColor?: string;
+  onCountComplete?: () => void;
 }
 
 const AlertMessage = ({ 
@@ -18,7 +19,8 @@ const AlertMessage = ({
   giftCount = 1,
   giftCountAnimationSpeed = 100,
   giftTextColor = "#FFFFFF",
-  giftCountColor = "#4CDBC4"
+  giftCountColor = "#4CDBC4",
+  onCountComplete
 }: AlertMessageProps) => {
   useGiftAnimation({ isGiftAlert, giftCount });
 
@@ -55,6 +57,7 @@ const AlertMessage = ({
             textColor={giftTextColor}
             countColor={giftCountColor}
             fontSize={fontSize * 1.5}
+            onCountComplete={onCountComplete}
           />
         </div>
         <div 

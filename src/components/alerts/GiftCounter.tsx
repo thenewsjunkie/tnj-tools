@@ -6,6 +6,7 @@ interface GiftCounterProps {
   textColor?: string;
   countColor?: string;
   fontSize?: number;
+  onCountComplete?: () => void;
 }
 
 const GiftCounter = ({ 
@@ -13,7 +14,8 @@ const GiftCounter = ({
   animationSpeed = 100,
   textColor = "#FFFFFF",
   countColor = "#4CDBC4",
-  fontSize = 36
+  fontSize = 36,
+  onCountComplete
 }: GiftCounterProps) => {
   const [currentCount, setCurrentCount] = useState(0);
 
@@ -24,8 +26,11 @@ const GiftCounter = ({
       }, animationSpeed);
       
       return () => clearTimeout(timeout);
+    } else if (currentCount === targetCount) {
+      // Notify parent when counting is complete
+      onCountComplete?.();
     }
-  }, [currentCount, targetCount, animationSpeed]);
+  }, [currentCount, targetCount, animationSpeed, onCountComplete]);
 
   return (
     <div 

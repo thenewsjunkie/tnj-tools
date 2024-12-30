@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import VideoAlert from "../media/VideoAlert";
 import ImageAlert from "../media/ImageAlert";
 import AlertMessage from "../AlertMessage";
@@ -25,6 +25,24 @@ export const AlertContent: React.FC<AlertContentProps> = ({
   onComplete,
   onError
 }) => {
+  const [isMediaComplete, setIsMediaComplete] = useState(false);
+  const [isCountComplete, setIsCountComplete] = useState(!currentAlert.is_gift_alert);
+
+  // Only complete the alert when both media and counting (if applicable) are done
+  const handleComplete = () => {
+    setIsMediaComplete(true);
+    if (isCountComplete) {
+      onComplete();
+    }
+  };
+
+  const handleCountComplete = () => {
+    setIsCountComplete(true);
+    if (isMediaComplete) {
+      onComplete();
+    }
+  };
+
   const displayMessage = currentAlert.message_enabled && currentAlert.message_text 
     ? currentAlert.message_text
     : '';
@@ -36,13 +54,13 @@ export const AlertContent: React.FC<AlertContentProps> = ({
           {currentAlert.media_type.startsWith('video') ? (
             <VideoAlert 
               mediaUrl={currentAlert.media_url}
-              onComplete={onComplete}
+              onComplete={handleComplete}
               onError={onError}
             />
           ) : (
             <ImageAlert 
               mediaUrl={currentAlert.media_url}
-              onComplete={onComplete}
+              onComplete={handleComplete}
               onError={onError}
             />
           )}
@@ -57,6 +75,7 @@ export const AlertContent: React.FC<AlertContentProps> = ({
             giftCountAnimationSpeed={currentAlert.gift_count_animation_speed}
             giftTextColor={currentAlert.gift_text_color}
             giftCountColor={currentAlert.gift_count_color}
+            onCountComplete={handleCountComplete}
           />
         )}
       </div>
