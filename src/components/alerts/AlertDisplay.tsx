@@ -104,7 +104,7 @@ export const AlertDisplay = ({
         console.log('[AlertDisplay] Scoreboard display complete, triggering alert completion');
         completedRef.current = true;
         onComplete();
-      }, 5000);
+      }, 8000); // Increased from 5000 to 8000 for 8 seconds total display time
 
       return () => clearTimeout(scoreboardTimer);
     }
