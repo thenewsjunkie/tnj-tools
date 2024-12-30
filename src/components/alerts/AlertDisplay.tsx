@@ -50,12 +50,14 @@ export const AlertDisplay = ({
     }
   };
 
-  const { completedRef } = useAlertTimer({
+  // Only use alert timer when not showing leaderboard
+  const { completedRef } = !showingLeaderboard ? useAlertTimer({
     currentAlert,
     onComplete: handleAlertContentComplete,
     onShowLeaderboard: handleShowLeaderboard
-  });
+  }) : { completedRef: { current: false } };
 
+  // Only use leaderboard timer when showing leaderboard
   useGiftLeaderboardTimer({
     showingLeaderboard,
     onComplete,
