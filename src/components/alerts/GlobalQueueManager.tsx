@@ -64,7 +64,7 @@ const GlobalQueueManager = () => {
       console.log('[GlobalQueueManager] Setting up completion timer for alert:', currentAlert.id);
       
       // Calculate timeout based on alert type
-      let timeout = 15000; // Default 15 seconds
+      let timeout = 8000; // Default 8 seconds for video alerts (changed from 15s)
       
       if (currentAlert.alert.is_gift_alert) {
         // For gift alerts, give more time for the counting animation
