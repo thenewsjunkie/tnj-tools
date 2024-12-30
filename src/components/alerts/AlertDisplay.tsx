@@ -43,34 +43,31 @@ export const AlertDisplay = ({
     completedRef
   });
 
-  const handleImageError = (error: any) => {
-    console.error('[AlertDisplay] Image error:', error);
-    completedRef.current = true;
-    onComplete();
-  };
-
-  if (!currentAlert) {
-    console.log('[AlertDisplay] No alert to render');
-    return null;
-  }
-
-  // Add debug logging to help troubleshoot
+  // Add debug logging
   console.log('[AlertDisplay] Current state:', {
     showingLeaderboard,
     isGiftAlert: currentAlert.is_gift_alert,
     currentAlert
   });
 
+  if (!currentAlert) {
+    console.log('[AlertDisplay] No alert to render');
+    return null;
+  }
+
   if (showingLeaderboard) {
     console.log('[AlertDisplay] Rendering gift leaderboard');
-    return <GiftLeaderboard limit={5} />;
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-black z-[9999]">
+        <GiftLeaderboard limit={5} fadeBelow={5} />
+      </div>
+    );
   }
 
   return (
     <AlertContent
       currentAlert={currentAlert}
       onComplete={onComplete}
-      onError={handleImageError}
     />
   );
 };

@@ -30,7 +30,6 @@ const VideoAlert = ({ mediaUrl, onComplete, onError }: VideoAlertProps) => {
       videoElement.muted = true;
       videoElement.play().catch(error => {
         console.error('[VideoAlert] Initial muted autoplay failed:', error);
-        // If autoplay fails, trigger completion
         handleComplete();
       });
 
