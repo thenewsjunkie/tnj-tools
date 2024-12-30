@@ -37,6 +37,7 @@ export const AlertContent: React.FC<AlertContentProps> = ({
             <VideoAlert 
               mediaUrl={currentAlert.media_url}
               onComplete={onComplete}
+              onError={onError}
             />
           ) : (
             <ImageAlert 
