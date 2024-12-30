@@ -72,10 +72,8 @@ export const AlertDisplay = ({
   if (showingLeaderboard) {
     console.log('[AlertDisplay] Rendering gift leaderboard');
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-black z-[9999]">
-        <div className="w-full h-full bg-black">
-          <GiftLeaderboard limit={5} fadeBelow={5} />
-        </div>
+      <div className="fixed inset-0 flex items-center justify-center z-[9999] transition-opacity duration-300">
+        <GiftLeaderboard limit={5} fadeBelow={5} />
       </div>
     );
   }
