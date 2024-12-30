@@ -53,17 +53,37 @@ const AlertSelector = ({
     setIsDeleting(true);
 
     try {
-      console.log('[AlertSelector] Deleting alert:', selectedAlert.title);
-      const { error } = await supabase
+      console.log('[AlertSelector] Starting alert deletion process for:', selectedAlert.title);
+      
+      // First, delete any queue entries for this alert
+      const { error: queueError } = await supabase
+        .from('alert_queue')
+        .delete()
+        .eq('alert_id', selectedAlert.id);
+
+      if (queueError) {
+        console.error('[AlertSelector] Error deleting queue entries:', queueError);
+        toast({
+          title: "Error",
+          description: `Failed to delete alert queue entries: ${queueError.message}`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('[AlertSelector] Successfully deleted queue entries, now deleting alert');
+
+      // Then delete the alert itself
+      const { error: alertError } = await supabase
         .from('alerts')
         .delete()
         .eq('id', selectedAlert.id);
 
-      if (error) {
-        console.error('[AlertSelector] Error deleting alert:', error);
+      if (alertError) {
+        console.error('[AlertSelector] Error deleting alert:', alertError);
         toast({
           title: "Error",
-          description: `Failed to delete alert: ${error.message}`,
+          description: `Failed to delete alert: ${alertError.message}`,
           variant: "destructive",
         });
         return;
