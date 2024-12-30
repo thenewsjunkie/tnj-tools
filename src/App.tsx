@@ -24,6 +24,7 @@ import FritzScoreHandler from "./components/fritz/FritzScoreHandler";
 import LowerThird from "./pages/LowerThird";
 import LowerThirds from "./pages/Admin/LowerThirds";
 import Leaderboard from "./pages/Leaderboard";
+import GiftStats from "./pages/Admin/GiftStats";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -177,6 +178,7 @@ const App = () => (
             <Route path="/admin/instructions" element={<AdminRoute><Instructions /></AdminRoute>} />
             <Route path="/admin/queue-history" element={<AdminRoute><QueueHistory /></AdminRoute>} />
             <Route path="/admin/lower-thirds" element={<AdminRoute><LowerThirds /></AdminRoute>} />
+            <Route path="/admin/gift-stats" element={<AdminRoute><GiftStats /></AdminRoute>} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
