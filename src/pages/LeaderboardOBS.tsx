@@ -50,14 +50,14 @@ const LeaderboardOBS = () => {
     };
 
     // Create a route handler for POST requests
+    const originalFetchFunction = window.fetch;
     if (typeof window !== 'undefined') {
-      const originalFetch = window.fetch;
       window.fetch = async function(input, init) {
         if (input === '/leaderboard/obs' && init?.method === 'POST') {
           handlePostRequest();
           return new Response(null, { status: 200 });
         }
-        return originalFetch.apply(this, [input, init]);
+        return originalFetchFunction.apply(this, [input, init]);
       };
     }
 
@@ -72,7 +72,7 @@ const LeaderboardOBS = () => {
       clearTimeout(initialTimer);
       // Restore original fetch
       if (typeof window !== 'undefined') {
-        window.fetch = originalFetch;
+        window.fetch = originalFetchFunction;
       }
     };
   }, []);

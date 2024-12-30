@@ -52,6 +52,7 @@ const GlobalQueueManager = () => {
 
   const triggerLeaderboard = async () => {
     try {
+      console.log('[GlobalQueueManager] Triggering leaderboard');
       const response = await fetch('/leaderboard/obs', {
         method: 'POST',
         headers: {
@@ -59,7 +60,9 @@ const GlobalQueueManager = () => {
         },
       });
       if (!response.ok) {
-        console.error('[GlobalQueueManager] Failed to trigger leaderboard');
+        console.error('[GlobalQueueManager] Failed to trigger leaderboard:', response.status);
+      } else {
+        console.log('[GlobalQueueManager] Leaderboard triggered successfully');
       }
     } catch (error) {
       console.error('[GlobalQueueManager] Error triggering leaderboard:', error);
@@ -73,17 +76,17 @@ const GlobalQueueManager = () => {
     }
 
     if (currentAlert && !isPaused) {
-      console.log('[GlobalQueueManager] Setting up completion timer for alert:', currentAlert.id);
+      console.log('[GlobalQueueManager] Setting up completion timer for alert:', currentAlert);
       
       let timeout = 8000; // Default 8 seconds for video alerts
       
-      if (currentAlert.alert.is_gift_alert) {
+      if (currentAlert.alert?.is_gift_alert) {
         // For gift alerts, give more time for the counting animation
         const giftCount = currentAlert.gift_count || 1;
         const animationSpeed = currentAlert.alert.gift_count_animation_speed || 100;
         // Base time (20s) plus time for counting animation
         timeout = 20000 + (giftCount * animationSpeed);
-      } else if (!currentAlert.alert.media_type.startsWith('video')) {
+      } else if (currentAlert.alert?.media_type && !currentAlert.alert.media_type.startsWith('video')) {
         timeout = 5000; // 5 seconds for regular image alerts
       }
       
@@ -92,7 +95,7 @@ const GlobalQueueManager = () => {
         await handleAlertComplete();
 
         // If this was a gift alert, trigger the leaderboard
-        if (currentAlert.alert.is_gift_alert) {
+        if (currentAlert.alert?.is_gift_alert) {
           console.log('[GlobalQueueManager] Gift alert completed, triggering leaderboard');
           await triggerLeaderboard();
         }
