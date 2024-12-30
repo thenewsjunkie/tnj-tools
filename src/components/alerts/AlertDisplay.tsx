@@ -72,6 +72,13 @@ export const AlertDisplay = ({
     return null;
   }
 
+  // Create the display message based on the alert configuration
+  const displayMessage = currentAlert.message_enabled && currentAlert.message_text 
+    ? currentAlert.message_text
+    : '';
+
+  console.log('[AlertDisplay] Rendering with message:', displayMessage);
+
   return (
     <div className="fixed top-0 left-0 right-0 flex flex-col items-center">
       <div>
@@ -89,9 +96,9 @@ export const AlertDisplay = ({
         )}
       </div>
       
-      {currentAlert.message_enabled && currentAlert.message_text && (
+      {currentAlert.message_enabled && displayMessage && (
         <AlertMessage 
-          message={currentAlert.message_text}
+          message={displayMessage}
           fontSize={currentAlert.font_size}
           isGiftAlert={currentAlert.is_gift_alert}
           giftCount={currentAlert.gift_count || 1}
