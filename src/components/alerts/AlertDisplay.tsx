@@ -124,7 +124,7 @@ export const AlertDisplay = ({
     return (
       <div className="fixed inset-0 bg-black">
         <iframe 
-          src="/leaderboard"
+          src="/leaderboard?limit=5"
           className="w-full h-full border-none"
           title="Leaderboard"
         />
