@@ -2,39 +2,34 @@ import { useEffect, useRef } from "react";
 
 interface UseAlertTimerProps {
   currentAlert: {
-    is_gift_alert?: boolean;
-    media_type?: string;
+    media_type: string;
+    media_url: string;
   };
   onComplete: () => void;
-  onShowLeaderboard: () => void;
 }
 
-export const useAlertTimer = ({ currentAlert, onComplete, onShowLeaderboard }: UseAlertTimerProps) => {
+export const useAlertTimer = ({
+  currentAlert,
+  onComplete
+}: UseAlertTimerProps) => {
   const completedRef = useRef(false);
 
   useEffect(() => {
-    console.log('[useAlertTimer] Starting timer for alert:', currentAlert);
-    
-    // For video alerts, let the video completion trigger the next step
-    if (currentAlert.media_type?.startsWith('video')) {
-      console.log('[useAlertTimer] Video alert - waiting for video completion');
-      return;
-    }
+    if (!currentAlert) return;
 
-    // For other alerts, use a timer
     const timer = setTimeout(() => {
-      console.log('[useAlertTimer] Alert timer completed');
       if (!completedRef.current) {
-        console.log('[useAlertTimer] Triggering completion callback');
+        console.log('[AlertTimer] Alert display timeout reached');
         completedRef.current = true;
         onComplete();
       }
-    }, 5000); // 5 seconds for non-video alerts
+    }, 8000); // 8 seconds timeout
 
     return () => {
       clearTimeout(timer);
+      completedRef.current = false;
     };
-  }, [currentAlert, onComplete, onShowLeaderboard]);
+  }, [currentAlert, onComplete]);
 
   return { completedRef };
 };

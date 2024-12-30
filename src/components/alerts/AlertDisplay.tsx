@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { AlertContent } from "./display/AlertContent";
-import { GiftLeaderboard } from "./display/GiftLeaderboard";
 import { useAlertTimer } from "./display/useAlertTimer";
-import { useGiftLeaderboardTimer } from "./display/useGiftLeaderboardTimer";
 
 interface AlertDisplayProps {
   currentAlert: {
@@ -24,49 +22,27 @@ export const AlertDisplay = ({
   currentAlert,
   onComplete,
 }: AlertDisplayProps) => {
-  const [showingLeaderboard, setShowingLeaderboard] = useState(false);
   const [hasError, setHasError] = useState(false);
-
-  const handleShowLeaderboard = () => {
-    console.log('[AlertDisplay] Showing gift leaderboard for gift alert');
-    setShowingLeaderboard(true);
-  };
 
   const handleError = (error: any) => {
     console.error('[AlertDisplay] Error:', error);
-    // Only handle error if we're not already showing leaderboard
-    if (!showingLeaderboard) {
-      setHasError(true);
-      onComplete();
-    }
+    setHasError(true);
+    onComplete();
   };
 
   const handleAlertContentComplete = () => {
     console.log('[AlertDisplay] Alert content completed');
-    if (currentAlert.is_gift_alert && !hasError) {
-      handleShowLeaderboard();
-    } else {
-      onComplete();
-    }
+    onComplete();
   };
 
-  // Only use alert timer when not showing leaderboard
-  const { completedRef } = !showingLeaderboard ? useAlertTimer({
+  // Use alert timer
+  useAlertTimer({
     currentAlert,
-    onComplete: handleAlertContentComplete,
-    onShowLeaderboard: handleShowLeaderboard
-  }) : { completedRef: { current: false } };
-
-  // Only use leaderboard timer when showing leaderboard
-  useGiftLeaderboardTimer({
-    showingLeaderboard,
-    onComplete,
-    completedRef
+    onComplete: handleAlertContentComplete
   });
 
   // Add debug logging
   console.log('[AlertDisplay] Current state:', {
-    showingLeaderboard,
     isGiftAlert: currentAlert.is_gift_alert,
     hasError,
     currentAlert
@@ -75,15 +51,6 @@ export const AlertDisplay = ({
   if (!currentAlert) {
     console.log('[AlertDisplay] No alert to render');
     return null;
-  }
-
-  if (showingLeaderboard) {
-    console.log('[AlertDisplay] Rendering gift leaderboard');
-    return (
-      <div className="fixed inset-0 flex items-center justify-center z-[9999] transition-opacity duration-300">
-        <GiftLeaderboard limit={5} fadeBelow={5} />
-      </div>
-    );
   }
 
   return (
