@@ -29,20 +29,41 @@ const LeaderboardOBS = () => {
 
   // Handle POST requests to show the leaderboard
   useEffect(() => {
-    const handleVisibilityRequest = async (event: MessageEvent) => {
-      if (event.data === 'show-leaderboard') {
-        console.log('[LeaderboardOBS] Received show request');
-        setIsVisible(true);
-        // Auto-hide after 8 seconds
-        setTimeout(() => {
-          console.log('[LeaderboardOBS] Auto-hiding leaderboard');
-          setIsVisible(false);
-        }, 8000);
+    const handleVisibilityRequest = async () => {
+      console.log('[LeaderboardOBS] Received show request');
+      setIsVisible(true);
+      // Auto-hide after 8 seconds
+      setTimeout(() => {
+        console.log('[LeaderboardOBS] Auto-hiding leaderboard');
+        setIsVisible(false);
+      }, 8000);
+    };
+
+    // Create an endpoint to handle POST requests
+    const handlePostRequest = async (event: Event) => {
+      if (event instanceof FetchEvent && event.request.method === 'POST') {
+        handleVisibilityRequest();
       }
     };
 
-    window.addEventListener('message', handleVisibilityRequest);
-    return () => window.removeEventListener('message', handleVisibilityRequest);
+    // Listen for both POST requests and message events
+    window.addEventListener('fetch', handlePostRequest as any);
+    window.addEventListener('message', (event) => {
+      if (event.data === 'show-leaderboard') {
+        handleVisibilityRequest();
+      }
+    });
+
+    // Initial auto-hide
+    const initialTimer = setTimeout(() => {
+      console.log('[LeaderboardOBS] Initial auto-hide');
+      setIsVisible(false);
+    }, 8000);
+
+    return () => {
+      window.removeEventListener('fetch', handlePostRequest as any);
+      clearTimeout(initialTimer);
+    };
   }, []);
 
   if (isLoading) {
