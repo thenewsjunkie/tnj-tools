@@ -15,12 +15,10 @@ const UsernameDialog = ({ open, onOpenChange, onSubmit, isGiftAlert }: UsernameD
   const [username, setUsername] = useState("");
   const [giftCount, setGiftCount] = useState<number>(1);
 
-  // Reset form when dialog opens
+  // Reset username when dialog opens, but preserve gift count
   useEffect(() => {
     if (open) {
       setUsername("");
-      // Don't reset gift count when dialog opens
-      // This was causing the count to revert to 1
     }
   }, [open]);
 
@@ -29,7 +27,6 @@ const UsernameDialog = ({ open, onOpenChange, onSubmit, isGiftAlert }: UsernameD
     console.log('[UsernameDialog] Submitting with gift count:', giftCount);
     onSubmit(username, isGiftAlert ? giftCount : undefined);
     setUsername("");
-    // Don't reset gift count after submit
   };
 
   return (

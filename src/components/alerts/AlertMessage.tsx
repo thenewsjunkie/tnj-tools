@@ -22,6 +22,15 @@ const AlertMessage = ({
   if (isGiftAlert) {
     // Extract username from the message
     const username = message.split(' ')[0];
+    // Extract gift count from message if present, otherwise use provided giftCount
+    const messageGiftCount = parseInt(message.match(/\d+/)?.[0] || giftCount.toString(), 10);
+    
+    console.log('[AlertMessage] Gift alert details:', {
+      username,
+      messageGiftCount,
+      providedGiftCount: giftCount,
+      message
+    });
     
     return (
       <div className="mt-2 text-center">
@@ -36,7 +45,7 @@ const AlertMessage = ({
           {username} Gifted
         </div>
         <GiftCounter 
-          targetCount={giftCount}
+          targetCount={messageGiftCount}
           animationSpeed={giftCountAnimationSpeed}
           textColor={giftTextColor}
           countColor={giftCountColor}
