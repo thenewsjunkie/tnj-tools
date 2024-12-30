@@ -10,7 +10,7 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({ limit = 8 }) => {
   return (
     <div className="fixed inset-0 z-50 bg-black/80">
       <iframe 
-        src={`/leaderboard?limit=${limit}`}
+        src={`${window.location.origin}/leaderboard?limit=${limit}`}
         className="w-full h-screen border-none"
         title="Leaderboard"
         style={{ pointerEvents: 'none' }}
