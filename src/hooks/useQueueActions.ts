@@ -2,6 +2,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { GiftStats } from "@/integrations/supabase/types/tables/gifts";
 
 export const useQueueActions = (refetchQueue: () => Promise<any>) => {
+  const triggerLeaderboard = async () => {
+    try {
+      console.log('[useQueueActions] Triggering leaderboard');
+      const response = await fetch('/leaderboard/obs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        console.error('[useQueueActions] Failed to trigger leaderboard:', response.status);
+      } else {
+        console.log('[useQueueActions] Leaderboard triggered successfully');
+      }
+    } catch (error) {
+      console.error('[useQueueActions] Error triggering leaderboard:', error);
+    }
+  };
+
   const handleAlertComplete = async (currentAlert: any) => {
     if (!currentAlert) {
       console.log('[useQueueActions] No current alert to complete');
@@ -25,7 +45,7 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
     }
 
     // If this is a gift alert, update gift stats
-    if (currentAlert.alert.is_gift_alert && currentAlert.username && currentAlert.gift_count) {
+    if (currentAlert.alert?.is_gift_alert && currentAlert.username && currentAlert.gift_count) {
       console.log('[useQueueActions] Processing gift stats for:', {
         username: currentAlert.username,
         giftCount: currentAlert.gift_count
@@ -92,6 +112,10 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
               yearly_gifts: yearlyGifts
             });
         }
+
+        // Trigger leaderboard after gift stats are updated
+        console.log('[useQueueActions] Gift stats updated, triggering leaderboard');
+        await triggerLeaderboard();
       }
     }
 
