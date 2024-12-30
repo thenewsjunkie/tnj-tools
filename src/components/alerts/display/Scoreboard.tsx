@@ -6,7 +6,7 @@ interface ScoreboardProps {
 
 export const Scoreboard: React.FC<ScoreboardProps> = ({ limit = 8 }) => {
   return (
-    <div className="fixed inset-0 bg-black flex flex-col">
+    <div className="fixed inset-0 bg-black/80 flex flex-col">
       <iframe 
         src={`/leaderboard?limit=${limit}`}
         className="w-full flex-1 border-none"
