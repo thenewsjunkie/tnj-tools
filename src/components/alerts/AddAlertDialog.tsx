@@ -18,6 +18,10 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
   const [messageEnabled, setMessageEnabled] = useState(false);
   const [messageText, setMessageText] = useState("");
   const [fontSize, setFontSize] = useState(24);
+  const [isGiftAlert, setIsGiftAlert] = useState(false);
+  const [giftCountAnimationSpeed, setGiftCountAnimationSpeed] = useState(100);
+  const [giftTextColor, setGiftTextColor] = useState("#FFFFFF");
+  const [giftCountColor, setGiftCountColor] = useState("#4CDBC4");
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
@@ -58,7 +62,11 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
           media_type: file.type,
           message_enabled: messageEnabled,
           message_text: messageText,
-          font_size: fontSize
+          font_size: fontSize,
+          is_gift_alert: isGiftAlert,
+          gift_count_animation_speed: giftCountAnimationSpeed,
+          gift_text_color: giftTextColor,
+          gift_count_color: giftCountColor
         })
         .select('*')
         .single();
@@ -69,6 +77,10 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
       setMessageEnabled(false);
       setMessageText("");
       setFontSize(24);
+      setIsGiftAlert(false);
+      setGiftCountAnimationSpeed(100);
+      setGiftTextColor("#FFFFFF");
+      setGiftCountColor("#4CDBC4");
       if (fileInput) fileInput.value = "";
       onAlertAdded();
     } catch (error) {
@@ -99,6 +111,7 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
               className="text-foreground bg-background"
             />
           </div>
+          
           <div className="flex items-center space-x-2">
             <Switch
               id="message-enabled"
@@ -107,6 +120,7 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
             />
             <Label htmlFor="message-enabled" className="text-foreground">Enable Alert Message</Label>
           </div>
+
           {messageEnabled && (
             <>
               <div className="space-y-2">
@@ -128,8 +142,52 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
                   className="text-foreground bg-background"
                 />
               </div>
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="gift-alert"
+                  checked={isGiftAlert}
+                  onCheckedChange={setIsGiftAlert}
+                />
+                <Label htmlFor="gift-alert" className="text-foreground">Gift Subscription Alert</Label>
+              </div>
+
+              {isGiftAlert && (
+                <>
+                  <div className="space-y-2">
+                    <Label className="text-foreground">Animation Speed (ms)</Label>
+                    <Input
+                      type="number"
+                      min="50"
+                      max="500"
+                      value={giftCountAnimationSpeed}
+                      onChange={(e) => setGiftCountAnimationSpeed(Number(e.target.value))}
+                      className="text-foreground bg-background"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-foreground">Text Color</Label>
+                    <Input
+                      type="color"
+                      value={giftTextColor}
+                      onChange={(e) => setGiftTextColor(e.target.value)}
+                      className="h-10 text-foreground bg-background"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-foreground">Counter Color</Label>
+                    <Input
+                      type="color"
+                      value={giftCountColor}
+                      onChange={(e) => setGiftCountColor(e.target.value)}
+                      className="h-10 text-foreground bg-background"
+                    />
+                  </div>
+                </>
+              )}
             </>
           )}
+
           <div className="space-y-2">
             <Input
               type="file"
@@ -139,6 +197,7 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
               className="text-foreground bg-background"
             />
           </div>
+          
           <Button 
             type="submit" 
             className="w-full dark:text-white text-black" 

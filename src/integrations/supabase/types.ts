@@ -48,7 +48,11 @@ export type Database = {
         Row: {
           created_at: string
           font_size: number | null
+          gift_count_animation_speed: number | null
+          gift_count_color: string | null
+          gift_text_color: string | null
           id: string
+          is_gift_alert: boolean | null
           media_type: string
           media_url: string
           message_enabled: boolean | null
@@ -58,7 +62,11 @@ export type Database = {
         Insert: {
           created_at?: string
           font_size?: number | null
+          gift_count_animation_speed?: number | null
+          gift_count_color?: string | null
+          gift_text_color?: string | null
           id?: string
+          is_gift_alert?: boolean | null
           media_type: string
           media_url: string
           message_enabled?: boolean | null
@@ -68,7 +76,11 @@ export type Database = {
         Update: {
           created_at?: string
           font_size?: number | null
+          gift_count_animation_speed?: number | null
+          gift_count_color?: string | null
+          gift_text_color?: string | null
           id?: string
+          is_gift_alert?: boolean | null
           media_type?: string
           media_url?: string
           message_enabled?: boolean | null

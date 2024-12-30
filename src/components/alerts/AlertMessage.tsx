@@ -1,9 +1,47 @@
+import GiftCounter from "./GiftCounter";
+
 interface AlertMessageProps {
   message: string;
   fontSize?: number;
+  isGiftAlert?: boolean;
+  giftCount?: number;
+  giftCountAnimationSpeed?: number;
+  giftTextColor?: string;
+  giftCountColor?: string;
 }
 
-const AlertMessage = ({ message, fontSize = 24 }: AlertMessageProps) => {
+const AlertMessage = ({ 
+  message, 
+  fontSize = 24,
+  isGiftAlert = false,
+  giftCount = 1,
+  giftCountAnimationSpeed = 100,
+  giftTextColor = "#FFFFFF",
+  giftCountColor = "#4CDBC4"
+}: AlertMessageProps) => {
+  if (isGiftAlert) {
+    return (
+      <div className="mt-2 text-center">
+        <div 
+          className="alert-message-font"
+          style={{ 
+            fontSize: `${fontSize}px`,
+            textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
+            color: giftTextColor
+          }}
+        >
+          {message}
+        </div>
+        <GiftCounter 
+          targetCount={giftCount}
+          animationSpeed={giftCountAnimationSpeed}
+          textColor={giftTextColor}
+          countColor={giftCountColor}
+        />
+      </div>
+    );
+  }
+
   // Find the username by looking for the word that comes before "just subscribed"
   const subscribedIndex = message.indexOf(' just');
   const username = subscribedIndex === -1 ? message : message.slice(0, subscribedIndex);

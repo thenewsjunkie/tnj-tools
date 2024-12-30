@@ -6,6 +6,10 @@ export interface Alert {
   message_text?: string | null;
   message_enabled?: boolean | null;
   font_size?: number | null;
+  is_gift_alert?: boolean | null;
+  gift_count_animation_speed?: number | null;
+  gift_text_color?: string | null;
+  gift_count_color?: string | null;
   created_at: string;
 }
 
@@ -55,6 +59,10 @@ export interface AlertsTable {
     message_text: string | null;
     message_enabled: boolean | null;
     font_size: number | null;
+    is_gift_alert: boolean | null;
+    gift_count_animation_speed: number | null;
+    gift_text_color: string | null;
+    gift_count_color: string | null;
   };
   Insert: {
     created_at?: string;
@@ -65,6 +73,10 @@ export interface AlertsTable {
     message_text?: string | null;
     message_enabled?: boolean | null;
     font_size?: number | null;
+    is_gift_alert?: boolean | null;
+    gift_count_animation_speed?: number | null;
+    gift_text_color?: string | null;
+    gift_count_color?: string | null;
   };
   Update: {
     created_at?: string;
@@ -75,6 +87,10 @@ export interface AlertsTable {
     message_text?: string | null;
     message_enabled?: boolean | null;
     font_size?: number | null;
+    is_gift_alert?: boolean | null;
+    gift_count_animation_speed?: number | null;
+    gift_text_color?: string | null;
+    gift_count_color?: string | null;
   };
   Relationships: [];
 }
