@@ -35,7 +35,7 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
       const { error: historyError } = await supabase
         .from('gift_history')
         .insert({
-          gifter_username: currentAlert.username,
+          gifter_username: currentAlert.username.toLowerCase(), // Ensure username is lowercase
           gift_count: currentAlert.gift_count,
           alert_queue_id: currentAlert.id
         });
@@ -48,7 +48,7 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
       const { data: existingStats, error: statsError } = await supabase
         .from('gift_stats')
         .select('*')
-        .eq('username', currentAlert.username)
+        .eq('username', currentAlert.username.toLowerCase()) // Ensure username is lowercase
         .maybeSingle();
 
       if (!statsError) {
@@ -76,7 +76,7 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
               monthly_gifts: monthlyGifts,
               yearly_gifts: yearlyGifts
             })
-            .eq('username', currentAlert.username);
+            .eq('username', currentAlert.username.toLowerCase()); // Ensure username is lowercase
         } else {
           // Create new stats record
           const monthlyGifts: Record<string, number> = { [monthKey]: currentAlert.gift_count };
@@ -85,7 +85,7 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
           await supabase
             .from('gift_stats')
             .insert({
-              username: currentAlert.username,
+              username: currentAlert.username.toLowerCase(), // Ensure username is lowercase
               total_gifts: currentAlert.gift_count,
               last_gift_date: now.toISOString(),
               monthly_gifts: monthlyGifts,

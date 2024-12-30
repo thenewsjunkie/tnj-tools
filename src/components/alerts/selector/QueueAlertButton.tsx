@@ -19,9 +19,12 @@ const QueueAlertButton = ({ selectedAlert }: QueueAlertButtonProps) => {
     setIsQueuing(true);
 
     try {
+      // Normalize username to lowercase if provided
+      const normalizedUsername = username?.toLowerCase();
+
       console.log('[QueueAlertButton] Queueing alert:', {
         title: selectedAlert.title,
-        username,
+        username: normalizedUsername,
         giftCount,
         isGiftAlert: selectedAlert.is_gift_alert
       });
@@ -30,7 +33,7 @@ const QueueAlertButton = ({ selectedAlert }: QueueAlertButtonProps) => {
         .from('alert_queue')
         .insert({
           alert_id: selectedAlert.id,
-          username,
+          username: normalizedUsername,
           status: 'pending',
           gift_count: selectedAlert.is_gift_alert ? (giftCount || 1) : null
         });
