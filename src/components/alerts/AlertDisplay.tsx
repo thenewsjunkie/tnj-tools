@@ -54,7 +54,14 @@ export const AlertDisplay = ({
     return null;
   }
 
+  console.log('[AlertDisplay] Current state:', {
+    currentAlert,
+    showingScoreboard,
+    isGiftAlert: currentAlert.is_gift_alert
+  });
+
   if (showingScoreboard) {
+    console.log('[AlertDisplay] Rendering gift leaderboard');
     return <Scoreboard limit={8} />;
   }
 

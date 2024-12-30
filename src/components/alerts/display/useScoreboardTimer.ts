@@ -9,12 +9,12 @@ interface UseScoreboardTimerProps {
 export const useScoreboardTimer = ({ showingScoreboard, onComplete, completedRef }: UseScoreboardTimerProps) => {
   useEffect(() => {
     if (showingScoreboard) {
-      console.log('[ScoreboardTimer] Starting scoreboard display timer');
+      console.log('[GiftLeaderboardTimer] Starting leaderboard display timer');
       const scoreboardTimer = setTimeout(() => {
-        console.log('[ScoreboardTimer] Scoreboard display complete');
+        console.log('[GiftLeaderboardTimer] Leaderboard display complete');
         completedRef.current = true;
         onComplete();
-      }, 3000); // Reduced from 5000ms to 3000ms
+      }, 3000);
 
       return () => clearTimeout(scoreboardTimer);
     }
