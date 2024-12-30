@@ -24,6 +24,7 @@ import FritzScoreHandler from "./components/fritz/FritzScoreHandler";
 import LowerThird from "./pages/LowerThird";
 import LowerThirds from "./pages/Admin/LowerThirds";
 import Leaderboard from "./pages/Leaderboard";
+import LeaderboardOBS from "./pages/LeaderboardOBS";
 import GiftStats from "./pages/Admin/GiftStats";
 
 const queryClient = new QueryClient({
@@ -170,6 +171,7 @@ const App = () => (
             <Route path="/fritz/:contestant/:action" element={<FritzScoreHandler />} />
             <Route path="/lower-third" element={<LowerThird />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/leaderboard/obs" element={<LeaderboardOBS />} />
 
             {/* Protected Admin Routes */}
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
