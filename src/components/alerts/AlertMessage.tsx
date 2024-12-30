@@ -20,6 +20,9 @@ const AlertMessage = ({
   giftCountColor = "#4CDBC4"
 }: AlertMessageProps) => {
   if (isGiftAlert) {
+    // Extract username from the message
+    const username = message.split(' ')[0];
+    
     return (
       <div className="mt-2 text-center">
         <div 
@@ -30,7 +33,7 @@ const AlertMessage = ({
             color: giftTextColor
           }}
         >
-          {message}
+          {username} Gifted
         </div>
         <GiftCounter 
           targetCount={giftCount}

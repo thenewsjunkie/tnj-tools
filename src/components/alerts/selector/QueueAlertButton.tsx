@@ -21,17 +21,13 @@ const QueueAlertButton = ({ selectedAlert }: QueueAlertButtonProps) => {
     try {
       console.log('[QueueAlertButton] Queueing alert:', selectedAlert.title);
       
-      let messageText = selectedAlert.message_text;
-      if (selectedAlert.is_gift_alert && giftCount) {
-        messageText = `Gifted ${giftCount} Secret Shows Subscriptions!`;
-      }
-
       const { error } = await supabase
         .from('alert_queue')
         .insert({
           alert_id: selectedAlert.id,
           username,
-          status: 'pending'
+          status: 'pending',
+          gift_count: giftCount // Store the gift count in the queue
         });
 
       if (error) {
