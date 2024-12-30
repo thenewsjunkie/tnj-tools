@@ -34,7 +34,7 @@ export const AlertDisplay = ({
   const { completedRef } = useAlertTimer({
     currentAlert,
     onComplete,
-    onShowScoreboard: handleShowLeaderboard
+    onShowLeaderboard: handleShowLeaderboard
   });
 
   useGiftLeaderboardTimer({

@@ -6,10 +6,10 @@ interface UseAlertTimerProps {
     media_type?: string;
   };
   onComplete: () => void;
-  onShowScoreboard: () => void;
+  onShowLeaderboard: () => void;
 }
 
-export const useAlertTimer = ({ currentAlert, onComplete, onShowScoreboard }: UseAlertTimerProps) => {
+export const useAlertTimer = ({ currentAlert, onComplete, onShowLeaderboard }: UseAlertTimerProps) => {
   const completedRef = useRef(false);
 
   useEffect(() => {
@@ -25,8 +25,8 @@ export const useAlertTimer = ({ currentAlert, onComplete, onShowScoreboard }: Us
     const timer = setTimeout(() => {
       console.log('[useAlertTimer] Alert timer completed');
       if (currentAlert.is_gift_alert) {
-        console.log('[useAlertTimer] This is a gift alert, showing scoreboard');
-        onShowScoreboard();
+        console.log('[useAlertTimer] This is a gift alert, showing leaderboard');
+        onShowLeaderboard();
       } else {
         console.log('[useAlertTimer] This is not a gift alert, completing');
         completedRef.current = true;
@@ -37,7 +37,7 @@ export const useAlertTimer = ({ currentAlert, onComplete, onShowScoreboard }: Us
     return () => {
       clearTimeout(timer);
     };
-  }, [currentAlert, onComplete, onShowScoreboard]);
+  }, [currentAlert, onComplete, onShowLeaderboard]);
 
   return { completedRef };
 };
