@@ -27,6 +27,7 @@ const VideoAlert = ({ mediaUrl, onComplete }: VideoAlertProps) => {
       
       videoElement.load();
       videoElement.muted = true;
+      videoElement.loop = true; // Make the video loop
       videoElement.play().catch(error => {
         console.error('[VideoAlert] Initial muted autoplay failed:', error);
         // If autoplay fails, trigger completion
@@ -35,11 +36,6 @@ const VideoAlert = ({ mediaUrl, onComplete }: VideoAlertProps) => {
 
       videoElement.addEventListener('play', () => {
         console.log('[VideoAlert] Video started playing');
-      });
-
-      videoElement.addEventListener('ended', () => {
-        console.log('[VideoAlert] Video ended naturally');
-        handleComplete();
       });
 
       videoElement.addEventListener('error', (e) => {
@@ -54,7 +50,6 @@ const VideoAlert = ({ mediaUrl, onComplete }: VideoAlertProps) => {
         const videoElement = videoRef.current;
         videoElement.pause();
         videoElement.removeEventListener('play', () => {});
-        videoElement.removeEventListener('ended', () => {});
         videoElement.removeEventListener('error', () => {});
       }
     };
@@ -75,12 +70,12 @@ const VideoAlert = ({ mediaUrl, onComplete }: VideoAlertProps) => {
       ref={videoRef}
       src={mediaUrl}
       className="max-h-[70vh] w-auto"
-      onEnded={handleComplete}
-      onLoadedMetadata={handleVideoLoadedMetadata}
       onError={() => handleComplete()}
+      onLoadedMetadata={handleVideoLoadedMetadata}
       playsInline
       muted={true}
       controls={false}
+      loop={true}
       autoPlay
     />
   );
