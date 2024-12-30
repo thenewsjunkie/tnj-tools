@@ -19,7 +19,11 @@ const QueueAlertButton = ({ selectedAlert }: QueueAlertButtonProps) => {
     setIsQueuing(true);
 
     try {
-      console.log('[QueueAlertButton] Queueing alert:', selectedAlert.title);
+      console.log('[QueueAlertButton] Queueing alert:', {
+        title: selectedAlert.title,
+        username,
+        giftCount
+      });
       
       const { error } = await supabase
         .from('alert_queue')
@@ -27,7 +31,7 @@ const QueueAlertButton = ({ selectedAlert }: QueueAlertButtonProps) => {
           alert_id: selectedAlert.id,
           username,
           status: 'pending',
-          gift_count: giftCount
+          gift_count: giftCount || null
         });
 
       if (error) {
