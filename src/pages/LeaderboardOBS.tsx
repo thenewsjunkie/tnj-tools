@@ -42,8 +42,9 @@ const LeaderboardOBS = () => {
         throw error;
       }
       console.log('[LeaderboardOBS] Fetched visibility state:', data);
-      const value = data?.value as Json;
-      return typeof value === 'object' && value !== null && 'isVisible' in value ? (value as LeaderboardVisibilityValue).isVisible : false;
+      const value = data?.value as { [key: string]: Json };
+      return value && typeof value === 'object' && 'isVisible' in value ? 
+        (value as unknown as LeaderboardVisibilityValue).isVisible : false;
     },
   });
 
