@@ -59,32 +59,22 @@ export const AlertDisplay = ({
       
       // Calculate total animation time needed based on gift count
       // Add extra padding time to ensure the animation completes
-      const paddingTime = 3000; // 3 seconds padding
+      const paddingTime = 5000; // Increased padding to 5 seconds
       
-      // Progressive scaling for different ranges of gift counts
-      let totalAnimationTime = 0;
-      
-      if (giftCount <= 30) {
-        totalAnimationTime = giftCount * baseAnimationSpeed;
-      } else if (giftCount <= 50) {
-        totalAnimationTime = (30 * baseAnimationSpeed) + 
-                           ((giftCount - 30) * (baseAnimationSpeed * 0.8));
-      } else if (giftCount <= 100) {
-        totalAnimationTime = (30 * baseAnimationSpeed) + 
-                           (20 * (baseAnimationSpeed * 0.8)) +
-                           ((giftCount - 50) * (baseAnimationSpeed * 0.6));
-      } else {
-        totalAnimationTime = (30 * baseAnimationSpeed) + 
-                           (20 * (baseAnimationSpeed * 0.8)) +
-                           (50 * (baseAnimationSpeed * 0.6)) +
-                           ((giftCount - 100) * (baseAnimationSpeed * 0.4));
-      }
+      // Simplified timing calculation to ensure consistent counting
+      // Each gift takes baseAnimationSpeed milliseconds to count
+      const totalAnimationTime = giftCount * baseAnimationSpeed;
       
       // Set timeout to total animation time plus padding
       timeout = totalAnimationTime + paddingTime;
       
-      // Remove the 60-second cap to ensure all gifts are counted
-      console.log('[AlertDisplay] Calculated timeout for gift alert:', timeout, 'ms');
+      console.log('[AlertDisplay] Gift alert timing details:', {
+        giftCount,
+        baseAnimationSpeed,
+        totalAnimationTime,
+        paddingTime,
+        finalTimeout: timeout
+      });
     }
 
     const timer = setTimeout(() => {
