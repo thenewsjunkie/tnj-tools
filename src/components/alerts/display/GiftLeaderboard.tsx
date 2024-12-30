@@ -4,11 +4,13 @@ interface GiftLeaderboardProps {
 }
 
 export const GiftLeaderboard = ({ limit = 5, fadeBelow = 5 }: GiftLeaderboardProps) => {
+  console.log('[GiftLeaderboard] Rendering with props:', { limit, fadeBelow });
+  
   return (
-    <div className="fixed inset-0 bg-black/80 flex flex-col">
+    <div className="fixed inset-0 flex items-center justify-center bg-black/80">
       <iframe 
-        src={`/leaderboard?limit=${limit}&fadeBelow=${fadeBelow}`}
-        className="w-full flex-1 border-none"
+        src={`/leaderboard?limit=${limit}&fadeBelow=${fadeBelow}&hideText=true`}
+        className="w-full h-full border-none"
         title="Gift Leaderboard"
       />
     </div>
