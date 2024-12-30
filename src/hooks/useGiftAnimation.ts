@@ -10,8 +10,10 @@ export const useGiftAnimation = ({ isGiftAlert, giftCount }: UseGiftAnimationPro
   useEffect(() => {
     if (!isGiftAlert || giftCount <= 1) return;
 
-    const duration = 2000;
-    const end = Date.now() + duration;
+    // Calculate total animation duration based on gift count and animation speed
+    const baseAnimationSpeed = 200; // Match the gift count animation speed
+    const totalDuration = (giftCount * baseAnimationSpeed) + 5000; // Add 5s padding to match AlertDisplay
+    const startTime = Date.now();
     
     const createConfetti = (angle: number, origin: { x: number }) => {
       const baseParticleCount = giftCount > 10 ? 3 : 2;
@@ -44,25 +46,26 @@ export const useGiftAnimation = ({ isGiftAlert, giftCount }: UseGiftAnimationPro
     };
     
     const frame = () => {
-      // For 2-5 gifts: confetti only
-      if (giftCount >= 2 && giftCount <= 5) {
-        createConfetti(60, { x: 0 });
-        createConfetti(120, { x: 1 });
-      }
-      
-      // For 5-10 gifts: fireworks effect
-      else if (giftCount > 5 && giftCount <= 10) {
-        createFirework();
-      }
-      
-      // For 10+ gifts: combined effects with increased intensity
-      else if (giftCount > 10) {
-        createConfetti(60, { x: 0 });
-        createConfetti(120, { x: 1 });
-        createFirework();
-      }
+      const now = Date.now();
+      if (now - startTime < totalDuration) {
+        // For 2-5 gifts: confetti only
+        if (giftCount >= 2 && giftCount <= 5) {
+          createConfetti(60, { x: 0 });
+          createConfetti(120, { x: 1 });
+        }
+        
+        // For 5-10 gifts: fireworks effect
+        else if (giftCount > 5 && giftCount <= 10) {
+          createFirework();
+        }
+        
+        // For 10+ gifts: combined effects with increased intensity
+        else if (giftCount > 10) {
+          createConfetti(60, { x: 0 });
+          createConfetti(120, { x: 1 });
+          createFirework();
+        }
 
-      if (Date.now() < end) {
         requestAnimationFrame(frame);
       }
     };
