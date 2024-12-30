@@ -107,7 +107,7 @@ const AlertMessage = ({
     );
   }
 
-  // Find the username by looking for the word that comes before "just subscribed"
+  // For regular subscription alerts
   const subscribedIndex = message.indexOf(' just');
   const username = subscribedIndex === -1 ? message : message.slice(0, subscribedIndex);
   const restOfMessage = subscribedIndex === -1 ? '' : message.slice(subscribedIndex);
