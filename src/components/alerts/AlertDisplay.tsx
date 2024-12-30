@@ -50,11 +50,10 @@ export const AlertDisplay = ({
       giftCount: currentAlert.gift_count
     });
 
-    // Add a backup completion timer
     const backupTimer = setTimeout(() => {
       console.log('[AlertDisplay] Backup timer triggered - forcing completion');
       handleComplete();
-    }, 15000); // 15 seconds for both video and image alerts
+    }, 15000);
     
     return () => {
       console.log('[AlertDisplay] Component cleanup - clearing backup timer');
@@ -72,7 +71,6 @@ export const AlertDisplay = ({
     return null;
   }
 
-  // Create the display message based on the alert configuration
   const displayMessage = currentAlert.message_enabled && currentAlert.message_text 
     ? currentAlert.message_text
     : '';
@@ -80,33 +78,35 @@ export const AlertDisplay = ({
   console.log('[AlertDisplay] Rendering with message:', displayMessage);
 
   return (
-    <div className="fixed top-0 left-0 right-0 flex flex-col items-center">
-      <div>
-        {currentAlert.media_type.startsWith('video') ? (
-          <VideoAlert 
-            mediaUrl={currentAlert.media_url}
-            onComplete={handleComplete}
-          />
-        ) : (
-          <ImageAlert 
-            mediaUrl={currentAlert.media_url}
-            onComplete={handleComplete}
-            onError={handleImageError}
+    <div className="fixed top-0 left-0 right-0">
+      <div className={`flex ${currentAlert.is_gift_alert ? 'items-start gap-8' : 'flex-col items-center'}`}>
+        <div>
+          {currentAlert.media_type.startsWith('video') ? (
+            <VideoAlert 
+              mediaUrl={currentAlert.media_url}
+              onComplete={handleComplete}
+            />
+          ) : (
+            <ImageAlert 
+              mediaUrl={currentAlert.media_url}
+              onComplete={handleComplete}
+              onError={handleImageError}
+            />
+          )}
+        </div>
+        
+        {currentAlert.message_enabled && displayMessage && (
+          <AlertMessage 
+            message={displayMessage}
+            fontSize={currentAlert.font_size}
+            isGiftAlert={currentAlert.is_gift_alert}
+            giftCount={currentAlert.gift_count || 1}
+            giftCountAnimationSpeed={currentAlert.gift_count_animation_speed}
+            giftTextColor={currentAlert.gift_text_color}
+            giftCountColor={currentAlert.gift_count_color}
           />
         )}
       </div>
-      
-      {currentAlert.message_enabled && displayMessage && (
-        <AlertMessage 
-          message={displayMessage}
-          fontSize={currentAlert.font_size}
-          isGiftAlert={currentAlert.is_gift_alert}
-          giftCount={currentAlert.gift_count || 1}
-          giftCountAnimationSpeed={currentAlert.gift_count_animation_speed}
-          giftTextColor={currentAlert.gift_text_color}
-          giftCountColor={currentAlert.gift_count_color}
-        />
-      )}
     </div>
   );
 };

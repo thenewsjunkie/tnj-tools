@@ -34,7 +34,7 @@ const AlertMessage = ({
     });
     
     return (
-      <div className="mt-2 text-center">
+      <div className="flex flex-col gap-2">
         <div 
           className="alert-message-font"
           style={{ 
@@ -43,7 +43,27 @@ const AlertMessage = ({
             color: giftTextColor
           }}
         >
-          {username} Gifted {formattedMessage.substring(username.length + 1)}
+          {username} Gifted
+        </div>
+        <div
+          className="alert-message-font"
+          style={{ 
+            fontSize: `${fontSize * 1.5}px`,
+            textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
+            color: giftCountColor
+          }}
+        >
+          {giftCount}
+        </div>
+        <div 
+          className="alert-message-font"
+          style={{ 
+            fontSize: `${fontSize * 0.8}px`,
+            textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
+            color: giftTextColor
+          }}
+        >
+          {formattedMessage.substring(formattedMessage.indexOf(' ') + 1)}
         </div>
       </div>
     );
