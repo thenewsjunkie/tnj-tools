@@ -22,7 +22,8 @@ const QueueAlertButton = ({ selectedAlert }: QueueAlertButtonProps) => {
       console.log('[QueueAlertButton] Queueing alert:', {
         title: selectedAlert.title,
         username,
-        giftCount
+        giftCount,
+        isGiftAlert: selectedAlert.is_gift_alert
       });
       
       const { error } = await supabase
@@ -31,7 +32,7 @@ const QueueAlertButton = ({ selectedAlert }: QueueAlertButtonProps) => {
           alert_id: selectedAlert.id,
           username,
           status: 'pending',
-          gift_count: giftCount || null
+          gift_count: selectedAlert.is_gift_alert ? (giftCount || 1) : null
         });
 
       if (error) {
@@ -57,7 +58,7 @@ const QueueAlertButton = ({ selectedAlert }: QueueAlertButtonProps) => {
   };
 
   const handleClick = () => {
-    if (selectedAlert.message_enabled) {
+    if (selectedAlert.message_enabled || selectedAlert.is_gift_alert) {
       setIsNameDialogOpen(true);
     } else {
       queueAlert();

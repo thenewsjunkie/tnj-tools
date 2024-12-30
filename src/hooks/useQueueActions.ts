@@ -8,7 +8,7 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
       return;
     }
 
-    console.log('[useQueueActions] Completing alert:', currentAlert.id);
+    console.log('[useQueueActions] Completing alert:', currentAlert);
 
     // Start a transaction to update alert status and gift stats
     const { error } = await supabase
@@ -26,7 +26,10 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
 
     // If this is a gift alert, update gift stats
     if (currentAlert.alert.is_gift_alert && currentAlert.username && currentAlert.gift_count) {
-      console.log('[useQueueActions] Processing gift stats for:', currentAlert.username);
+      console.log('[useQueueActions] Processing gift stats for:', {
+        username: currentAlert.username,
+        giftCount: currentAlert.gift_count
+      });
       
       // Record in gift history
       const { error: historyError } = await supabase
@@ -53,14 +56,16 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
         .single();
 
       if (!statsError && existingStats) {
-        // Ensure monthly_gifts and yearly_gifts are properly typed
-        const monthlyGifts: Record<string, number> = 
-          (existingStats.monthly_gifts as Record<string, number>) || {};
-        const yearlyGifts: Record<string, number> = 
-          (existingStats.yearly_gifts as Record<string, number>) || {};
-
-        monthlyGifts[monthKey] = (monthlyGifts[monthKey] || 0) + currentAlert.gift_count;
-        yearlyGifts[yearKey] = (yearlyGifts[yearKey] || 0) + currentAlert.gift_count;
+        // Update existing stats
+        const monthlyGifts = {
+          ...(existingStats.monthly_gifts as Record<string, number>),
+          [monthKey]: ((existingStats.monthly_gifts as Record<string, number>)[monthKey] || 0) + currentAlert.gift_count
+        };
+        
+        const yearlyGifts = {
+          ...(existingStats.yearly_gifts as Record<string, number>),
+          [yearKey]: ((existingStats.yearly_gifts as Record<string, number>)[yearKey] || 0) + currentAlert.gift_count
+        };
 
         await supabase
           .from('gift_stats')
