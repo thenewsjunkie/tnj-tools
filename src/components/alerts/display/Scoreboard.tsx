@@ -6,12 +6,15 @@ interface ScoreboardProps {
 
 export const Scoreboard: React.FC<ScoreboardProps> = ({ limit = 5 }) => {
   return (
-    <div className="fixed inset-0 bg-black">
+    <div className="fixed inset-0 bg-black flex flex-col">
       <iframe 
         src={`/leaderboard?limit=${limit}`}
-        className="w-full h-full border-none"
+        className="w-full flex-1 border-none"
         title="Leaderboard"
       />
+      <div className="p-4 text-center text-white text-xl font-bold">
+        Gift Secret Shows Access To Other Fans On TheNewsJunkie.com Now! 1 Gift = 1 Magnet!
+      </div>
     </div>
   );
 };
