@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import EditAlertFormFields from "./edit/EditAlertFormFields";
 
 interface EditAlertDialogProps {
   alert: {
@@ -16,6 +16,10 @@ interface EditAlertDialogProps {
     message_enabled?: boolean;
     message_text?: string;
     font_size?: number;
+    is_gift_alert?: boolean;
+    gift_count_animation_speed?: number;
+    gift_text_color?: string;
+    gift_count_color?: string;
   };
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -27,15 +31,22 @@ const EditAlertDialog = ({ alert, open, onOpenChange, onAlertUpdated }: EditAler
   const [messageEnabled, setMessageEnabled] = useState(alert.message_enabled || false);
   const [messageText, setMessageText] = useState(alert.message_text || "");
   const [fontSize, setFontSize] = useState(alert.font_size || 24);
+  const [isGiftAlert, setIsGiftAlert] = useState(alert.is_gift_alert || false);
+  const [giftCountAnimationSpeed, setGiftCountAnimationSpeed] = useState(alert.gift_count_animation_speed || 100);
+  const [giftTextColor, setGiftTextColor] = useState(alert.gift_text_color || "#FFFFFF");
+  const [giftCountColor, setGiftCountColor] = useState(alert.gift_count_color || "#4CDBC4");
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
-  // Reset form state when alert changes
   useEffect(() => {
     setTitle(alert.title);
     setMessageEnabled(alert.message_enabled || false);
     setMessageText(alert.message_text || "");
     setFontSize(alert.font_size || 24);
+    setIsGiftAlert(alert.is_gift_alert || false);
+    setGiftCountAnimationSpeed(alert.gift_count_animation_speed || 100);
+    setGiftTextColor(alert.gift_text_color || "#FFFFFF");
+    setGiftCountColor(alert.gift_count_color || "#4CDBC4");
   }, [alert]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -82,7 +93,11 @@ const EditAlertDialog = ({ alert, open, onOpenChange, onAlertUpdated }: EditAler
           media_type: mediaType,
           message_enabled: messageEnabled,
           message_text: messageText,
-          font_size: fontSize
+          font_size: fontSize,
+          is_gift_alert: isGiftAlert,
+          gift_count_animation_speed: giftCountAnimationSpeed,
+          gift_text_color: giftTextColor,
+          gift_count_color: giftCountColor
         })
         .eq('id', alert.id);
 
@@ -114,46 +129,25 @@ const EditAlertDialog = ({ alert, open, onOpenChange, onAlertUpdated }: EditAler
           <DialogTitle className="text-foreground">Edit Alert</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Input
-              placeholder="Alert Title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-              className="text-foreground bg-background border-input"
-            />
-          </div>
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="message-enabled"
-              checked={messageEnabled}
-              onCheckedChange={setMessageEnabled}
-            />
-            <Label htmlFor="message-enabled" className="text-foreground">Enable Alert Message</Label>
-          </div>
-          {messageEnabled && (
-            <>
-              <div className="space-y-2">
-                <Input
-                  placeholder="Alert Message"
-                  value={messageText}
-                  onChange={(e) => setMessageText(e.target.value)}
-                  className="text-foreground bg-background border-input"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-foreground">Font Size (px)</Label>
-                <Input
-                  type="number"
-                  min="12"
-                  max="72"
-                  value={fontSize}
-                  onChange={(e) => setFontSize(Number(e.target.value))}
-                  className="text-foreground bg-background border-input"
-                />
-              </div>
-            </>
-          )}
+          <EditAlertFormFields
+            title={title}
+            setTitle={setTitle}
+            messageEnabled={messageEnabled}
+            setMessageEnabled={setMessageEnabled}
+            messageText={messageText}
+            setMessageText={setMessageText}
+            fontSize={fontSize}
+            setFontSize={setFontSize}
+            isGiftAlert={isGiftAlert}
+            setIsGiftAlert={setIsGiftAlert}
+            giftCountAnimationSpeed={giftCountAnimationSpeed}
+            setGiftCountAnimationSpeed={setGiftCountAnimationSpeed}
+            giftTextColor={giftTextColor}
+            setGiftTextColor={setGiftTextColor}
+            giftCountColor={giftCountColor}
+            setGiftCountColor={setGiftCountColor}
+          />
+          
           <div className="space-y-2">
             <Label className="text-foreground">Current Media: {alert.media_type}</Label>
             <Input
@@ -163,6 +157,7 @@ const EditAlertDialog = ({ alert, open, onOpenChange, onAlertUpdated }: EditAler
             />
             <p className="text-sm text-muted-foreground">Leave empty to keep current media</p>
           </div>
+          
           <Button type="submit" className="w-full dark:text-white text-black" disabled={isUploading}>
             {isUploading ? "Updating..." : "Update Alert"}
           </Button>
