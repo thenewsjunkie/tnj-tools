@@ -53,10 +53,10 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
 
       if (!statsError && existingStats) {
         // Update existing stats
-        const monthlyGifts = { ...existingStats.monthly_gifts };
+        const monthlyGifts: Record<string, number> = existingStats.monthly_gifts || {};
         monthlyGifts[monthKey] = (monthlyGifts[monthKey] || 0) + currentAlert.gift_count;
 
-        const yearlyGifts = { ...existingStats.yearly_gifts };
+        const yearlyGifts: Record<string, number> = existingStats.yearly_gifts || {};
         yearlyGifts[yearKey] = (yearlyGifts[yearKey] || 0) + currentAlert.gift_count;
 
         await supabase
@@ -70,14 +70,17 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
           .eq('username', currentAlert.username);
       } else {
         // Create new stats record
+        const monthlyGifts: Record<string, number> = { [monthKey]: currentAlert.gift_count };
+        const yearlyGifts: Record<string, number> = { [yearKey]: currentAlert.gift_count };
+
         await supabase
           .from('gift_stats')
           .insert({
             username: currentAlert.username,
             total_gifts: currentAlert.gift_count,
             last_gift_date: now.toISOString(),
-            monthly_gifts: { [monthKey]: currentAlert.gift_count },
-            yearly_gifts: { [yearKey]: currentAlert.gift_count }
+            monthly_gifts: monthlyGifts,
+            yearly_gifts: yearlyGifts
           });
       }
     }
