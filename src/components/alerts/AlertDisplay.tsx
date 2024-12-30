@@ -1,7 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import VideoAlert from "./media/VideoAlert";
 import ImageAlert from "./media/ImageAlert";
 import AlertMessage from "./AlertMessage";
+import { useNavigate } from "react-router-dom";
 
 interface AlertDisplayProps {
   currentAlert: {
@@ -24,18 +25,29 @@ export const AlertDisplay = ({
   onComplete,
 }: AlertDisplayProps) => {
   const completedRef = useRef(false);
+  const [showingScoreboard, setShowingScoreboard] = useState(false);
+  const navigate = useNavigate();
 
   const handleComplete = () => {
     if (!completedRef.current) {
-      completedRef.current = true;
-      console.log('[AlertDisplay] Triggering completion callback');
-      onComplete();
+      if (currentAlert.is_gift_alert) {
+        // For gift alerts, show scoreboard before completing
+        setShowingScoreboard(true);
+        setTimeout(() => {
+          completedRef.current = true;
+          onComplete();
+        }, 5000); // Show scoreboard for 5 seconds
+      } else {
+        completedRef.current = true;
+        onComplete();
+      }
     }
   };
 
   useEffect(() => {
     console.log('[AlertDisplay] Component mounted or alert changed');
     completedRef.current = false;
+    setShowingScoreboard(false);
     
     if (!currentAlert) {
       console.log('[AlertDisplay] No alert to display');
@@ -96,6 +108,16 @@ export const AlertDisplay = ({
   if (!currentAlert) {
     console.log('[AlertDisplay] No alert to render');
     return null;
+  }
+
+  if (showingScoreboard) {
+    return (
+      <iframe 
+        src="/leaderboard"
+        className="fixed top-0 left-0 w-full h-full border-none"
+        title="Leaderboard"
+      />
+    );
   }
 
   const displayMessage = currentAlert.message_enabled && currentAlert.message_text 
