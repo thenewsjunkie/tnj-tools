@@ -39,6 +39,7 @@ const EditAlertDialog = ({ alert, open, onOpenChange, onAlertUpdated }: EditAler
   const { toast } = useToast();
 
   useEffect(() => {
+    // Update all form fields when alert prop changes
     setTitle(alert.title);
     setMessageEnabled(alert.message_enabled || false);
     setMessageText(alert.message_text || "");
@@ -85,6 +86,17 @@ const EditAlertDialog = ({ alert, open, onOpenChange, onAlertUpdated }: EditAler
         }
       }
 
+      console.log('[EditAlertDialog] Updating alert with data:', {
+        title,
+        messageEnabled,
+        messageText,
+        fontSize,
+        isGiftAlert,
+        giftCountAnimationSpeed,
+        giftTextColor,
+        giftCountColor
+      });
+
       const { error: dbError } = await supabase
         .from('alerts')
         .update({
@@ -111,12 +123,12 @@ const EditAlertDialog = ({ alert, open, onOpenChange, onAlertUpdated }: EditAler
       onAlertUpdated();
       onOpenChange(false);
     } catch (error) {
+      console.error('[EditAlertDialog] Update error:', error);
       toast({
         title: "Error",
         description: "Failed to update alert",
         variant: "destructive",
       });
-      console.error('Update error:', error);
     } finally {
       setIsUploading(false);
     }
