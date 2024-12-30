@@ -29,9 +29,9 @@ const AlertSelector = ({
   const [isNameDialogOpen, setIsNameDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isQueuing, setIsQueuing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
 
-  // Load selected alert from localStorage on mount
   useEffect(() => {
     const savedAlertId = localStorage.getItem('selectedAlertId');
     if (savedAlertId && alerts) {
@@ -49,33 +49,47 @@ const AlertSelector = ({
   };
 
   const handleDelete = async () => {
-    console.log('[AlertSelector] Deleting alert:', selectedAlert.title);
-    const { error } = await supabase
-      .from('alerts')
-      .delete()
-      .eq('id', selectedAlert.id);
+    if (isDeleting) return;
+    setIsDeleting(true);
 
-    if (error) {
-      console.error('[AlertSelector] Error deleting alert:', error);
+    try {
+      console.log('[AlertSelector] Deleting alert:', selectedAlert.title);
+      const { error } = await supabase
+        .from('alerts')
+        .delete()
+        .eq('id', selectedAlert.id);
+
+      if (error) {
+        console.error('[AlertSelector] Error deleting alert:', error);
+        toast({
+          title: "Error",
+          description: `Failed to delete alert: ${error.message}`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('[AlertSelector] Alert deleted successfully');
+      toast({
+        title: "Success",
+        description: "Alert deleted successfully",
+      });
+      
+      localStorage.removeItem('selectedAlertId');
+      onAlertDeleted();
+      if (alerts && alerts.length > 0 && alerts[0].id !== selectedAlert.id) {
+        onAlertSelect(alerts[0]);
+        localStorage.setItem('selectedAlertId', alerts[0].id);
+      }
+    } catch (error) {
+      console.error('[AlertSelector] Unexpected error deleting alert:', error);
       toast({
         title: "Error",
-        description: "Failed to delete alert",
+        description: "An unexpected error occurred while deleting the alert",
         variant: "destructive",
       });
-      return;
-    }
-
-    console.log('[AlertSelector] Alert deleted successfully');
-    toast({
-      title: "Success",
-      description: "Alert deleted successfully",
-    });
-    
-    localStorage.removeItem('selectedAlertId');
-    onAlertDeleted();
-    if (alerts && alerts.length > 0 && alerts[0].id !== selectedAlert.id) {
-      onAlertSelect(alerts[0]);
-      localStorage.setItem('selectedAlertId', alerts[0].id);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -166,6 +180,7 @@ const AlertSelector = ({
             size="icon"
             onClick={handleDelete}
             className="text-destructive hover:text-destructive"
+            disabled={isDeleting}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
