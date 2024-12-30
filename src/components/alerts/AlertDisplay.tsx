@@ -50,14 +50,34 @@ export const AlertDisplay = ({
       giftCount: currentAlert.gift_count
     });
 
-    // Calculate timeout based on gift count
+    // Calculate timeout based on gift count with progressive scaling
     const baseTimeout = 15000; // 15 seconds base timeout
-    const giftCountTimeout = currentAlert.is_gift_alert && currentAlert.gift_count 
-      ? Math.min(currentAlert.gift_count * (currentAlert.gift_count_animation_speed || 100), 30000) // Cap at 30 seconds
-      : 0;
-    const timeout = Math.max(baseTimeout, giftCountTimeout);
+    let giftCountTimeout = 0;
+    
+    if (currentAlert.is_gift_alert && currentAlert.gift_count) {
+      const giftCount = currentAlert.gift_count;
+      const animationSpeed = currentAlert.gift_count_animation_speed || 100;
+      
+      // Progressive scaling based on gift count ranges
+      if (giftCount <= 30) {
+        giftCountTimeout = giftCount * animationSpeed;
+      } else if (giftCount <= 50) {
+        giftCountTimeout = 30 * animationSpeed + (giftCount - 30) * (animationSpeed * 0.8);
+      } else if (giftCount <= 100) {
+        giftCountTimeout = 30 * animationSpeed + 20 * (animationSpeed * 0.8) + 
+                          (giftCount - 50) * (animationSpeed * 0.6);
+      } else {
+        giftCountTimeout = 30 * animationSpeed + 20 * (animationSpeed * 0.8) + 
+                          50 * (animationSpeed * 0.6) + 
+                          (giftCount - 100) * (animationSpeed * 0.4);
+      }
+      
+      // Cap at 60 seconds for very large numbers
+      giftCountTimeout = Math.min(giftCountTimeout, 60000);
+    }
 
-    console.log('[AlertDisplay] Setting timeout:', timeout);
+    const timeout = Math.max(baseTimeout, giftCountTimeout);
+    console.log('[AlertDisplay] Setting timeout:', timeout, 'ms for', currentAlert.gift_count, 'gifts');
     
     const backupTimer = setTimeout(() => {
       console.log('[AlertDisplay] Backup timer triggered - forcing completion');
