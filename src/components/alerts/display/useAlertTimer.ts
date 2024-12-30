@@ -44,7 +44,7 @@ export const useAlertTimer = ({ currentAlert, onComplete, onShowScoreboard }: Us
       const baseAnimationSpeed = currentAlert.gift_count_animation_speed || 100;
       
       // Calculate total animation time needed based on gift count
-      const paddingTime = 5000; // Padding time in milliseconds
+      const paddingTime = 3000; // Reduced from 5000 to 3000 milliseconds
       const totalAnimationTime = giftCount * baseAnimationSpeed;
       const timeout = totalAnimationTime + paddingTime;
       
