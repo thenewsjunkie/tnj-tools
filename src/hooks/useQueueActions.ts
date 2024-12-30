@@ -9,6 +9,7 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
 
     console.log('[useQueueActions] Completing alert:', currentAlert.id);
 
+    // Start a transaction to update alert status and gift stats
     const { error } = await supabase
       .from('alert_queue')
       .update({ 
@@ -20,6 +21,65 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
     if (error) {
       console.error('[useQueueActions] Error completing alert:', error);
       return;
+    }
+
+    // If this is a gift alert, update gift stats
+    if (currentAlert.alert.is_gift_alert && currentAlert.username && currentAlert.gift_count) {
+      console.log('[useQueueActions] Processing gift stats for:', currentAlert.username);
+      
+      // Record in gift history
+      const { error: historyError } = await supabase
+        .from('gift_history')
+        .insert({
+          gifter_username: currentAlert.username,
+          gift_count: currentAlert.gift_count,
+          alert_queue_id: currentAlert.id
+        });
+
+      if (historyError) {
+        console.error('[useQueueActions] Error recording gift history:', historyError);
+      }
+
+      // Update gift stats
+      const now = new Date();
+      const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const yearKey = now.getFullYear().toString();
+
+      const { data: existingStats, error: statsError } = await supabase
+        .from('gift_stats')
+        .select()
+        .eq('username', currentAlert.username)
+        .single();
+
+      if (!statsError && existingStats) {
+        // Update existing stats
+        const monthlyGifts = { ...existingStats.monthly_gifts };
+        monthlyGifts[monthKey] = (monthlyGifts[monthKey] || 0) + currentAlert.gift_count;
+
+        const yearlyGifts = { ...existingStats.yearly_gifts };
+        yearlyGifts[yearKey] = (yearlyGifts[yearKey] || 0) + currentAlert.gift_count;
+
+        await supabase
+          .from('gift_stats')
+          .update({
+            total_gifts: existingStats.total_gifts + currentAlert.gift_count,
+            last_gift_date: now.toISOString(),
+            monthly_gifts: monthlyGifts,
+            yearly_gifts: yearlyGifts
+          })
+          .eq('username', currentAlert.username);
+      } else {
+        // Create new stats record
+        await supabase
+          .from('gift_stats')
+          .insert({
+            username: currentAlert.username,
+            total_gifts: currentAlert.gift_count,
+            last_gift_date: now.toISOString(),
+            monthly_gifts: { [monthKey]: currentAlert.gift_count },
+            yearly_gifts: { [yearKey]: currentAlert.gift_count }
+          });
+      }
     }
 
     console.log('[useQueueActions] Alert marked as completed');

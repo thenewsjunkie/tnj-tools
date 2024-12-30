@@ -4,6 +4,10 @@ import {
   AlertsTable,
 } from './tables/alerts';
 import {
+  GiftStatsTable,
+  GiftHistoryTable,
+} from './tables/gifts';
+import {
   AudioConversationsTable,
   CallSessionsTable,
 } from './tables/conversations';
@@ -35,6 +39,8 @@ export interface Database {
     Tables: {
       alert_queue: AlertQueueTable
       alerts: AlertsTable
+      gift_stats: GiftStatsTable
+      gift_history: GiftHistoryTable
       audio_conversations: AudioConversationsTable
       call_sessions: CallSessionsTable
       code_implementations: CodeImplementationsTable

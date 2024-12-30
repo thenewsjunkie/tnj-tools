@@ -389,6 +389,71 @@ export type Database = {
         }
         Relationships: []
       }
+      gift_history: {
+        Row: {
+          alert_queue_id: string | null
+          created_at: string | null
+          gift_count: number
+          gifter_username: string
+          id: string
+        }
+        Insert: {
+          alert_queue_id?: string | null
+          created_at?: string | null
+          gift_count: number
+          gifter_username: string
+          id?: string
+        }
+        Update: {
+          alert_queue_id?: string | null
+          created_at?: string | null
+          gift_count?: number
+          gifter_username?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_history_alert_queue_id_fkey"
+            columns: ["alert_queue_id"]
+            isOneToOne: false
+            referencedRelation: "alert_queue"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gift_stats: {
+        Row: {
+          created_at: string | null
+          id: string
+          last_gift_date: string | null
+          monthly_gifts: Json | null
+          total_gifts: number | null
+          updated_at: string | null
+          username: string
+          yearly_gifts: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          last_gift_date?: string | null
+          monthly_gifts?: Json | null
+          total_gifts?: number | null
+          updated_at?: string | null
+          username: string
+          yearly_gifts?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          last_gift_date?: string | null
+          monthly_gifts?: Json | null
+          total_gifts?: number | null
+          updated_at?: string | null
+          username?: string
+          yearly_gifts?: Json | null
+        }
+        Relationships: []
+      }
       instructions: {
         Row: {
           content: string
