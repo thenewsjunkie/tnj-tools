@@ -50,10 +50,19 @@ export const AlertDisplay = ({
       giftCount: currentAlert.gift_count
     });
 
+    // Calculate timeout based on gift count
+    const baseTimeout = 15000; // 15 seconds base timeout
+    const giftCountTimeout = currentAlert.is_gift_alert && currentAlert.gift_count 
+      ? Math.min(currentAlert.gift_count * (currentAlert.gift_count_animation_speed || 100), 30000) // Cap at 30 seconds
+      : 0;
+    const timeout = Math.max(baseTimeout, giftCountTimeout);
+
+    console.log('[AlertDisplay] Setting timeout:', timeout);
+    
     const backupTimer = setTimeout(() => {
       console.log('[AlertDisplay] Backup timer triggered - forcing completion');
       handleComplete();
-    }, 15000);
+    }, timeout);
     
     return () => {
       console.log('[AlertDisplay] Component cleanup - clearing backup timer');
