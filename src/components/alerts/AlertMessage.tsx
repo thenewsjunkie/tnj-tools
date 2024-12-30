@@ -52,24 +52,17 @@ const AlertMessage = ({
   }, [isGiftAlert, giftCount]);
 
   if (isGiftAlert) {
-    // Find the index of "gifted" in the message (case insensitive)
-    const giftedIndex = message.toLowerCase().indexOf(' gifted ');
-    if (giftedIndex === -1) {
-      console.error('[AlertMessage] Invalid gift alert message format');
-      return null;
-    }
+    // Extract username from the message
+    const username = message.split(' ')[0];
     
-    // Extract the full username (everything before "gifted")
-    const username = message.substring(0, giftedIndex);
-    
-    // Get the rest of the message (everything after "gifted")
-    const restOfMessage = message.substring(giftedIndex + ' gifted '.length);
+    // Replace {count} placeholder with actual count
+    const formattedMessage = message.replace('{count}', giftCount.toString());
     
     console.log('[AlertMessage] Gift alert details:', {
       username,
       giftCount,
       originalMessage: message,
-      restOfMessage
+      formattedMessage
     });
     
     return (
@@ -101,13 +94,13 @@ const AlertMessage = ({
             color: giftTextColor
           }}
         >
-          {restOfMessage}
+          {formattedMessage.substring(formattedMessage.indexOf(' ') + 1)}
         </div>
       </div>
     );
   }
 
-  // For regular subscription alerts
+  // Find the username by looking for the word that comes before "just subscribed"
   const subscribedIndex = message.indexOf(' just');
   const username = subscribedIndex === -1 ? message : message.slice(0, subscribedIndex);
   const restOfMessage = subscribedIndex === -1 ? '' : message.slice(subscribedIndex);
