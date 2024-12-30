@@ -25,6 +25,7 @@ export const AlertDisplay = ({
   onComplete,
 }: AlertDisplayProps) => {
   const [showingLeaderboard, setShowingLeaderboard] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   const handleShowLeaderboard = () => {
     console.log('[AlertDisplay] Showing gift leaderboard for gift alert');
@@ -33,12 +34,16 @@ export const AlertDisplay = ({
 
   const handleError = (error: any) => {
     console.error('[AlertDisplay] Error:', error);
-    onComplete();
+    // Only handle error if we're not already showing leaderboard
+    if (!showingLeaderboard) {
+      setHasError(true);
+      onComplete();
+    }
   };
 
   const handleAlertContentComplete = () => {
     console.log('[AlertDisplay] Alert content completed');
-    if (currentAlert.is_gift_alert) {
+    if (currentAlert.is_gift_alert && !hasError) {
       handleShowLeaderboard();
     } else {
       onComplete();
@@ -61,6 +66,7 @@ export const AlertDisplay = ({
   console.log('[AlertDisplay] Current state:', {
     showingLeaderboard,
     isGiftAlert: currentAlert.is_gift_alert,
+    hasError,
     currentAlert
   });
 

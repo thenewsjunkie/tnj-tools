@@ -9,9 +9,10 @@ interface VideoAlertProps {
 const VideoAlert = ({ mediaUrl, onComplete, onError }: VideoAlertProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const completedRef = useRef(false);
+  const unmountedRef = useRef(false);
 
   const handleComplete = () => {
-    if (!completedRef.current) {
+    if (!completedRef.current && !unmountedRef.current) {
       completedRef.current = true;
       console.log('[VideoAlert] Video completed, triggering completion callback');
       onComplete();
@@ -21,6 +22,7 @@ const VideoAlert = ({ mediaUrl, onComplete, onError }: VideoAlertProps) => {
   useEffect(() => {
     console.log('[VideoAlert] Component mounted');
     completedRef.current = false;
+    unmountedRef.current = false;
     
     if (videoRef.current) {
       const videoElement = videoRef.current;
@@ -29,8 +31,10 @@ const VideoAlert = ({ mediaUrl, onComplete, onError }: VideoAlertProps) => {
       videoElement.load();
       videoElement.muted = true;
       videoElement.play().catch(error => {
-        console.error('[VideoAlert] Initial muted autoplay failed:', error);
-        onError(error);
+        if (!unmountedRef.current) {
+          console.error('[VideoAlert] Initial muted autoplay failed:', error);
+          onError(error);
+        }
       });
 
       videoElement.addEventListener('play', () => {
@@ -43,14 +47,17 @@ const VideoAlert = ({ mediaUrl, onComplete, onError }: VideoAlertProps) => {
       });
 
       videoElement.addEventListener('error', (e) => {
-        console.error('[VideoAlert] Video error:', e);
-        onError(e);
+        if (!unmountedRef.current) {
+          console.error('[VideoAlert] Video error:', e);
+          onError(e);
+        }
       });
     }
 
     return () => {
+      console.log('[VideoAlert] Cleaning up video element');
+      unmountedRef.current = true;
       if (videoRef.current) {
-        console.log('[VideoAlert] Cleaning up video element');
         const videoElement = videoRef.current;
         videoElement.pause();
         videoElement.removeEventListener('play', () => {});
@@ -62,10 +69,12 @@ const VideoAlert = ({ mediaUrl, onComplete, onError }: VideoAlertProps) => {
 
   const handleVideoLoadedMetadata = () => {
     console.log('[VideoAlert] Video metadata loaded');
-    if (videoRef.current) {
+    if (videoRef.current && !unmountedRef.current) {
       videoRef.current.play().catch(error => {
-        console.error('[VideoAlert] Autoplay after metadata failed:', error);
-        onError(error);
+        if (!unmountedRef.current) {
+          console.error('[VideoAlert] Autoplay after metadata failed:', error);
+          onError(error);
+        }
       });
     }
   };
@@ -75,7 +84,7 @@ const VideoAlert = ({ mediaUrl, onComplete, onError }: VideoAlertProps) => {
       ref={videoRef}
       src={mediaUrl}
       className="max-h-[70vh] w-auto"
-      onError={() => onError}
+      onError={() => !unmountedRef.current && onError}
       onLoadedMetadata={handleVideoLoadedMetadata}
       playsInline
       muted={true}
