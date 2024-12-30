@@ -34,9 +34,9 @@ const AlertMessage = ({
     });
     
     return (
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2 items-center">
         <div 
-          className="alert-message-font"
+          className="alert-message-font text-center"
           style={{ 
             fontSize: `${fontSize}px`,
             textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
@@ -45,15 +45,17 @@ const AlertMessage = ({
         >
           {username} Gifted
         </div>
-        <GiftCounter 
-          targetCount={giftCount}
-          animationSpeed={giftCountAnimationSpeed}
-          textColor={giftTextColor}
-          countColor={giftCountColor}
-          fontSize={fontSize * 1.5}
-        />
+        <div className="flex justify-center w-full">
+          <GiftCounter 
+            targetCount={giftCount}
+            animationSpeed={giftCountAnimationSpeed}
+            textColor={giftTextColor}
+            countColor={giftCountColor}
+            fontSize={fontSize * 1.5}
+          />
+        </div>
         <div 
-          className="alert-message-font"
+          className="alert-message-font text-center"
           style={{ 
             fontSize: `${fontSize * 0.8}px`,
             textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
