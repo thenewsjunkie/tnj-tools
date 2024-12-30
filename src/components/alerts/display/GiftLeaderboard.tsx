@@ -4,11 +4,11 @@ interface GiftLeaderboardProps {
   limit?: number;
 }
 
-export const GiftLeaderboard = ({ limit = 8 }: GiftLeaderboardProps) => {
+export const GiftLeaderboard = ({ limit = 5 }: GiftLeaderboardProps) => {
   return (
     <div className="fixed inset-0 bg-black/80 flex flex-col">
       <iframe 
-        src={`/leaderboard?limit=${limit}`}
+        src={`/leaderboard?limit=${limit}&fadeBelow=5`}
         className="w-full flex-1 border-none"
         title="Gift Leaderboard"
       />

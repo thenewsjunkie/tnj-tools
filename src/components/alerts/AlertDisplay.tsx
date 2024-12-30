@@ -55,7 +55,7 @@ export const AlertDisplay = ({
   }
 
   if (showingLeaderboard) {
-    return <GiftLeaderboard limit={8} />;
+    return <GiftLeaderboard limit={5} />;
   }
 
   return (
