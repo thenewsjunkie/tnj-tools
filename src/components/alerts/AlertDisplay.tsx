@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { AlertContent } from "./display/AlertContent";
-import { GiftLeaderboard } from "./display/GiftLeaderboard";
+import { Scoreboard } from "./display/Scoreboard";
 import { useAlertTimer } from "./display/useAlertTimer";
-import { useGiftLeaderboardTimer } from "./display/useGiftLeaderboardTimer";
+import { useScoreboardTimer } from "./display/useScoreboardTimer";
 
 interface AlertDisplayProps {
   currentAlert: {
@@ -24,21 +24,21 @@ export const AlertDisplay = ({
   currentAlert,
   onComplete,
 }: AlertDisplayProps) => {
-  const [showingLeaderboard, setShowingLeaderboard] = useState(false);
+  const [showingScoreboard, setShowingScoreboard] = useState(false);
 
-  const handleShowLeaderboard = () => {
-    console.log('[AlertDisplay] Showing gift leaderboard for gift alert');
-    setShowingLeaderboard(true);
+  const handleShowScoreboard = () => {
+    console.log('[AlertDisplay] Showing scoreboard for gift alert');
+    setShowingScoreboard(true);
   };
 
   const { completedRef } = useAlertTimer({
     currentAlert,
     onComplete,
-    onShowScoreboard: handleShowLeaderboard
+    onShowScoreboard: handleShowScoreboard
   });
 
-  useGiftLeaderboardTimer({
-    showingLeaderboard,
+  useScoreboardTimer({
+    showingScoreboard,
     onComplete,
     completedRef
   });
@@ -54,16 +54,8 @@ export const AlertDisplay = ({
     return null;
   }
 
-  // Add debug logging to help troubleshoot
-  console.log('[AlertDisplay] Current state:', {
-    showingLeaderboard,
-    isGiftAlert: currentAlert.is_gift_alert,
-    currentAlert
-  });
-
-  if (showingLeaderboard) {
-    console.log('[AlertDisplay] Rendering gift leaderboard');
-    return <GiftLeaderboard limit={5} />;
+  if (showingScoreboard) {
+    return <Scoreboard limit={8} />;
   }
 
   return (
