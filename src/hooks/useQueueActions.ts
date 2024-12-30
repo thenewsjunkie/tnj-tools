@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { GiftStats } from "@/integrations/supabase/types/tables/gifts";
 
 export const useQueueActions = (refetchQueue: () => Promise<any>) => {
   const handleAlertComplete = async (currentAlert: any) => {
@@ -52,11 +53,13 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
         .single();
 
       if (!statsError && existingStats) {
-        // Update existing stats
-        const monthlyGifts: Record<string, number> = existingStats.monthly_gifts || {};
-        monthlyGifts[monthKey] = (monthlyGifts[monthKey] || 0) + currentAlert.gift_count;
+        // Ensure monthly_gifts and yearly_gifts are properly typed
+        const monthlyGifts: Record<string, number> = 
+          (existingStats.monthly_gifts as Record<string, number>) || {};
+        const yearlyGifts: Record<string, number> = 
+          (existingStats.yearly_gifts as Record<string, number>) || {};
 
-        const yearlyGifts: Record<string, number> = existingStats.yearly_gifts || {};
+        monthlyGifts[monthKey] = (monthlyGifts[monthKey] || 0) + currentAlert.gift_count;
         yearlyGifts[yearKey] = (yearlyGifts[yearKey] || 0) + currentAlert.gift_count;
 
         await supabase
