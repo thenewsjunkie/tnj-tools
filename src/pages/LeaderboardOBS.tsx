@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { Crown } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { LeaderboardVisibilityValue } from "@/integrations/supabase/types/tables/system";
 
 const LeaderboardOBS = () => {
   const { data: giftStats, isLoading } = useQuery({
@@ -40,7 +41,7 @@ const LeaderboardOBS = () => {
         throw error;
       }
       console.log('[LeaderboardOBS] Fetched visibility state:', data);
-      return data?.value?.isVisible ?? false;
+      return (data?.value as LeaderboardVisibilityValue)?.isVisible ?? false;
     },
   });
 
@@ -53,7 +54,7 @@ const LeaderboardOBS = () => {
         .from('system_settings')
         .upsert({
           key: 'leaderboard_visibility',
-          value: { isVisible: true },
+          value: { isVisible: true } as LeaderboardVisibilityValue,
           updated_at: new Date().toISOString()
         });
 
@@ -69,7 +70,7 @@ const LeaderboardOBS = () => {
           .from('system_settings')
           .upsert({
             key: 'leaderboard_visibility',
-            value: { isVisible: false },
+            value: { isVisible: false } as LeaderboardVisibilityValue,
             updated_at: new Date().toISOString()
           });
 
