@@ -10,6 +10,7 @@ const GlobalQueueManager = () => {
   const channelRef = useRef<RealtimeChannel | null>(null);
   const isInitializedRef = useRef(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const leaderboardWindowRef = useRef<Window | null>(null);
 
   useEffect(() => {
     if (isInitializedRef.current) return;
@@ -17,7 +18,6 @@ const GlobalQueueManager = () => {
 
     console.log('[GlobalQueueManager] Initializing');
     
-    // Only set up subscription if we don't already have one
     if (!channelRef.current) {
       console.log('[GlobalQueueManager] Setting up realtime subscription');
       
@@ -33,14 +33,12 @@ const GlobalQueueManager = () => {
           console.log('[GlobalQueueManager] Subscription status:', status);
         });
 
-      // If there's no current alert and the queue isn't paused, try to process the next alert
       if (!currentAlert && !isPaused) {
         console.log('[GlobalQueueManager] No current alert, attempting to process next');
         processNextAlert(isPaused);
       }
     }
 
-    // Cleanup function
     return () => {
       if (channelRef.current) {
         console.log('[GlobalQueueManager] Cleaning up realtime subscription');
@@ -53,7 +51,26 @@ const GlobalQueueManager = () => {
     };
   }, [isPaused, currentAlert, processNextAlert]);
 
-  // Set up timer when current alert changes
+  const showLeaderboard = () => {
+    // Close existing window if it exists
+    if (leaderboardWindowRef.current) {
+      leaderboardWindowRef.current.close();
+    }
+
+    // Calculate position to center the window
+    const width = 400;
+    const height = 500;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+
+    // Open new window with specific dimensions
+    leaderboardWindowRef.current = window.open(
+      '/leaderboard/obs',
+      'LeaderboardOBS',
+      `width=${width},height=${height},left=${left},top=${top}`
+    );
+  };
+
   useEffect(() => {
     if (timerRef.current) {
       clearTimeout(timerRef.current);
@@ -63,8 +80,7 @@ const GlobalQueueManager = () => {
     if (currentAlert && !isPaused) {
       console.log('[GlobalQueueManager] Setting up completion timer for alert:', currentAlert.id);
       
-      // Calculate timeout based on alert type
-      let timeout = 8000; // Default 8 seconds for video alerts (changed from 15s)
+      let timeout = 8000; // Default 8 seconds for video alerts
       
       if (currentAlert.alert.is_gift_alert) {
         // For gift alerts, give more time for the counting animation
@@ -79,6 +95,12 @@ const GlobalQueueManager = () => {
       timerRef.current = setTimeout(() => {
         console.log('[GlobalQueueManager] Alert timeout reached, marking as complete');
         handleAlertComplete();
+
+        // If this was a gift alert, show the leaderboard
+        if (currentAlert.alert.is_gift_alert) {
+          console.log('[GlobalQueueManager] Gift alert completed, showing leaderboard');
+          showLeaderboard();
+        }
       }, timeout);
     }
 
