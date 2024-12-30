@@ -63,8 +63,18 @@ const GlobalQueueManager = () => {
     if (currentAlert && !isPaused) {
       console.log('[GlobalQueueManager] Setting up completion timer for alert:', currentAlert.id);
       
-      // Calculate timeout based on media type
-      const timeout = currentAlert.alert.media_type.startsWith('video') ? 15000 : 5000;
+      // Calculate timeout based on alert type
+      let timeout = 15000; // Default 15 seconds
+      
+      if (currentAlert.alert.is_gift_alert) {
+        // For gift alerts, give more time for the counting animation
+        const giftCount = currentAlert.gift_count || 1;
+        const animationSpeed = currentAlert.alert.gift_count_animation_speed || 100;
+        // Base time (20s) plus time for counting animation
+        timeout = 20000 + (giftCount * animationSpeed);
+      } else if (!currentAlert.alert.media_type.startsWith('video')) {
+        timeout = 5000; // 5 seconds for regular image alerts
+      }
       
       timerRef.current = setTimeout(() => {
         console.log('[GlobalQueueManager] Alert timeout reached, marking as complete');
