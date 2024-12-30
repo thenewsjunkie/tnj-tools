@@ -28,7 +28,7 @@ const Leaderboard = () => {
       return data as GiftStats[];
     },
     staleTime: 1000, // Reduce stale time to refresh more frequently
-    cacheTime: 5000, // Reduce cache time for more frequent updates
+    gcTime: 5000, // Changed from cacheTime to gcTime for v5 compatibility
   });
 
   if (isLoading) {
