@@ -22,8 +22,8 @@ export const useAlertTimer = ({ currentAlert, onComplete, onShowScoreboard }: Us
       return;
     }
 
-    // Calculate timeout based on gift count
-    let timeout = 15000; // Base timeout of 15 seconds for non-gift alerts
+    // Calculate timeout based on alert type
+    let timeout = 5000; // Default timeout of 5 seconds for regular alerts
     
     if (currentAlert.is_gift_alert && currentAlert.gift_count) {
       const giftCount = currentAlert.gift_count;
