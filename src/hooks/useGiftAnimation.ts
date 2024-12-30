@@ -10,38 +10,38 @@ export const useGiftAnimation = ({ isGiftAlert, giftCount }: UseGiftAnimationPro
   useEffect(() => {
     if (!isGiftAlert || giftCount <= 1) return;
 
-    // Calculate total animation duration based on gift count and animation speed
-    const baseAnimationSpeed = 200; // Match the gift count animation speed
-    const totalDuration = (giftCount * baseAnimationSpeed) + 5000; // Add 5s padding to match AlertDisplay
+    // Reduce total duration - now based just on gift count
+    const baseAnimationSpeed = 200;
+    const totalDuration = giftCount * baseAnimationSpeed + 2000; // Reduced from 5000ms to 2000ms padding
     const startTime = Date.now();
     
     const createConfetti = (angle: number, origin: { x: number }) => {
-      const baseParticleCount = giftCount > 10 ? 3 : 2;
-      const baseSpread = giftCount > 10 ? 70 : 55;
-      
       confetti({
         particleCount: Math.min(5 + Math.floor(giftCount / 10), 10),
         angle,
-        spread: baseSpread,
+        spread: 55,
         origin,
         colors: ['#ff0000', '#00ff00', '#0000ff', '#ff44ff', '#44ffff']
       });
     };
 
     const createFirework = () => {
-      const startX = Math.random();
-      const startY = Math.random() * 0.5;
-      
+      // Adjusted firework parameters for better visibility
       confetti({
-        particleCount: Math.min(40 + Math.floor(giftCount / 5), 80),
-        angle: 360 * Math.random(),
-        spread: 70,
-        origin: { x: startX, y: startY },
+        particleCount: 50,
+        spread: 360,
+        startVelocity: 30,
+        decay: 0.95,
+        gravity: 1,
+        drift: 0,
+        ticks: 200,
+        origin: {
+          x: Math.random(),
+          y: Math.random() * 0.5
+        },
         colors: ['#ff4444', '#ffff44', '#44ff44', '#44ffff', '#ff44ff'],
-        ticks: 100,
-        gravity: 0.8,
-        scalar: 1.2,
-        drift: 0
+        shapes: ['circle'],
+        scalar: 1
       });
     };
     
@@ -54,16 +54,14 @@ export const useGiftAnimation = ({ isGiftAlert, giftCount }: UseGiftAnimationPro
           createConfetti(120, { x: 1 });
         }
         
-        // For 5-10 gifts: fireworks effect
-        else if (giftCount > 5 && giftCount <= 10) {
-          createFirework();
-        }
-        
-        // For 10+ gifts: combined effects with increased intensity
-        else if (giftCount > 10) {
+        // For 5+ gifts: both confetti and fireworks
+        else if (giftCount > 5) {
           createConfetti(60, { x: 0 });
           createConfetti(120, { x: 1 });
-          createFirework();
+          // Reduced firework frequency
+          if (Math.random() < 0.3) { // 30% chance each frame
+            createFirework();
+          }
         }
 
         requestAnimationFrame(frame);
