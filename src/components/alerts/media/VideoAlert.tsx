@@ -30,7 +30,7 @@ const VideoAlert = ({ mediaUrl, onComplete, onError }: VideoAlertProps) => {
       videoElement.muted = true;
       videoElement.play().catch(error => {
         console.error('[VideoAlert] Initial muted autoplay failed:', error);
-        handleComplete();
+        onError(error);
       });
 
       videoElement.addEventListener('play', () => {
@@ -65,7 +65,7 @@ const VideoAlert = ({ mediaUrl, onComplete, onError }: VideoAlertProps) => {
     if (videoRef.current) {
       videoRef.current.play().catch(error => {
         console.error('[VideoAlert] Autoplay after metadata failed:', error);
-        handleComplete();
+        onError(error);
       });
     }
   };

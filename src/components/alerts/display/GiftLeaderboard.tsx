@@ -7,15 +7,13 @@ export const GiftLeaderboard = ({ limit = 5, fadeBelow = 5 }: GiftLeaderboardPro
   console.log('[GiftLeaderboard] Rendering with props:', { limit, fadeBelow });
   
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black z-[9999]">
-      <div className="w-full h-full bg-black">
-        <iframe 
-          src={`/leaderboard?limit=${limit}&fadeBelow=${fadeBelow}&hideText=true`}
-          className="w-full h-full border-none"
-          title="Gift Leaderboard"
-          style={{ backgroundColor: 'black' }}
-        />
-      </div>
+    <div className="w-full h-full bg-black">
+      <iframe 
+        src={`/leaderboard?limit=${limit}&fadeBelow=${fadeBelow}&hideText=true`}
+        className="w-full h-full border-none"
+        title="Gift Leaderboard"
+        style={{ backgroundColor: 'black' }}
+      />
     </div>
   );
 };

@@ -31,6 +31,11 @@ export const AlertDisplay = ({
     setShowingLeaderboard(true);
   };
 
+  const handleError = (error: any) => {
+    console.error('[AlertDisplay] Error:', error);
+    onComplete();
+  };
+
   const { completedRef } = useAlertTimer({
     currentAlert,
     onComplete,
@@ -59,7 +64,9 @@ export const AlertDisplay = ({
     console.log('[AlertDisplay] Rendering gift leaderboard');
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-black z-[9999]">
-        <GiftLeaderboard limit={5} fadeBelow={5} />
+        <div className="w-full h-full bg-black">
+          <GiftLeaderboard limit={5} fadeBelow={5} />
+        </div>
       </div>
     );
   }
@@ -68,6 +75,7 @@ export const AlertDisplay = ({
     <AlertContent
       currentAlert={currentAlert}
       onComplete={onComplete}
+      onError={handleError}
     />
   );
 };
