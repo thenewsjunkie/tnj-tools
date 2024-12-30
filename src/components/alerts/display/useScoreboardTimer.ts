@@ -14,7 +14,7 @@ export const useScoreboardTimer = ({ showingScoreboard, onComplete, completedRef
         console.log('[ScoreboardTimer] Scoreboard display complete');
         completedRef.current = true;
         onComplete();
-      }, 5000);
+      }, 3000); // Reduced from 5000ms to 3000ms
 
       return () => clearTimeout(scoreboardTimer);
     }
