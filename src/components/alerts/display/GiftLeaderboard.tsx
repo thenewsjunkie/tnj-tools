@@ -7,7 +7,7 @@ export const GiftLeaderboard = ({ limit = 5, fadeBelow = 5 }: GiftLeaderboardPro
   console.log('[GiftLeaderboard] Rendering with props:', { limit, fadeBelow });
   
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/80">
+    <div className="fixed inset-0 flex items-center justify-center bg-black">
       <div className="w-full h-full bg-black">
         <iframe 
           src={`/leaderboard?limit=${limit}&fadeBelow=${fadeBelow}&hideText=true`}
