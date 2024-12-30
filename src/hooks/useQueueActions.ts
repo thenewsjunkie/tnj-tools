@@ -44,52 +44,54 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
         console.error('[useQueueActions] Error recording gift history:', historyError);
       }
 
-      // Update gift stats
-      const now = new Date();
-      const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-      const yearKey = now.getFullYear().toString();
-
+      // Get existing stats with proper headers
       const { data: existingStats, error: statsError } = await supabase
         .from('gift_stats')
-        .select()
+        .select('*')
         .eq('username', currentAlert.username)
-        .single();
+        .maybeSingle();
 
-      if (!statsError && existingStats) {
-        // Update existing stats
-        const monthlyGifts = {
-          ...(existingStats.monthly_gifts as Record<string, number>),
-          [monthKey]: ((existingStats.monthly_gifts as Record<string, number>)[monthKey] || 0) + currentAlert.gift_count
-        };
-        
-        const yearlyGifts = {
-          ...(existingStats.yearly_gifts as Record<string, number>),
-          [yearKey]: ((existingStats.yearly_gifts as Record<string, number>)[yearKey] || 0) + currentAlert.gift_count
-        };
+      if (!statsError) {
+        const now = new Date();
+        const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        const yearKey = now.getFullYear().toString();
 
-        await supabase
-          .from('gift_stats')
-          .update({
-            total_gifts: existingStats.total_gifts + currentAlert.gift_count,
-            last_gift_date: now.toISOString(),
-            monthly_gifts: monthlyGifts,
-            yearly_gifts: yearlyGifts
-          })
-          .eq('username', currentAlert.username);
-      } else {
-        // Create new stats record
-        const monthlyGifts: Record<string, number> = { [monthKey]: currentAlert.gift_count };
-        const yearlyGifts: Record<string, number> = { [yearKey]: currentAlert.gift_count };
+        if (existingStats) {
+          // Update existing stats
+          const monthlyGifts = {
+            ...(existingStats.monthly_gifts as Record<string, number>),
+            [monthKey]: ((existingStats.monthly_gifts as Record<string, number>)[monthKey] || 0) + currentAlert.gift_count
+          };
+          
+          const yearlyGifts = {
+            ...(existingStats.yearly_gifts as Record<string, number>),
+            [yearKey]: ((existingStats.yearly_gifts as Record<string, number>)[yearKey] || 0) + currentAlert.gift_count
+          };
 
-        await supabase
-          .from('gift_stats')
-          .insert({
-            username: currentAlert.username,
-            total_gifts: currentAlert.gift_count,
-            last_gift_date: now.toISOString(),
-            monthly_gifts: monthlyGifts,
-            yearly_gifts: yearlyGifts
-          });
+          await supabase
+            .from('gift_stats')
+            .update({
+              total_gifts: existingStats.total_gifts + currentAlert.gift_count,
+              last_gift_date: now.toISOString(),
+              monthly_gifts: monthlyGifts,
+              yearly_gifts: yearlyGifts
+            })
+            .eq('username', currentAlert.username);
+        } else {
+          // Create new stats record
+          const monthlyGifts: Record<string, number> = { [monthKey]: currentAlert.gift_count };
+          const yearlyGifts: Record<string, number> = { [yearKey]: currentAlert.gift_count };
+
+          await supabase
+            .from('gift_stats')
+            .insert({
+              username: currentAlert.username,
+              total_gifts: currentAlert.gift_count,
+              last_gift_date: now.toISOString(),
+              monthly_gifts: monthlyGifts,
+              yearly_gifts: yearlyGifts
+            });
+        }
       }
     }
 
