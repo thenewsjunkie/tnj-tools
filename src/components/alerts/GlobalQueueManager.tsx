@@ -59,6 +59,7 @@ const GlobalQueueManager = () => {
           'Content-Type': 'application/json',
         },
       });
+      
       if (!response.ok) {
         console.error('[GlobalQueueManager] Failed to trigger leaderboard:', response.status);
       } else {
@@ -81,6 +82,7 @@ const GlobalQueueManager = () => {
       let timeout = 8000; // Default 8 seconds for video alerts
       
       if (currentAlert.alert?.is_gift_alert) {
+        console.log('[GlobalQueueManager] Setting up gift alert timer');
         // For gift alerts, give more time for the counting animation
         const giftCount = currentAlert.gift_count || 1;
         const animationSpeed = currentAlert.alert.gift_count_animation_speed || 100;
@@ -90,6 +92,8 @@ const GlobalQueueManager = () => {
         timeout = 5000; // 5 seconds for regular image alerts
       }
       
+      console.log('[GlobalQueueManager] Setting timer for', timeout, 'ms');
+      
       timerRef.current = setTimeout(async () => {
         console.log('[GlobalQueueManager] Alert timeout reached, marking as complete');
         await handleAlertComplete();
@@ -97,7 +101,10 @@ const GlobalQueueManager = () => {
         // If this was a gift alert, trigger the leaderboard
         if (currentAlert.alert?.is_gift_alert) {
           console.log('[GlobalQueueManager] Gift alert completed, triggering leaderboard');
-          await triggerLeaderboard();
+          // Add a small delay to ensure the alert is fully completed
+          setTimeout(async () => {
+            await triggerLeaderboard();
+          }, 500);
         }
       }, timeout);
     }
