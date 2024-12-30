@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import VideoAlert from "./media/VideoAlert";
 import ImageAlert from "./media/ImageAlert";
 import AlertMessage from "./AlertMessage";
-import { useNavigate } from "react-router-dom";
 
 interface AlertDisplayProps {
   currentAlert: {
@@ -26,17 +25,14 @@ export const AlertDisplay = ({
 }: AlertDisplayProps) => {
   const completedRef = useRef(false);
   const [showingScoreboard, setShowingScoreboard] = useState(false);
-  const navigate = useNavigate();
 
   const handleComplete = () => {
     if (!completedRef.current) {
       if (currentAlert.is_gift_alert) {
         // For gift alerts, show scoreboard before completing
+        console.log('[AlertDisplay] Showing scoreboard for gift alert');
         setShowingScoreboard(true);
-        setTimeout(() => {
-          completedRef.current = true;
-          onComplete();
-        }, 5000); // Show scoreboard for 5 seconds
+        // Don't mark as completed yet - wait for scoreboard timer
       } else {
         completedRef.current = true;
         onComplete();
@@ -100,6 +96,20 @@ export const AlertDisplay = ({
     };
   }, [currentAlert, onComplete]);
 
+  // Add a separate effect for handling scoreboard display
+  useEffect(() => {
+    if (showingScoreboard) {
+      console.log('[AlertDisplay] Starting scoreboard display timer');
+      const scoreboardTimer = setTimeout(() => {
+        console.log('[AlertDisplay] Scoreboard display complete, triggering alert completion');
+        completedRef.current = true;
+        onComplete();
+      }, 5000);
+
+      return () => clearTimeout(scoreboardTimer);
+    }
+  }, [showingScoreboard, onComplete]);
+
   const handleImageError = (error: any) => {
     console.error('[AlertDisplay] Image error:', error);
     handleComplete();
@@ -112,11 +122,13 @@ export const AlertDisplay = ({
 
   if (showingScoreboard) {
     return (
-      <iframe 
-        src="/leaderboard"
-        className="fixed top-0 left-0 w-full h-full border-none"
-        title="Leaderboard"
-      />
+      <div className="fixed inset-0 bg-black">
+        <iframe 
+          src="/leaderboard"
+          className="w-full h-full border-none"
+          title="Leaderboard"
+        />
+      </div>
     );
   }
 
