@@ -55,7 +55,7 @@ export const AlertDisplay = ({
   }
 
   if (showingScoreboard) {
-    return <Scoreboard limit={5} />;
+    return <Scoreboard limit={8} />;
   }
 
   return (
