@@ -6,10 +6,10 @@ interface UseAlertTimerProps {
     media_type?: string;
   };
   onComplete: () => void;
-  onShowLeaderboard: () => void;
+  onShowLeaderboard?: () => void;
 }
 
-export const useAlertTimer = ({ currentAlert, onComplete, onShowLeaderboard }: UseAlertTimerProps) => {
+export const useAlertTimer = ({ currentAlert, onComplete }: UseAlertTimerProps) => {
   const completedRef = useRef(false);
 
   useEffect(() => {
@@ -34,7 +34,7 @@ export const useAlertTimer = ({ currentAlert, onComplete, onShowLeaderboard }: U
     return () => {
       clearTimeout(timer);
     };
-  }, [currentAlert, onComplete, onShowLeaderboard]);
+  }, [currentAlert, onComplete]);
 
   return { completedRef };
 };
