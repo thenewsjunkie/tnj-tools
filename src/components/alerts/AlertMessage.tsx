@@ -23,10 +23,14 @@ const AlertMessage = ({
     // Extract username from the message
     const username = message.split(' ')[0];
     
+    // Replace {count} placeholder with actual count
+    const formattedMessage = message.replace('{count}', giftCount.toString());
+    
     console.log('[AlertMessage] Gift alert details:', {
       username,
       giftCount,
-      message
+      originalMessage: message,
+      formattedMessage
     });
     
     return (
@@ -39,14 +43,8 @@ const AlertMessage = ({
             color: giftTextColor
           }}
         >
-          {username} Gifted
+          {formattedMessage}
         </div>
-        <GiftCounter 
-          targetCount={giftCount}
-          animationSpeed={giftCountAnimationSpeed}
-          textColor={giftTextColor}
-          countColor={giftCountColor}
-        />
       </div>
     );
   }
