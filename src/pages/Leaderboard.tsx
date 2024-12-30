@@ -4,26 +4,37 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { GiftStats } from "@/integrations/supabase/types/tables/gifts";
 import { Crown } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 
 const Leaderboard = () => {
+  const [searchParams] = useSearchParams();
+  const limit = parseInt(searchParams.get('limit') || '10');
+
   const { data: giftStats, isLoading } = useQuery({
-    queryKey: ['giftStats'],
+    queryKey: ['giftStats', limit],
     queryFn: async () => {
+      console.log('[Leaderboard] Fetching top gifters with limit:', limit);
       const { data, error } = await supabase
         .from('gift_stats')
         .select('*')
         .order('total_gifts', { ascending: false })
-        .limit(10);
+        .limit(limit);
 
-      if (error) throw error;
+      if (error) {
+        console.error('[Leaderboard] Error fetching gift stats:', error);
+        throw error;
+      }
+      console.log('[Leaderboard] Fetched gift stats:', data);
       return data as GiftStats[];
     },
+    staleTime: 1000, // Reduce stale time to refresh more frequently
+    cacheTime: 5000, // Reduce cache time for more frequent updates
   });
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-8 space-y-4">
-        <Card className="p-8 bg-[#1A1F2C]">
+      <div className="container mx-auto p-4">
+        <Card className="p-4 bg-[#1A1F2C]">
           <Skeleton className="h-16" />
         </Card>
       </div>
@@ -31,9 +42,9 @@ const Leaderboard = () => {
   }
 
   return (
-    <div className="container mx-auto p-8">
-      <Card className="p-8 bg-[#1A1F2C] border-0">
-        <div className="space-y-2 mb-8">
+    <div className="container mx-auto p-4">
+      <Card className="p-4 bg-[#1A1F2C] border-0">
+        <div className="space-y-2 mb-4">
           <div className="flex items-center gap-2">
             <Crown className="h-6 w-6 text-yellow-500" />
             <h1 className="text-2xl font-bold text-white">Top Gifters</h1>
@@ -42,13 +53,13 @@ const Leaderboard = () => {
         </div>
 
         {!giftStats?.length ? (
-          <div className="text-center py-12">
+          <div className="text-center py-8">
             <p className="text-[#8A898C]">No gift statistics available yet</p>
           </div>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-2">
             {giftStats.map((stat, index) => (
-              <Card key={stat.id} className="p-6 bg-black/20 border-0">
+              <Card key={stat.id} className="p-4 bg-black/20 border-0">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className="text-2xl font-bold text-yellow-500 w-8">
