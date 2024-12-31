@@ -50,26 +50,6 @@ const GlobalQueueManager = () => {
     };
   }, [isPaused, currentAlert, processNextAlert]);
 
-  const triggerLeaderboard = async () => {
-    try {
-      console.log('[GlobalQueueManager] Triggering leaderboard');
-      const response = await fetch('/leaderboard/obs', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        console.error('[GlobalQueueManager] Failed to trigger leaderboard:', response.status);
-      } else {
-        console.log('[GlobalQueueManager] Leaderboard triggered successfully');
-      }
-    } catch (error) {
-      console.error('[GlobalQueueManager] Error triggering leaderboard:', error);
-    }
-  };
-
   useEffect(() => {
     if (timerRef.current) {
       clearTimeout(timerRef.current);
@@ -97,15 +77,6 @@ const GlobalQueueManager = () => {
       timerRef.current = setTimeout(async () => {
         console.log('[GlobalQueueManager] Alert timeout reached, marking as complete');
         await handleAlertComplete();
-
-        // If this was a gift alert, trigger the leaderboard
-        if (currentAlert.alert?.is_gift_alert) {
-          console.log('[GlobalQueueManager] Gift alert completed, triggering leaderboard');
-          // Add a small delay to ensure the alert is fully completed
-          setTimeout(async () => {
-            await triggerLeaderboard();
-          }, 500);
-        }
       }, timeout);
     }
 
