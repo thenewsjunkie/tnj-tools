@@ -62,10 +62,6 @@ export default {
         },
       },
       keyframes: {
-        "led-flicker": {
-          "0%, 100%": { opacity: "1" },
-          "50%": { opacity: "0.95" },
-        },
         marquee: {
           '0%': { transform: 'translateX(0)' },
           '100%': { transform: 'translateX(-100%)' },
@@ -88,7 +84,6 @@ export default {
         },
       },
       animation: {
-        "led-flicker": "led-flicker 2s ease-in-out infinite",
         "marquee": "marquee 60s linear infinite",
         "slide-in-bottom": "slide-in-bottom 0.6s ease-out",
         "slide-out-bottom": "slide-out-bottom 0.6s ease-out",
