@@ -23,7 +23,7 @@ export const useAlertTimer = ({
         completedRef.current = true;
         onComplete();
       }
-    }, 8000); // 8 seconds timeout
+    }, 10000); // 10 seconds timeout
 
     return () => {
       clearTimeout(timer);

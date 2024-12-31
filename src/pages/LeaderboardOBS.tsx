@@ -66,7 +66,7 @@ const LeaderboardOBS = () => {
         return;
       }
 
-      // Auto-hide after 8 seconds
+      // Auto-hide after 10 seconds
       setTimeout(async () => {
         console.log('[LeaderboardOBS] Auto-hiding leaderboard');
         const { error: hideError } = await supabase
@@ -80,7 +80,7 @@ const LeaderboardOBS = () => {
         if (hideError) {
           console.error('[LeaderboardOBS] Error hiding leaderboard:', hideError);
         }
-      }, 8000);
+      }, 10000);
     };
 
     // Handle POST requests using a custom event
