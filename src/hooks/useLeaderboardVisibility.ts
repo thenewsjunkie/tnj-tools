@@ -2,8 +2,15 @@ import { useEffect, useRef } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types/helpers";
 import type { LeaderboardVisibilityValue } from "@/integrations/supabase/types/tables/system";
+import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 export const LEADERBOARD_DISPLAY_DURATION = 10000; // 10 seconds
+
+type SystemSettingsRow = {
+  key: string;
+  value: Json;
+  updated_at: string;
+}
 
 export const useLeaderboardVisibility = () => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -90,13 +97,15 @@ export const useLeaderboardVisibility = () => {
           table: 'system_settings',
           filter: 'key=eq.leaderboard_visibility'
         },
-        (payload) => {
+        (payload: RealtimePostgresChangesPayload<SystemSettingsRow>) => {
           console.log('[useLeaderboardVisibility] Received visibility update:', payload);
-          const newValue = payload.new.value as { isVisible: boolean };
-          
-          // Only start timer when visibility changes to true
-          if (newValue.isVisible) {
-            startHideTimer();
+          if (payload.new && typeof payload.new.value === 'object' && payload.new.value !== null) {
+            const newValue = payload.new.value as { isVisible: boolean };
+            
+            // Only start timer when visibility changes to true
+            if (newValue.isVisible) {
+              startHideTimer();
+            }
           }
         }
       )
