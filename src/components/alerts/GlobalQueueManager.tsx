@@ -79,7 +79,7 @@ const GlobalQueueManager = () => {
     if (currentAlert && !isPaused) {
       console.log('[GlobalQueueManager] Setting up completion timer for alert:', currentAlert);
       
-      let timeout = 8000; // Default 8 seconds for video alerts
+      let timeout = 6000; // Changed from 8000 to 6000 for video alerts
       
       if (currentAlert.alert?.is_gift_alert) {
         console.log('[GlobalQueueManager] Setting up gift alert timer');
