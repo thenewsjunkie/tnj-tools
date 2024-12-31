@@ -109,8 +109,10 @@ const LowerThird = () => {
             </div>
           </div>
         ) : (
-          <div className="bg-black/85 text-white px-8 py-4 text-xl font-bold uppercase">
-            {type}
+          <div className="absolute -top-12 left-0 z-10">
+            <div className="bg-black/85 text-white px-8 py-4 text-xl font-bold uppercase">
+              {type}
+            </div>
           </div>
         )}
 
