@@ -39,8 +39,8 @@ const StreamReview = () => {
   const Icon = icons[activeReview.type];
 
   return (
-    <div className="min-h-screen w-screen flex items-center justify-center">
-      <div className="flex flex-col items-center max-w-fit bg-black/60 rounded-xl backdrop-blur-sm border border-white/10">
+    <div className="min-h-screen w-screen">
+      <div className="flex flex-col items-start max-w-fit bg-black/60 rounded-xl backdrop-blur-sm border border-white/10">
         <div className="w-full flex items-center justify-between p-4">
           <div className="flex items-center gap-3">
             <Icon className="h-8 w-8 text-yellow-500" />
