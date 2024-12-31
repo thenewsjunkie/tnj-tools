@@ -39,23 +39,24 @@ const StreamReview = () => {
   const Icon = icons[activeReview.type];
 
   return (
-    <div className="min-h-screen w-screen p-4 md:p-8 flex items-center justify-center">
-      <div className="w-full max-w-[90vw] space-y-6 bg-black/60 p-6 md:p-8 rounded-xl backdrop-blur-sm border border-white/10">
-        <div className="flex items-center gap-3">
-          <Icon className="h-8 w-8 text-neon-red" />
-          <h2 className="text-2xl md:text-3xl font-semibold text-white/90">{activeReview.title}</h2>
+    <div className="min-h-screen w-screen flex items-center justify-center">
+      <div className="flex flex-col items-center max-w-fit bg-black/60 rounded-xl backdrop-blur-sm border border-white/10">
+        <div className="w-full flex items-center justify-between p-4">
+          <div className="flex items-center gap-3">
+            <Icon className="h-8 w-8 text-neon-red" />
+            <h2 className="text-2xl md:text-3xl font-semibold text-white/90">{activeReview.title}</h2>
+          </div>
+          <div className="text-3xl md:text-4xl text-yellow-500 ml-6">
+            {"★".repeat(activeReview.rating)}{"☆".repeat(5-activeReview.rating)}
+          </div>
         </div>
         
-        <div className="text-2xl md:text-3xl text-yellow-500">
-          {"★".repeat(activeReview.rating)}{"☆".repeat(5-activeReview.rating)}
-        </div>
-
         {activeReview.image_urls?.length > 0 && (
-          <div className="flex justify-center items-center">
+          <div className="flex justify-center">
             <img 
               src={activeReview.image_urls[0]} 
               alt={activeReview.title}
-              className="rounded-lg h-[70vh] w-auto object-contain bg-black/40 p-2"
+              className="h-[75vh] w-auto object-contain bg-black/40"
             />
           </div>
         )}
