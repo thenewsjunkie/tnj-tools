@@ -3,10 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tv, Film, Utensils, Package } from "lucide-react";
 import type { Review } from "@/components/reviews/types";
 
-interface ActiveReviewSettings {
-  review_id: string | null;
-}
-
 const StreamReview = () => {
   const { data: activeReview } = useQuery({
     queryKey: ['active-review'],
@@ -55,16 +51,14 @@ const StreamReview = () => {
         </div>
 
         {activeReview.image_urls?.length > 0 && (
-          <div className="relative">
+          <div className="relative flex justify-center">
             <img 
               src={activeReview.image_urls[0]} 
               alt={activeReview.title}
-              className="rounded-lg w-full h-auto object-contain max-h-[400px] bg-black/40 p-2"
+              className="rounded-lg h-[60vh] w-auto object-contain bg-black/40 p-2"
             />
           </div>
         )}
-
-        <p className="text-2xl text-white/90 leading-relaxed">{activeReview.content}</p>
       </div>
     </div>
   );
