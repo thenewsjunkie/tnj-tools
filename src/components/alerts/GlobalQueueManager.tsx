@@ -71,36 +71,36 @@ const GlobalQueueManager = () => {
         // - First 10 gifts: normal speed (baseAnimationSpeed)
         // - 11-50 gifts: 1.5x faster (baseAnimationSpeed / 1.5)
         // - 50+ gifts: 3x faster (baseAnimationSpeed / 3)
-        let countingTime;
-        if (giftCount <= 10) {
-          countingTime = giftCount * baseAnimationSpeed;
-        } else if (giftCount <= 50) {
-          // First 10 at normal speed, rest at 1.5x speed
-          countingTime = (10 * baseAnimationSpeed) + 
-                        ((giftCount - 10) * (baseAnimationSpeed / 1.5));
-        } else {
-          // First 10 at normal speed
-          // Next 40 at 1.5x speed
-          // Remainder at 3x speed
-          countingTime = (10 * baseAnimationSpeed) + 
-                        (40 * (baseAnimationSpeed / 1.5)) + 
-                        ((giftCount - 50) * (baseAnimationSpeed / 3));
-        }
+        
+        // Calculate time needed for each segment
+        const firstSegmentCount = Math.min(10, giftCount);
+        const secondSegmentCount = Math.max(0, Math.min(40, giftCount - 10)); // Up to next 40 gifts (11-50)
+        const thirdSegmentCount = Math.max(0, giftCount - 50); // Remaining gifts beyond 50
+        
+        const firstSegmentTime = firstSegmentCount * baseAnimationSpeed;
+        const secondSegmentTime = secondSegmentCount * (baseAnimationSpeed / 1.5);
+        const thirdSegmentTime = thirdSegmentCount * (baseAnimationSpeed / 3);
+        
+        const countingTime = firstSegmentTime + secondSegmentTime + thirdSegmentTime;
+        
+        console.log('[GlobalQueueManager] Calculated gift alert timing:', {
+          giftCount,
+          baseAnimationSpeed,
+          segments: {
+            first: { count: firstSegmentCount, time: firstSegmentTime },
+            second: { count: secondSegmentCount, time: secondSegmentTime },
+            third: { count: thirdSegmentCount, time: thirdSegmentTime }
+          },
+          totalCountingTime: countingTime,
+          speedMultipliers: {
+            normal: '1x (100%)',
+            medium: '1.5x (~67ms per count)',
+            high: '3x (~33ms per count)'
+          }
+        });
         
         // Base time (8s) plus calculated counting time plus buffer
         timeout = 8000 + countingTime + 2000;
-        
-        console.log('[GlobalQueueManager] Calculated gift alert timeout:', {
-          giftCount,
-          baseAnimationSpeed,
-          countingTime,
-          totalTimeout: timeout,
-          speedMultipliers: {
-            normal: '1x',
-            medium: '1.5x',
-            high: '3x'
-          }
-        });
       } else if (currentAlert.alert?.media_type && !currentAlert.alert.media_type.startsWith('video')) {
         timeout = 5000; // 5 seconds for regular image alerts
       }
