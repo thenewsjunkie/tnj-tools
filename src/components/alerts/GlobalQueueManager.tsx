@@ -65,20 +65,23 @@ const GlobalQueueManager = () => {
         console.log('[GlobalQueueManager] Setting up gift alert timer');
         // For gift alerts, calculate time based on count
         const giftCount = currentAlert.gift_count || 1;
-        const animationSpeed = currentAlert.alert.gift_count_animation_speed || 100;
+        const baseAnimationSpeed = currentAlert.alert.gift_count_animation_speed || 100;
         
         // Progressive timing formula:
-        // - First 10 gifts: full animation speed
-        // - 11-50 gifts: gradually faster
-        // - 50+ gifts: even faster to prevent extremely long waits
+        // - First 10 gifts: normal speed
+        // - 11-50 gifts: 30% faster
+        // - 50+ gifts: 60% faster
         let countingTime;
         if (giftCount <= 10) {
-          countingTime = giftCount * animationSpeed;
+          countingTime = giftCount * baseAnimationSpeed;
         } else if (giftCount <= 50) {
-          countingTime = (10 * animationSpeed) + ((giftCount - 10) * (animationSpeed * 0.7));
+          // Speed up by reducing the time per count by 30%
+          countingTime = (10 * baseAnimationSpeed) + ((giftCount - 10) * (baseAnimationSpeed * 0.7));
         } else {
-          countingTime = (10 * animationSpeed) + (40 * (animationSpeed * 0.7)) + 
-                        ((giftCount - 50) * (animationSpeed * 0.4));
+          // Speed up even more for higher counts by reducing time per count by 60%
+          countingTime = (10 * baseAnimationSpeed) + 
+                        (40 * (baseAnimationSpeed * 0.7)) + 
+                        ((giftCount - 50) * (baseAnimationSpeed * 0.4));
         }
         
         // Base time (8s) plus calculated counting time plus buffer
@@ -86,7 +89,7 @@ const GlobalQueueManager = () => {
         
         console.log('[GlobalQueueManager] Calculated gift alert timeout:', {
           giftCount,
-          animationSpeed,
+          baseAnimationSpeed,
           countingTime,
           totalTimeout: timeout
         });
