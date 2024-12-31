@@ -5,7 +5,7 @@ import QueueControlHandler from "@/components/alerts/url-handlers/QueueControlHa
 import AlertTriggerHandler from "@/components/alerts/url-handlers/AlertTriggerHandler";
 
 const Alerts = () => {
-  const { alertSlug, username, action } = useParams();
+  const { alertSlug, username, action, giftCount } = useParams();
   const { currentAlert, handleAlertComplete } = useAlertQueue();
 
   // Effect to log current alert state
@@ -22,7 +22,7 @@ const Alerts = () => {
       <>
         <QueueControlHandler action={action} />
         {/* Only render AlertTriggerHandler if we're not on a queue control URL */}
-        {!action && <AlertTriggerHandler alertSlug={alertSlug} username={username} />}
+        {!action && <AlertTriggerHandler alertSlug={alertSlug} username={username} giftCount={giftCount} />}
       </>
     );
   }
@@ -38,7 +38,7 @@ const Alerts = () => {
       : currentAlert.alert.message_text,
     font_size: currentAlert.alert.font_size,
     is_gift_alert: currentAlert.alert.is_gift_alert,
-    gift_count: currentAlert.gift_count,
+    gift_count: currentAlert.gift_count || 1, // Use the gift_count from the queue or default to 1
     gift_count_animation_speed: currentAlert.alert.gift_count_animation_speed,
     gift_text_color: currentAlert.alert.gift_text_color,
     gift_count_color: currentAlert.alert.gift_count_color
@@ -47,7 +47,7 @@ const Alerts = () => {
   return (
     <>
       <QueueControlHandler action={action} />
-      {!action && <AlertTriggerHandler alertSlug={alertSlug} username={username} />}
+      {!action && <AlertTriggerHandler alertSlug={alertSlug} username={username} giftCount={giftCount} />}
       <AlertDisplay
         currentAlert={displayAlert}
         onComplete={handleAlertComplete}
