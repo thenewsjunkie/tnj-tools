@@ -68,20 +68,23 @@ const GlobalQueueManager = () => {
         const baseAnimationSpeed = currentAlert.alert.gift_count_animation_speed || 100;
         
         // Progressive timing formula:
-        // - First 10 gifts: normal speed
-        // - 11-50 gifts: 1.5x faster
-        // - 50+ gifts: 3x faster
+        // - First 10 gifts: normal speed (baseAnimationSpeed)
+        // - 11-50 gifts: 1.5x faster (baseAnimationSpeed * 1.5)
+        // - 50+ gifts: 3x faster (baseAnimationSpeed * 3)
         let countingTime;
         if (giftCount <= 10) {
           countingTime = giftCount * baseAnimationSpeed;
         } else if (giftCount <= 50) {
-          // Speed up by increasing speed by 50%
-          countingTime = (10 * baseAnimationSpeed) + ((giftCount - 10) * (baseAnimationSpeed / 1.5));
-        } else {
-          // Speed up even more for higher counts by tripling the speed
+          // First 10 at normal speed, rest at 1.5x speed
           countingTime = (10 * baseAnimationSpeed) + 
-                        (40 * (baseAnimationSpeed / 1.5)) + 
-                        ((giftCount - 50) * (baseAnimationSpeed / 3));
+                        ((giftCount - 10) * (baseAnimationSpeed * 1.5));
+        } else {
+          // First 10 at normal speed
+          // Next 40 at 1.5x speed
+          // Remainder at 3x speed
+          countingTime = (10 * baseAnimationSpeed) + 
+                        (40 * (baseAnimationSpeed * 1.5)) + 
+                        ((giftCount - 50) * (baseAnimationSpeed * 3));
         }
         
         // Base time (8s) plus calculated counting time plus buffer
