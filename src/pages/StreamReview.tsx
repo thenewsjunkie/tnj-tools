@@ -43,7 +43,7 @@ const StreamReview = () => {
       <div className="flex flex-col items-center max-w-fit bg-black/60 rounded-xl backdrop-blur-sm border border-white/10">
         <div className="w-full flex items-center justify-between p-4">
           <div className="flex items-center gap-3">
-            <Icon className="h-8 w-8 text-neon-red" />
+            <Icon className="h-8 w-8 text-yellow-500" />
             <h2 className="text-2xl md:text-3xl font-semibold text-white/90">{activeReview.title}</h2>
           </div>
           <div className="text-3xl md:text-4xl text-yellow-500 ml-6">
