@@ -35,18 +35,17 @@ const TickerText = ({ text }: TickerTextProps) => {
           className="animate-none"
           style={{
             animation: `marquee ${duration}s linear infinite`,
-            paddingRight: '50px'
+            paddingRight: '100vw' // Add full viewport width as padding to prevent overlap
           }}
         >
           {text}
         </div>
         <div 
-          className="absolute top-0"
+          className="absolute top-0 left-full"
           style={{
-            left: '100%',
             animation: `marquee ${duration}s linear infinite`,
-            animationDelay: `-${duration / 2}s`,
-            paddingRight: '50px'
+            animationDelay: `${duration / 2}s`,
+            paddingRight: '100vw' // Add full viewport width as padding to prevent overlap
           }}
         >
           {text}
