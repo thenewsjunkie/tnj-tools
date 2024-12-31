@@ -3,6 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LeaderboardCard } from "@/components/leaderboard/LeaderboardCard";
 import { useLeaderboardVisibility } from "@/hooks/useLeaderboardVisibility";
+import type { Json } from "@/integrations/supabase/types/helpers";
+import type { GiftStats } from "@/integrations/supabase/types/tables/gifts";
+
+interface LeaderboardVisibilityValue {
+  isVisible: boolean;
+}
 
 const LeaderboardOBS = () => {
   // Set up visibility handling
@@ -24,7 +30,7 @@ const LeaderboardOBS = () => {
         throw error;
       }
       console.log('[LeaderboardOBS] Fetched gift stats:', data);
-      return data;
+      return data as GiftStats[];
     },
   });
 
