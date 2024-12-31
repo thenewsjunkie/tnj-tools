@@ -117,29 +117,38 @@ const LowerThird = () => {
           </div>
         )}
 
-        <div className="flex-1 bg-white/85 text-black p-4 pt-8 self-end">
-          <div className="flex justify-between items-start w-full">
-            <div className="space-y-2 flex-1 min-w-0">
-              {primary_text && (
-                <h1 className={`text-7xl font-bold leading-tight ${type === 'guest' ? 'border-b-4 border-neon-red inline-block pr-6 -mr-6' : ''}`}>
-                  {primary_text}
-                </h1>
-              )}
-              {secondary_text && (
-                <p className="text-5xl text-black/80 whitespace-nowrap overflow-hidden text-ellipsis">
-                  {secondary_text}
-                </p>
-              )}
-            </div>
-            <div className="flex items-center gap-2 ml-auto">
-              <TimeDisplay currentTime={currentTime} show={show_time} />
-              {logo_url && (
-                <img 
-                  src={logo_url} 
-                  alt="Logo"
-                  className="h-40 w-auto object-contain"
-                />
-              )}
+        <div className="flex-1 relative overflow-hidden">
+          {/* Professional gradient background */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#221F26] to-[#403E43] opacity-95"></div>
+          
+          {/* Accent line */}
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-neon-red"></div>
+          
+          {/* Content with enhanced styling */}
+          <div className="relative p-6 pt-8">
+            <div className="flex justify-between items-start w-full">
+              <div className="space-y-2 flex-1 min-w-0">
+                {primary_text && (
+                  <h1 className={`text-7xl font-bold leading-tight text-white ${type === 'guest' ? 'border-b-2 border-neon-red inline-block pr-6 -mr-6' : ''}`}>
+                    {primary_text}
+                  </h1>
+                )}
+                {secondary_text && (
+                  <p className="text-5xl text-white/90 whitespace-nowrap overflow-hidden text-ellipsis font-light">
+                    {secondary_text}
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center gap-4 ml-auto">
+                <TimeDisplay currentTime={currentTime} show={show_time} />
+                {logo_url && (
+                  <img 
+                    src={logo_url} 
+                    alt="Logo"
+                    className="h-40 w-auto object-contain"
+                  />
+                )}
+              </div>
             </div>
           </div>
         </div>
