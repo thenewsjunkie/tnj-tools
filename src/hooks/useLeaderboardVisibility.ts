@@ -77,6 +77,24 @@ export const useLeaderboardVisibility = () => {
         },
         (payload) => {
           console.log('[useLeaderboardVisibility] Received visibility update:', payload);
+          // Trigger auto-hide if visibility was just set to true
+          const newValue = payload.new.value as { isVisible: boolean };
+          if (newValue.isVisible) {
+            setTimeout(async () => {
+              console.log('[useLeaderboardVisibility] Auto-hiding leaderboard from subscription update');
+              const { error: hideError } = await supabase
+                .from('system_settings')
+                .upsert({
+                  key: 'leaderboard_visibility',
+                  value: { isVisible: false } as unknown as Json,
+                  updated_at: new Date().toISOString()
+                });
+
+              if (hideError) {
+                console.error('[useLeaderboardVisibility] Error hiding leaderboard:', hideError);
+              }
+            }, LEADERBOARD_DISPLAY_DURATION);
+          }
         }
       )
       .subscribe((status) => {
