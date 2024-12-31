@@ -99,7 +99,15 @@ export const useLeaderboardVisibility = () => {
         },
         (payload: RealtimePostgresChangesPayload<SystemSettingsRow>) => {
           console.log('[useLeaderboardVisibility] Received visibility update:', payload);
-          if (payload.new && typeof payload.new.value === 'object' && payload.new.value !== null) {
+          
+          // Check if payload.new exists and has the expected structure
+          if (payload.new && 
+              typeof payload.new === 'object' && 
+              'value' in payload.new && 
+              payload.new.value !== null && 
+              typeof payload.new.value === 'object') {
+            
+            // Type assertion after runtime checks
             const newValue = payload.new.value as { isVisible: boolean };
             
             // Only start timer when visibility changes to true
