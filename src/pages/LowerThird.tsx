@@ -9,6 +9,7 @@ const LowerThird = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isVisible, setIsVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [logoLoaded, setLogoLoaded] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -29,6 +30,7 @@ const LowerThird = () => {
         setTimeout(() => {
           setLowerThird(null);
           setIsLoading(false);
+          setLogoLoaded(false);
         }, 400);
         return;
       }
@@ -37,16 +39,18 @@ const LowerThird = () => {
         setIsVisible(false);
         setTimeout(() => {
           setLowerThird(data);
-          setTimeout(() => {
-            setIsVisible(true);
-            setIsLoading(false);
-          }, 50);
+          if (!data.logo_url) {
+            // If there's no logo, we can show the content immediately
+            setLogoLoaded(true);
+          }
+          setIsLoading(false);
         }, 400);
       } else {
         setIsVisible(false);
         setTimeout(() => {
           setLowerThird(null);
           setIsLoading(false);
+          setLogoLoaded(false);
         }, 400);
       }
     };
@@ -69,11 +73,15 @@ const LowerThird = () => {
             setIsVisible(false);
             setTimeout(() => {
               setLowerThird(null);
+              setLogoLoaded(false);
             }, 400);
           } else {
             setIsVisible(false);
             setTimeout(() => {
               setLowerThird(payload.new as Tables<"lower_thirds">);
+              if (!payload.new.logo_url) {
+                setLogoLoaded(true);
+              }
               setTimeout(() => {
                 setIsVisible(true);
               }, 50);
@@ -98,11 +106,15 @@ const LowerThird = () => {
               setIsVisible(false);
               setTimeout(() => {
                 setLowerThird(null);
+                setLogoLoaded(false);
               }, 400);
             } else {
               setIsVisible(false);
               setTimeout(() => {
                 setLowerThird(payload.new as Tables<"lower_thirds">);
+                if (!payload.new.logo_url) {
+                  setLogoLoaded(true);
+                }
                 setTimeout(() => {
                   setIsVisible(true);
                 }, 50);
@@ -120,7 +132,28 @@ const LowerThird = () => {
     };
   }, [lowerThird?.id]);
 
-  if (!lowerThird || isLoading) return null;
+  // Effect to handle logo loading and visibility
+  useEffect(() => {
+    if (lowerThird && !isLoading) {
+      if (lowerThird.logo_url) {
+        const img = new Image();
+        img.onload = () => {
+          setLogoLoaded(true);
+          setTimeout(() => {
+            setIsVisible(true);
+          }, 50);
+        };
+        img.src = lowerThird.logo_url;
+      } else {
+        // If there's no logo, show content immediately
+        setTimeout(() => {
+          setIsVisible(true);
+        }, 50);
+      }
+    }
+  }, [lowerThird, isLoading]);
+
+  if (!lowerThird || isLoading || !logoLoaded) return null;
 
   const { primary_text, secondary_text, ticker_text, show_time, type, guest_image_url, logo_url } = lowerThird;
 
