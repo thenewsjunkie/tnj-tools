@@ -16,18 +16,6 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
 
       if (visibilityError) {
         console.error('[useQueueActions] Error updating leaderboard visibility:', visibilityError);
-      }
-
-      // Trigger leaderboard endpoint
-      const response = await fetch('/leaderboard/obs', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        console.error('[useQueueActions] Failed to trigger leaderboard:', response.status);
       } else {
         console.log('[useQueueActions] Leaderboard triggered successfully');
       }
