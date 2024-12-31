@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LeaderboardCard } from "@/components/leaderboard/LeaderboardCard";
 import { useLeaderboardVisibility } from "@/hooks/useLeaderboardVisibility";
+import { useEffect } from "react";
 import type { Json } from "@/integrations/supabase/types/helpers";
 import type { GiftStats } from "@/integrations/supabase/types/tables/gifts";
 
@@ -35,7 +36,7 @@ const LeaderboardOBS = () => {
   });
 
   // Check visibility state with realtime updates
-  const { data: visibility } = useQuery({
+  const { data: visibility, refetch: refetchVisibility } = useQuery({
     queryKey: ['leaderboardVisibility'],
     queryFn: async () => {
       console.log('[LeaderboardOBS] Fetching visibility state');
@@ -54,8 +55,33 @@ const LeaderboardOBS = () => {
       return value && typeof value === 'object' && 'isVisible' in value ? 
         (value as unknown as LeaderboardVisibilityValue).isVisible : false;
     },
-    refetchInterval: 1000, // Poll every second to ensure we catch visibility changes
   });
+
+  // Subscribe to visibility changes
+  useEffect(() => {
+    const channel = supabase
+      .channel('leaderboard-visibility-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'system_settings',
+          filter: 'key=eq.leaderboard_visibility'
+        },
+        () => {
+          console.log('[LeaderboardOBS] Visibility changed, refetching...');
+          refetchVisibility();
+        }
+      )
+      .subscribe((status) => {
+        console.log('[LeaderboardOBS] Subscription status:', status);
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refetchVisibility]);
 
   if (isLoading) {
     return (
