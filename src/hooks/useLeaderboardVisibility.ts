@@ -23,11 +23,11 @@ export const useLeaderboardVisibility = () => {
       console.log('[useLeaderboardVisibility] Auto-hiding leaderboard');
       const { error: hideError } = await supabase
         .from('system_settings')
-        .upsert({
-          key: 'leaderboard_visibility',
+        .update({
           value: { isVisible: false } as unknown as Json,
           updated_at: new Date().toISOString()
-        });
+        })
+        .eq('key', 'leaderboard_visibility');
 
       if (hideError) {
         console.error('[useLeaderboardVisibility] Error hiding leaderboard:', hideError);
@@ -41,11 +41,11 @@ export const useLeaderboardVisibility = () => {
     // Update visibility in database
     const { error } = await supabase
       .from('system_settings')
-      .upsert({
-        key: 'leaderboard_visibility',
+      .update({
         value: { isVisible: true } as unknown as Json,
         updated_at: new Date().toISOString()
-      });
+      })
+      .eq('key', 'leaderboard_visibility');
 
     if (error) {
       console.error('[useLeaderboardVisibility] Error updating visibility:', error);
@@ -85,7 +85,7 @@ export const useLeaderboardVisibility = () => {
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*',
           schema: 'public',
           table: 'system_settings',
           filter: 'key=eq.leaderboard_visibility'
