@@ -34,7 +34,7 @@ const LeaderboardOBS = () => {
     },
   });
 
-  // Check visibility state
+  // Check visibility state with realtime updates
   const { data: visibility } = useQuery({
     queryKey: ['leaderboardVisibility'],
     queryFn: async () => {
@@ -54,6 +54,7 @@ const LeaderboardOBS = () => {
       return value && typeof value === 'object' && 'isVisible' in value ? 
         (value as unknown as LeaderboardVisibilityValue).isVisible : false;
     },
+    refetchInterval: 1000, // Poll every second to ensure we catch visibility changes
   });
 
   if (isLoading) {
