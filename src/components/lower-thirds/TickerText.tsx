@@ -6,7 +6,7 @@ const TickerText = ({ text }: TickerTextProps) => {
   if (!text) return null;
 
   return (
-    <div className="mt-2 bg-black/90 text-white p-3 w-full overflow-hidden whitespace-nowrap animate-slide-in-bottom text-xl md:text-2xl" style={{ animationDelay: '300ms' }}>
+    <div className="mt-2 bg-black/90 text-white p-4 w-full overflow-hidden whitespace-nowrap animate-slide-in-bottom text-3xl md:text-4xl" style={{ animationDelay: '300ms' }}>
       <div className="relative inline-flex whitespace-nowrap">
         <div 
           className="animate-[marquee_60s_linear_infinite]"
