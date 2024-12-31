@@ -16,8 +16,8 @@ const TickerText = ({ text }: TickerTextProps) => {
     const containerWidth = containerRef.current.offsetWidth;
     const textWidth = textRef.current.offsetWidth;
 
-    // Calculate duration based on text length (20 pixels per second)
-    const newDuration = textWidth / 20;
+    // Calculate duration based on text length (125 pixels per second)
+    const newDuration = textWidth / 125;
     setDuration(newDuration);
   }, [text]);
 
