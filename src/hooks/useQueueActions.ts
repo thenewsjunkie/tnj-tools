@@ -57,7 +57,7 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
       const { error: historyError } = await supabase
         .from('gift_history')
         .insert({
-          gifter_username: currentAlert.username.toLowerCase(), // Ensure username is lowercase
+          gifter_username: currentAlert.username.toLowerCase(),
           gift_count: currentAlert.gift_count,
           alert_queue_id: currentAlert.id
         });
@@ -66,11 +66,11 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
         console.error('[useQueueActions] Error recording gift history:', historyError);
       }
 
-      // Get existing stats with proper headers
+      // Get existing stats
       const { data: existingStats, error: statsError } = await supabase
         .from('gift_stats')
         .select('*')
-        .eq('username', currentAlert.username.toLowerCase()) // Ensure username is lowercase
+        .eq('username', currentAlert.username.toLowerCase())
         .maybeSingle();
 
       if (!statsError) {
@@ -98,7 +98,7 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
               monthly_gifts: monthlyGifts,
               yearly_gifts: yearlyGifts
             })
-            .eq('username', currentAlert.username.toLowerCase()); // Ensure username is lowercase
+            .eq('username', currentAlert.username.toLowerCase());
         } else {
           // Create new stats record
           const monthlyGifts: Record<string, number> = { [monthKey]: currentAlert.gift_count };
@@ -107,7 +107,7 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
           await supabase
             .from('gift_stats')
             .insert({
-              username: currentAlert.username.toLowerCase(), // Ensure username is lowercase
+              username: currentAlert.username.toLowerCase(),
               total_gifts: currentAlert.gift_count,
               last_gift_date: now.toISOString(),
               monthly_gifts: monthlyGifts,
@@ -115,8 +115,7 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
             });
         }
 
-        // Trigger leaderboard after gift stats are updated
-        console.log('[useQueueActions] Gift stats updated, triggering leaderboard');
+        // Only trigger leaderboard after gift stats are fully updated
         await triggerLeaderboard();
       }
     }
