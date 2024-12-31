@@ -7,6 +7,7 @@ import TickerText from "@/components/lower-thirds/TickerText";
 const LowerThird = () => {
   const [lowerThird, setLowerThird] = useState<Tables<"lower_thirds"> | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -23,11 +24,22 @@ const LowerThird = () => {
       if (error) {
         console.error("Error fetching lower third:", error);
         setLowerThird(null);
+        setIsVisible(false);
         return;
       }
 
-      console.log("Active lower third:", data);
-      setLowerThird(data);
+      if (data) {
+        setIsVisible(false);
+        setTimeout(() => {
+          setLowerThird(data);
+          setIsVisible(true);
+        }, 400); // Wait for fade out before updating content
+      } else {
+        setIsVisible(false);
+        setTimeout(() => {
+          setLowerThird(null);
+        }, 400);
+      }
     };
 
     fetchActiveLowerThird();
@@ -45,9 +57,16 @@ const LowerThird = () => {
         (payload) => {
           console.log("Lower third changed:", payload);
           if (payload.eventType === "DELETE" || !payload.new.is_active) {
-            setLowerThird(null);
+            setIsVisible(false);
+            setTimeout(() => {
+              setLowerThird(null);
+            }, 400);
           } else {
-            setLowerThird(payload.new as Tables<"lower_thirds">);
+            setIsVisible(false);
+            setTimeout(() => {
+              setLowerThird(payload.new as Tables<"lower_thirds">);
+              setIsVisible(true);
+            }, 400);
           }
         }
       )
@@ -65,9 +84,16 @@ const LowerThird = () => {
         (payload) => {
           if (lowerThird && payload.old.id === lowerThird.id) {
             if (!payload.new.is_active) {
-              setLowerThird(null);
+              setIsVisible(false);
+              setTimeout(() => {
+                setLowerThird(null);
+              }, 400);
             } else {
-              setLowerThird(payload.new as Tables<"lower_thirds">);
+              setIsVisible(false);
+              setTimeout(() => {
+                setLowerThird(payload.new as Tables<"lower_thirds">);
+                setIsVisible(true);
+              }, 400);
             }
           }
         }
@@ -86,11 +112,11 @@ const LowerThird = () => {
   const { primary_text, secondary_text, ticker_text, show_time, type, guest_image_url, logo_url } = lowerThird;
 
   return (
-    <div className="fixed bottom-0 left-0 w-full">
+    <div className={`fixed bottom-0 left-0 w-full transition-opacity duration-400 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
       <div className="flex items-end w-full">
         {type === "guest" && guest_image_url ? (
           <div 
-            className="relative bg-black/85 overflow-hidden rounded-l-lg" 
+            className={`relative bg-black/85 overflow-hidden rounded-l-lg animate-slide-in-bottom`}
             style={{ 
               width: '240px',
               height: '280px',
@@ -110,13 +136,13 @@ const LowerThird = () => {
           </div>
         ) : (
           <div className="absolute -top-16 left-0 z-10">
-            <div className="bg-black/85 text-white px-8 py-4 text-xl font-bold uppercase">
+            <div className="bg-black/85 text-white px-8 py-4 text-xl font-bold uppercase animate-fade-in">
               {type}
             </div>
           </div>
         )}
 
-        <div className="flex-1 relative overflow-hidden" style={{ height: type === "guest" ? '280px' : 'auto' }}>
+        <div className={`flex-1 relative overflow-hidden animate-slide-in-bottom`} style={{ height: type === "guest" ? '280px' : 'auto' }}>
           {/* Professional gradient background */}
           <div className="absolute inset-0 bg-gradient-to-r from-[#221F26] to-[#403E43] opacity-95"></div>
           
@@ -128,12 +154,12 @@ const LowerThird = () => {
             <div className="flex justify-between items-start w-full">
               <div className="space-y-2 flex-1 min-w-0">
                 {primary_text && (
-                  <h1 className={`text-7xl font-bold leading-tight text-white ${type === 'guest' ? 'border-b-2 border-neon-red inline-block pr-6 -mr-6' : ''}`}>
+                  <h1 className={`text-7xl font-bold leading-tight text-white animate-fade-in ${type === 'guest' ? 'border-b-2 border-neon-red inline-block pr-6 -mr-6' : ''}`}>
                     {primary_text}
                   </h1>
                 )}
                 {secondary_text && (
-                  <p className="text-5xl text-white/90 whitespace-nowrap overflow-hidden text-ellipsis font-light">
+                  <p className="text-5xl text-white/90 whitespace-nowrap overflow-hidden text-ellipsis font-light animate-fade-in" style={{ animationDelay: '200ms' }}>
                     {secondary_text}
                   </p>
                 )}
@@ -144,7 +170,8 @@ const LowerThird = () => {
                   <img 
                     src={logo_url} 
                     alt="Logo"
-                    className="h-40 w-auto object-contain"
+                    className="h-40 w-auto object-contain animate-fade-in"
+                    style={{ animationDelay: '300ms' }}
                   />
                 )}
               </div>
