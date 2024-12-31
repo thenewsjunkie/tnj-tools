@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, memo } from "react";
 import VideoAlert from "../media/VideoAlert";
 import ImageAlert from "../media/ImageAlert";
 import AlertMessage from "../AlertMessage";
@@ -20,7 +20,7 @@ interface AlertContentProps {
   onError: (error: any) => void;
 }
 
-export const AlertContent: React.FC<AlertContentProps> = ({
+export const AlertContent: React.FC<AlertContentProps> = memo(({
   currentAlert,
   onComplete,
   onError
@@ -28,20 +28,19 @@ export const AlertContent: React.FC<AlertContentProps> = ({
   const [isMediaComplete, setIsMediaComplete] = useState(false);
   const [isCountComplete, setIsCountComplete] = useState(!currentAlert.is_gift_alert);
 
-  // Only complete the alert when both media and counting (if applicable) are done
-  const handleComplete = () => {
+  const handleComplete = useCallback(() => {
     setIsMediaComplete(true);
     if (isCountComplete) {
       onComplete();
     }
-  };
+  }, [isCountComplete, onComplete]);
 
-  const handleCountComplete = () => {
+  const handleCountComplete = useCallback(() => {
     setIsCountComplete(true);
     if (isMediaComplete) {
       onComplete();
     }
-  };
+  }, [isMediaComplete, onComplete]);
 
   const displayMessage = currentAlert.message_enabled && currentAlert.message_text 
     ? currentAlert.message_text
@@ -81,4 +80,6 @@ export const AlertContent: React.FC<AlertContentProps> = ({
       </div>
     </div>
   );
-};
+});
+
+AlertContent.displayName = 'AlertContent';
