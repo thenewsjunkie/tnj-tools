@@ -1,13 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
-import { Crown } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { LeaderboardVisibilityValue } from "@/integrations/supabase/types/tables/system";
-import type { Json } from "@/integrations/supabase/types/helpers";
+import { LeaderboardCard } from "@/components/leaderboard/LeaderboardCard";
+import { useLeaderboardVisibility } from "@/hooks/useLeaderboardVisibility";
 
 const LeaderboardOBS = () => {
+  // Set up visibility handling
+  useLeaderboardVisibility();
+
+  // Fetch gift stats
   const { data: giftStats, isLoading } = useQuery({
     queryKey: ['giftStats'],
     queryFn: async () => {
@@ -27,6 +28,7 @@ const LeaderboardOBS = () => {
     },
   });
 
+  // Check visibility state
   const { data: visibility } = useQuery({
     queryKey: ['leaderboardVisibility'],
     queryFn: async () => {
@@ -48,99 +50,10 @@ const LeaderboardOBS = () => {
     },
   });
 
-  useEffect(() => {
-    const handleVisibilityRequest = async () => {
-      console.log('[LeaderboardOBS] Received show request');
-      
-      // Update visibility in database
-      const { error } = await supabase
-        .from('system_settings')
-        .upsert({
-          key: 'leaderboard_visibility',
-          value: { isVisible: true } as unknown as Json,
-          updated_at: new Date().toISOString()
-        });
-
-      if (error) {
-        console.error('[LeaderboardOBS] Error updating visibility:', error);
-        return;
-      }
-
-      // Auto-hide after 10 seconds
-      setTimeout(async () => {
-        console.log('[LeaderboardOBS] Auto-hiding leaderboard');
-        const { error: hideError } = await supabase
-          .from('system_settings')
-          .upsert({
-            key: 'leaderboard_visibility',
-            value: { isVisible: false } as unknown as Json,
-            updated_at: new Date().toISOString()
-          });
-
-        if (hideError) {
-          console.error('[LeaderboardOBS] Error hiding leaderboard:', hideError);
-        }
-      }, 10000);
-    };
-
-    // Handle POST requests using a custom event
-    const handlePostRequest = async () => {
-      handleVisibilityRequest();
-    };
-
-    // Create a route handler for POST requests
-    const originalFetchFunction = window.fetch;
-    if (typeof window !== 'undefined') {
-      window.fetch = async function(input, init) {
-        if (input === '/leaderboard/obs' && init?.method === 'POST') {
-          handlePostRequest();
-          return new Response(null, { status: 200 });
-        }
-        return originalFetchFunction.apply(this, [input, init]);
-      };
-    }
-
-    // Also listen for message events
-    window.addEventListener('message', (event) => {
-      if (event.data === 'show-leaderboard') {
-        handleVisibilityRequest();
-      }
-    });
-
-    // Set up realtime subscription
-    const channel = supabase.channel('leaderboard-visibility')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'system_settings',
-          filter: 'key=eq.leaderboard_visibility'
-        },
-        (payload) => {
-          console.log('[LeaderboardOBS] Received visibility update:', payload);
-        }
-      )
-      .subscribe((status) => {
-        console.log('[LeaderboardOBS] Subscription status:', status);
-      });
-
-    return () => {
-      // Restore original fetch
-      if (typeof window !== 'undefined') {
-        window.fetch = originalFetchFunction;
-      }
-      // Clean up subscription
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
   if (isLoading) {
     return (
       <div className="p-4">
-        <Card className="p-4 bg-[#1A1F2C]">
-          <Skeleton className="h-16" />
-        </Card>
+        <Skeleton className="h-16" />
       </div>
     );
   }
@@ -151,33 +64,7 @@ const LeaderboardOBS = () => {
 
   return (
     <div className="p-0">
-      <Card className="p-4 bg-[#1A1F2C]/90 border-0">
-        <div className="space-y-2 mb-4">
-          <div className="flex items-center gap-2">
-            <Crown className="h-6 w-6 text-yellow-500" />
-            <h1 className="text-2xl font-bold text-white">Top Gifters</h1>
-          </div>
-          <p className="text-[#8A898C]">The most generous members of our community</p>
-        </div>
-
-        <div className="grid gap-2">
-          {giftStats.map((stat, index) => (
-            <Card key={stat.id} className="p-4 bg-black/20 border-0">
-              <div className="flex items-center gap-4">
-                <div className="text-2xl font-bold text-yellow-500 w-8">
-                  #{index + 1}
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-white">{stat.username}</h3>
-                  <p className="text-sm text-[#8A898C]">
-                    Total Gifts: {stat.total_gifts}
-                  </p>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </Card>
+      <LeaderboardCard stats={giftStats} />
     </div>
   );
 };
