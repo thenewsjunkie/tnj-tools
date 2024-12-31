@@ -87,14 +87,13 @@ const LowerThird = () => {
 
   return (
     <div className="fixed bottom-0 left-0 w-full">
-      <div className="flex items-end gap-2 w-full">
+      <div className="flex items-end w-full">
         {type === "guest" && guest_image_url ? (
           <div 
-            className="relative bg-black/85 overflow-hidden rounded-lg" 
+            className="relative bg-black/85 overflow-hidden rounded-l-lg" 
             style={{ 
               width: '240px',
               height: '280px',
-              marginBottom: '0'
             }}
           >
             <img 
