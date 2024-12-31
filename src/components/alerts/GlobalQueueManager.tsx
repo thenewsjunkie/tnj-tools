@@ -69,19 +69,19 @@ const GlobalQueueManager = () => {
         
         // Progressive timing formula:
         // - First 10 gifts: normal speed
-        // - 11-50 gifts: 30% faster
-        // - 50+ gifts: 60% faster
+        // - 11-50 gifts: 1.5x faster
+        // - 50+ gifts: 3x faster
         let countingTime;
         if (giftCount <= 10) {
           countingTime = giftCount * baseAnimationSpeed;
         } else if (giftCount <= 50) {
-          // Speed up by reducing the time per count by 30%
-          countingTime = (10 * baseAnimationSpeed) + ((giftCount - 10) * (baseAnimationSpeed * 0.7));
+          // Speed up by increasing speed by 50%
+          countingTime = (10 * baseAnimationSpeed) + ((giftCount - 10) * (baseAnimationSpeed / 1.5));
         } else {
-          // Speed up even more for higher counts by reducing time per count by 60%
+          // Speed up even more for higher counts by tripling the speed
           countingTime = (10 * baseAnimationSpeed) + 
-                        (40 * (baseAnimationSpeed * 0.7)) + 
-                        ((giftCount - 50) * (baseAnimationSpeed * 0.4));
+                        (40 * (baseAnimationSpeed / 1.5)) + 
+                        ((giftCount - 50) * (baseAnimationSpeed / 3));
         }
         
         // Base time (8s) plus calculated counting time plus buffer
@@ -91,7 +91,12 @@ const GlobalQueueManager = () => {
           giftCount,
           baseAnimationSpeed,
           countingTime,
-          totalTimeout: timeout
+          totalTimeout: timeout,
+          speedMultipliers: {
+            normal: '1x',
+            medium: '1.5x',
+            high: '3x'
+          }
         });
       } else if (currentAlert.alert?.media_type && !currentAlert.alert.media_type.startsWith('video')) {
         timeout = 5000; // 5 seconds for regular image alerts
