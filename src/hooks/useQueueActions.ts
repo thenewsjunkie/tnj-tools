@@ -5,6 +5,20 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
   const triggerLeaderboard = async () => {
     try {
       console.log('[useQueueActions] Triggering leaderboard');
+
+      // Set leaderboard visibility to true
+      const { error: visibilityError } = await supabase
+        .from('system_settings')
+        .update({
+          value: { isVisible: true }
+        })
+        .eq('key', 'leaderboard_visibility');
+
+      if (visibilityError) {
+        console.error('[useQueueActions] Error updating leaderboard visibility:', visibilityError);
+      }
+
+      // Trigger leaderboard endpoint
       const response = await fetch('/leaderboard/obs', {
         method: 'POST',
         headers: {
