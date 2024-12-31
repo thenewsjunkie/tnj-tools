@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types/helpers";
 import type { LeaderboardVisibilityValue } from "@/integrations/supabase/types/tables/system";
@@ -6,6 +6,35 @@ import type { LeaderboardVisibilityValue } from "@/integrations/supabase/types/t
 export const LEADERBOARD_DISPLAY_DURATION = 10000; // 10 seconds
 
 export const useLeaderboardVisibility = () => {
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const clearExistingTimer = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  const startHideTimer = () => {
+    clearExistingTimer();
+    console.log('[useLeaderboardVisibility] Starting hide timer');
+    
+    timerRef.current = setTimeout(async () => {
+      console.log('[useLeaderboardVisibility] Auto-hiding leaderboard');
+      const { error: hideError } = await supabase
+        .from('system_settings')
+        .upsert({
+          key: 'leaderboard_visibility',
+          value: { isVisible: false } as unknown as Json,
+          updated_at: new Date().toISOString()
+        });
+
+      if (hideError) {
+        console.error('[useLeaderboardVisibility] Error hiding leaderboard:', hideError);
+      }
+    }, LEADERBOARD_DISPLAY_DURATION);
+  };
+
   const handleVisibilityRequest = async () => {
     console.log('[useLeaderboardVisibility] Received show request');
     
@@ -23,21 +52,7 @@ export const useLeaderboardVisibility = () => {
       return;
     }
 
-    // Auto-hide after duration
-    setTimeout(async () => {
-      console.log('[useLeaderboardVisibility] Auto-hiding leaderboard');
-      const { error: hideError } = await supabase
-        .from('system_settings')
-        .upsert({
-          key: 'leaderboard_visibility',
-          value: { isVisible: false } as unknown as Json,
-          updated_at: new Date().toISOString()
-        });
-
-      if (hideError) {
-        console.error('[useLeaderboardVisibility] Error hiding leaderboard:', hideError);
-      }
-    }, LEADERBOARD_DISPLAY_DURATION);
+    // Timer will be started by the subscription handler
   };
 
   useEffect(() => {
@@ -77,23 +92,11 @@ export const useLeaderboardVisibility = () => {
         },
         (payload) => {
           console.log('[useLeaderboardVisibility] Received visibility update:', payload);
-          // Trigger auto-hide if visibility was just set to true
           const newValue = payload.new.value as { isVisible: boolean };
+          
+          // Only start timer when visibility changes to true
           if (newValue.isVisible) {
-            setTimeout(async () => {
-              console.log('[useLeaderboardVisibility] Auto-hiding leaderboard from subscription update');
-              const { error: hideError } = await supabase
-                .from('system_settings')
-                .upsert({
-                  key: 'leaderboard_visibility',
-                  value: { isVisible: false } as unknown as Json,
-                  updated_at: new Date().toISOString()
-                });
-
-              if (hideError) {
-                console.error('[useLeaderboardVisibility] Error hiding leaderboard:', hideError);
-              }
-            }, LEADERBOARD_DISPLAY_DURATION);
+            startHideTimer();
           }
         }
       )
@@ -102,10 +105,14 @@ export const useLeaderboardVisibility = () => {
       });
 
     return () => {
+      // Clear any existing timer
+      clearExistingTimer();
+      
       // Restore original fetch
       if (typeof window !== 'undefined') {
         window.fetch = originalFetchFunction;
       }
+      
       // Clean up subscription
       supabase.removeChannel(channel);
     };
