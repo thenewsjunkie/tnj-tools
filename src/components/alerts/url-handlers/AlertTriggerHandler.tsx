@@ -4,9 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 interface AlertTriggerHandlerProps {
   alertSlug?: string;
   username?: string;
+  giftCount?: string;
 }
 
-const AlertTriggerHandler = ({ alertSlug, username }: AlertTriggerHandlerProps) => {
+const AlertTriggerHandler = ({ alertSlug, username, giftCount }: AlertTriggerHandlerProps) => {
   const completingRef = useRef(false);
 
   // Function to convert title to slug
@@ -22,7 +23,7 @@ const AlertTriggerHandler = ({ alertSlug, username }: AlertTriggerHandlerProps) 
   };
 
   useEffect(() => {
-    console.log('[AlertTriggerHandler] Component mounted. Alert slug:', alertSlug, 'Username:', username);
+    console.log('[AlertTriggerHandler] Component mounted. Alert slug:', alertSlug, 'Username:', username, 'Gift Count:', giftCount);
     
     const triggerAlertFromUrl = async () => {
       if (!alertSlug || completingRef.current || alertSlug === 'queue') {
@@ -49,19 +50,29 @@ const AlertTriggerHandler = ({ alertSlug, username }: AlertTriggerHandlerProps) 
         console.log('[AlertTriggerHandler] Found matching alert:', matchingAlert.title);
         completingRef.current = true;
         
+        // Parse gift count if provided and alert is a gift alert
+        const parsedGiftCount = matchingAlert.is_gift_alert && giftCount ? 
+          parseInt(giftCount, 10) : undefined;
+
+        if (parsedGiftCount && isNaN(parsedGiftCount)) {
+          console.error('[AlertTriggerHandler] Invalid gift count provided:', giftCount);
+          return;
+        }
+
         // Add to queue
         const { error: queueError } = await supabase
           .from('alert_queue')
           .insert({
             alert_id: matchingAlert.id,
             username: username ? formatUsername(username) : null,
+            gift_count: parsedGiftCount,
             status: 'pending'
           });
 
         if (queueError) {
           console.error('[AlertTriggerHandler] Error queueing alert:', queueError);
         } else {
-          console.log('[AlertTriggerHandler] Alert queued successfully');
+          console.log('[AlertTriggerHandler] Alert queued successfully with gift count:', parsedGiftCount);
         }
       } else {
         console.log('[AlertTriggerHandler] No matching alert found for slug:', alertSlug);
@@ -69,7 +80,7 @@ const AlertTriggerHandler = ({ alertSlug, username }: AlertTriggerHandlerProps) 
     };
 
     triggerAlertFromUrl();
-  }, [alertSlug, username]);
+  }, [alertSlug, username, giftCount]);
 
   return null;
 };

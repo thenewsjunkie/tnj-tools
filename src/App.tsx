@@ -165,6 +165,7 @@ const App = () => (
             <Route path="/alerts/queue/:action" element={<Alerts />} />
             <Route path="/alerts/:alertSlug" element={<Alerts />} />
             <Route path="/alerts/:alertSlug/:username" element={<Alerts />} />
+            <Route path="/alerts/:alertSlug/:username/:giftCount" element={<Alerts />} />
             <Route path="/fritz" element={<Fritz />} />
             <Route path="/fritz/current-score" element={<CurrentScore />} />
             <Route path="/fritz/total-score" element={<TotalScore />} />
