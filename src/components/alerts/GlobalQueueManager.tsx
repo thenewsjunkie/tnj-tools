@@ -59,15 +59,37 @@ const GlobalQueueManager = () => {
     if (currentAlert && !isPaused) {
       console.log('[GlobalQueueManager] Setting up completion timer for alert:', currentAlert);
       
-      let timeout = 6000; // Changed from 8000 to 6000 for video alerts
+      let timeout = 6000; // Base timeout for video alerts
       
       if (currentAlert.alert?.is_gift_alert) {
         console.log('[GlobalQueueManager] Setting up gift alert timer');
-        // For gift alerts, give more time for the counting animation
+        // For gift alerts, calculate time based on count
         const giftCount = currentAlert.gift_count || 1;
         const animationSpeed = currentAlert.alert.gift_count_animation_speed || 100;
-        // Base time (20s) plus time for counting animation
-        timeout = 20000 + (giftCount * animationSpeed);
+        
+        // Progressive timing formula:
+        // - First 10 gifts: full animation speed
+        // - 11-50 gifts: gradually faster
+        // - 50+ gifts: even faster to prevent extremely long waits
+        let countingTime;
+        if (giftCount <= 10) {
+          countingTime = giftCount * animationSpeed;
+        } else if (giftCount <= 50) {
+          countingTime = (10 * animationSpeed) + ((giftCount - 10) * (animationSpeed * 0.7));
+        } else {
+          countingTime = (10 * animationSpeed) + (40 * (animationSpeed * 0.7)) + 
+                        ((giftCount - 50) * (animationSpeed * 0.4));
+        }
+        
+        // Base time (8s) plus calculated counting time plus buffer
+        timeout = 8000 + countingTime + 2000;
+        
+        console.log('[GlobalQueueManager] Calculated gift alert timeout:', {
+          giftCount,
+          animationSpeed,
+          countingTime,
+          totalTimeout: timeout
+        });
       } else if (currentAlert.alert?.media_type && !currentAlert.alert.media_type.startsWith('video')) {
         timeout = 5000; // 5 seconds for regular image alerts
       }
