@@ -10,23 +10,27 @@ const VideoAlert = ({ mediaUrl, onComplete, onError }: VideoAlertProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const completedRef = useRef(false);
   const unmountedRef = useRef(false);
+  const mountCountRef = useRef(0);
 
   const handleComplete = () => {
     if (!completedRef.current && !unmountedRef.current) {
       completedRef.current = true;
-      console.log('[VideoAlert] Video completed, triggering completion callback');
+      console.log('[VideoAlert] Video completed, triggering completion callback. Mount count:', mountCountRef.current);
       onComplete();
+    } else {
+      console.log('[VideoAlert] Skipping duplicate completion. Already completed:', completedRef.current, 'Unmounted:', unmountedRef.current);
     }
   };
 
   useEffect(() => {
-    console.log('[VideoAlert] Component mounted');
+    mountCountRef.current += 1;
+    console.log('[VideoAlert] Component mounted. Mount count:', mountCountRef.current);
     completedRef.current = false;
     unmountedRef.current = false;
     
     if (videoRef.current) {
       const videoElement = videoRef.current;
-      console.log('[VideoAlert] Setting up video element');
+      console.log('[VideoAlert] Setting up video element. Mount count:', mountCountRef.current);
       
       videoElement.load();
       videoElement.muted = true;
@@ -38,11 +42,11 @@ const VideoAlert = ({ mediaUrl, onComplete, onError }: VideoAlertProps) => {
       });
 
       videoElement.addEventListener('play', () => {
-        console.log('[VideoAlert] Video started playing');
+        console.log('[VideoAlert] Video started playing. Mount count:', mountCountRef.current);
       });
 
       videoElement.addEventListener('ended', () => {
-        console.log('[VideoAlert] Video ended naturally');
+        console.log('[VideoAlert] Video ended naturally. Mount count:', mountCountRef.current);
         handleComplete();
       });
 
@@ -55,7 +59,7 @@ const VideoAlert = ({ mediaUrl, onComplete, onError }: VideoAlertProps) => {
     }
 
     return () => {
-      console.log('[VideoAlert] Cleaning up video element');
+      console.log('[VideoAlert] Cleaning up video element. Mount count:', mountCountRef.current);
       unmountedRef.current = true;
       if (videoRef.current) {
         const videoElement = videoRef.current;
@@ -68,7 +72,7 @@ const VideoAlert = ({ mediaUrl, onComplete, onError }: VideoAlertProps) => {
   }, [onComplete, onError]);
 
   const handleVideoLoadedMetadata = () => {
-    console.log('[VideoAlert] Video metadata loaded');
+    console.log('[VideoAlert] Video metadata loaded. Mount count:', mountCountRef.current);
     if (videoRef.current && !unmountedRef.current) {
       videoRef.current.play().catch(error => {
         if (!unmountedRef.current) {
