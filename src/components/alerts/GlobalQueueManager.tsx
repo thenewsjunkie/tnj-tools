@@ -18,12 +18,14 @@ const GlobalQueueManager = () => {
     if (!channelRef.current) {
       channelRef.current = supabase.channel('alert-queue')
         .on('broadcast', { event: 'alert_completed' }, () => {
+          // Only process next alert if not paused
           if (!isPaused) {
             processNextAlert(isPaused);
           }
         })
         .subscribe();
 
+      // Only process initial alert if not paused and no current alert
       if (!currentAlert && !isPaused) {
         processNextAlert(isPaused);
       }
@@ -46,6 +48,7 @@ const GlobalQueueManager = () => {
       timerRef.current = null;
     }
 
+    // Only set up timer if there's a current alert and queue is not paused
     if (currentAlert && !isPaused) {
       let timeout = 6000; // Base timeout for video alerts
       
