@@ -37,9 +37,9 @@ const GiftStatsAdmin = () => {
       }
       
       // Order by last_gift_date in descending order (most recent first)
-      // Use COALESCE to handle null dates by putting them at the end
+      // Null values will automatically be placed last
       const { data, error } = await query
-        .order('last_gift_date', { ascending: false, nullsLast: true });
+        .order('last_gift_date', { ascending: false });
 
       if (error) throw error;
       return data as GiftStats[];
