@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { LeaderboardCard } from "@/components/leaderboard/LeaderboardCard";
 import { useLeaderboardVisibility } from "@/hooks/useLeaderboardVisibility";
+import { GiftStats } from "@/integrations/supabase/types/tables/gifts";
 
 const LeaderboardOBS = () => {
   useLeaderboardVisibility();
@@ -17,7 +18,7 @@ const LeaderboardOBS = () => {
         .limit(10);
 
       if (error) throw error;
-      return data;
+      return data as GiftStats[];
     },
   });
 
