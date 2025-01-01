@@ -7,7 +7,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import { GiftStats } from "@/integrations/supabase/types/tables/gifts";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 interface GiftStatsTableProps {
   stats: GiftStats[];
@@ -20,6 +24,26 @@ export const GiftStatsTable = ({
   isLoading,
   formatDate,
 }: GiftStatsTableProps) => {
+  const queryClient = useQueryClient();
+
+  const handleTestDataToggle = async (id: string, currentValue: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('gift_stats')
+        .update({ is_test_data: !currentValue })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Invalidate and refetch
+      await queryClient.invalidateQueries({ queryKey: ['gift-stats'] });
+      toast.success('Test data status updated successfully');
+    } catch (error) {
+      console.error('Error updating test data status:', error);
+      toast.error('Failed to update test data status');
+    }
+  };
+
   if (isLoading) {
     return (
       <TableRow>
@@ -79,7 +103,10 @@ export const GiftStatsTable = ({
                   )}
                 </TableCell>
                 <TableCell className="text-right">
-                  {stat.is_test_data ? "Yes" : "No"}
+                  <Switch
+                    checked={stat.is_test_data}
+                    onCheckedChange={() => handleTestDataToggle(stat.id, stat.is_test_data)}
+                  />
                 </TableCell>
               </TableRow>
             ))}
