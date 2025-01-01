@@ -1,8 +1,8 @@
+@import './components/lower-thirds/animations.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import './components/lower-thirds/animations.css';
 
 @font-face {
   font-family: 'Digital-7';
