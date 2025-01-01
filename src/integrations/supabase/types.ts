@@ -425,6 +425,7 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
+          is_test_data: boolean
           last_gift_date: string | null
           monthly_gifts: Json | null
           total_gifts: number | null
@@ -435,6 +436,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           id?: string
+          is_test_data?: boolean
           last_gift_date?: string | null
           monthly_gifts?: Json | null
           total_gifts?: number | null
@@ -445,6 +447,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           id?: string
+          is_test_data?: boolean
           last_gift_date?: string | null
           monthly_gifts?: Json | null
           total_gifts?: number | null

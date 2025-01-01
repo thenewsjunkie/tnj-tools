@@ -23,14 +23,20 @@ import { GiftStats } from "@/integrations/supabase/types/tables/gifts";
 
 const GiftStatsAdmin = () => {
   const [search, setSearch] = useState("");
+  const [includeTestData, setIncludeTestData] = useState(false);
 
   const { data: giftStats, isLoading } = useQuery({
-    queryKey: ["gift-stats"],
+    queryKey: ["gift-stats", includeTestData],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("gift_stats")
-        .select("*")
-        .order("total_gifts", { ascending: false });
+        .select("*");
+      
+      if (!includeTestData) {
+        query = query.eq('is_test_data', false);
+      }
+      
+      const { data, error } = await query.order("total_gifts", { ascending: false });
 
       if (error) throw error;
       return data as GiftStats[];
@@ -118,12 +124,26 @@ const GiftStatsAdmin = () => {
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold">Detailed Statistics</h2>
-            <Input
-              placeholder="Search by username..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="max-w-xs"
-            />
+            <div className="flex gap-4 items-center">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="includeTestData"
+                  checked={includeTestData}
+                  onChange={(e) => setIncludeTestData(e.target.checked)}
+                  className="rounded border-gray-300"
+                />
+                <label htmlFor="includeTestData" className="text-sm text-muted-foreground">
+                  Include test data
+                </label>
+              </div>
+              <Input
+                placeholder="Search by username..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="max-w-xs"
+              />
+            </div>
           </div>
 
           <Card>
@@ -136,18 +156,19 @@ const GiftStatsAdmin = () => {
                     <TableHead className="text-right">Last Gift</TableHead>
                     <TableHead className="text-right">Monthly Gifts</TableHead>
                     <TableHead className="text-right">Yearly Gifts</TableHead>
+                    <TableHead className="text-right">Test Data</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center">
+                      <TableCell colSpan={6} className="text-center">
                         Loading...
                       </TableCell>
                     </TableRow>
                   ) : filteredStats?.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center">
+                      <TableCell colSpan={6} className="text-center">
                         No gift statistics found
                       </TableCell>
                     </TableRow>
@@ -174,6 +195,9 @@ const GiftStatsAdmin = () => {
                             (acc, count) => acc + count,
                             0
                           )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {stat.is_test_data ? "Yes" : "No"}
                         </TableCell>
                       </TableRow>
                     ))

@@ -17,6 +17,7 @@ const Leaderboard = () => {
       const { data, error } = await supabase
         .from('gift_stats')
         .select('*')
+        .eq('is_test_data', false)  // Only fetch non-test data
         .order('total_gifts', { ascending: false })
         .limit(limit);
 
@@ -27,8 +28,8 @@ const Leaderboard = () => {
       console.log('[Leaderboard] Fetched gift stats:', data);
       return data as GiftStats[];
     },
-    staleTime: 1000, // Reduce stale time to refresh more frequently
-    gcTime: 5000, // Changed from cacheTime to gcTime for v5 compatibility
+    staleTime: 1000,
+    gcTime: 5000,
   });
 
   if (isLoading) {
