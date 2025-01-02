@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ReviewImageCarousel from "./ReviewImageCarousel";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ReviewImageUploadProps {
   images: string[];
