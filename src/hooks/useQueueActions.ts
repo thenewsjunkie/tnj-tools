@@ -1,6 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
 import { GiftStats } from "@/integrations/supabase/types/tables/gifts";
 
+// Add interface for queue state value
+interface QueueStateValue {
+  isPaused: boolean;
+}
+
 export const useQueueActions = (refetchQueue: () => Promise<any>) => {
   const triggerLeaderboard = async () => {
     try {
@@ -169,7 +174,8 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
       .eq('key', 'queue_state')
       .single();
     
-    const queueIsPaused = settings?.value?.isPaused;
+    const queueState = settings?.value as QueueStateValue;
+    const queueIsPaused = queueState?.isPaused;
     
     if (queueIsPaused) {
       console.log('[useQueueActions] Queue is now paused, not processing next alert');
