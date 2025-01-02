@@ -42,20 +42,6 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
     },
   });
 
-  // Reset form when review changes
-  React.useEffect(() => {
-    if (open) {
-      form.reset({
-        type: review.type,
-        title: review.title,
-        rating: review.rating,
-        content: review.content,
-        genre: review.genre || undefined,
-        image_urls: review.image_urls || [],
-      });
-    }
-  }, [form, review, open]);
-
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setIsLoading(true);

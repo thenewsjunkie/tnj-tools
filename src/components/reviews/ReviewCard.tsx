@@ -4,8 +4,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Json } from "@/integrations/supabase/types";
-import ReviewNavigationControls from "./ReviewNavigationControls";
-import ReviewStreamControl from "./ReviewStreamControl";
 
 interface ReviewCardProps {
   review: Review;
@@ -18,8 +16,8 @@ const ReviewCard = ({ review, onClick, Icon, simpleView = false }: ReviewCardPro
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  const { data: activeReview } = useQuery({
-    queryKey: ['active-review'],
+  const { data: activeReviewId } = useQuery({
+    queryKey: ['active-review-id'],
     queryFn: async () => {
       const { data: settings } = await supabase
         .from('system_settings')
@@ -27,21 +25,17 @@ const ReviewCard = ({ review, onClick, Icon, simpleView = false }: ReviewCardPro
         .eq('key', 'active_review')
         .single();
       
-      const value = settings?.value as { review_id: string | null, current_image_index?: number } | null;
-      return value ?? null;
+      const value = settings?.value as { review_id: string | null } | null;
+      return value?.review_id ?? null;
     },
   });
 
-  const isActive = activeReview?.review_id === review.id;
-  const currentImageIndex = activeReview?.current_image_index ?? 0;
-  const hasMultipleImages = review.image_urls && review.image_urls.length > 1;
+  const isActive = activeReviewId === review.id;
 
-  const updateActiveReview = async (reviewId: string | null, imageIndex?: number) => {
+  const toggleReviewStream = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     try {
-      const value = reviewId ? { 
-        review_id: reviewId,
-        current_image_index: imageIndex ?? 0
-      } : { review_id: null };
+      const value = { review_id: isActive ? null : review.id };
       
       const { error } = await supabase
         .from('system_settings')
@@ -52,32 +46,13 @@ const ReviewCard = ({ review, onClick, Icon, simpleView = false }: ReviewCardPro
 
       if (error) throw error;
 
-      queryClient.invalidateQueries({ queryKey: ['active-review'] });
-    } catch (error) {
-      console.error('Error updating active review:', error);
       toast({
-        title: "Error updating stream",
-        variant: "destructive",
+        title: isActive ? "Review removed from stream" : "Review added to stream",
+        duration: 2000,
       });
-    }
-  };
 
-  const toggleReviewStream = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    try {
-      if (isActive) {
-        await updateActiveReview(null);
-        toast({
-          title: "Review removed from stream",
-          duration: 2000,
-        });
-      } else {
-        await updateActiveReview(review.id, 0);
-        toast({
-          title: "Review added to stream",
-          duration: 2000,
-        });
-      }
+      queryClient.invalidateQueries({ queryKey: ['active-review-id'] });
+      queryClient.invalidateQueries({ queryKey: ['active-review'] });
     } catch (error) {
       console.error('Error toggling review stream:', error);
       toast({
@@ -85,21 +60,6 @@ const ReviewCard = ({ review, onClick, Icon, simpleView = false }: ReviewCardPro
         variant: "destructive",
       });
     }
-  };
-
-  const navigateImages = async (direction: 'prev' | 'next') => {
-    if (!review.image_urls?.length) return;
-    
-    const newIndex = direction === 'next'
-      ? (currentImageIndex + 1) % review.image_urls.length
-      : (currentImageIndex - 1 + review.image_urls.length) % review.image_urls.length;
-    
-    await updateActiveReview(review.id, newIndex);
-    
-    toast({
-      title: `Showing image ${newIndex + 1} of ${review.image_urls.length}`,
-      duration: 1000,
-    });
   };
 
   if (simpleView) {
@@ -116,12 +76,14 @@ const ReviewCard = ({ review, onClick, Icon, simpleView = false }: ReviewCardPro
           <div className="text-yellow-500 text-sm flex-shrink-0">
             {"★".repeat(review.rating)}{"☆".repeat(5-review.rating)}
           </div>
-          <div className="flex items-center gap-2">
-            {isActive && hasMultipleImages && (
-              <ReviewNavigationControls onNavigate={navigateImages} />
-            )}
-            <ReviewStreamControl isActive={isActive} onToggle={toggleReviewStream} />
-          </div>
+          <button
+            onClick={toggleReviewStream}
+            className="p-1 rounded-full hover:bg-background/50 transition-colors"
+          >
+            <Eye 
+              className={`h-4 w-4 ${isActive ? 'text-neon-red' : 'text-foreground'}`} 
+            />
+          </button>
         </div>
       </div>
     );
@@ -157,12 +119,14 @@ const ReviewCard = ({ review, onClick, Icon, simpleView = false }: ReviewCardPro
           <div className="text-yellow-500 text-sm">
             {"★".repeat(review.rating)}{"☆".repeat(5-review.rating)}
           </div>
-          <div className="flex items-center gap-2">
-            {isActive && hasMultipleImages && (
-              <ReviewNavigationControls onNavigate={navigateImages} />
-            )}
-            <ReviewStreamControl isActive={isActive} onToggle={toggleReviewStream} />
-          </div>
+          <button
+            onClick={toggleReviewStream}
+            className="p-1 rounded-full hover:bg-background/50 transition-colors"
+          >
+            <Eye 
+              className={`h-4 w-4 ${isActive ? 'text-neon-red' : 'text-foreground'}`} 
+            />
+          </button>
         </div>
       </div>
     </div>
