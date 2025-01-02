@@ -171,7 +171,7 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
                 <Button 
                   type="submit" 
                   disabled={isLoading}
-                  className="bg-primary text-black hover:text-white dark:text-white"
+                  className="bg-black text-white hover:bg-black/90"
                 >
                   {isLoading ? "Saving..." : "Save Changes"}
                 </Button>
