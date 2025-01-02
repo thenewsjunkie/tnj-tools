@@ -1,35 +1,9 @@
 import { supabase } from "@/integrations/supabase/client";
-import { GiftStats } from "@/integrations/supabase/types/tables/gifts";
-
-// Add interface for queue state value
-interface QueueStateValue {
-  isPaused: boolean;
-}
+import { handleGiftStats } from "./useGiftQueueActions";
+import { QueueStateValue, AlertQueueItem } from "@/types/queue";
 
 export const useQueueActions = (refetchQueue: () => Promise<any>) => {
-  const triggerLeaderboard = async () => {
-    try {
-      console.log('[useQueueActions] Triggering leaderboard');
-
-      // Set leaderboard visibility to true
-      const { error: visibilityError } = await supabase
-        .from('system_settings')
-        .update({
-          value: { isVisible: true }
-        })
-        .eq('key', 'leaderboard_visibility');
-
-      if (visibilityError) {
-        console.error('[useQueueActions] Error updating leaderboard visibility:', visibilityError);
-      } else {
-        console.log('[useQueueActions] Leaderboard triggered successfully');
-      }
-    } catch (error) {
-      console.error('[useQueueActions] Error triggering leaderboard:', error);
-    }
-  };
-
-  const handleAlertComplete = async (currentAlert: any) => {
+  const handleAlertComplete = async (currentAlert: AlertQueueItem) => {
     if (!currentAlert) {
       console.log('[useQueueActions] No current alert to complete');
       return;
@@ -52,78 +26,7 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
     }
 
     // If this is a gift alert, update gift stats
-    if (currentAlert.alert?.is_gift_alert && currentAlert.username && currentAlert.gift_count) {
-      console.log('[useQueueActions] Processing gift stats for:', {
-        username: currentAlert.username,
-        giftCount: currentAlert.gift_count
-      });
-      
-      // Record in gift history
-      const { error: historyError } = await supabase
-        .from('gift_history')
-        .insert({
-          gifter_username: currentAlert.username.toLowerCase(),
-          gift_count: currentAlert.gift_count,
-          alert_queue_id: currentAlert.id
-        });
-
-      if (historyError) {
-        console.error('[useQueueActions] Error recording gift history:', historyError);
-      }
-
-      // Get existing stats
-      const { data: existingStats, error: statsError } = await supabase
-        .from('gift_stats')
-        .select('*')
-        .eq('username', currentAlert.username.toLowerCase())
-        .maybeSingle();
-
-      if (!statsError) {
-        const now = new Date();
-        const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-        const yearKey = now.getFullYear().toString();
-
-        if (existingStats) {
-          // Update existing stats
-          const monthlyGifts = {
-            ...(existingStats.monthly_gifts as Record<string, number>),
-            [monthKey]: ((existingStats.monthly_gifts as Record<string, number>)[monthKey] || 0) + currentAlert.gift_count
-          };
-          
-          const yearlyGifts = {
-            ...(existingStats.yearly_gifts as Record<string, number>),
-            [yearKey]: ((existingStats.yearly_gifts as Record<string, number>)[yearKey] || 0) + currentAlert.gift_count
-          };
-
-          await supabase
-            .from('gift_stats')
-            .update({
-              total_gifts: existingStats.total_gifts + currentAlert.gift_count,
-              last_gift_date: now.toISOString(),
-              monthly_gifts: monthlyGifts,
-              yearly_gifts: yearlyGifts
-            })
-            .eq('username', currentAlert.username.toLowerCase());
-        } else {
-          // Create new stats record
-          const monthlyGifts: Record<string, number> = { [monthKey]: currentAlert.gift_count };
-          const yearlyGifts: Record<string, number> = { [yearKey]: currentAlert.gift_count };
-
-          await supabase
-            .from('gift_stats')
-            .insert({
-              username: currentAlert.username.toLowerCase(),
-              total_gifts: currentAlert.gift_count,
-              last_gift_date: now.toISOString(),
-              monthly_gifts: monthlyGifts,
-              yearly_gifts: yearlyGifts
-            });
-        }
-
-        // Only trigger leaderboard after gift stats are fully updated
-        await triggerLeaderboard();
-      }
-    }
+    await handleGiftStats(currentAlert);
 
     console.log('[useQueueActions] Alert marked as completed');
     
@@ -147,7 +50,7 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
     await refetchQueue();
   };
 
-  const processNextAlert = async (isPaused: boolean, currentAlert: any, pendingAlerts: any[]) => {
+  const processNextAlert = async (isPaused: boolean, currentAlert: AlertQueueItem | null, pendingAlerts: AlertQueueItem[]) => {
     console.log('[useQueueActions] Processing next alert. Queue paused:', isPaused);
     
     if (isPaused) {
@@ -174,10 +77,10 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
       .eq('key', 'queue_state')
       .single();
     
-    const queueState = settings?.value as QueueStateValue;
-    const queueIsPaused = queueState?.isPaused;
+    // Properly type and cast the queue state value
+    const queueState = settings?.value as unknown as QueueStateValue;
     
-    if (queueIsPaused) {
+    if (queueState?.isPaused) {
       console.log('[useQueueActions] Queue is now paused, not processing next alert');
       return;
     }
