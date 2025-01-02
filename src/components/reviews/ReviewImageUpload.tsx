@@ -3,6 +3,8 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import ReviewImageCarousel from "./ReviewImageCarousel";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
 
 interface ReviewImageUploadProps {
   images: string[];
@@ -56,6 +58,15 @@ const ReviewImageUpload = ({ images, onImagesChange, title }: ReviewImageUploadP
     }
   };
 
+  const handleDeleteImage = (indexToDelete: number) => {
+    const newImages = images.filter((_, index) => index !== indexToDelete);
+    onImagesChange(newImages);
+    toast({
+      title: "Success",
+      description: "Image removed successfully",
+    });
+  };
+
   return (
     <div className="space-y-4">
       <Input
@@ -68,11 +79,26 @@ const ReviewImageUpload = ({ images, onImagesChange, title }: ReviewImageUploadP
       />
       {isUploading && <p className="text-sm text-white/70">Uploading...</p>}
       {images.length > 0 && (
-        <ReviewImageCarousel 
-          images={images} 
-          title={title} 
-          showControls={images.length > 1}
-        />
+        <div className="relative">
+          <ReviewImageCarousel 
+            images={images} 
+            title={title} 
+            showControls={images.length > 1}
+          />
+          <div className="flex gap-2 mt-2">
+            {images.map((_, index) => (
+              <Button
+                key={index}
+                variant="destructive"
+                size="icon"
+                onClick={() => handleDeleteImage(index)}
+                className="h-8 w-8"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            ))}
+          </div>
+        </div>
       )}
       <p className="text-sm text-muted-foreground">
         {images.length}/5 images uploaded
