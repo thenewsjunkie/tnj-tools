@@ -9,6 +9,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { Review } from "./types";
 import { supabase } from "@/integrations/supabase/client";
 import EditReviewFormFields from "./EditReviewFormFields";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Trash2 } from "lucide-react";
 
 const formSchema = z.object({
   type: z.enum(["television", "movie", "food", "product"]),
@@ -77,6 +79,34 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
     }
   };
 
+  const handleDelete = async () => {
+    try {
+      setIsLoading(true);
+      const { error } = await supabase
+        .from("reviews")
+        .delete()
+        .eq("id", review.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Review deleted successfully",
+      });
+      onOpenChange(false);
+      onReviewUpdated?.();
+    } catch (error) {
+      console.error("Error deleting review:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete review",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 max-h-[90vh] overflow-y-auto">
@@ -87,23 +117,51 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <EditReviewFormFields form={form} />
             
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={isLoading}
-                className="text-foreground"
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={isLoading}
-                className="bg-primary text-black hover:text-white dark:text-white"
-              >
-                {isLoading ? "Saving..." : "Save Changes"}
-              </Button>
+            <div className="flex justify-between items-center pt-4">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    disabled={isLoading}
+                    className="gap-2"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete the review.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                  disabled={isLoading}
+                  className="text-foreground"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={isLoading}
+                  className="bg-primary text-black hover:text-white dark:text-white"
+                >
+                  {isLoading ? "Saving..." : "Save Changes"}
+                </Button>
+              </div>
             </div>
           </form>
         </Form>
