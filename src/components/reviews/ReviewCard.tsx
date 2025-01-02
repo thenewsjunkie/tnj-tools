@@ -1,10 +1,11 @@
-import { LucideIcon, Eye, ChevronLeft, ChevronRight } from "lucide-react";
+import { LucideIcon, Eye } from "lucide-react";
 import type { Review } from "./types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Json } from "@/integrations/supabase/types";
-import { Button } from "@/components/ui/button";
+import ReviewNavigationControls from "./ReviewNavigationControls";
+import ReviewStreamControl from "./ReviewStreamControl";
 
 interface ReviewCardProps {
   review: Review;
@@ -116,39 +117,9 @@ const ReviewCard = ({ review, onClick, Icon, simpleView = false }: ReviewCardPro
           </div>
           <div className="flex items-center gap-2">
             {isActive && review.image_urls && review.image_urls.length > 1 && (
-              <>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigateImages('prev');
-                  }}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigateImages('next');
-                  }}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </>
+              <ReviewNavigationControls onNavigate={navigateImages} />
             )}
-            <button
-              onClick={toggleReviewStream}
-              className="p-1 rounded-full hover:bg-background/50 transition-colors"
-            >
-              <Eye 
-                className={`h-4 w-4 ${isActive ? 'text-neon-red' : 'text-foreground'}`} 
-              />
-            </button>
+            <ReviewStreamControl isActive={isActive} onToggle={toggleReviewStream} />
           </div>
         </div>
       </div>
@@ -187,39 +158,9 @@ const ReviewCard = ({ review, onClick, Icon, simpleView = false }: ReviewCardPro
           </div>
           <div className="flex items-center gap-2">
             {isActive && review.image_urls && review.image_urls.length > 1 && (
-              <>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigateImages('prev');
-                  }}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigateImages('next');
-                  }}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </>
+              <ReviewNavigationControls onNavigate={navigateImages} />
             )}
-            <button
-              onClick={toggleReviewStream}
-              className="p-1 rounded-full hover:bg-background/50 transition-colors"
-            >
-              <Eye 
-                className={`h-4 w-4 ${isActive ? 'text-neon-red' : 'text-foreground'}`} 
-              />
-            </button>
+            <ReviewStreamControl isActive={isActive} onToggle={toggleReviewStream} />
           </div>
         </div>
       </div>

@@ -52,11 +52,11 @@ const StreamReview = () => {
         </div>
         
         {activeReview.image_urls?.length > 0 && (
-          <div className="flex justify-center">
+          <div className="w-full flex justify-center items-center">
             <img 
               src={activeReview.image_urls[activeReview.currentImageIndex]} 
               alt={activeReview.title}
-              className="h-[75vh] w-auto object-contain bg-black/40"
+              className="max-h-[75vh] w-auto object-contain bg-black/40"
             />
           </div>
         )}
