@@ -77,6 +77,7 @@ export const QueueTable = ({ items, onStatusUpdate, onDelete }: QueueTableProps)
                 <Button
                   variant="outline"
                   size="sm"
+                  className="bg-white text-black hover:bg-white/90"
                   onClick={() => onDelete(item.id)}
                 >
                   Delete
@@ -84,6 +85,7 @@ export const QueueTable = ({ items, onStatusUpdate, onDelete }: QueueTableProps)
                 <Button
                   variant="outline"
                   size="sm"
+                  className="bg-white text-black hover:bg-white/90"
                   onClick={() => handleRequeue(item)}
                 >
                   <Redo className="h-4 w-4" />
