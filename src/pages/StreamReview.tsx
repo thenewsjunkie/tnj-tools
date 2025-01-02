@@ -13,7 +13,7 @@ const StreamReview = () => {
         .eq('key', 'active_review')
         .single();
       
-      const value = settings?.value as { review_id: string | null } | null;
+      const value = settings?.value as { review_id: string | null, current_image_index?: number } | null;
       if (!value?.review_id) return null;
 
       const { data: review } = await supabase
@@ -22,7 +22,7 @@ const StreamReview = () => {
         .eq('id', value.review_id)
         .single();
 
-      return review as Review;
+      return { ...review, currentImageIndex: value.current_image_index ?? 0 } as Review & { currentImageIndex: number };
     },
     refetchInterval: 1000,
   });
@@ -54,7 +54,7 @@ const StreamReview = () => {
         {activeReview.image_urls?.length > 0 && (
           <div className="flex justify-center">
             <img 
-              src={activeReview.image_urls[0]} 
+              src={activeReview.image_urls[activeReview.currentImageIndex]} 
               alt={activeReview.title}
               className="h-[75vh] w-auto object-contain bg-black/40"
             />
