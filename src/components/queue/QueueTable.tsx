@@ -1,15 +1,7 @@
-import { format } from "date-fns";
-import { Trash2 } from "lucide-react";
+import { Redo } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface QueueTableProps {
   items: any[];
@@ -18,66 +10,89 @@ interface QueueTableProps {
 }
 
 export const QueueTable = ({ items, onStatusUpdate, onDelete }: QueueTableProps) => {
+  const { toast } = useToast();
+
+  const handleRequeue = async (item: any) => {
+    try {
+      const { error } = await supabase
+        .from('alert_queue')
+        .insert({
+          alert_id: item.alert_id,
+          username: item.username,
+          gift_count: item.gift_count,
+          status: 'pending'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Alert requeued",
+        description: "The alert has been added back to the queue"
+      });
+    } catch (error) {
+      console.error('Error requeueing alert:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to requeue alert"
+      });
+    }
+  };
+
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Date</TableHead>
-          <TableHead>Alert Type</TableHead>
-          <TableHead>Message</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Played At</TableHead>
-          <TableHead>Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {items.map((item) => (
-          <TableRow key={item.id}>
-            <TableCell>
-              {format(new Date(item.created_at), "MMM d, yyyy HH:mm:ss")}
-            </TableCell>
-            <TableCell>{item.alerts?.title}</TableCell>
-            <TableCell>
-              {item.username && item.alerts?.message_enabled ? (
-                `${item.username} subscribed to ${item.alerts.title}`
-              ) : (
-                item.alerts?.message_text || "No message"
-              )}
-            </TableCell>
-            <TableCell>
-              <Badge 
-                variant={item.status === 'completed' ? 'default' : 'secondary'}
-              >
-                {item.status}
-              </Badge>
-            </TableCell>
-            <TableCell>
-              {item.played_at ? 
-                format(new Date(item.played_at), "MMM d, yyyy HH:mm:ss") : 
-                "Not played"
-              }
-            </TableCell>
-            <TableCell className="space-x-2">
-              {item.status !== 'completed' && (
+    <div className="overflow-x-auto">
+      <table className="w-full">
+        <thead>
+          <tr className="border-b">
+            <th className="px-4 py-2 text-left">Status</th>
+            <th className="px-4 py-2 text-left">Alert</th>
+            <th className="px-4 py-2 text-left">Username</th>
+            <th className="px-4 py-2 text-left">Created</th>
+            <th className="px-4 py-2 text-left">Played</th>
+            <th className="px-4 py-2 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item) => (
+            <tr key={item.id} className="border-b">
+              <td className="px-4 py-2">{item.status}</td>
+              <td className="px-4 py-2">{item.alerts?.title}</td>
+              <td className="px-4 py-2">{item.username}</td>
+              <td className="px-4 py-2">
+                {new Date(item.created_at).toLocaleString()}
+              </td>
+              <td className="px-4 py-2">
+                {item.played_at ? new Date(item.played_at).toLocaleString() : '-'}
+              </td>
+              <td className="px-4 py-2 space-x-2">
+                {item.status === 'pending' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onStatusUpdate(item.id)}
+                  >
+                    Mark Complete
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => onStatusUpdate(item.id)}
+                  onClick={() => onDelete(item.id)}
                 >
-                  Mark Complete
+                  Delete
                 </Button>
-              )}
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => onDelete(item.id)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleRequeue(item)}
+                >
+                  <Redo className="h-4 w-4" />
+                </Button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 };
