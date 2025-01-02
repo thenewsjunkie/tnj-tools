@@ -34,6 +34,7 @@ const ReviewCard = ({ review, onClick, Icon, simpleView = false }: ReviewCardPro
 
   const isActive = activeReview?.review_id === review.id;
   const currentImageIndex = activeReview?.current_image_index ?? 0;
+  const hasMultipleImages = review.image_urls && review.image_urls.length > 1;
 
   const updateActiveReview = async (reviewId: string | null, imageIndex?: number) => {
     try {
@@ -116,7 +117,7 @@ const ReviewCard = ({ review, onClick, Icon, simpleView = false }: ReviewCardPro
             {"★".repeat(review.rating)}{"☆".repeat(5-review.rating)}
           </div>
           <div className="flex items-center gap-2">
-            {isActive && review.image_urls && review.image_urls.length > 1 && (
+            {isActive && hasMultipleImages && (
               <ReviewNavigationControls onNavigate={navigateImages} />
             )}
             <ReviewStreamControl isActive={isActive} onToggle={toggleReviewStream} />
@@ -157,7 +158,7 @@ const ReviewCard = ({ review, onClick, Icon, simpleView = false }: ReviewCardPro
             {"★".repeat(review.rating)}{"☆".repeat(5-review.rating)}
           </div>
           <div className="flex items-center gap-2">
-            {isActive && review.image_urls && review.image_urls.length > 1 && (
+            {isActive && hasMultipleImages && (
               <ReviewNavigationControls onNavigate={navigateImages} />
             )}
             <ReviewStreamControl isActive={isActive} onToggle={toggleReviewStream} />

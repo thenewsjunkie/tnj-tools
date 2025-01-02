@@ -39,7 +39,7 @@ const StreamReview = () => {
   const Icon = icons[activeReview.type];
 
   return (
-    <div className="min-h-screen w-screen">
+    <div className="min-h-screen w-screen flex items-center justify-center">
       <div className="flex flex-col items-start max-w-fit bg-black/60 rounded-xl backdrop-blur-sm border border-white/10">
         <div className="w-full flex items-center justify-between p-4">
           <div className="flex items-center gap-3">
@@ -52,11 +52,11 @@ const StreamReview = () => {
         </div>
         
         {activeReview.image_urls?.length > 0 && (
-          <div className="w-full flex justify-center items-center">
+          <div className="w-full flex justify-center items-center p-4">
             <img 
               src={activeReview.image_urls[activeReview.currentImageIndex]} 
               alt={activeReview.title}
-              className="max-h-[75vh] w-auto object-contain bg-black/40"
+              className="max-h-[75vh] w-auto object-contain"
             />
           </div>
         )}
