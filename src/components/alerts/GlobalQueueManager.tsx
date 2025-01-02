@@ -33,6 +33,8 @@ const GlobalQueueManager = () => {
       if (!currentAlert && !isPaused) {
         console.log('[GlobalQueueManager] No current alert and queue not paused, processing initial alert');
         processNextAlert(isPaused);
+      } else {
+        console.log('[GlobalQueueManager] Queue is paused or has current alert, not processing initial alert');
       }
     }
 

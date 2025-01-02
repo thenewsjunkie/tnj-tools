@@ -162,6 +162,20 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
       return;
     }
 
+    // Check pause state again before processing
+    const { data: settings } = await supabase
+      .from('system_settings')
+      .select('value')
+      .eq('key', 'queue_state')
+      .single();
+    
+    const queueIsPaused = settings?.value?.isPaused;
+    
+    if (queueIsPaused) {
+      console.log('[useQueueActions] Queue is now paused, not processing next alert');
+      return;
+    }
+
     console.log('[useQueueActions] Setting next alert to playing:', nextAlert.id);
 
     const { error } = await supabase
