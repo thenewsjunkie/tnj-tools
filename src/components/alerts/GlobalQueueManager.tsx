@@ -17,16 +17,21 @@ const GlobalQueueManager = () => {
     
     if (!channelRef.current) {
       channelRef.current = supabase.channel('alert-queue')
-        .on('broadcast', { event: 'alert_completed' }, () => {
+        .on('broadcast', { event: 'alert_completed' }, (payload) => {
+          console.log('[GlobalQueueManager] Received alert completion broadcast:', payload);
           // Only process next alert if not paused
           if (!isPaused) {
+            console.log('[GlobalQueueManager] Queue not paused, processing next alert');
             processNextAlert(isPaused);
+          } else {
+            console.log('[GlobalQueueManager] Queue is paused, not processing next alert');
           }
         })
         .subscribe();
 
       // Only process initial alert if not paused and no current alert
       if (!currentAlert && !isPaused) {
+        console.log('[GlobalQueueManager] No current alert and queue not paused, processing initial alert');
         processNextAlert(isPaused);
       }
     }
@@ -71,6 +76,7 @@ const GlobalQueueManager = () => {
         timeout = 5000;
       }
       
+      console.log('[GlobalQueueManager] Setting up alert completion timer for', timeout, 'ms');
       timerRef.current = setTimeout(async () => {
         await handleAlertComplete();
       }, timeout);

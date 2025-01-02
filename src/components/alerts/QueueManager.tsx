@@ -14,7 +14,7 @@ const QueueManager = ({ currentAlert, queueCount, isPaused, processNextAlert }: 
 
   // Effect to process next alert when queue is empty and not paused
   useEffect(() => {
-    // Only process if we have alerts to process and aren't already processing
+    // Only process if we have alerts to process, aren't already processing, and queue isn't paused
     if (!currentAlert && queueCount > 0 && !isPaused && !processingRef.current) {
       console.log('[QueueManager] Processing next alert. Current state:', {
         currentAlert,
