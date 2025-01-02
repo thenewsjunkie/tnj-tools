@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -43,6 +43,20 @@ const EditReviewDialog = ({ review, open, onOpenChange, onReviewUpdated }: EditR
       image_urls: review.image_urls || [],
     },
   });
+
+  // Reset form when review changes or dialog opens
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        type: review.type,
+        title: review.title,
+        rating: review.rating,
+        content: review.content,
+        genre: review.genre || undefined,
+        image_urls: review.image_urls || [],
+      });
+    }
+  }, [review, open, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
