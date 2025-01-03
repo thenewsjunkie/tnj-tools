@@ -358,36 +358,6 @@ export type Database = {
         }
         Relationships: []
       }
-      interview_requests: {
-        Row: {
-          conversation_history: Json | null
-          created_at: string | null
-          email_script: string
-          guest_email: string
-          id: string
-          scheduled_date: string | null
-          status: string
-        }
-        Insert: {
-          conversation_history?: Json | null
-          created_at?: string | null
-          email_script: string
-          guest_email: string
-          id?: string
-          scheduled_date?: string | null
-          status?: string
-        }
-        Update: {
-          conversation_history?: Json | null
-          created_at?: string | null
-          email_script?: string
-          guest_email?: string
-          id?: string
-          scheduled_date?: string | null
-          status?: string
-        }
-        Relationships: []
-      }
       lower_thirds: {
         Row: {
           created_at: string | null
@@ -586,102 +556,6 @@ export type Database = {
           share_code?: string
           viewer_connected?: boolean | null
           viewer_device_id?: string | null
-        }
-        Relationships: []
-      }
-      show_notes: {
-        Row: {
-          content: string | null
-          created_at: string | null
-          id: string
-          title: string | null
-          type: string
-          url: string | null
-        }
-        Insert: {
-          content?: string | null
-          created_at?: string | null
-          id?: string
-          title?: string | null
-          type: string
-          url?: string | null
-        }
-        Update: {
-          content?: string | null
-          created_at?: string | null
-          id?: string
-          title?: string | null
-          type?: string
-          url?: string | null
-        }
-        Relationships: []
-      }
-      survey_responses: {
-        Row: {
-          age: number | null
-          car_make: string | null
-          car_year: number | null
-          children_count: number | null
-          created_at: string | null
-          education_level: string | null
-          email: string | null
-          employment_status:
-            | Database["public"]["Enums"]["employment_status"]
-            | null
-          favorite_stores: string[] | null
-          gender: string | null
-          home_ownership: string | null
-          id: string
-          income_bracket: Database["public"]["Enums"]["income_bracket"] | null
-          marital_status: Database["public"]["Enums"]["marital_status"] | null
-          media_consumption_habits: Json | null
-          preferred_social_media: string[] | null
-          shopping_preferences: string[] | null
-          zip_code: string | null
-        }
-        Insert: {
-          age?: number | null
-          car_make?: string | null
-          car_year?: number | null
-          children_count?: number | null
-          created_at?: string | null
-          education_level?: string | null
-          email?: string | null
-          employment_status?:
-            | Database["public"]["Enums"]["employment_status"]
-            | null
-          favorite_stores?: string[] | null
-          gender?: string | null
-          home_ownership?: string | null
-          id?: string
-          income_bracket?: Database["public"]["Enums"]["income_bracket"] | null
-          marital_status?: Database["public"]["Enums"]["marital_status"] | null
-          media_consumption_habits?: Json | null
-          preferred_social_media?: string[] | null
-          shopping_preferences?: string[] | null
-          zip_code?: string | null
-        }
-        Update: {
-          age?: number | null
-          car_make?: string | null
-          car_year?: number | null
-          children_count?: number | null
-          created_at?: string | null
-          education_level?: string | null
-          email?: string | null
-          employment_status?:
-            | Database["public"]["Enums"]["employment_status"]
-            | null
-          favorite_stores?: string[] | null
-          gender?: string | null
-          home_ownership?: string | null
-          id?: string
-          income_bracket?: Database["public"]["Enums"]["income_bracket"] | null
-          marital_status?: Database["public"]["Enums"]["marital_status"] | null
-          media_consumption_habits?: Json | null
-          preferred_social_media?: string[] | null
-          shopping_preferences?: string[] | null
-          zip_code?: string | null
         }
         Relationships: []
       }
