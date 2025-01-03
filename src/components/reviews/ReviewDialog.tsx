@@ -3,7 +3,6 @@ import { Tv, Film, Utensils, Package, Edit2 } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import ImageFullscreen from "@/components/notes/ImageFullscreen";
 import EditReviewDialog from "./EditReviewDialog";
 import ReviewImageCarousel from "./ReviewImageCarousel";
 import type { Review } from "./types";
@@ -16,10 +15,8 @@ interface ReviewDialogProps {
 }
 
 const ReviewDialog = ({ review, open, onOpenChange, showControls = true }: ReviewDialogProps) => {
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [objectFit, setObjectFit] = useState<'contain' | 'cover'>('contain');
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   if (!review) return null;
 
@@ -79,14 +76,6 @@ const ReviewDialog = ({ review, open, onOpenChange, showControls = true }: Revie
           </div>
         </DialogContent>
       </Dialog>
-
-      {isFullscreen && review.image_urls?.[selectedImageIndex] && showControls && (
-        <ImageFullscreen
-          url={review.image_urls[selectedImageIndex]}
-          title={review.title}
-          onClose={() => setIsFullscreen(false)}
-        />
-      )}
 
       {showControls && (
         <EditReviewDialog

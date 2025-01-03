@@ -11,7 +11,6 @@ import Index from "./pages/Index";
 import Admin from "./pages/Admin";
 import Login from "./pages/Login";
 import AI from "./pages/AI";
-import Notes from "./pages/Notes";
 import Reviews from "./pages/Reviews";
 import Alerts from "./pages/Alerts";
 import Settings from "./pages/Settings";
@@ -158,7 +157,6 @@ const App = () => (
             {/* Public Routes */}
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/notes" element={<Notes />} />
             <Route path="/reviews" element={<Reviews />} />
             <Route path="/reviews/stream" element={<StreamReview />} />
             <Route path="/alerts" element={<Alerts />} />
