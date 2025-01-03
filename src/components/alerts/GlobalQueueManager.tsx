@@ -27,20 +27,31 @@ const GlobalQueueManager = () => {
         const queueState = settings?.value as { isPaused: boolean } | null;
         const currentlyPaused = queueState?.isPaused ?? false;
         
-        console.log('[GlobalQueueManager] Initial queue state:', { currentlyPaused });
+        console.log('[GlobalQueueManager] Setting up realtime channel. Initial queue state:', { currentlyPaused });
 
         channelRef.current = supabase.channel('alert-queue')
-          .on('broadcast', { event: 'alert_completed' }, (payload) => {
-            console.log('[GlobalQueueManager] Received alert completion broadcast:', payload);
-            // Recheck pause state before processing next alert
-            if (!currentlyPaused) {
-              console.log('[GlobalQueueManager] Queue not paused, processing next alert');
-              processNextAlert(false);
-            } else {
-              console.log('[GlobalQueueManager] Queue is paused, not processing next alert');
+          .on(
+            'postgres_changes',
+            { 
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'alert_queue',
+              filter: 'status=eq.completed'
+            },
+            (payload) => {
+              console.log('[GlobalQueueManager] Received alert completion update:', payload);
+              // Recheck pause state before processing next alert
+              if (!currentlyPaused) {
+                console.log('[GlobalQueueManager] Queue not paused, processing next alert');
+                processNextAlert(false);
+              } else {
+                console.log('[GlobalQueueManager] Queue is paused, not processing next alert');
+              }
             }
-          })
-          .subscribe();
+          )
+          .subscribe((status) => {
+            console.log('[GlobalQueueManager] Realtime subscription status:', status);
+          });
 
         // Only process initial alert if not paused and no current alert
         if (!currentAlert && !currentlyPaused) {
@@ -56,11 +67,9 @@ const GlobalQueueManager = () => {
 
     return () => {
       if (channelRef.current) {
+        console.log('[GlobalQueueManager] Cleaning up realtime channel');
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
-      }
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
       }
     };
   }, [currentAlert, processNextAlert]);
