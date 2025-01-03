@@ -15,28 +15,44 @@ const GlobalQueueManager = () => {
     if (isInitializedRef.current) return;
     isInitializedRef.current = true;
     
-    if (!channelRef.current) {
-      channelRef.current = supabase.channel('alert-queue')
-        .on('broadcast', { event: 'alert_completed' }, (payload) => {
-          console.log('[GlobalQueueManager] Received alert completion broadcast:', payload);
-          // Only process next alert if not paused
-          if (!isPaused) {
-            console.log('[GlobalQueueManager] Queue not paused, processing next alert');
-            processNextAlert(isPaused);
-          } else {
-            console.log('[GlobalQueueManager] Queue is paused, not processing next alert');
-          }
-        })
-        .subscribe();
+    const setupChannel = async () => {
+      if (!channelRef.current) {
+        // Get current queue state from database to ensure consistency
+        const { data: settings } = await supabase
+          .from('system_settings')
+          .select('value')
+          .eq('key', 'queue_state')
+          .single();
+        
+        const queueState = settings?.value as { isPaused: boolean } | null;
+        const currentlyPaused = queueState?.isPaused ?? false;
+        
+        console.log('[GlobalQueueManager] Initial queue state:', { currentlyPaused });
 
-      // Only process initial alert if not paused and no current alert
-      if (!currentAlert && !isPaused) {
-        console.log('[GlobalQueueManager] No current alert and queue not paused, processing initial alert');
-        processNextAlert(isPaused);
-      } else {
-        console.log('[GlobalQueueManager] Queue is paused or has current alert, not processing initial alert');
+        channelRef.current = supabase.channel('alert-queue')
+          .on('broadcast', { event: 'alert_completed' }, (payload) => {
+            console.log('[GlobalQueueManager] Received alert completion broadcast:', payload);
+            // Recheck pause state before processing next alert
+            if (!currentlyPaused) {
+              console.log('[GlobalQueueManager] Queue not paused, processing next alert');
+              processNextAlert(false);
+            } else {
+              console.log('[GlobalQueueManager] Queue is paused, not processing next alert');
+            }
+          })
+          .subscribe();
+
+        // Only process initial alert if not paused and no current alert
+        if (!currentAlert && !currentlyPaused) {
+          console.log('[GlobalQueueManager] No current alert and queue not paused, processing initial alert');
+          processNextAlert(false);
+        } else {
+          console.log('[GlobalQueueManager] Queue is paused or has current alert, not processing initial alert');
+        }
       }
-    }
+    };
+
+    setupChannel();
 
     return () => {
       if (channelRef.current) {
@@ -47,8 +63,9 @@ const GlobalQueueManager = () => {
         clearTimeout(timerRef.current);
       }
     };
-  }, [isPaused, currentAlert, processNextAlert]);
+  }, [currentAlert, processNextAlert]);
 
+  // Effect to handle alert completion timing
   useEffect(() => {
     if (timerRef.current) {
       clearTimeout(timerRef.current);
@@ -90,6 +107,17 @@ const GlobalQueueManager = () => {
       }
     };
   }, [currentAlert, isPaused, handleAlertComplete]);
+
+  // Effect to handle pause state changes
+  useEffect(() => {
+    console.log('[GlobalQueueManager] Pause state changed:', isPaused);
+    
+    // If queue is paused, clear any existing completion timer
+    if (isPaused && timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, [isPaused]);
 
   return null;
 };

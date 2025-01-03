@@ -53,7 +53,16 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
   const processNextAlert = async (isPaused: boolean, currentAlert: AlertQueueItem | null, pendingAlerts: AlertQueueItem[]) => {
     console.log('[useQueueActions] Processing next alert. Queue paused:', isPaused);
     
-    if (isPaused) {
+    // Double check pause state from database
+    const { data: settings } = await supabase
+      .from('system_settings')
+      .select('value')
+      .eq('key', 'queue_state')
+      .single();
+    
+    const queueState = settings?.value as QueueStateValue;
+    
+    if (queueState?.isPaused || isPaused) {
       console.log('[useQueueActions] Queue is paused, not processing next alert');
       return;
     }
@@ -67,21 +76,6 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
     const nextAlert = pendingAlerts[0];
     if (!nextAlert) {
       console.log('[useQueueActions] No pending alerts in queue');
-      return;
-    }
-
-    // Check pause state again before processing
-    const { data: settings } = await supabase
-      .from('system_settings')
-      .select('value')
-      .eq('key', 'queue_state')
-      .single();
-    
-    // Properly type and cast the queue state value
-    const queueState = settings?.value as unknown as QueueStateValue;
-    
-    if (queueState?.isPaused) {
-      console.log('[useQueueActions] Queue is now paused, not processing next alert');
       return;
     }
 
