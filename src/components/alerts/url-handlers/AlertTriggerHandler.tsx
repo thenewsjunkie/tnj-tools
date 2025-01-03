@@ -11,7 +11,6 @@ interface AlertTriggerHandlerProps {
 
 const AlertTriggerHandler = ({ alertSlug, username, giftCount }: AlertTriggerHandlerProps) => {
   const completingRef = useRef(false);
-  const { isPaused } = useQueueState();
   const { toast } = useToast();
 
   // Function to convert title to slug
@@ -32,16 +31,6 @@ const AlertTriggerHandler = ({ alertSlug, username, giftCount }: AlertTriggerHan
     const triggerAlertFromUrl = async () => {
       if (!alertSlug || completingRef.current || alertSlug === 'queue') {
         console.log('[AlertTriggerHandler] No alert slug, already completing, or queue control URL');
-        return;
-      }
-
-      if (isPaused) {
-        console.log('[AlertTriggerHandler] Queue is paused, not triggering alert');
-        toast({
-          title: "Queue Paused",
-          description: "Cannot trigger alerts while the queue is paused",
-          variant: "destructive",
-        });
         return;
       }
 
@@ -108,7 +97,7 @@ const AlertTriggerHandler = ({ alertSlug, username, giftCount }: AlertTriggerHan
     };
 
     triggerAlertFromUrl();
-  }, [alertSlug, username, giftCount, isPaused, toast]);
+  }, [alertSlug, username, giftCount, toast]);
 
   return null;
 };
