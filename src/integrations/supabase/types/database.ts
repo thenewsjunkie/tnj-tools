@@ -26,7 +26,6 @@ import {
 } from './tables/users';
 import {
   SystemSettingsTable,
-  ScreenShareSessionsTable,
   TnjLinksTable,
 } from './tables/system';
 import { InterviewRequestsTable } from './tables/interviews';
@@ -51,8 +50,6 @@ export interface Database {
       news_sources: NewsSourcesTable
       profiles: ProfilesTable
       reviews: ReviewsTable
-      screen_share_sessions: ScreenShareSessionsTable
-      show_notes: ShowNotesTable
       system_settings: SystemSettingsTable
       tnj_links: TnjLinksTable
     }
