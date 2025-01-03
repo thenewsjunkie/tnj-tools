@@ -60,9 +60,17 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
       .eq('key', 'queue_state')
       .single();
     
-    const queueState = settings?.value as QueueStateValue;
+    // Type guard function to check if the value matches QueueStateValue shape
+    const isQueueStateValue = (value: any): value is QueueStateValue => {
+      return value && typeof value === 'object' && 'isPaused' in value && typeof value.isPaused === 'boolean';
+    };
+
+    // Safely get queue state with type checking
+    const queueState = settings?.value && isQueueStateValue(settings.value) 
+      ? settings.value 
+      : { isPaused: false };
     
-    if (queueState?.isPaused || isPaused) {
+    if (queueState.isPaused || isPaused) {
       console.log('[useQueueActions] Queue is paused, not processing next alert');
       return;
     }
