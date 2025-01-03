@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types/helpers";
 import type { LeaderboardVisibilityValue } from "@/integrations/supabase/types/tables/system";
@@ -15,6 +15,7 @@ type SystemSettingsRow = {
 export const useLeaderboardVisibility = () => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const instanceIdRef = useRef(`instance-${Math.random().toString(36).substr(2, 9)}`);
+  const [isVisible, setIsVisible] = useState(false);
 
   const clearExistingTimer = () => {
     if (timerRef.current) {
@@ -49,7 +50,6 @@ export const useLeaderboardVisibility = () => {
   const handleVisibilityRequest = async () => {
     console.log(`[useLeaderboardVisibility ${instanceIdRef.current}] Received show request`);
     
-    // Update visibility in database
     const { error } = await supabase
       .from('system_settings')
       .update({
@@ -62,8 +62,6 @@ export const useLeaderboardVisibility = () => {
       console.error(`[useLeaderboardVisibility ${instanceIdRef.current}] Error updating visibility:`, error);
       return;
     }
-
-    // Timer will be started by the subscription handler
   };
 
   useEffect(() => {
@@ -106,17 +104,15 @@ export const useLeaderboardVisibility = () => {
         (payload: RealtimePostgresChangesPayload<SystemSettingsRow>) => {
           console.log(`[useLeaderboardVisibility ${instanceIdRef.current}] Received visibility update:`, payload);
           
-          // Check if payload.new exists and has the expected structure
           if (payload.new && 
               typeof payload.new === 'object' && 
               'value' in payload.new && 
               payload.new.value !== null && 
               typeof payload.new.value === 'object') {
             
-            // Type assertion after runtime checks
             const newValue = payload.new.value as { isVisible: boolean };
+            setIsVisible(newValue.isVisible);
             
-            // Only start timer when visibility changes to true
             if (newValue.isVisible) {
               console.log(`[useLeaderboardVisibility ${instanceIdRef.current}] Starting timer due to visibility change to true`);
               startHideTimer();
@@ -130,16 +126,15 @@ export const useLeaderboardVisibility = () => {
 
     return () => {
       console.log(`[useLeaderboardVisibility ${instanceIdRef.current}] Hook unmounting`);
-      // Clear any existing timer
       clearExistingTimer();
       
-      // Restore original fetch
       if (typeof window !== 'undefined') {
         window.fetch = originalFetchFunction;
       }
       
-      // Clean up subscription
       supabase.removeChannel(channel);
     };
   }, []);
+
+  return isVisible;
 };

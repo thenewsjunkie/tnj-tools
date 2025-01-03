@@ -5,7 +5,7 @@ import { useLeaderboardVisibility } from "@/hooks/useLeaderboardVisibility";
 import { GiftStats } from "@/integrations/supabase/types/tables/gifts";
 
 const LeaderboardOBS = () => {
-  useLeaderboardVisibility();
+  const isVisible = useLeaderboardVisibility();
 
   const { data: giftStats } = useQuery({
     queryKey: ['giftStats'],
@@ -21,6 +21,10 @@ const LeaderboardOBS = () => {
       return data as GiftStats[];
     },
   });
+
+  if (!isVisible) {
+    return null;
+  }
 
   return <LeaderboardCard stats={giftStats || []} />;
 };

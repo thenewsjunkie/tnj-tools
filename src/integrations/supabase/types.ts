@@ -92,33 +92,6 @@ export type Database = {
         }
         Relationships: []
       }
-      audio_conversations: {
-        Row: {
-          answer_audio_url: string | null
-          answer_text: string | null
-          created_at: string | null
-          id: string
-          question_audio_url: string | null
-          question_text: string | null
-        }
-        Insert: {
-          answer_audio_url?: string | null
-          answer_text?: string | null
-          created_at?: string | null
-          id?: string
-          question_audio_url?: string | null
-          question_text?: string | null
-        }
-        Update: {
-          answer_audio_url?: string | null
-          answer_text?: string | null
-          created_at?: string | null
-          id?: string
-          question_audio_url?: string | null
-          question_text?: string | null
-        }
-        Relationships: []
-      }
       bot_instances: {
         Row: {
           created_at: string | null
@@ -146,78 +119,6 @@ export type Database = {
           status?: string
           type?: string
           updated_at?: string | null
-        }
-        Relationships: []
-      }
-      call_sessions: {
-        Row: {
-          caller_name: string
-          connection_quality: string | null
-          created_at: string | null
-          ended_at: string | null
-          id: string
-          is_muted: boolean | null
-          started_at: string | null
-          status: Database["public"]["Enums"]["call_status"] | null
-          topic: string | null
-        }
-        Insert: {
-          caller_name: string
-          connection_quality?: string | null
-          created_at?: string | null
-          ended_at?: string | null
-          id?: string
-          is_muted?: boolean | null
-          started_at?: string | null
-          status?: Database["public"]["Enums"]["call_status"] | null
-          topic?: string | null
-        }
-        Update: {
-          caller_name?: string
-          connection_quality?: string | null
-          created_at?: string | null
-          ended_at?: string | null
-          id?: string
-          is_muted?: boolean | null
-          started_at?: string | null
-          status?: Database["public"]["Enums"]["call_status"] | null
-          topic?: string | null
-        }
-        Relationships: []
-      }
-      chat_messages: {
-        Row: {
-          created_at: string | null
-          id: string
-          message: string
-          message_type: Database["public"]["Enums"]["message_type"]
-          metadata: Json | null
-          source: Database["public"]["Enums"]["chat_source"]
-          superchat_amount: number | null
-          superchat_expires_at: string | null
-          username: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          message: string
-          message_type?: Database["public"]["Enums"]["message_type"]
-          metadata?: Json | null
-          source: Database["public"]["Enums"]["chat_source"]
-          superchat_amount?: number | null
-          superchat_expires_at?: string | null
-          username: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          message?: string
-          message_type?: Database["public"]["Enums"]["message_type"]
-          metadata?: Json | null
-          source?: Database["public"]["Enums"]["chat_source"]
-          superchat_amount?: number | null
-          superchat_expires_at?: string | null
-          username?: string
         }
         Relationships: []
       }
@@ -281,27 +182,6 @@ export type Database = {
           id?: string
           prompt?: string
           status?: string | null
-        }
-        Relationships: []
-      }
-      custom_emotes: {
-        Row: {
-          created_at: string
-          id: string
-          image_url: string
-          name: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          image_url: string
-          name: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          image_url?: string
-          name?: string
         }
         Relationships: []
       }
