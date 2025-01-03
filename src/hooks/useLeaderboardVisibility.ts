@@ -29,16 +29,19 @@ export const useLeaderboardVisibility = () => {
     
     timerRef.current = setTimeout(async () => {
       console.log(`[useLeaderboardVisibility ${instanceIdRef.current}] Auto-hiding leaderboard`);
-      const { error: hideError } = await supabase
+      const { data, error: hideError } = await supabase
         .from('system_settings')
         .update({
           value: { isVisible: false } as unknown as Json,
           updated_at: new Date().toISOString()
         })
-        .eq('key', 'leaderboard_visibility');
+        .eq('key', 'leaderboard_visibility')
+        .select();
 
       if (hideError) {
         console.error(`[useLeaderboardVisibility ${instanceIdRef.current}] Error hiding leaderboard:`, hideError);
+      } else {
+        console.log(`[useLeaderboardVisibility ${instanceIdRef.current}] Hide operation successful:`, data);
       }
     }, LEADERBOARD_DISPLAY_DURATION);
   };
