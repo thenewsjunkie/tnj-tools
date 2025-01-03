@@ -26,7 +26,6 @@ import {
 } from './tables/users';
 import {
   SystemSettingsTable,
-  TnjLinksTable,
 } from './tables/system';
 import { InterviewRequestsTable } from './tables/interviews';
 import { FritzContestantsTable } from './tables/fritz';
@@ -51,7 +50,41 @@ export interface Database {
       profiles: ProfilesTable
       reviews: ReviewsTable
       system_settings: SystemSettingsTable
-      tnj_links: TnjLinksTable
+      tnj_links: {
+        Row: {
+          created_at: string | null
+          display_order: number
+          id: string
+          last_checked: string | null
+          status: string
+          target: string
+          title: string
+          updated_at: string | null
+          url: string
+        }
+        Insert: {
+          created_at?: string | null
+          display_order: number
+          id?: string
+          last_checked?: string | null
+          status?: string
+          target?: string
+          title: string
+          updated_at?: string | null
+          url: string
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          last_checked?: string | null
+          status?: string
+          target?: string
+          title?: string
+          updated_at?: string | null
+          url?: string
+        }
+      }
     }
     Functions: DatabaseFunctions
     Enums: DatabaseEnums
