@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LeaderboardCard } from "@/components/leaderboard/LeaderboardCard";
 import { useLeaderboardVisibility } from "@/hooks/useLeaderboardVisibility";
 import { GiftStats } from "@/integrations/supabase/types/tables/gifts";
+import { cn } from "@/lib/utils";
 
 const LeaderboardOBS = () => {
   const isVisible = useLeaderboardVisibility();
@@ -22,11 +23,16 @@ const LeaderboardOBS = () => {
     },
   });
 
-  if (!isVisible) {
-    return null;
-  }
-
-  return <LeaderboardCard stats={giftStats || []} />;
+  return (
+    <div className={cn(
+      "transition-all duration-500 ease-in-out transform",
+      isVisible 
+        ? "opacity-100 translate-y-0" 
+        : "opacity-0 translate-y-full"
+    )}>
+      <LeaderboardCard stats={giftStats || []} />
+    </div>
+  );
 };
 
 export default LeaderboardOBS;
