@@ -559,6 +559,33 @@ export type Database = {
         }
         Relationships: []
       }
+      show_notes: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          id: string
+          title: string | null
+          type: string
+          url: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          title?: string | null
+          type: string
+          url?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          title?: string | null
+          type?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
           key: string
