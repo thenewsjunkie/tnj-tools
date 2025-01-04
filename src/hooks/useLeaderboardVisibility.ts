@@ -16,7 +16,6 @@ export const useLeaderboardVisibility = () => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const instanceIdRef = useRef(`instance-${Math.random().toString(36).substr(2, 9)}`);
   const [isVisible, setIsVisible] = useState(false);
-  const [isConnected, setIsConnected] = useState(true);
 
   const clearExistingTimer = () => {
     if (timerRef.current) {
@@ -49,11 +48,6 @@ export const useLeaderboardVisibility = () => {
   };
 
   const handleVisibilityRequest = async () => {
-    if (!isConnected) {
-      console.error(`[useLeaderboardVisibility ${instanceIdRef.current}] Cannot update visibility: Realtime connection is down`);
-      return;
-    }
-    
     console.log(`[useLeaderboardVisibility ${instanceIdRef.current}] Received show request`);
     
     const { error } = await supabase
@@ -128,7 +122,6 @@ export const useLeaderboardVisibility = () => {
       )
       .subscribe((status) => {
         console.log(`[useLeaderboardVisibility ${instanceIdRef.current}] Subscription status:`, status);
-        setIsConnected(status === 'SUBSCRIBED');
       });
 
     return () => {
@@ -142,14 +135,6 @@ export const useLeaderboardVisibility = () => {
       supabase.removeChannel(channel);
     };
   }, []);
-
-  // If connection is lost, hide the leaderboard
-  useEffect(() => {
-    if (!isConnected) {
-      setIsVisible(false);
-      clearExistingTimer();
-    }
-  }, [isConnected]);
 
   return isVisible;
 };
