@@ -533,24 +533,9 @@ export type Database = {
         Relationships: []
       }
       twitch_channel_emotes: {
-        Row: {
-          created_at: string | null
-          id: string
-          name: string
-          urls: Json
-        }
-        Insert: {
-          created_at?: string | null
-          id: string
-          name: string
-          urls: Json
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          name?: string
-          urls?: Json
-        }
+        Row: {}
+        Insert: {}
+        Update: {}
         Relationships: []
       }
     }
