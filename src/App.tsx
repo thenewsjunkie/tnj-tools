@@ -2,29 +2,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
-import GlobalQueueManager from "@/components/alerts/GlobalQueueManager";
-import { useEffect, useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import Index from "./pages/Index";
-import Admin from "./pages/Admin";
-import Login from "./pages/Login";
-import Reviews from "./pages/Reviews";
-import Alerts from "./pages/Alerts";
-import Settings from "./pages/Settings";
-import Instructions from "./pages/Instructions";
-import QueueHistory from "./pages/QueueHistory";
-import Fritz from "./pages/Fritz";
-import CurrentScore from "./pages/CurrentScore";
-import TotalScore from "./pages/TotalScore";
-import FritzScoreHandler from "./components/fritz/FritzScoreHandler";
-import LowerThird from "./pages/LowerThird";
-import LowerThirds from "./pages/Admin/LowerThirds";
-import Leaderboard from "./pages/Leaderboard";
-import LeaderboardOBS from "./pages/LeaderboardOBS";
-import GiftStats from "./pages/Admin/GiftStats";
-import StreamReview from "./pages/StreamReview";
+import RouteTracker from "@/components/routing/RouteTracker";
+import { publicRoutes, adminRoutes } from "@/components/routing/routes";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,112 +18,6 @@ const queryClient = new QueryClient({
   },
 });
 
-const RouteTracker = () => {
-  const location = useLocation();
-  const [isTransitioning, setIsTransitioning] = useState(false);
-
-  useEffect(() => {
-    console.log("[Router] Route changed to:", location.pathname);
-    setIsTransitioning(true);
-    const timer = setTimeout(() => {
-      setIsTransitioning(false);
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, [location]);
-
-  if (isTransitioning) {
-    return (
-      <div 
-        className="fixed inset-0 bg-black z-50 transition-opacity duration-100" 
-        style={{ opacity: 0.5 }}
-      />
-    );
-  }
-
-  return null;
-};
-
-const AdminRoute = ({ children }: { children: React.ReactNode }) => {
-  const location = useLocation();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  const checkAuth = useCallback(async (session: any) => {
-    if (!session) {
-      console.log('[AdminRoute] No session found');
-      setIsAuthenticated(false);
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('status')
-        .eq('id', session.user.id)
-        .single();
-      
-      const isApproved = profile?.status === 'approved';
-      console.log('[AdminRoute] User authentication status:', isApproved);
-      
-      setIsAuthenticated(isApproved);
-      setIsLoading(false);
-    } catch (error) {
-      console.error('[AdminRoute] Error checking auth:', error);
-      setIsAuthenticated(false);
-      setIsLoading(false);
-    }
-  }, []);
-  
-  useEffect(() => {
-    let mounted = true;
-
-    // Initial auth check
-    const initialCheck = async () => {
-      console.log('[AdminRoute] Checking authentication...');
-      const { data: { session } } = await supabase.auth.getSession();
-      if (mounted) {
-        checkAuth(session);
-      }
-    };
-
-    initialCheck();
-
-    // Subscribe to auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      console.log('[AdminRoute] Auth state changed:', _event);
-      if (mounted) {
-        checkAuth(session);
-      }
-    });
-
-    return () => {
-      mounted = false;
-      subscription?.unsubscribe();
-    };
-  }, [checkAuth]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-foreground text-lg">Loading...</div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  return (
-    <>
-      <GlobalQueueManager />
-      {children}
-    </>
-  );
-};
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider defaultTheme="dark">
@@ -152,31 +27,8 @@ const App = () => (
         <BrowserRouter>
           <RouteTracker />
           <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/reviews" element={<Reviews />} />
-            <Route path="/reviews/stream" element={<StreamReview />} />
-            <Route path="/alerts" element={<Alerts />} />
-            <Route path="/alerts/queue/:action" element={<Alerts />} />
-            <Route path="/alerts/:alertSlug" element={<Alerts />} />
-            <Route path="/alerts/:alertSlug/:username" element={<Alerts />} />
-            <Route path="/alerts/:alertSlug/:username/:giftCount" element={<Alerts />} />
-            <Route path="/fritz" element={<Fritz />} />
-            <Route path="/fritz/current-score" element={<CurrentScore />} />
-            <Route path="/fritz/total-score" element={<TotalScore />} />
-            <Route path="/fritz/:contestant/:action" element={<FritzScoreHandler />} />
-            <Route path="/lower-third" element={<LowerThird />} />
-            <Route path="/leaderboard" element={<Leaderboard />} />
-            <Route path="/leaderboard/obs" element={<LeaderboardOBS />} />
-
-            {/* Protected Admin Routes */}
-            <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
-            <Route path="/admin/settings" element={<AdminRoute><Settings /></AdminRoute>} />
-            <Route path="/admin/instructions" element={<AdminRoute><Instructions /></AdminRoute>} />
-            <Route path="/admin/queue-history" element={<AdminRoute><QueueHistory /></AdminRoute>} />
-            <Route path="/admin/lower-thirds" element={<AdminRoute><LowerThirds /></AdminRoute>} />
-            <Route path="/admin/gift-stats" element={<AdminRoute><GiftStats /></AdminRoute>} />
+            {publicRoutes}
+            {adminRoutes}
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
