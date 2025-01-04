@@ -572,8 +572,8 @@ export type Database = {
       }
     }
     Enums: {
-      call_status: "waiting" | "connected" | "ended"
-      chat_source: "youtube" | "twitch" | "megachat"
+      lower_third_type: "news" | "guest" | "topic" | "breaking"
+      review_type: "television" | "movie" | "food" | "product"
       employment_status:
         | "full_time"
         | "part_time"
@@ -588,7 +588,6 @@ export type Database = {
         | "75k_100k"
         | "100k_150k"
         | "over_150k"
-      lower_third_type: "news" | "guest" | "topic" | "breaking"
       marital_status:
         | "single"
         | "married"
@@ -596,8 +595,6 @@ export type Database = {
         | "widowed"
         | "separated"
         | "domestic_partnership"
-      message_type: "chat" | "subscription" | "superchat"
-      review_type: "television" | "movie" | "food" | "product"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -701,3 +698,4 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
     ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
+

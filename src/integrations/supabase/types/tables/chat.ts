@@ -1,0 +1,1 @@
+// This file will be deleted as chat functionality is removed
