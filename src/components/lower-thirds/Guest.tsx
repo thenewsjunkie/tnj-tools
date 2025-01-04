@@ -8,18 +8,32 @@ interface GuestProps {
 
 const Guest = ({ imageUrl, type, isVisible }: GuestProps) => {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [shouldRender, setShouldRender] = useState(false);
 
   useEffect(() => {
     if (!imageUrl) return;
     
     const img = new Image();
     img.src = imageUrl;
-    img.onload = () => setIsLoaded(true);
+    img.onload = () => {
+      setIsLoaded(true);
+      if (isVisible) {
+        setShouldRender(true);
+      }
+    };
   }, [imageUrl]);
+
+  useEffect(() => {
+    if (!isVisible) {
+      setShouldRender(false);
+    } else if (isLoaded) {
+      setShouldRender(true);
+    }
+  }, [isVisible, isLoaded]);
 
   return (
     <div 
-      className={`relative bg-black/85 overflow-hidden rounded-l-lg transition-opacity duration-300 ${isVisible && isLoaded ? 'opacity-100' : 'opacity-0'}`}
+      className={`relative bg-black/85 overflow-hidden rounded-l-lg transition-opacity duration-300 ${shouldRender ? 'opacity-100' : 'opacity-0'}`}
       style={{ 
         width: '240px',
         height: '280px',
