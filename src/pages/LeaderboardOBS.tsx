@@ -11,15 +11,33 @@ const LeaderboardOBS = () => {
   const { data: giftStats, isLoading } = useQuery({
     queryKey: ['giftStats', false],  // false for includeTestData
     queryFn: async () => {
+      const now = new Date();
+      const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      
+      console.log('[LeaderboardOBS] Fetching stats for month:', currentMonthKey);
+      
       const { data, error } = await supabase
         .from('gift_stats')
         .select('*')
-        .eq('is_test_data', false)  // Only fetch non-test data
-        .order('total_gifts', { ascending: false })
-        .limit(5);  // Only get top 5
+        .eq('is_test_data', false)
+        .not('monthly_gifts', 'eq', '{}');  // Only get users who have gifted
 
-      if (error) throw error;
-      return data as GiftStats[];
+      if (error) {
+        console.error('[LeaderboardOBS] Error fetching gift stats:', error);
+        throw error;
+      }
+
+      // Sort by current month's gifts
+      const sortedData = data
+        .map(stat => ({
+          ...stat,
+          current_month_gifts: (stat.monthly_gifts as Record<string, number>)[currentMonthKey] || 0
+        }))
+        .sort((a, b) => b.current_month_gifts - a.current_month_gifts)
+        .slice(0, 5);  // Only get top 5
+
+      console.log('[LeaderboardOBS] Processed stats:', sortedData);
+      return sortedData as GiftStats[];
     },
   });
 

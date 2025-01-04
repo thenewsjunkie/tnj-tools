@@ -15,6 +15,14 @@ export const LeaderboardCard = ({ stats }: LeaderboardCardProps) => {
     return safeStats[index] || null;
   });
 
+  // Get current month key for displaying monthly gifts
+  const getCurrentMonthKey = () => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  };
+
+  const currentMonthKey = getCurrentMonthKey();
+
   return (
     <Card className="p-4 bg-[#1A1F2C]/90 border-0 h-[540px] flex flex-col">
       <div className="space-y-2 mb-4">
@@ -22,7 +30,7 @@ export const LeaderboardCard = ({ stats }: LeaderboardCardProps) => {
           <Crown className="h-6 w-6 text-yellow-500" />
           <h1 className="text-2xl font-bold text-white">Top Gifters</h1>
         </div>
-        <p className="text-[#8A898C]">The most generous members of our community</p>
+        <p className="text-[#8A898C]">Most generous gifters this month</p>
       </div>
 
       <div className="grid gap-2 flex-1">
@@ -39,7 +47,7 @@ export const LeaderboardCard = ({ stats }: LeaderboardCardProps) => {
                 <div>
                   <h3 className="text-xl font-semibold text-white">{stat.username}</h3>
                   <p className="text-sm text-[#8A898C]">
-                    Total Gifts: {stat.total_gifts}
+                    Monthly Gifts: {(stat.monthly_gifts as Record<string, number>)[currentMonthKey] || 0}
                   </p>
                 </div>
               </div>
@@ -51,7 +59,7 @@ export const LeaderboardCard = ({ stats }: LeaderboardCardProps) => {
                 <div>
                   <h3 className="text-xl font-semibold text-white">Placeholder</h3>
                   <p className="text-sm text-[#8A898C]">
-                    Total Gifts: 0
+                    Monthly Gifts: 0
                   </p>
                 </div>
               </div>
