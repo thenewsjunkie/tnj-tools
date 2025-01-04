@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { RealtimeChannel } from '@supabase/supabase-js';
+import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ChannelConfig {
@@ -12,24 +12,26 @@ interface ChannelConfig {
 export const useSupabaseRealtime = (
   channelName: string,
   config: ChannelConfig,
-  onEvent: (payload: any) => void
+  onEvent: (payload: RealtimePostgresChangesPayload<any>) => void
 ) => {
   const channelRef = useRef<RealtimeChannel | null>(null);
 
   useEffect(() => {
     let retryCount = 0;
     const maxRetries = 5;
-    const baseDelay = 1000; // Start with 1 second delay
+    const baseDelay = 1000;
 
     const setupChannel = () => {
-      // Clean up existing channel if any
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
       }
 
       console.log(`[Realtime] Setting up channel: ${channelName}`);
       
-      channelRef.current = supabase.channel(channelName)
+      channelRef.current = supabase.channel(channelName);
+
+      // Add postgres changes listener
+      channelRef.current = channelRef.current
         .on(
           'postgres_changes',
           {
@@ -43,21 +45,14 @@ export const useSupabaseRealtime = (
             onEvent(payload);
           }
         )
-        .on('system', { event: '*' }, (payload) => {
-          console.log(`[Realtime] System event on ${channelName}:`, payload);
-        })
-        .on('subscription', { event: '*' }, (payload) => {
-          console.log(`[Realtime] Subscription event on ${channelName}:`, payload);
-        })
-        .subscribe(async (status) => {
+        .subscribe((status) => {
           console.log(`[Realtime] Channel ${channelName} status:`, status);
           
           if (status === 'SUBSCRIBED') {
-            retryCount = 0; // Reset retry count on successful connection
+            retryCount = 0;
           } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-            // Implement exponential backoff for reconnection
             if (retryCount < maxRetries) {
-              const delay = Math.min(baseDelay * Math.pow(2, retryCount), 30000); // Max 30 second delay
+              const delay = Math.min(baseDelay * Math.pow(2, retryCount), 30000);
               console.log(`[Realtime] Retrying connection in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`);
               
               setTimeout(() => {
@@ -71,10 +66,8 @@ export const useSupabaseRealtime = (
         });
     };
 
-    // Initial setup
     setupChannel();
 
-    // Cleanup function
     return () => {
       console.log(`[Realtime] Cleaning up channel: ${channelName}`);
       if (channelRef.current) {

@@ -3,7 +3,7 @@
 import * as React from "react"
 import { createContext, useContext, useEffect, useState } from "react"
 
-type Theme = "dark" | "light"
+export type Theme = "dark" | "light"  // Export the Theme type
 
 type ThemeProviderProps = {
   children: React.ReactNode
@@ -24,10 +24,9 @@ const ThemeProviderContext = createContext<ThemeProviderState>(initialState)
 
 export function ThemeProvider({
   children,
-  defaultTheme = "dark", // Changed default here
+  defaultTheme = "dark",
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(() => {
-    // Check localStorage first
     if (typeof window !== 'undefined') {
       const stored = window.localStorage.getItem("theme") as Theme
       if (stored) return stored
@@ -37,14 +36,8 @@ export function ThemeProvider({
 
   useEffect(() => {
     const root = window.document.documentElement
-    
-    // Remove both classes first
     root.classList.remove("light", "dark")
-    
-    // Add the current theme class
     root.classList.add(theme)
-    
-    // Store in localStorage
     localStorage.setItem("theme", theme)
   }, [theme])
 
