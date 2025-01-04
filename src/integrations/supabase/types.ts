@@ -532,6 +532,12 @@ export type Database = {
         }
         Relationships: []
       }
+      twitch_channel_emotes: {
+        Row: {}
+        Insert: {}
+        Update: {}
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
