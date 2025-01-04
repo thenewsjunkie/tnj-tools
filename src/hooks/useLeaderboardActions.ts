@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { queryClient } from "@/lib/react-query"; // We'll create this file next
+import { queryClient } from "@/lib/react-query";
 
 export const triggerLeaderboard = async () => {
   try {
