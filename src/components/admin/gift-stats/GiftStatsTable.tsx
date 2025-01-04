@@ -17,12 +17,14 @@ interface GiftStatsTableProps {
   stats: GiftStats[];
   isLoading: boolean;
   formatDate: (date: string | null) => string;
+  includeTestData: boolean; // Add this prop
 }
 
 export const GiftStatsTable = ({
   stats,
   isLoading,
   formatDate,
+  includeTestData,
 }: GiftStatsTableProps) => {
   const queryClient = useQueryClient();
 
@@ -35,8 +37,10 @@ export const GiftStatsTable = ({
 
       if (error) throw error;
 
-      // Invalidate and refetch
-      await queryClient.invalidateQueries({ queryKey: ['gift-stats'] });
+      // Invalidate and refetch with the correct query key
+      await queryClient.invalidateQueries({ 
+        queryKey: ['giftStats', includeTestData] 
+      });
       toast.success('Test data status updated successfully');
     } catch (error) {
       console.error('Error updating test data status:', error);

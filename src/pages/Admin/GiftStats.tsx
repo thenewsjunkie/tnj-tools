@@ -98,6 +98,7 @@ const GiftStatsAdmin = () => {
             stats={filteredStats || []}
             isLoading={isLoading}
             formatDate={formatDate}
+            includeTestData={includeTestData}
           />
         </div>
       </div>
