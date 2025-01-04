@@ -30,20 +30,16 @@ export const useSupabaseRealtime = (
       
       channelRef.current = supabase.channel(channelName);
       
-      // Add the postgres_changes listener
-      channelRef.current = channelRef.current.on(
-        'postgres_changes',
-        {
-          event: config.event,
-          schema: config.schema || 'public',
-          table: config.table,
-          filter: config.filter
-        },
-        (payload) => {
-          console.log(`[Realtime] Received event on ${channelName}:`, payload);
-          onEvent(payload);
-        }
-      );
+      // Add the postgres_changes listener with proper method chaining
+      channelRef.current = channelRef.current.on('postgres_changes' as const, {
+        event: config.event,
+        schema: config.schema || 'public',
+        table: config.table,
+        filter: config.filter
+      }, (payload) => {
+        console.log(`[Realtime] Received event on ${channelName}:`, payload);
+        onEvent(payload);
+      });
 
       // Subscribe to the channel
       channelRef.current.subscribe((status) => {
