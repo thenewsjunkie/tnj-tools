@@ -4,7 +4,7 @@ import { GiftStats } from "@/integrations/supabase/types/tables/gifts";
 
 export const useGiftStats = (includeTestData: boolean) => {
   return useQuery({
-    queryKey: ["gift-stats", includeTestData],
+    queryKey: ["giftStats", includeTestData],
     queryFn: async () => {
       let query = supabase
         .from("gift_stats")

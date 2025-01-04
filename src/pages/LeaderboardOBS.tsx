@@ -9,7 +9,7 @@ const LeaderboardOBS = () => {
   const isVisible = useLeaderboardVisibility();
 
   const { data: giftStats, isLoading } = useQuery({
-    queryKey: ['giftStats'],
+    queryKey: ['giftStats', false],  // false for includeTestData
     queryFn: async () => {
       const { data, error } = await supabase
         .from('gift_stats')

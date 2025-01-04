@@ -6,7 +6,10 @@ export const triggerLeaderboard = async () => {
     console.log('[useLeaderboardActions] Triggering leaderboard');
 
     // Invalidate the giftStats query to force a refresh
-    await queryClient.invalidateQueries({ queryKey: ['giftStats'] });
+    // Include both query keys to ensure all queries are invalidated
+    await queryClient.invalidateQueries({ 
+      queryKey: ['giftStats']
+    });
 
     const { error: visibilityError } = await supabase
       .from('system_settings')
