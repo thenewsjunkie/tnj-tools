@@ -31,7 +31,7 @@ export const useSupabaseRealtime = (
       channelRef.current = supabase
         .channel(channelName)
         .on(
-          'postgres_changes' as const,
+          'postgres_changes',
           {
             event: config.event,
             schema: config.schema || 'public',
