@@ -10,7 +10,6 @@ import { supabase } from "@/integrations/supabase/client";
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
 import Login from "./pages/Login";
-import AI from "./pages/AI";
 import Reviews from "./pages/Reviews";
 import Alerts from "./pages/Alerts";
 import Settings from "./pages/Settings";
@@ -25,6 +24,7 @@ import LowerThirds from "./pages/Admin/LowerThirds";
 import Leaderboard from "./pages/Leaderboard";
 import LeaderboardOBS from "./pages/LeaderboardOBS";
 import GiftStats from "./pages/Admin/GiftStats";
+import StreamReview from "./pages/StreamReview";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -143,8 +143,6 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-import StreamReview from "./pages/StreamReview";
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider defaultTheme="dark">
@@ -174,7 +172,6 @@ const App = () => (
 
             {/* Protected Admin Routes */}
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
-            <Route path="/admin/ai" element={<AdminRoute><AI /></AdminRoute>} />
             <Route path="/admin/settings" element={<AdminRoute><Settings /></AdminRoute>} />
             <Route path="/admin/instructions" element={<AdminRoute><Instructions /></AdminRoute>} />
             <Route path="/admin/queue-history" element={<AdminRoute><QueueHistory /></AdminRoute>} />

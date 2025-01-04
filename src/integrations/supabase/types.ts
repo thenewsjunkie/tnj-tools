@@ -122,69 +122,6 @@ export type Database = {
         }
         Relationships: []
       }
-      code_implementations: {
-        Row: {
-          code: string
-          created_at: string | null
-          filename: string
-          id: string
-          prompt: string
-          status: string | null
-          target_page: string
-        }
-        Insert: {
-          code: string
-          created_at?: string | null
-          filename: string
-          id?: string
-          prompt: string
-          status?: string | null
-          target_page: string
-        }
-        Update: {
-          code?: string
-          created_at?: string | null
-          filename?: string
-          id?: string
-          prompt?: string
-          status?: string | null
-          target_page?: string
-        }
-        Relationships: []
-      }
-      code_versions: {
-        Row: {
-          branch_name: string
-          changes: Json
-          commit_hash: string
-          commit_message: string
-          created_at: string | null
-          id: string
-          prompt: string
-          status: string | null
-        }
-        Insert: {
-          branch_name: string
-          changes: Json
-          commit_hash: string
-          commit_message: string
-          created_at?: string | null
-          id?: string
-          prompt: string
-          status?: string | null
-        }
-        Update: {
-          branch_name?: string
-          changes?: Json
-          commit_hash?: string
-          commit_message?: string
-          created_at?: string | null
-          id?: string
-          prompt?: string
-          status?: string | null
-        }
-        Relationships: []
-      }
       fritz_contestants: {
         Row: {
           created_at: string | null
