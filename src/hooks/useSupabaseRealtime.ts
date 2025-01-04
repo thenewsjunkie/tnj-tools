@@ -28,12 +28,10 @@ export const useSupabaseRealtime = (
 
       console.log(`[Realtime] Setting up channel: ${channelName}`);
       
-      channelRef.current = supabase.channel(channelName);
-
-      // Add postgres changes listener
-      channelRef.current = channelRef.current
+      channelRef.current = supabase
+        .channel(channelName)
         .on(
-          'postgres_changes',
+          'postgres_changes' as const,
           {
             event: config.event,
             schema: config.schema || 'public',
