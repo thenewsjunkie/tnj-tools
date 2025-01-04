@@ -15,7 +15,7 @@ export const LeaderboardCard = ({ stats }: LeaderboardCardProps) => {
   const filledStats = [...stats, ...Array(5 - stats.length).fill(null)];
 
   return (
-    <Card className="p-4 bg-[#1A1F2C]/90 border-0 h-[540px] flex flex-col">
+    <Card className="p-4 bg-[#1A1F2C]/90 border-0 h-[500px] flex flex-col">
       <div className="space-y-2 mb-4">
         <div className="flex items-center gap-2">
           <Crown className="h-6 w-6 text-yellow-500" />
