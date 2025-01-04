@@ -28,40 +28,43 @@ export const useSupabaseRealtime = (
 
       console.log(`[Realtime] Setting up channel: ${channelName}`);
       
-      channelRef.current = supabase
-        .channel(channelName)
-        .on(
-          'postgres_changes',
-          {
-            event: config.event,
-            schema: config.schema || 'public',
-            table: config.table,
-            filter: config.filter
-          },
-          (payload) => {
-            console.log(`[Realtime] Received event on ${channelName}:`, payload);
-            onEvent(payload);
+      channelRef.current = supabase.channel(channelName);
+      
+      // Add the postgres_changes listener
+      channelRef.current = channelRef.current.on(
+        'postgres_changes',
+        {
+          event: config.event,
+          schema: config.schema || 'public',
+          table: config.table,
+          filter: config.filter
+        },
+        (payload) => {
+          console.log(`[Realtime] Received event on ${channelName}:`, payload);
+          onEvent(payload);
+        }
+      );
+
+      // Subscribe to the channel
+      channelRef.current.subscribe((status) => {
+        console.log(`[Realtime] Channel ${channelName} status:`, status);
+        
+        if (status === 'SUBSCRIBED') {
+          retryCount = 0;
+        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+          if (retryCount < maxRetries) {
+            const delay = Math.min(baseDelay * Math.pow(2, retryCount), 30000);
+            console.log(`[Realtime] Retrying connection in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`);
+            
+            setTimeout(() => {
+              retryCount++;
+              setupChannel();
+            }, delay);
+          } else {
+            console.error(`[Realtime] Failed to reconnect after ${maxRetries} attempts`);
           }
-        )
-        .subscribe((status) => {
-          console.log(`[Realtime] Channel ${channelName} status:`, status);
-          
-          if (status === 'SUBSCRIBED') {
-            retryCount = 0;
-          } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-            if (retryCount < maxRetries) {
-              const delay = Math.min(baseDelay * Math.pow(2, retryCount), 30000);
-              console.log(`[Realtime] Retrying connection in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`);
-              
-              setTimeout(() => {
-                retryCount++;
-                setupChannel();
-              }, delay);
-            } else {
-              console.error(`[Realtime] Failed to reconnect after ${maxRetries} attempts`);
-            }
-          }
-        });
+        }
+      });
     };
 
     setupChannel();
