@@ -18,12 +18,12 @@ const Content = ({ lowerThird, currentTime, isVisible }: ContentProps) => {
       <div className="relative flex justify-between items-start w-full">
         <div className="space-y-2 flex-1 min-w-0">
           {primary_text && (
-            <h1 className={`text-7xl font-bold leading-tight text-white ${isVisible ? 'animate-fade-in' : ''} ${type === 'guest' ? 'border-b-2 border-neon-red inline-block pr-6 -mr-6' : ''}`}>
+            <h1 className={`text-7xl font-bold leading-tight text-white transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'} ${type === 'guest' ? 'border-b-2 border-neon-red inline-block pr-6 -mr-6' : ''}`}>
               {primary_text}
             </h1>
           )}
           {secondary_text && (
-            <p className={`text-5xl text-white/90 whitespace-nowrap overflow-hidden text-ellipsis font-light ${isVisible ? 'animate-fade-in' : ''}`}>
+            <p className={`text-5xl text-white/90 whitespace-nowrap overflow-hidden text-ellipsis font-light transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
               {secondary_text}
             </p>
           )}
