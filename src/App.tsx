@@ -2,10 +2,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes } from "react-router-dom";
+import { RouterProvider } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
-import RouteTracker from "@/components/routing/RouteTracker";
-import { publicRoutes, adminRoutes } from "@/components/routing/routes";
+import { router } from "@/components/routing/routes";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -24,13 +23,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <RouteTracker />
-          <Routes>
-            {publicRoutes}
-            {adminRoutes}
-          </Routes>
-        </BrowserRouter>
+        <RouterProvider router={router} />
       </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>
