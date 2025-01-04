@@ -1,8 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
+import { queryClient } from "@/lib/react-query"; // We'll create this file next
 
 export const triggerLeaderboard = async () => {
   try {
     console.log('[useLeaderboardActions] Triggering leaderboard');
+
+    // Invalidate the giftStats query to force a refresh
+    await queryClient.invalidateQueries({ queryKey: ['giftStats'] });
 
     const { error: visibilityError } = await supabase
       .from('system_settings')
