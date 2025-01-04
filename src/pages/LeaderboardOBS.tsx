@@ -16,7 +16,7 @@ const LeaderboardOBS = () => {
         .select('*')
         .eq('is_test_data', false)  // Only fetch non-test data
         .order('total_gifts', { ascending: false })
-        .limit(10);
+        .limit(5);  // Only get top 5
 
       if (error) throw error;
       return data as GiftStats[];
