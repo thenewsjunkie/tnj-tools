@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 const LeaderboardOBS = () => {
   const isVisible = useLeaderboardVisibility();
 
-  const { data: giftStats } = useQuery({
+  const { data: giftStats, isLoading } = useQuery({
     queryKey: ['giftStats'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -22,6 +22,9 @@ const LeaderboardOBS = () => {
       return data as GiftStats[];
     },
   });
+
+  // Don't render anything while loading to prevent invalid array operations
+  if (isLoading) return null;
 
   return (
     <div className={cn(

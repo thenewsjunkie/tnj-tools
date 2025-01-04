@@ -7,9 +7,12 @@ interface LeaderboardCardProps {
 }
 
 export const LeaderboardCard = ({ stats }: LeaderboardCardProps) => {
+  // Ensure stats is an array before attempting to map
+  const safeStats = Array.isArray(stats) ? stats : [];
+  
   // Create a fixed array of 5 items, using empty placeholders if needed
   const filledStats = Array(5).fill(null).map((_, index) => {
-    return stats?.[index] || null;
+    return safeStats[index] || null;
   });
 
   return (
