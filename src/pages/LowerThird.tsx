@@ -28,12 +28,7 @@ const LowerThird = () => {
 
       if (error) {
         console.error("Error fetching lower third:", error);
-        setIsVisible(false);
-        setTimeout(() => {
-          setLowerThird(null);
-          setIsLoading(false);
-          setLogoLoaded(false);
-        }, 400);
+        handleDeactivation();
         return;
       }
 
@@ -48,13 +43,23 @@ const LowerThird = () => {
           }
         }, 400);
       } else {
-        setIsVisible(false);
-        setTimeout(() => {
-          setLowerThird(null);
-          setIsLoading(false);
-          setLogoLoaded(false);
-        }, 400);
+        handleDeactivation();
       }
+    };
+
+    const handleDeactivation = () => {
+      setIsVisible(false);
+      // Force a DOM update by removing the element completely
+      setTimeout(() => {
+        setLowerThird(null);
+        setIsLoading(false);
+        setLogoLoaded(false);
+        // Force a repaint in the browser
+        document.body.style.opacity = '0.99';
+        setTimeout(() => {
+          document.body.style.opacity = '1';
+        }, 1);
+      }, 400);
     };
 
     fetchActiveLowerThird();
@@ -72,11 +77,7 @@ const LowerThird = () => {
         (payload) => {
           console.log("Lower third changed:", payload);
           if (payload.eventType === "DELETE" || !payload.new.is_active) {
-            setIsVisible(false);
-            setTimeout(() => {
-              setLowerThird(null);
-              setLogoLoaded(false);
-            }, 400);
+            handleDeactivation();
           } else {
             setIsVisible(false);
             setTimeout(() => {
@@ -122,7 +123,10 @@ const LowerThird = () => {
   const { primary_text, secondary_text, ticker_text, show_time, type, guest_image_url, logo_url } = lowerThird;
 
   return (
-    <div className={`fixed bottom-0 left-0 w-full transition-opacity duration-400 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+    <div 
+      className={`fixed bottom-0 left-0 w-full transition-opacity duration-400 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+      style={{ display: lowerThird ? 'block' : 'none' }} // Ensure complete removal when inactive
+    >
       <div className="flex items-end w-full">
         {type === "guest" && guest_image_url ? (
           <GuestSection
