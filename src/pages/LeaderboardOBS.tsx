@@ -1,12 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { LeaderboardCard } from "@/components/leaderboard/LeaderboardCard";
 import { useLeaderboardVisibility } from "@/hooks/useLeaderboardVisibility";
 import { GiftStats } from "@/integrations/supabase/types/tables/gifts";
 import { cn } from "@/lib/utils";
+import { useEffect } from "react";
 
 const LeaderboardOBS = () => {
   const isVisible = useLeaderboardVisibility();
+  const queryClient = useQueryClient();
 
   const { data: giftStats, isLoading } = useQuery({
     queryKey: ['giftStats', false],  // false for includeTestData
@@ -40,6 +42,29 @@ const LeaderboardOBS = () => {
       return sortedData as GiftStats[];
     },
   });
+
+  // Subscribe to realtime changes
+  useEffect(() => {
+    const channel = supabase
+      .channel('gift-stats-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',  // Listen to all changes (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'gift_stats'
+        },
+        () => {
+          console.log('[LeaderboardOBS] Received realtime update, invalidating query');
+          queryClient.invalidateQueries({ queryKey: ['giftStats', false] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   // Don't render anything while loading to prevent invalid array operations
   if (isLoading) return null;
