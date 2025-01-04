@@ -7,11 +7,10 @@ interface LeaderboardCardProps {
 }
 
 export const LeaderboardCard = ({ stats }: LeaderboardCardProps) => {
-  // Ensure stats is an array and has a valid length
-  const safeStats = Array.isArray(stats) ? stats : [];
-  
-  // Create an array of exactly 5 items, filling empty slots with null
-  const filledStats = [...safeStats.slice(0, 5), ...Array(Math.max(0, 5 - safeStats.length)).fill(null)];
+  // Create a fixed array of 5 items, using empty placeholders if needed
+  const filledStats = Array(5).fill(null).map((_, index) => {
+    return stats?.[index] || null;
+  });
 
   return (
     <Card className="p-4 bg-[#1A1F2C]/90 border-0 h-[540px] flex flex-col">
