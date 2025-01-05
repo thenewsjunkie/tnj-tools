@@ -79,14 +79,14 @@ const QueueHistory = () => {
   };
 
   if (isLoading) {
-    return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+    return <div className="flex justify-center items-center min-h-screen bg-background text-foreground">Loading...</div>;
   }
 
   const totalPages = Math.ceil((data?.total || 0) / ITEMS_PER_PAGE);
 
   return (
-    <div className="queue-history-page min-h-screen py-8">
-      <div className="container mx-auto">
+    <div className="min-h-screen bg-background py-8">
+      <div className="container mx-auto px-4">
         <nav className="mb-8">
           <Link 
             to="/admin" 
@@ -96,9 +96,9 @@ const QueueHistory = () => {
           </Link>
         </nav>
         
-        <h1 className="text-2xl font-bold mb-6">Alert Queue History</h1>
+        <h1 className="text-2xl font-bold mb-6 text-foreground">Alert Queue History</h1>
         
-        <div className="rounded-md border">
+        <div className="rounded-md border border-border bg-card">
           <QueueTable 
             items={data?.items || []}
             onStatusUpdate={handleStatusUpdate}

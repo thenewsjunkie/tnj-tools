@@ -43,25 +43,25 @@ export const QueueTable = ({ items, onStatusUpdate, onDelete }: QueueTableProps)
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead>
-          <tr className="border-b">
-            <th className="px-4 py-2 text-left">Status</th>
-            <th className="px-4 py-2 text-left">Alert</th>
-            <th className="px-4 py-2 text-left">Username</th>
-            <th className="px-4 py-2 text-left">Created</th>
-            <th className="px-4 py-2 text-left">Played</th>
-            <th className="px-4 py-2 text-left">Actions</th>
+          <tr className="border-b border-border">
+            <th className="px-4 py-2 text-left text-muted-foreground font-medium">Status</th>
+            <th className="px-4 py-2 text-left text-muted-foreground font-medium">Alert</th>
+            <th className="px-4 py-2 text-left text-muted-foreground font-medium">Username</th>
+            <th className="px-4 py-2 text-left text-muted-foreground font-medium">Created</th>
+            <th className="px-4 py-2 text-left text-muted-foreground font-medium">Played</th>
+            <th className="px-4 py-2 text-left text-muted-foreground font-medium">Actions</th>
           </tr>
         </thead>
         <tbody>
           {items.map((item) => (
-            <tr key={item.id} className="border-b">
-              <td className="px-4 py-2">{item.status}</td>
-              <td className="px-4 py-2">{item.alerts?.title}</td>
-              <td className="px-4 py-2">{item.username}</td>
-              <td className="px-4 py-2">
+            <tr key={item.id} className="border-b border-border hover:bg-muted/50 transition-colors">
+              <td className="px-4 py-2 text-foreground">{item.status}</td>
+              <td className="px-4 py-2 text-foreground">{item.alerts?.title}</td>
+              <td className="px-4 py-2 text-foreground">{item.username}</td>
+              <td className="px-4 py-2 text-foreground">
                 {new Date(item.created_at).toLocaleString()}
               </td>
-              <td className="px-4 py-2">
+              <td className="px-4 py-2 text-foreground">
                 {item.played_at ? new Date(item.played_at).toLocaleString() : '-'}
               </td>
               <td className="px-4 py-2 space-x-2">
@@ -77,7 +77,6 @@ export const QueueTable = ({ items, onStatusUpdate, onDelete }: QueueTableProps)
                 <Button
                   variant="outline"
                   size="sm"
-                  className="bg-white text-black hover:bg-white/90"
                   onClick={() => onDelete(item.id)}
                 >
                   Delete
@@ -85,7 +84,6 @@ export const QueueTable = ({ items, onStatusUpdate, onDelete }: QueueTableProps)
                 <Button
                   variant="outline"
                   size="sm"
-                  className="bg-white text-black hover:bg-white/90"
                   onClick={() => handleRequeue(item)}
                 >
                   <Redo className="h-4 w-4" />

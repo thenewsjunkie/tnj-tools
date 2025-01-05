@@ -24,6 +24,7 @@ export const QueuePagination = ({ currentPage, totalPages, onPageChange }: Queue
             size="sm"
             onClick={() => onPageChange(Math.max(1, currentPage - 1))}
             disabled={currentPage === 1}
+            className="text-foreground hover:text-accent-foreground"
           >
             Previous
           </Button>
@@ -34,6 +35,7 @@ export const QueuePagination = ({ currentPage, totalPages, onPageChange }: Queue
             <PaginationLink
               onClick={() => onPageChange(page)}
               isActive={currentPage === page}
+              className="text-foreground hover:text-accent-foreground"
             >
               {page}
             </PaginationLink>
@@ -46,6 +48,7 @@ export const QueuePagination = ({ currentPage, totalPages, onPageChange }: Queue
             size="sm"
             onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
             disabled={currentPage === totalPages}
+            className="text-foreground hover:text-accent-foreground"
           >
             Next
           </Button>
