@@ -10,6 +10,10 @@ interface AlertMessageProps {
   giftTextColor?: string;
   giftCountColor?: string;
   onCountComplete?: () => void;
+  textColor?: string;
+  textAlignment?: string;
+  fontFamily?: string;
+  textAnimation?: string;
 }
 
 const AlertMessage = ({ 
@@ -20,9 +24,26 @@ const AlertMessage = ({
   giftCountAnimationSpeed = 100,
   giftTextColor = "#FFFFFF",
   giftCountColor = "#4CDBC4",
-  onCountComplete
+  onCountComplete,
+  textColor = "#FFFFFF",
+  textAlignment = "center",
+  fontFamily = "Radiate Sans Extra Bold",
+  textAnimation = "none"
 }: AlertMessageProps) => {
   useGiftAnimation({ isGiftAlert, giftCount });
+
+  const getAnimationClass = () => {
+    switch (textAnimation) {
+      case "pulse":
+        return "animate-pulse";
+      case "bounce":
+        return "animate-bounce";
+      case "wave":
+        return "animate-wave";
+      default:
+        return "";
+    }
+  };
 
   if (isGiftAlert) {
     // Extract username from the message
@@ -74,27 +95,22 @@ const AlertMessage = ({
     );
   }
 
-  // Find the username by looking for the word that comes before "just subscribed"
-  const subscribedIndex = message.indexOf(' just');
-  const username = subscribedIndex === -1 ? message : message.slice(0, subscribedIndex);
-  const restOfMessage = subscribedIndex === -1 ? '' : message.slice(subscribedIndex);
-
   return (
     <div 
-      className="text-white alert-message-font mt-2 text-center"
+      className={`alert-message-font mt-2 ${getAnimationClass()}`}
       style={{ 
         fontSize: `${fontSize}px`,
         textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
         wordWrap: 'break-word',
         whiteSpace: 'pre-wrap',
         lineHeight: '1.2',
-        minHeight: `${fontSize * 1.2}px`
+        minHeight: `${fontSize * 1.2}px`,
+        color: textColor,
+        textAlign: textAlignment as "left" | "center" | "right",
+        fontFamily
       }}
     >
-      <span className="text-[#4CDBC4]">{username}</span>
-      {restOfMessage && (
-        <span className="break-words inline-block">{restOfMessage}</span>
-      )}
+      {message}
     </div>
   );
 };
