@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useCallback, memo } from "react";
 import VideoAlert from "../media/VideoAlert";
 import ImageAlert from "../media/ImageAlert";
 import AlertMessage from "../AlertMessage";
@@ -20,48 +20,66 @@ interface AlertContentProps {
   onError: (error: any) => void;
 }
 
-export const AlertContent: React.FC<AlertContentProps> = ({
+export const AlertContent: React.FC<AlertContentProps> = memo(({
   currentAlert,
   onComplete,
-  onError,
+  onError
 }) => {
-  console.log('[AlertContent] Rendering with media:', {
-    type: currentAlert.media_type,
-    url: currentAlert.media_url
-  });
+  const [isMediaComplete, setIsMediaComplete] = useState(false);
+  const [isCountComplete, setIsCountComplete] = useState(!currentAlert.is_gift_alert);
+
+  const handleComplete = useCallback(() => {
+    setIsMediaComplete(true);
+    if (isCountComplete) {
+      onComplete();
+    }
+  }, [isCountComplete, onComplete]);
+
+  const handleCountComplete = useCallback(() => {
+    setIsCountComplete(true);
+    if (isMediaComplete) {
+      onComplete();
+    }
+  }, [isMediaComplete, onComplete]);
+
+  const displayMessage = currentAlert.message_enabled && currentAlert.message_text 
+    ? currentAlert.message_text
+    : '';
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/80">
+    <div className="fixed top-0 left-0 right-0">
       <div className={`flex ${currentAlert.is_gift_alert ? 'items-center gap-8' : 'flex-col items-center'}`}>
-        <div className="max-w-screen-lg">
+        <div>
           {currentAlert.media_type.startsWith('video') ? (
             <VideoAlert 
               mediaUrl={currentAlert.media_url}
-              onComplete={onComplete}
+              onComplete={handleComplete}
               onError={onError}
             />
           ) : (
             <ImageAlert 
               mediaUrl={currentAlert.media_url}
-              onComplete={onComplete}
+              onComplete={handleComplete}
               onError={onError}
             />
           )}
         </div>
         
-        {currentAlert.message_enabled && currentAlert.message_text && (
+        {currentAlert.message_enabled && displayMessage && (
           <AlertMessage 
-            message={currentAlert.message_text}
+            message={displayMessage}
             fontSize={currentAlert.font_size}
             isGiftAlert={currentAlert.is_gift_alert}
             giftCount={currentAlert.gift_count || 1}
             giftCountAnimationSpeed={currentAlert.gift_count_animation_speed}
             giftTextColor={currentAlert.gift_text_color}
             giftCountColor={currentAlert.gift_count_color}
-            onCountComplete={onComplete}
+            onCountComplete={handleCountComplete}
           />
         )}
       </div>
     </div>
   );
-};
+});
+
+AlertContent.displayName = 'AlertContent';

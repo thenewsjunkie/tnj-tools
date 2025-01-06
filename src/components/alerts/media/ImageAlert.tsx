@@ -8,54 +8,46 @@ interface ImageAlertProps {
 
 const ImageAlert = ({ mediaUrl, onComplete, onError }: ImageAlertProps) => {
   const completedRef = useRef(false);
-  const imageRef = useRef<HTMLImageElement>(null);
 
   const handleComplete = () => {
     if (!completedRef.current) {
       completedRef.current = true;
-      console.log('[ImageAlert] Image loaded successfully:', mediaUrl);
-      console.log('[ImageAlert] Image dimensions:', {
-        width: imageRef.current?.naturalWidth,
-        height: imageRef.current?.naturalHeight
-      });
+      console.log('[ImageAlert] Triggering completion callback');
       onComplete();
     }
   };
 
-  const handleImageError = (error: any) => {
-    console.error('[ImageAlert] Image error:', error);
-    console.error('[ImageAlert] Failed to load image URL:', mediaUrl);
-    onError({
-      message: 'Failed to load image',
-      url: mediaUrl,
-      error
-    });
-  };
-
   useEffect(() => {
-    console.log('[ImageAlert] Setting up image with URL:', mediaUrl);
+    console.log('[ImageAlert] Setting up image timer');
     completedRef.current = false;
     
-    // Preload the image
-    const img = new Image();
-    img.src = mediaUrl;
-    img.onload = handleComplete;
-    img.onerror = () => handleImageError(new Error('Image failed to load'));
+    const timer = setTimeout(() => {
+      console.log('[ImageAlert] Image timer completed, calling onComplete');
+      handleComplete();
+    }, 5000);
     
     return () => {
-      console.log('[ImageAlert] Cleaning up image');
-      img.onload = null;
-      img.onerror = null;
+      console.log('[ImageAlert] Cleaning up image timer');
+      clearTimeout(timer);
     };
-  }, [mediaUrl]);
+  }, [onComplete]);
+
+  const handleImageLoad = () => {
+    console.log('[ImageAlert] Image loaded successfully');
+  };
+
+  const handleImageError = (error: any) => {
+    console.error('[ImageAlert] Image error:', error);
+    handleComplete();
+    onError(error);
+  };
 
   return (
     <img
-      ref={imageRef}
       src={mediaUrl}
       alt="Alert"
-      className="max-w-full max-h-[70vh] w-auto h-auto object-contain"
-      onLoad={handleComplete}
+      className="max-h-screen max-w-screen-lg"
+      onLoad={handleImageLoad}
       onError={handleImageError}
     />
   );

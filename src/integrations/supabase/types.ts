@@ -47,117 +47,48 @@ export type Database = {
           },
         ]
       }
-      alert_templates: {
-        Row: {
-          alert_type: Database["public"]["Enums"]["alert_type"]
-          content: string
-          created_at: string | null
-          id: string
-          style_config: Json | null
-          title: string
-          updated_at: string | null
-        }
-        Insert: {
-          alert_type: Database["public"]["Enums"]["alert_type"]
-          content: string
-          created_at?: string | null
-          id?: string
-          style_config?: Json | null
-          title: string
-          updated_at?: string | null
-        }
-        Update: {
-          alert_type?: Database["public"]["Enums"]["alert_type"]
-          content?: string
-          created_at?: string | null
-          id?: string
-          style_config?: Json | null
-          title?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       alerts: {
         Row: {
-          alert_type: Database["public"]["Enums"]["alert_type"] | null
-          background_color: string | null
-          background_gradient: Json | null
           created_at: string
-          display_duration: number | null
-          effects: Json | null
-          font_family: string | null
           font_size: number | null
           gift_count_animation_speed: number | null
           gift_count_color: string | null
           gift_text_color: string | null
           id: string
           is_gift_alert: boolean | null
-          is_message_alert: boolean | null
-          is_template: boolean | null
           media_type: string
           media_url: string
           message_enabled: boolean | null
           message_text: string | null
-          text_alignment: string | null
-          text_animation: string | null
-          text_color: string | null
-          text_shadow: Json | null
           title: string
-          transition_type: string | null
         }
         Insert: {
-          alert_type?: Database["public"]["Enums"]["alert_type"] | null
-          background_color?: string | null
-          background_gradient?: Json | null
           created_at?: string
-          display_duration?: number | null
-          effects?: Json | null
-          font_family?: string | null
           font_size?: number | null
           gift_count_animation_speed?: number | null
           gift_count_color?: string | null
           gift_text_color?: string | null
           id?: string
           is_gift_alert?: boolean | null
-          is_message_alert?: boolean | null
-          is_template?: boolean | null
           media_type: string
           media_url: string
           message_enabled?: boolean | null
           message_text?: string | null
-          text_alignment?: string | null
-          text_animation?: string | null
-          text_color?: string | null
-          text_shadow?: Json | null
           title: string
-          transition_type?: string | null
         }
         Update: {
-          alert_type?: Database["public"]["Enums"]["alert_type"] | null
-          background_color?: string | null
-          background_gradient?: Json | null
           created_at?: string
-          display_duration?: number | null
-          effects?: Json | null
-          font_family?: string | null
           font_size?: number | null
           gift_count_animation_speed?: number | null
           gift_count_color?: string | null
           gift_text_color?: string | null
           id?: string
           is_gift_alert?: boolean | null
-          is_message_alert?: boolean | null
-          is_template?: boolean | null
           media_type?: string
           media_url?: string
           message_enabled?: boolean | null
           message_text?: string | null
-          text_alignment?: string | null
-          text_animation?: string | null
-          text_color?: string | null
-          text_shadow?: Json | null
           title?: string
-          transition_type?: string | null
         }
         Relationships: []
       }
@@ -620,7 +551,6 @@ export type Database = {
       }
     }
     Enums: {
-      alert_type: "standard" | "message" | "gift"
       call_status: "waiting" | "connected" | "ended"
       employment_status:
         | "full_time"
@@ -644,7 +574,7 @@ export type Database = {
         | "widowed"
         | "separated"
         | "domestic_partnership"
-      review_type: "television" | "movie" | "food" | "product" | "message"
+      review_type: "television" | "movie" | "food" | "product"
     }
     CompositeTypes: {
       [_ in never]: never

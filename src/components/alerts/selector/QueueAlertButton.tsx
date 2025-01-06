@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import UsernameDialog from "../dialogs/UsernameDialog";
-import MessageAlertDialog from "../dialogs/MessageAlertDialog";
 import { Alert } from "@/hooks/useAlerts";
 
 interface QueueAlertButtonProps {
@@ -12,7 +11,6 @@ interface QueueAlertButtonProps {
 
 const QueueAlertButton = ({ selectedAlert }: QueueAlertButtonProps) => {
   const [isNameDialogOpen, setIsNameDialogOpen] = useState(false);
-  const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
   const [isQueuing, setIsQueuing] = useState(false);
   const { toast } = useToast();
 
@@ -63,9 +61,7 @@ const QueueAlertButton = ({ selectedAlert }: QueueAlertButtonProps) => {
   };
 
   const handleClick = () => {
-    if (selectedAlert.is_message_alert) {
-      setIsMessageDialogOpen(true);
-    } else if (selectedAlert.message_enabled || selectedAlert.is_gift_alert) {
+    if (selectedAlert.message_enabled || selectedAlert.is_gift_alert) {
       setIsNameDialogOpen(true);
     } else {
       queueAlert();
@@ -88,12 +84,6 @@ const QueueAlertButton = ({ selectedAlert }: QueueAlertButtonProps) => {
         onOpenChange={setIsNameDialogOpen}
         onSubmit={queueAlert}
         isGiftAlert={selectedAlert.is_gift_alert}
-      />
-
-      <MessageAlertDialog
-        open={isMessageDialogOpen}
-        onOpenChange={setIsMessageDialogOpen}
-        selectedAlert={selectedAlert}
       />
     </>
   );
