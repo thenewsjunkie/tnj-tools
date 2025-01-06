@@ -59,6 +59,7 @@ export type Database = {
           gift_text_color: string | null
           id: string
           is_gift_alert: boolean | null
+          is_template: boolean | null
           media_type: string
           media_url: string
           message_enabled: boolean | null
@@ -77,6 +78,7 @@ export type Database = {
           gift_text_color?: string | null
           id?: string
           is_gift_alert?: boolean | null
+          is_template?: boolean | null
           media_type: string
           media_url: string
           message_enabled?: boolean | null
@@ -95,6 +97,7 @@ export type Database = {
           gift_text_color?: string | null
           id?: string
           is_gift_alert?: boolean | null
+          is_template?: boolean | null
           media_type?: string
           media_url?: string
           message_enabled?: boolean | null

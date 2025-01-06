@@ -1,22 +1,29 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import AlertTypeSelector from "./form/AlertTypeSelector";
 import MessageAlertFields from "./form/MessageAlertFields";
 import AlertMediaUpload from "./form/AlertMediaUpload";
 import GiftAlertFields from "./dialog/GiftAlertFields";
+import AlertDialogHeader from "./dialog/AlertDialogHeader";
+import AlertTitleInput from "./dialog/AlertTitleInput";
+import AlertSubmitButton from "./dialog/AlertSubmitButton";
 import { AlertEffect } from "@/types/alerts";
 
 interface AddAlertDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAlertAdded: () => void;
+  isTemplate?: boolean;
 }
 
-const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProps) => {
+const AddAlertDialog = ({ 
+  open, 
+  onOpenChange, 
+  onAlertAdded,
+  isTemplate = false 
+}: AddAlertDialogProps) => {
   const [title, setTitle] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
@@ -52,32 +59,62 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
 
     try {
       if (isMessageAlert) {
-        const { error: dbError } = await supabase
-          .from('alerts')
-          .insert({
-            title,
-            media_type: 'message',
-            media_url: 'none',
-            message_enabled: true,
-            message_text: messageText,
-            display_duration: displayDuration,
-            text_color: textColor,
-            background_color: backgroundColor,
-            effects: effects,
-            style_config: {
-              textAlignment,
-              fontFamily,
-              textShadow,
-              textAnimation,
-              useGradient,
-              gradientColor
-            }
-          })
-          .select('*')
-          .single();
+        const alertData = {
+          title: isTemplate ? 'Message Alert Template' : title,
+          media_type: 'message',
+          media_url: 'none',
+          message_enabled: true,
+          message_text: messageText,
+          display_duration: displayDuration,
+          text_color: textColor,
+          background_color: backgroundColor,
+          effects: effects,
+          is_template: isTemplate,
+          style_config: {
+            textAlignment,
+            fontFamily,
+            textShadow,
+            textAnimation,
+            useGradient,
+            gradientColor
+          }
+        };
 
-        if (dbError) throw dbError;
+        if (isTemplate) {
+          // For template, we queue the alert directly
+          const { error: queueError } = await supabase
+            .from('alert_queue')
+            .insert({
+              alert_id: '00000000-0000-0000-0000-000000000000', // Placeholder ID
+              status: 'pending',
+              message_text: messageText,
+              display_duration: displayDuration,
+              text_color: textColor,
+              background_color: backgroundColor,
+              effects: effects,
+              style_config: {
+                textAlignment,
+                fontFamily,
+                textShadow,
+                textAnimation,
+                useGradient,
+                gradientColor
+              }
+            });
+
+          if (queueError) throw queueError;
+        } else {
+          // For regular alerts, we save them to the alerts table
+          const { error: dbError } = await supabase
+            .from('alerts')
+            .insert(alertData)
+            .select('*')
+            .single();
+
+          if (dbError) throw dbError;
+        }
       } else {
+        // Handle non-message alerts (existing code)
         const fileInput = document.querySelector<HTMLInputElement>('input[type="file"]');
         const file = fileInput?.files?.[0];
 
@@ -147,6 +184,11 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
       
       onAlertAdded();
       onOpenChange(false);
+
+      toast({
+        title: "Success",
+        description: isTemplate ? "Alert triggered successfully" : "Alert added successfully",
+      });
     } catch (error) {
       toast({
         title: "Error",
@@ -162,19 +204,11 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-foreground">Add New Alert</DialogTitle>
-        </DialogHeader>
+        <AlertDialogHeader />
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Input
-              placeholder="Alert Title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-              className="text-foreground bg-background border-input"
-            />
-          </div>
+          {!isTemplate && (
+            <AlertTitleInput title={title} setTitle={setTitle} />
+          )}
 
           <AlertTypeSelector
             isGiftAlert={isGiftAlert}
@@ -230,15 +264,7 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
             isMessageAlert={isMessageAlert}
           />
           
-          <div className="sticky bottom-0 pt-4 bg-background/95 backdrop-blur">
-            <Button 
-              type="submit" 
-              className="w-full bg-primary text-black hover:bg-primary/90" 
-              disabled={isUploading}
-            >
-              {isUploading ? "Uploading..." : "Add Alert"}
-            </Button>
-          </div>
+          <AlertSubmitButton isUploading={isUploading} />
         </form>
       </DialogContent>
     </Dialog>
