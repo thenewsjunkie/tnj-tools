@@ -52,7 +52,7 @@ const StreamReview = () => {
         </div>
         
         {activeReview.image_urls?.length > 0 && (
-          <div className="flex justify-center w-full">
+          <div className="flex justify-center w-full px-4">
             <img 
               src={activeReview.image_urls[0]} 
               alt={activeReview.title}
