@@ -31,7 +31,7 @@ export const AlertContent: React.FC<AlertContentProps> = ({
   });
 
   return (
-    <div className="fixed top-0 left-0 right-0">
+    <div className="fixed inset-0 flex items-center justify-center bg-black/50">
       <div className={`flex ${currentAlert.is_gift_alert ? 'items-center gap-8' : 'flex-col items-center'}`}>
         <div className="max-w-screen-lg">
           {currentAlert.media_type.startsWith('video') ? (

@@ -8,11 +8,16 @@ interface ImageAlertProps {
 
 const ImageAlert = ({ mediaUrl, onComplete, onError }: ImageAlertProps) => {
   const completedRef = useRef(false);
+  const imageRef = useRef<HTMLImageElement>(null);
 
   const handleComplete = () => {
     if (!completedRef.current) {
       completedRef.current = true;
       console.log('[ImageAlert] Image loaded successfully:', mediaUrl);
+      console.log('[ImageAlert] Image dimensions:', {
+        width: imageRef.current?.naturalWidth,
+        height: imageRef.current?.naturalHeight
+      });
       onComplete();
     }
   };
@@ -46,9 +51,10 @@ const ImageAlert = ({ mediaUrl, onComplete, onError }: ImageAlertProps) => {
 
   return (
     <img
+      ref={imageRef}
       src={mediaUrl}
       alt="Alert"
-      className="max-h-[70vh] w-auto object-contain"
+      className="max-w-full max-h-[70vh] w-auto h-auto object-contain"
       onLoad={handleComplete}
       onError={handleImageError}
     />
