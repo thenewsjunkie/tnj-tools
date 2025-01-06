@@ -13,6 +13,7 @@ export interface Alert {
   gift_count_animation_speed?: number | null;
   gift_text_color?: string | null;
   gift_count_color?: string | null;
+  is_message_alert?: boolean | null;  // Added this property
 }
 
 export const useAlerts = () => {
