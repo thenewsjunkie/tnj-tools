@@ -27,18 +27,18 @@ const AlertTypeSelector = ({
 
   return (
     <div className="space-y-2">
-      <Label>Alert Type</Label>
+      <Label className="text-foreground">Alert Type</Label>
       <Select
         value={getCurrentValue()}
         onValueChange={handleTypeChange}
       >
-        <SelectTrigger>
+        <SelectTrigger className="bg-background text-foreground border-input">
           <SelectValue placeholder="Select alert type" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="standard">Standard Alert</SelectItem>
-          <SelectItem value="gift">Gift Alert</SelectItem>
-          <SelectItem value="message">Message Alert</SelectItem>
+          <SelectItem value="standard" className="text-foreground">Standard Alert</SelectItem>
+          <SelectItem value="gift" className="text-foreground">Gift Alert</SelectItem>
+          <SelectItem value="message" className="text-foreground">Message Alert</SelectItem>
         </SelectContent>
       </Select>
     </div>

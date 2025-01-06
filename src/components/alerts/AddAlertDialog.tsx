@@ -173,7 +173,7 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              className="text-foreground bg-background"
+              className="text-foreground bg-background border-input"
             />
           </div>
 
@@ -283,7 +283,7 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
           
           <Button 
             type="submit" 
-            className="w-full dark:text-white text-black" 
+            className="w-full bg-primary text-black hover:bg-primary/90" 
             disabled={isUploading}
           >
             {isUploading ? "Uploading..." : "Add Alert"}
