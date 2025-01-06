@@ -78,7 +78,7 @@ const MessageAlertDialog = ({ open, onOpenChange, selectedAlert }: MessageAlertD
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] bg-background border-border">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto bg-background border-border">
         <DialogHeader>
           <DialogTitle className="text-foreground">Queue Message Alert</DialogTitle>
         </DialogHeader>
@@ -105,7 +105,7 @@ const MessageAlertDialog = ({ open, onOpenChange, selectedAlert }: MessageAlertD
         />
 
         {isPreviewMode && (
-          <div className="mt-4 p-4 rounded-lg" style={{ backgroundColor }}>
+          <div className="mt-4 p-4 rounded-lg relative" style={{ backgroundColor }}>
             <AlertMessage
               message={message}
               fontSize={fontSize}
@@ -113,10 +113,15 @@ const MessageAlertDialog = ({ open, onOpenChange, selectedAlert }: MessageAlertD
               textAlignment={textAlignment}
               textAnimation={textAnimation}
             />
+            {confettiEnabled && (
+              <div className="absolute inset-0 pointer-events-none">
+                <canvas id="preview-confetti" className="w-full h-full" />
+              </div>
+            )}
           </div>
         )}
 
-        <div className="flex justify-end gap-3">
+        <div className="flex justify-end gap-3 mt-4 sticky bottom-0 bg-background py-4">
           <Button 
             variant="outline" 
             onClick={() => onOpenChange(false)}
