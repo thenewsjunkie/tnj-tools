@@ -35,6 +35,17 @@ const AlertSelector = ({
     localStorage.setItem('selectedAlertId', alert.id);
   };
 
+  // Determine the initial type based on the selected alert's properties
+  const getInitialType = () => {
+    if (selectedAlert.media_type === 'message' || selectedAlert.message_enabled) {
+      return 'message';
+    }
+    if (selectedAlert.is_gift_alert) {
+      return 'gift';
+    }
+    return 'standard';
+  };
+
   return (
     <div className="flex flex-col space-y-2">
       <div className="flex gap-2">
@@ -63,7 +74,7 @@ const AlertSelector = ({
           setIsTemplateDialogOpen(false);
         }}
         isTemplate={true}
-        initialType={selectedAlert.media_type === 'message' ? 'message' : 'gift'}
+        initialType={getInitialType()}
       />
     </div>
   );
