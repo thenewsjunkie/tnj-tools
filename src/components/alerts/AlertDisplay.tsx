@@ -26,8 +26,11 @@ export const AlertDisplay = ({
 
   const handleError = (error: any) => {
     console.error('[AlertDisplay] Media error:', error);
+    console.error('[AlertDisplay] Failed media details:', {
+      type: currentAlert.media_type,
+      url: currentAlert.media_url
+    });
     setHasError(true);
-    // Don't call onComplete here - let the timer handle it
   };
 
   const handleAlertContentComplete = () => {
@@ -41,13 +44,15 @@ export const AlertDisplay = ({
     onComplete: handleAlertContentComplete
   });
 
-  // Add debug logging
-  console.log('[AlertDisplay] Current alert state:', {
+  // Add detailed debug logging
+  console.log('[AlertDisplay] Rendering alert with details:', {
     mediaType: currentAlert.media_type,
     mediaUrl: currentAlert.media_url,
     isGiftAlert: currentAlert.is_gift_alert,
     hasError,
-    currentAlert
+    messageEnabled: currentAlert.message_enabled,
+    messageText: currentAlert.message_text,
+    fullAlert: currentAlert
   });
 
   if (!currentAlert) {
