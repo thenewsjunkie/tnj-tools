@@ -41,6 +41,7 @@ const MessageAlertDialog = ({ open, onOpenChange, selectedAlert }: MessageAlertD
     try {
       console.log('[MessageAlertDialog] Queueing alert with data:', {
         alert_id: selectedAlert.id,
+        status: 'pending',
         message_text: message,
       });
       
