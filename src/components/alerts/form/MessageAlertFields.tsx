@@ -1,11 +1,8 @@
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertEffect } from "@/types/alerts";
-import { Card } from "@/components/ui/card";
+import ContentTab from "./tabs/ContentTab";
+import StyleTab from "./tabs/StyleTab";
+import EffectsTab from "./tabs/EffectsTab";
 
 interface MessageAlertFieldsProps {
   messageText: string;
@@ -56,168 +53,49 @@ const MessageAlertFields = ({
   gradientColor,
   setGradientColor,
 }: MessageAlertFieldsProps) => {
-  const availableEffects: AlertEffect[] = ['confetti', 'sparkles', 'fireworks', 'hearts'];
-  const availableAnimations = ['none', 'pulse', 'wave', 'bounce', 'shake'];
-  const availableFonts = ['Arial', 'Helvetica', 'Times New Roman', 'Courier New', 'Impact'];
-
-  const toggleEffect = (effect: AlertEffect) => {
-    if (effects.includes(effect)) {
-      setEffects(effects.filter(e => e !== effect));
-    } else {
-      setEffects([...effects, effect]);
-    }
-  };
-
   return (
     <Tabs defaultValue="content" className="w-full space-y-4">
-      <TabsList className="grid w-full grid-cols-3">
-        <TabsTrigger value="content">Content</TabsTrigger>
-        <TabsTrigger value="style">Style</TabsTrigger>
-        <TabsTrigger value="effects">Effects</TabsTrigger>
+      <TabsList className="grid w-full grid-cols-3 dark:bg-black/50">
+        <TabsTrigger value="content" className="dark:data-[state=active]:bg-white/10">Content</TabsTrigger>
+        <TabsTrigger value="style" className="dark:data-[state=active]:bg-white/10">Style</TabsTrigger>
+        <TabsTrigger value="effects" className="dark:data-[state=active]:bg-white/10">Effects</TabsTrigger>
       </TabsList>
 
-      <TabsContent value="content" className="space-y-4">
-        <div className="space-y-2">
-          <Label>Message Text</Label>
-          <Input
-            value={messageText}
-            onChange={(e) => setMessageText(e.target.value)}
-            placeholder="Enter your message"
-            className="h-24"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label>Display Duration (seconds)</Label>
-          <div className="pt-2">
-            <Slider
-              value={[displayDuration]}
-              onValueChange={([value]) => setDisplayDuration(value)}
-              min={1}
-              max={60}
-              step={1}
-            />
-          </div>
-          <div className="text-sm text-muted-foreground text-right">
-            {displayDuration} seconds
-          </div>
-        </div>
+      <TabsContent value="content">
+        <ContentTab
+          messageText={messageText}
+          setMessageText={setMessageText}
+          displayDuration={displayDuration}
+          setDisplayDuration={setDisplayDuration}
+        />
       </TabsContent>
 
-      <TabsContent value="style" className="space-y-4">
-        <Card className="p-4 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Text Color</Label>
-              <Input
-                type="color"
-                value={textColor}
-                onChange={(e) => setTextColor(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Background Color</Label>
-              <Input
-                type="color"
-                value={backgroundColor}
-                onChange={(e) => setBackgroundColor(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Text Alignment</Label>
-            <Select value={textAlignment} onValueChange={(value: 'left' | 'center' | 'right') => setTextAlignment(value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select alignment" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="left">Left</SelectItem>
-                <SelectItem value="center">Center</SelectItem>
-                <SelectItem value="right">Right</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Font</Label>
-            <Select value={fontFamily} onValueChange={setFontFamily}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select font" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableFonts.map(font => (
-                  <SelectItem key={font} value={font}>{font}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Switch
-              checked={textShadow}
-              onCheckedChange={setTextShadow}
-            />
-            <Label>Enable Text Shadow/Glow</Label>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Text Animation</Label>
-            <Select value={textAnimation} onValueChange={setTextAnimation}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select animation" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableAnimations.map(animation => (
-                  <SelectItem key={animation} value={animation}>{animation}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <Switch
-                checked={useGradient}
-                onCheckedChange={setUseGradient}
-              />
-              <Label>Use Background Gradient</Label>
-            </div>
-            
-            {useGradient && (
-              <div className="space-y-2">
-                <Label>Gradient End Color</Label>
-                <Input
-                  type="color"
-                  value={gradientColor}
-                  onChange={(e) => setGradientColor(e.target.value)}
-                />
-              </div>
-            )}
-          </div>
-        </Card>
+      <TabsContent value="style">
+        <StyleTab
+          textColor={textColor}
+          setTextColor={setTextColor}
+          backgroundColor={backgroundColor}
+          setBackgroundColor={setBackgroundColor}
+          textAlignment={textAlignment}
+          setTextAlignment={setTextAlignment}
+          fontFamily={fontFamily}
+          setFontFamily={setFontFamily}
+          textShadow={textShadow}
+          setTextShadow={setTextShadow}
+          textAnimation={textAnimation}
+          setTextAnimation={setTextAnimation}
+          useGradient={useGradient}
+          setUseGradient={setUseGradient}
+          gradientColor={gradientColor}
+          setGradientColor={setGradientColor}
+        />
       </TabsContent>
 
-      <TabsContent value="effects" className="space-y-4">
-        <Card className="p-4">
-          <Label className="mb-4 block">Effects</Label>
-          <div className="flex flex-wrap gap-2">
-            {availableEffects.map(effect => (
-              <button
-                key={effect}
-                onClick={() => toggleEffect(effect)}
-                className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                  effects.includes(effect)
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-secondary text-secondary-foreground'
-                }`}
-              >
-                {effect}
-              </button>
-            ))}
-          </div>
-        </Card>
+      <TabsContent value="effects">
+        <EffectsTab
+          effects={effects}
+          setEffects={setEffects}
+        />
       </TabsContent>
     </Tabs>
   );

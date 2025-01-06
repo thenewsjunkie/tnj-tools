@@ -162,7 +162,7 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <DialogContent className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:bg-black/90">
         <DialogHeader>
           <DialogTitle className="text-foreground">Add New Alert</DialogTitle>
         </DialogHeader>
@@ -173,7 +173,7 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              className="text-foreground bg-background"
+              className="text-foreground bg-background dark:bg-black/50 dark:border-white/10"
             />
           </div>
 
@@ -283,7 +283,7 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
           
           <Button 
             type="submit" 
-            className="w-full dark:text-white text-black" 
+            className="w-full dark:text-white dark:bg-white/10 dark:hover:bg-white/20" 
             disabled={isUploading}
           >
             {isUploading ? "Uploading..." : "Add Alert"}
