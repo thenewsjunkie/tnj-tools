@@ -12,42 +12,31 @@ const ImageAlert = ({ mediaUrl, onComplete, onError }: ImageAlertProps) => {
   const handleComplete = () => {
     if (!completedRef.current) {
       completedRef.current = true;
-      console.log('[ImageAlert] Triggering completion callback');
-      onComplete();
+      console.log('[ImageAlert] Image loaded successfully');
+      // Don't call onComplete here - let the timer handle it
     }
-  };
-
-  useEffect(() => {
-    console.log('[ImageAlert] Setting up image timer');
-    completedRef.current = false;
-    
-    const timer = setTimeout(() => {
-      console.log('[ImageAlert] Image timer completed, calling onComplete');
-      handleComplete();
-    }, 5000);
-    
-    return () => {
-      console.log('[ImageAlert] Cleaning up image timer');
-      clearTimeout(timer);
-    };
-  }, [onComplete]);
-
-  const handleImageLoad = () => {
-    console.log('[ImageAlert] Image loaded successfully');
   };
 
   const handleImageError = (error: any) => {
     console.error('[ImageAlert] Image error:', error);
-    handleComplete();
     onError(error);
   };
+
+  useEffect(() => {
+    console.log('[ImageAlert] Setting up image with URL:', mediaUrl);
+    completedRef.current = false;
+    
+    return () => {
+      console.log('[ImageAlert] Cleaning up image');
+    };
+  }, [mediaUrl]);
 
   return (
     <img
       src={mediaUrl}
       alt="Alert"
-      className="max-h-screen max-w-screen-lg"
-      onLoad={handleImageLoad}
+      className="max-h-[70vh] w-auto object-contain"
+      onLoad={handleComplete}
       onError={handleImageError}
     />
   );

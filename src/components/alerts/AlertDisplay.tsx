@@ -25,9 +25,9 @@ export const AlertDisplay = ({
   const [hasError, setHasError] = useState(false);
 
   const handleError = (error: any) => {
-    console.error('[AlertDisplay] Error:', error);
+    console.error('[AlertDisplay] Media error:', error);
     setHasError(true);
-    onComplete();
+    // Don't call onComplete here - let the timer handle it
   };
 
   const handleAlertContentComplete = () => {
@@ -42,7 +42,9 @@ export const AlertDisplay = ({
   });
 
   // Add debug logging
-  console.log('[AlertDisplay] Current state:', {
+  console.log('[AlertDisplay] Current alert state:', {
+    mediaType: currentAlert.media_type,
+    mediaUrl: currentAlert.media_url,
     isGiftAlert: currentAlert.is_gift_alert,
     hasError,
     currentAlert

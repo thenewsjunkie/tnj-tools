@@ -1,8 +1,7 @@
-import React, { useState, useCallback, memo } from "react";
+import React from "react";
 import VideoAlert from "../media/VideoAlert";
 import ImageAlert from "../media/ImageAlert";
 import AlertMessage from "../AlertMessage";
-import confetti from 'canvas-confetti';
 
 interface AlertContentProps {
   currentAlert: {
@@ -16,103 +15,53 @@ interface AlertContentProps {
     gift_count_animation_speed?: number;
     gift_text_color?: string;
     gift_count_color?: string;
-    effects?: string[];
   };
   onComplete: () => void;
   onError: (error: any) => void;
 }
 
-export const AlertContent: React.FC<AlertContentProps> = memo(({
+export const AlertContent: React.FC<AlertContentProps> = ({
   currentAlert,
   onComplete,
-  onError
+  onError,
 }) => {
-  const [isMediaComplete, setIsMediaComplete] = useState(false);
-  const [isCountComplete, setIsCountComplete] = useState(!currentAlert.is_gift_alert);
-
-  const handleComplete = useCallback(() => {
-    setIsMediaComplete(true);
-    if (isCountComplete) {
-      onComplete();
-    }
-  }, [isCountComplete, onComplete]);
-
-  const handleCountComplete = useCallback(() => {
-    setIsCountComplete(true);
-    if (isMediaComplete) {
-      onComplete();
-    }
-  }, [isMediaComplete, onComplete]);
-
-  // Trigger effects when alert shows
-  React.useEffect(() => {
-    if (currentAlert.effects?.includes('confetti')) {
-      const duration = 2000;
-      const end = Date.now() + duration;
-
-      const frame = () => {
-        confetti({
-          particleCount: 7,
-          angle: 60,
-          spread: 55,
-          origin: { x: 0 },
-          colors: ['#ff0000', '#00ff00', '#0000ff', '#ff44ff', '#44ffff']
-        });
-        confetti({
-          particleCount: 7,
-          angle: 120,
-          spread: 55,
-          origin: { x: 1 },
-          colors: ['#ff0000', '#00ff00', '#0000ff', '#ff44ff', '#44ffff']
-        });
-
-        if (Date.now() < end) {
-          requestAnimationFrame(frame);
-        }
-      };
-
-      frame();
-    }
-  }, [currentAlert.effects]);
-
-  const displayMessage = currentAlert.message_enabled && currentAlert.message_text 
-    ? currentAlert.message_text
-    : '';
+  console.log('[AlertContent] Rendering with media:', {
+    type: currentAlert.media_type,
+    url: currentAlert.media_url
+  });
 
   return (
     <div className="fixed top-0 left-0 right-0">
       <div className={`flex ${currentAlert.is_gift_alert ? 'items-center gap-8' : 'flex-col items-center'}`}>
-        <div>
+        <div className="max-w-screen-lg">
           {currentAlert.media_type.startsWith('video') ? (
             <VideoAlert 
               mediaUrl={currentAlert.media_url}
-              onComplete={handleComplete}
+              onComplete={onComplete}
               onError={onError}
             />
           ) : (
             <ImageAlert 
               mediaUrl={currentAlert.media_url}
-              onComplete={handleComplete}
+              onComplete={onComplete}
               onError={onError}
             />
           )}
         </div>
         
-        {currentAlert.message_enabled && displayMessage && (
+        {currentAlert.message_enabled && currentAlert.message_text && (
           <AlertMessage 
-            message={displayMessage}
+            message={currentAlert.message_text}
             fontSize={currentAlert.font_size}
             isGiftAlert={currentAlert.is_gift_alert}
             giftCount={currentAlert.gift_count || 1}
             giftCountAnimationSpeed={currentAlert.gift_count_animation_speed}
             giftTextColor={currentAlert.gift_text_color}
             giftCountColor={currentAlert.gift_count_color}
-            onCountComplete={handleCountComplete}
+            onCountComplete={onComplete}
           />
         )}
       </div>
     </div>
   );
-});
-
-AlertContent.displayName = 'AlertContent';
+};
