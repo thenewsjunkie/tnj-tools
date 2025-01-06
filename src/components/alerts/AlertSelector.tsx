@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import AlertDropdown from "./selector/AlertDropdown";
 import AlertActions from "./selector/AlertActions";
 import QueueAlertButton from "./selector/QueueAlertButton";
-import AddAlertDialog from "./AddAlertDialog";
 import { Alert } from "@/hooks/useAlerts";
 
 interface AlertSelectorProps {
@@ -18,8 +17,6 @@ const AlertSelector = ({
   onAlertSelect,
   onAlertDeleted 
 }: AlertSelectorProps) => {
-  const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
-
   useEffect(() => {
     const savedAlertId = localStorage.getItem('selectedAlertId');
     if (savedAlertId && alerts) {
@@ -30,22 +27,6 @@ const AlertSelector = ({
     }
   }, [alerts]);
 
-  const handleAlertSelect = (alert: Alert) => {
-    onAlertSelect(alert);
-    localStorage.setItem('selectedAlertId', alert.id);
-  };
-
-  // Determine the initial type based on the selected alert's properties
-  const getInitialType = () => {
-    if (selectedAlert.media_type === 'message' || selectedAlert.message_enabled) {
-      return 'message' as const;
-    }
-    if (selectedAlert.is_gift_alert) {
-      return 'gift' as const;
-    }
-    return null;
-  };
-
   return (
     <div className="flex flex-col space-y-2">
       <div className="flex gap-2">
@@ -53,7 +34,7 @@ const AlertSelector = ({
           <AlertDropdown
             selectedAlert={selectedAlert}
             alerts={alerts}
-            onAlertSelect={handleAlertSelect}
+            onAlertSelect={onAlertSelect}
           />
           <AlertActions
             selectedAlert={selectedAlert}
@@ -62,20 +43,7 @@ const AlertSelector = ({
         </div>
       </div>
 
-      <QueueAlertButton 
-        selectedAlert={selectedAlert}
-        onTemplateSelect={() => setIsTemplateDialogOpen(true)}
-      />
-
-      <AddAlertDialog
-        open={isTemplateDialogOpen}
-        onOpenChange={setIsTemplateDialogOpen}
-        onAlertAdded={() => {
-          setIsTemplateDialogOpen(false);
-        }}
-        isTemplate={true}
-        initialType={getInitialType()}
-      />
+      <QueueAlertButton selectedAlert={selectedAlert} />
     </div>
   );
 };

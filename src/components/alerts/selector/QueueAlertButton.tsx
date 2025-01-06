@@ -1,56 +1,91 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Alert } from "@/hooks/useAlerts";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import UsernameDialog from "../dialogs/UsernameDialog";
+import { Alert } from "@/hooks/useAlerts";
 
 interface QueueAlertButtonProps {
   selectedAlert: Alert;
-  onTemplateSelect?: () => void;
 }
 
-const QueueAlertButton = ({ selectedAlert, onTemplateSelect }: QueueAlertButtonProps) => {
+const QueueAlertButton = ({ selectedAlert }: QueueAlertButtonProps) => {
+  const [isNameDialogOpen, setIsNameDialogOpen] = useState(false);
+  const [isQueuing, setIsQueuing] = useState(false);
   const { toast } = useToast();
 
-  const handleClick = async () => {
-    if (selectedAlert.is_template) {
-      if (onTemplateSelect) {
-        onTemplateSelect();
-      }
-    } else {
-      // Queue the alert directly
-      try {
-        const { error } = await supabase
-          .from('alert_queue')
-          .insert({
-            alert_id: selectedAlert.id,
-            status: 'pending'
-          });
+  const queueAlert = async (username?: string, giftCount?: number) => {
+    if (isQueuing) return;
+    setIsQueuing(true);
 
-        if (error) throw error;
+    try {
+      // Normalize username to lowercase if provided
+      const normalizedUsername = username?.toLowerCase();
 
-        toast({
-          title: "Success",
-          description: "Alert queued successfully",
+      console.log('[QueueAlertButton] Queueing alert:', {
+        title: selectedAlert.title,
+        username: normalizedUsername,
+        giftCount,
+        isGiftAlert: selectedAlert.is_gift_alert
+      });
+      
+      const { error } = await supabase
+        .from('alert_queue')
+        .insert({
+          alert_id: selectedAlert.id,
+          username: normalizedUsername,
+          status: 'pending',
+          gift_count: selectedAlert.is_gift_alert ? (giftCount || 1) : null
         });
-      } catch (error) {
-        console.error('Error queueing alert:', error);
+
+      if (error) {
+        console.error('[QueueAlertButton] Error queueing alert:', error);
         toast({
           title: "Error",
           description: "Failed to queue alert",
           variant: "destructive",
         });
+        return;
       }
+
+      console.log('[QueueAlertButton] Alert queued successfully');
+      toast({
+        title: "Success",
+        description: "Alert queued successfully",
+      });
+
+      setIsNameDialogOpen(false);
+    } finally {
+      setIsQueuing(false);
+    }
+  };
+
+  const handleClick = () => {
+    if (selectedAlert.message_enabled || selectedAlert.is_gift_alert) {
+      setIsNameDialogOpen(true);
+    } else {
+      queueAlert();
     }
   };
 
   return (
-    <Button 
-      variant="outline"
-      onClick={handleClick}
-      className="w-full sm:w-auto"
-    >
-      {selectedAlert.is_template ? "Create Alert from Template" : "Queue Alert"}
-    </Button>
+    <>
+      <Button 
+        variant="outline"
+        onClick={handleClick}
+        disabled={isQueuing}
+        className="w-full sm:w-auto"
+      >
+        Queue Alert
+      </Button>
+
+      <UsernameDialog
+        open={isNameDialogOpen}
+        onOpenChange={setIsNameDialogOpen}
+        onSubmit={queueAlert}
+        isGiftAlert={selectedAlert.is_gift_alert}
+      />
+    </>
   );
 };
 

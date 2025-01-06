@@ -82,15 +82,6 @@ export default {
           "0%": { opacity: "1" },
           "100%": { opacity: "0" },
         },
-        "wave": {
-          "0%, 100%": { transform: "rotate(-3deg)" },
-          "50%": { transform: "rotate(3deg)" }
-        },
-        "shake": {
-          "0%, 100%": { transform: "translateX(0)" },
-          "25%": { transform: "translateX(-10px)" },
-          "75%": { transform: "translateX(10px)" }
-        }
       },
       animation: {
         "marquee": "marquee 60s linear infinite",
@@ -98,8 +89,6 @@ export default {
         "slide-out-bottom": "slide-out-bottom 0.6s ease-out",
         "fade-in": "fade-in 0.4s ease-out",
         "fade-out": "fade-out 0.4s ease-out",
-        "wave": "wave 2s ease-in-out infinite",
-        "shake": "shake 0.5s ease-in-out infinite"
       },
     },
   },
