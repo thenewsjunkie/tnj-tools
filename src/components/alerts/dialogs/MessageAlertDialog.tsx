@@ -5,6 +5,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert } from "@/hooks/useAlerts";
 import MessageForm from "./form/MessageForm";
+import AlertMessage from "../AlertMessage";
 
 interface MessageAlertDialogProps {
   open: boolean;
@@ -23,6 +24,7 @@ const MessageAlertDialog = ({ open, onOpenChange, selectedAlert }: MessageAlertD
   const [textAnimation, setTextAnimation] = useState("none");
   const [confettiEnabled, setConfettiEnabled] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
   const { toast } = useToast();
 
   const handleSubmit = async () => {
@@ -102,6 +104,18 @@ const MessageAlertDialog = ({ open, onOpenChange, selectedAlert }: MessageAlertD
           setConfettiEnabled={setConfettiEnabled}
         />
 
+        {isPreviewMode && (
+          <div className="mt-4 p-4 rounded-lg" style={{ backgroundColor }}>
+            <AlertMessage
+              message={message}
+              fontSize={fontSize}
+              textColor={textColor}
+              textAlignment={textAlignment}
+              textAnimation={textAnimation}
+            />
+          </div>
+        )}
+
         <div className="flex justify-end gap-3">
           <Button 
             variant="outline" 
@@ -110,13 +124,31 @@ const MessageAlertDialog = ({ open, onOpenChange, selectedAlert }: MessageAlertD
           >
             Cancel
           </Button>
-          <Button 
-            onClick={handleSubmit} 
-            disabled={isSubmitting}
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
-          >
-            Queue Alert
-          </Button>
+          {!isPreviewMode ? (
+            <Button 
+              onClick={() => setIsPreviewMode(true)}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              Preview
+            </Button>
+          ) : (
+            <>
+              <Button 
+                variant="outline"
+                onClick={() => setIsPreviewMode(false)}
+                className="bg-card text-card-foreground border-input hover:bg-accent"
+              >
+                Edit
+              </Button>
+              <Button 
+                onClick={handleSubmit} 
+                disabled={isSubmitting}
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                Queue Alert
+              </Button>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>
