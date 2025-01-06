@@ -32,7 +32,7 @@ const AlertSelector = ({
 
   const handleAlertSelect = (alert: Alert) => {
     onAlertSelect(alert);
-    // Remove the immediate template dialog trigger
+    localStorage.setItem('selectedAlertId', alert.id);
   };
 
   return (
