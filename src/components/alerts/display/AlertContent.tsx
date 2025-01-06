@@ -2,6 +2,7 @@ import React, { useState, useCallback, memo } from "react";
 import VideoAlert from "../media/VideoAlert";
 import ImageAlert from "../media/ImageAlert";
 import AlertMessage from "../AlertMessage";
+import confetti from 'canvas-confetti';
 
 interface AlertContentProps {
   currentAlert: {
@@ -15,6 +16,7 @@ interface AlertContentProps {
     gift_count_animation_speed?: number;
     gift_text_color?: string;
     gift_count_color?: string;
+    effects?: string[];
   };
   onComplete: () => void;
   onError: (error: any) => void;
@@ -41,6 +43,37 @@ export const AlertContent: React.FC<AlertContentProps> = memo(({
       onComplete();
     }
   }, [isMediaComplete, onComplete]);
+
+  // Trigger effects when alert shows
+  React.useEffect(() => {
+    if (currentAlert.effects?.includes('confetti')) {
+      const duration = 2000;
+      const end = Date.now() + duration;
+
+      const frame = () => {
+        confetti({
+          particleCount: 7,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+          colors: ['#ff0000', '#00ff00', '#0000ff', '#ff44ff', '#44ffff']
+        });
+        confetti({
+          particleCount: 7,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+          colors: ['#ff0000', '#00ff00', '#0000ff', '#ff44ff', '#44ffff']
+        });
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      };
+
+      frame();
+    }
+  }, [currentAlert.effects]);
 
   const displayMessage = currentAlert.message_enabled && currentAlert.message_text 
     ? currentAlert.message_text

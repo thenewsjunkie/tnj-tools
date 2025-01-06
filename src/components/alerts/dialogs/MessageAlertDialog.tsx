@@ -1,13 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert } from "@/hooks/useAlerts";
+import MessageForm from "./form/MessageForm";
 
 interface MessageAlertDialogProps {
   open: boolean;
@@ -22,9 +19,9 @@ const MessageAlertDialog = ({ open, onOpenChange, selectedAlert }: MessageAlertD
   const [textColor, setTextColor] = useState("#FFFFFF");
   const [backgroundColor, setBackgroundColor] = useState("rgba(0, 0, 0, 0.8)");
   const [textAlignment, setTextAlignment] = useState("center");
-  const [fontFamily, setFontFamily] = useState("Radiate Sans Extra Bold");
   const [transition, setTransition] = useState("fade");
   const [textAnimation, setTextAnimation] = useState("none");
+  const [confettiEnabled, setConfettiEnabled] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -40,6 +37,8 @@ const MessageAlertDialog = ({ open, onOpenChange, selectedAlert }: MessageAlertD
 
     setIsSubmitting(true);
     try {
+      const effects = confettiEnabled ? ["confetti"] : [];
+      
       const { error } = await supabase
         .from('alert_queue')
         .insert({
@@ -51,9 +50,9 @@ const MessageAlertDialog = ({ open, onOpenChange, selectedAlert }: MessageAlertD
           text_color: textColor,
           background_color: backgroundColor,
           text_alignment: textAlignment,
-          font_family: fontFamily,
           transition_type: transition,
-          text_animation: textAnimation
+          text_animation: textAnimation,
+          effects: effects
         });
 
       if (error) throw error;
@@ -82,107 +81,26 @@ const MessageAlertDialog = ({ open, onOpenChange, selectedAlert }: MessageAlertD
           <DialogTitle className="text-foreground">Queue Message Alert</DialogTitle>
         </DialogHeader>
         
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="message" className="text-foreground">Message</Label>
-            <Input
-              id="message"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Enter your message"
-              className="bg-card text-card-foreground border-input"
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <Label className="text-foreground">Font Size ({fontSize}px)</Label>
-            <Slider
-              value={[fontSize]}
-              onValueChange={(value) => setFontSize(value[0])}
-              min={24}
-              max={120}
-              step={1}
-              className="bg-transparent"
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <Label className="text-foreground">Duration ({duration}s)</Label>
-            <Slider
-              value={[duration]}
-              onValueChange={(value) => setDuration(value[0])}
-              min={1}
-              max={30}
-              step={1}
-              className="bg-transparent"
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="textColor" className="text-foreground">Text Color</Label>
-            <Input
-              id="textColor"
-              type="color"
-              value={textColor}
-              onChange={(e) => setTextColor(e.target.value)}
-              className="h-10 px-3 py-2 bg-card text-card-foreground border-input"
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="backgroundColor" className="text-foreground">Background Color</Label>
-            <Input
-              id="backgroundColor"
-              type="color"
-              value={backgroundColor}
-              onChange={(e) => setBackgroundColor(e.target.value)}
-              className="h-10 px-3 py-2 bg-card text-card-foreground border-input"
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <Label className="text-foreground">Text Alignment</Label>
-            <Select value={textAlignment} onValueChange={setTextAlignment}>
-              <SelectTrigger className="bg-card text-card-foreground border-input">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="left">Left</SelectItem>
-                <SelectItem value="center">Center</SelectItem>
-                <SelectItem value="right">Right</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid gap-2">
-            <Label className="text-foreground">Transition</Label>
-            <Select value={transition} onValueChange={setTransition}>
-              <SelectTrigger className="bg-card text-card-foreground border-input">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="fade">Fade</SelectItem>
-                <SelectItem value="slide">Slide</SelectItem>
-                <SelectItem value="scale">Scale</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid gap-2">
-            <Label className="text-foreground">Text Animation</Label>
-            <Select value={textAnimation} onValueChange={setTextAnimation}>
-              <SelectTrigger className="bg-card text-card-foreground border-input">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">None</SelectItem>
-                <SelectItem value="pulse">Pulse</SelectItem>
-                <SelectItem value="wave">Wave</SelectItem>
-                <SelectItem value="bounce">Bounce</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        <MessageForm
+          message={message}
+          setMessage={setMessage}
+          fontSize={fontSize}
+          setFontSize={setFontSize}
+          duration={duration}
+          setDuration={setDuration}
+          textColor={textColor}
+          setTextColor={setTextColor}
+          backgroundColor={backgroundColor}
+          setBackgroundColor={setBackgroundColor}
+          textAlignment={textAlignment}
+          setTextAlignment={setTextAlignment}
+          transition={transition}
+          setTransition={setTransition}
+          textAnimation={textAnimation}
+          setTextAnimation={setTextAnimation}
+          confettiEnabled={confettiEnabled}
+          setConfettiEnabled={setConfettiEnabled}
+        />
 
         <div className="flex justify-end gap-3">
           <Button 
