@@ -13,6 +13,7 @@ const ImageAlert = ({ mediaUrl, onComplete, onError }: ImageAlertProps) => {
     if (!completedRef.current) {
       completedRef.current = true;
       console.log('[ImageAlert] Image loaded successfully:', mediaUrl);
+      onComplete();
     }
   };
 
