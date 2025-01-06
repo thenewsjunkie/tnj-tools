@@ -3,6 +3,8 @@ import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import AlertTypeSelector from "./form/AlertTypeSelector";
 import MessageAlertFields from "./form/MessageAlertFields";
