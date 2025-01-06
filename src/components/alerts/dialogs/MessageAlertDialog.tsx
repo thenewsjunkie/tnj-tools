@@ -39,9 +39,11 @@ const MessageAlertDialog = ({ open, onOpenChange, selectedAlert }: MessageAlertD
 
     setIsSubmitting(true);
     try {
-      const effects = confettiEnabled ? ['confetti'] : [];
+      console.log('[MessageAlertDialog] Queueing alert with data:', {
+        alert_id: selectedAlert.id,
+        message_text: message,
+      });
       
-      // Only include fields that exist in the alert_queue table
       const { error } = await supabase
         .from('alert_queue')
         .insert({
@@ -50,7 +52,10 @@ const MessageAlertDialog = ({ open, onOpenChange, selectedAlert }: MessageAlertD
           message_text: message,
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[MessageAlertDialog] Error details:', error);
+        throw error;
+      }
 
       toast({
         title: "Success",
@@ -58,7 +63,7 @@ const MessageAlertDialog = ({ open, onOpenChange, selectedAlert }: MessageAlertD
       });
       onOpenChange(false);
     } catch (error) {
-      console.error('Error queueing message alert:', error);
+      console.error('[MessageAlertDialog] Error queueing message alert:', error);
       toast({
         title: "Error",
         description: "Failed to queue message alert",
