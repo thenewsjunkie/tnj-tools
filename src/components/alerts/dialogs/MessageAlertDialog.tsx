@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Alert } from "@/hooks/useAlerts";
 import MessageForm from "./form/MessageForm";
 import AlertMessage from "../AlertMessage";
+import confetti from 'canvas-confetti';
 
 interface MessageAlertDialogProps {
   open: boolean;
@@ -27,6 +28,49 @@ const MessageAlertDialog = ({ open, onOpenChange, selectedAlert }: MessageAlertD
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const { toast } = useToast();
 
+  // Effect to handle confetti preview
+  useEffect(() => {
+    if (isPreviewMode && confettiEnabled) {
+      const canvas = document.getElementById('preview-confetti') as HTMLCanvasElement;
+      if (canvas) {
+        const myConfetti = confetti.create(canvas, {
+          resize: true,
+          useWorker: true
+        });
+
+        const duration = 2000;
+        const end = Date.now() + duration;
+
+        const frame = () => {
+          myConfetti({
+            particleCount: 7,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+            colors: ['#ff0000', '#00ff00', '#0000ff', '#ff44ff', '#44ffff']
+          });
+          myConfetti({
+            particleCount: 7,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+            colors: ['#ff0000', '#00ff00', '#0000ff', '#ff44ff', '#44ffff']
+          });
+
+          if (Date.now() < end) {
+            requestAnimationFrame(frame);
+          }
+        };
+
+        frame();
+
+        return () => {
+          myConfetti.reset();
+        };
+      }
+    }
+  }, [isPreviewMode, confettiEnabled]);
+
   const handleSubmit = async () => {
     if (!message.trim()) {
       toast({
@@ -39,7 +83,8 @@ const MessageAlertDialog = ({ open, onOpenChange, selectedAlert }: MessageAlertD
 
     setIsSubmitting(true);
     try {
-      const effects = confettiEnabled ? ["confetti"] : [];
+      // Create effects array only if confetti is enabled
+      const effects = confettiEnabled ? ['confetti'] : [];
       
       const { error } = await supabase
         .from('alert_queue')
@@ -54,7 +99,7 @@ const MessageAlertDialog = ({ open, onOpenChange, selectedAlert }: MessageAlertD
           text_alignment: textAlignment,
           transition_type: transition,
           text_animation: textAnimation,
-          effects: effects
+          effects
         });
 
       if (error) throw error;
