@@ -19,7 +19,7 @@ const QueueAlertButton = ({ selectedAlert, onTemplateSelect }: QueueAlertButtonP
       onClick={handleClick}
       className="w-full sm:w-auto"
     >
-      Queue Alert
+      {selectedAlert.is_template ? "Create Alert from Template" : "Queue Alert"}
     </Button>
   );
 };

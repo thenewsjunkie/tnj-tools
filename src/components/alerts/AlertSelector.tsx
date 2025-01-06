@@ -32,9 +32,7 @@ const AlertSelector = ({
 
   const handleAlertSelect = (alert: Alert) => {
     onAlertSelect(alert);
-    if (alert.is_template) {
-      setIsTemplateDialogOpen(true);
-    }
+    // Remove the immediate template dialog trigger
   };
 
   return (
@@ -65,7 +63,7 @@ const AlertSelector = ({
           setIsTemplateDialogOpen(false);
         }}
         isTemplate={true}
-        initialType="message"
+        initialType={selectedAlert.media_type === 'message' ? 'message' : 'gift'}
       />
     </div>
   );
