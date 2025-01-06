@@ -6,6 +6,10 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import AlertTypeSelector from "./form/AlertTypeSelector";
+import MessageAlertFields from "./form/MessageAlertFields";
+import AlertMediaUpload from "./form/AlertMediaUpload";
+import { AlertEffect } from "@/types/alerts";
 
 interface AddAlertDialogProps {
   open: boolean;
@@ -15,73 +19,134 @@ interface AddAlertDialogProps {
 
 const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProps) => {
   const [title, setTitle] = useState("");
-  const [messageEnabled, setMessageEnabled] = useState(false);
-  const [messageText, setMessageText] = useState("");
-  const [fontSize, setFontSize] = useState(24);
-  const [isGiftAlert, setIsGiftAlert] = useState(false);
-  const [giftCountAnimationSpeed, setGiftCountAnimationSpeed] = useState(100);
-  const [giftTextColor, setGiftTextColor] = useState("#FFFFFF");
-  const [giftCountColor, setGiftCountColor] = useState("#4CDBC4");
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
+  // Alert type states
+  const [isGiftAlert, setIsGiftAlert] = useState(false);
+  const [isMessageAlert, setIsMessageAlert] = useState(false);
+
+  // Message alert specific states
+  const [messageText, setMessageText] = useState("");
+  const [displayDuration, setDisplayDuration] = useState(5);
+  const [textColor, setTextColor] = useState("#FFFFFF");
+  const [backgroundColor, setBackgroundColor] = useState("rgba(0, 0, 0, 0.8)");
+  const [textAlignment, setTextAlignment] = useState<'left' | 'center' | 'right'>('center');
+  const [fontFamily, setFontFamily] = useState("Arial");
+  const [textShadow, setTextShadow] = useState(false);
+  const [textAnimation, setTextAnimation] = useState("none");
+  const [effects, setEffects] = useState<AlertEffect[]>([]);
+  const [useGradient, setUseGradient] = useState(false);
+  const [gradientColor, setGradientColor] = useState("#000000");
+
+  // Gift alert specific states
+  const [messageEnabled, setMessageEnabled] = useState(false);
+  const [giftMessageText, setGiftMessageText] = useState("");
+  const [fontSize, setFontSize] = useState(24);
+  const [giftCountAnimationSpeed, setGiftCountAnimationSpeed] = useState(100);
+  const [giftTextColor, setGiftTextColor] = useState("#FFFFFF");
+  const [giftCountColor, setGiftCountColor] = useState("#4CDBC4");
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const fileInput = document.querySelector<HTMLInputElement>('input[type="file"]');
-    const file = fileInput?.files?.[0];
-
-    if (!file) {
-      toast({
-        title: "Error",
-        description: "Please select a file",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsUploading(true);
+
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${crypto.randomUUID()}.${fileExt}`;
-      
-      const { error: uploadError, data } = await supabase.storage
-        .from('alert_media')
-        .upload(fileName, file);
+      if (isMessageAlert) {
+        // For message alerts, we don't need media upload
+        const { error: dbError } = await supabase
+          .from('alerts')
+          .insert({
+            title,
+            media_type: 'message',
+            media_url: 'none',
+            message_enabled: true,
+            message_text: messageText,
+            display_duration: displayDuration,
+            text_color: textColor,
+            background_color: backgroundColor,
+            effects: effects,
+            style_config: {
+              textAlignment,
+              fontFamily,
+              textShadow,
+              textAnimation,
+              useGradient,
+              gradientColor
+            }
+          })
+          .select('*')
+          .single();
 
-      if (uploadError) throw uploadError;
+        if (dbError) throw dbError;
+      } else {
+        const fileInput = document.querySelector<HTMLInputElement>('input[type="file"]');
+        const file = fileInput?.files?.[0];
 
-      const { data: publicUrl } = supabase.storage
-        .from('alert_media')
-        .getPublicUrl(fileName);
+        if (!file) {
+          toast({
+            title: "Error",
+            description: "Please select a file",
+            variant: "destructive",
+          });
+          return;
+        }
 
-      const { error: dbError } = await supabase
-        .from('alerts')
-        .insert({
-          title,
-          media_url: publicUrl.publicUrl,
-          media_type: file.type,
-          message_enabled: messageEnabled,
-          message_text: messageText,
-          font_size: fontSize,
-          is_gift_alert: isGiftAlert,
-          gift_count_animation_speed: giftCountAnimationSpeed,
-          gift_text_color: giftTextColor,
-          gift_count_color: giftCountColor
-        })
-        .select('*')
-        .single();
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        
+        const { error: uploadError, data } = await supabase.storage
+          .from('alert_media')
+          .upload(fileName, file);
 
-      if (dbError) throw dbError;
+        if (uploadError) throw uploadError;
 
+        const { data: publicUrl } = supabase.storage
+          .from('alert_media')
+          .getPublicUrl(fileName);
+
+        const { error: dbError } = await supabase
+          .from('alerts')
+          .insert({
+            title,
+            media_url: publicUrl.publicUrl,
+            media_type: file.type,
+            message_enabled: messageEnabled,
+            message_text: giftMessageText,
+            font_size: fontSize,
+            is_gift_alert: isGiftAlert,
+            gift_count_animation_speed: giftCountAnimationSpeed,
+            gift_text_color: giftTextColor,
+            gift_count_color: giftCountColor
+          })
+          .select('*')
+          .single();
+
+        if (dbError) throw dbError;
+      }
+
+      // Reset form
       setTitle("");
-      setMessageEnabled(false);
       setMessageText("");
+      setDisplayDuration(5);
+      setTextColor("#FFFFFF");
+      setBackgroundColor("rgba(0, 0, 0, 0.8)");
+      setTextAlignment('center');
+      setFontFamily("Arial");
+      setTextShadow(false);
+      setTextAnimation("none");
+      setEffects([]);
+      setUseGradient(false);
+      setGradientColor("#000000");
+      setMessageEnabled(false);
+      setGiftMessageText("");
       setFontSize(24);
-      setIsGiftAlert(false);
       setGiftCountAnimationSpeed(100);
       setGiftTextColor("#FFFFFF");
       setGiftCountColor("#4CDBC4");
+      const fileInput = document.querySelector<HTMLInputElement>('input[type="file"]');
       if (fileInput) fileInput.value = "";
+      
       onAlertAdded();
     } catch (error) {
       toast({
@@ -111,49 +176,72 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
               className="text-foreground bg-background"
             />
           </div>
-          
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="message-enabled"
-              checked={messageEnabled}
-              onCheckedChange={setMessageEnabled}
+
+          <AlertTypeSelector
+            isGiftAlert={isGiftAlert}
+            setIsGiftAlert={setIsGiftAlert}
+            isMessageAlert={isMessageAlert}
+            setIsMessageAlert={setIsMessageAlert}
+          />
+
+          {isMessageAlert ? (
+            <MessageAlertFields
+              messageText={messageText}
+              setMessageText={setMessageText}
+              displayDuration={displayDuration}
+              setDisplayDuration={setDisplayDuration}
+              textColor={textColor}
+              setTextColor={setTextColor}
+              backgroundColor={backgroundColor}
+              setBackgroundColor={setBackgroundColor}
+              textAlignment={textAlignment}
+              setTextAlignment={setTextAlignment}
+              fontFamily={fontFamily}
+              setFontFamily={setFontFamily}
+              textShadow={textShadow}
+              setTextShadow={setTextShadow}
+              textAnimation={textAnimation}
+              setTextAnimation={setTextAnimation}
+              effects={effects}
+              setEffects={setEffects}
+              useGradient={useGradient}
+              setUseGradient={setUseGradient}
+              gradientColor={gradientColor}
+              setGradientColor={setGradientColor}
             />
-            <Label htmlFor="message-enabled" className="text-foreground">Enable Alert Message</Label>
-          </div>
-
-          {messageEnabled && (
+          ) : isGiftAlert ? (
             <>
-              <div className="space-y-2">
-                <Input
-                  placeholder="Alert Message"
-                  value={messageText}
-                  onChange={(e) => setMessageText(e.target.value)}
-                  className="text-foreground bg-background"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-foreground">Font Size (px)</Label>
-                <Input
-                  type="number"
-                  min="12"
-                  max="72"
-                  value={fontSize}
-                  onChange={(e) => setFontSize(Number(e.target.value))}
-                  className="text-foreground bg-background"
-                />
-              </div>
-
               <div className="flex items-center space-x-2">
                 <Switch
-                  id="gift-alert"
-                  checked={isGiftAlert}
-                  onCheckedChange={setIsGiftAlert}
+                  id="message-enabled"
+                  checked={messageEnabled}
+                  onCheckedChange={setMessageEnabled}
                 />
-                <Label htmlFor="gift-alert" className="text-foreground">Gift Subscription Alert</Label>
+                <Label htmlFor="message-enabled" className="text-foreground">Enable Alert Message</Label>
               </div>
 
-              {isGiftAlert && (
+              {messageEnabled && (
                 <>
+                  <div className="space-y-2">
+                    <Input
+                      placeholder="Alert Message"
+                      value={giftMessageText}
+                      onChange={(e) => setGiftMessageText(e.target.value)}
+                      className="text-foreground bg-background"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-foreground">Font Size (px)</Label>
+                    <Input
+                      type="number"
+                      min="12"
+                      max="72"
+                      value={fontSize}
+                      onChange={(e) => setFontSize(Number(e.target.value))}
+                      className="text-foreground bg-background"
+                    />
+                  </div>
+
                   <div className="space-y-2">
                     <Label className="text-foreground">Animation Speed (ms)</Label>
                     <Input
@@ -186,17 +274,12 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
                 </>
               )}
             </>
-          )}
+          ) : null}
 
-          <div className="space-y-2">
-            <Input
-              type="file"
-              accept="image/gif,video/webm"
-              required
-              disabled={isUploading}
-              className="text-foreground bg-background"
-            />
-          </div>
+          <AlertMediaUpload 
+            isUploading={isUploading}
+            isMessageAlert={isMessageAlert}
+          />
           
           <Button 
             type="submit" 

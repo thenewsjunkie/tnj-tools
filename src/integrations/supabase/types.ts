@@ -49,7 +49,10 @@ export type Database = {
       }
       alerts: {
         Row: {
+          background_color: string | null
           created_at: string
+          display_duration: number | null
+          effects: Json | null
           font_size: number | null
           gift_count_animation_speed: number | null
           gift_count_color: string | null
@@ -60,10 +63,14 @@ export type Database = {
           media_url: string
           message_enabled: boolean | null
           message_text: string | null
+          text_color: string | null
           title: string
         }
         Insert: {
+          background_color?: string | null
           created_at?: string
+          display_duration?: number | null
+          effects?: Json | null
           font_size?: number | null
           gift_count_animation_speed?: number | null
           gift_count_color?: string | null
@@ -74,10 +81,14 @@ export type Database = {
           media_url: string
           message_enabled?: boolean | null
           message_text?: string | null
+          text_color?: string | null
           title: string
         }
         Update: {
+          background_color?: string | null
           created_at?: string
+          display_duration?: number | null
+          effects?: Json | null
           font_size?: number | null
           gift_count_animation_speed?: number | null
           gift_count_color?: string | null
@@ -88,6 +99,7 @@ export type Database = {
           media_url?: string
           message_enabled?: boolean | null
           message_text?: string | null
+          text_color?: string | null
           title?: string
         }
         Relationships: []
@@ -574,7 +586,7 @@ export type Database = {
         | "widowed"
         | "separated"
         | "domestic_partnership"
-      review_type: "television" | "movie" | "food" | "product"
+      review_type: "television" | "movie" | "food" | "product" | "message"
     }
     CompositeTypes: {
       [_ in never]: never
