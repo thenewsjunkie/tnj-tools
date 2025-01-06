@@ -1,14 +1,13 @@
 import { useState } from "react";
-import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import AlertTypeSelector from "./form/AlertTypeSelector";
 import MessageAlertFields from "./form/MessageAlertFields";
 import AlertMediaUpload from "./form/AlertMediaUpload";
+import GiftAlertFields from "./dialog/GiftAlertFields";
 import { AlertEffect } from "@/types/alerts";
 
 interface AddAlertDialogProps {
@@ -53,7 +52,6 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
 
     try {
       if (isMessageAlert) {
-        // For message alerts, we don't need media upload
         const { error: dbError } = await supabase
           .from('alerts')
           .insert({
@@ -148,6 +146,7 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
       if (fileInput) fileInput.value = "";
       
       onAlertAdded();
+      onOpenChange(false);
     } catch (error) {
       toast({
         title: "Error",
@@ -161,136 +160,88 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
   };
 
   return (
-    <DialogContent className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 max-h-[90vh] overflow-y-auto">
-      <DialogHeader>
-        <DialogTitle className="text-foreground">Add New Alert</DialogTitle>
-      </DialogHeader>
-      <form onSubmit={handleSubmit} className="space-y-4 py-4">
-        <div className="space-y-2">
-          <Input
-            placeholder="Alert Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            className="text-foreground bg-background border-input"
-          />
-        </div>
-
-        <AlertTypeSelector
-          isGiftAlert={isGiftAlert}
-          setIsGiftAlert={setIsGiftAlert}
-          isMessageAlert={isMessageAlert}
-          setIsMessageAlert={setIsMessageAlert}
-        />
-
-        {isMessageAlert ? (
-          <MessageAlertFields
-            messageText={messageText}
-            setMessageText={setMessageText}
-            displayDuration={displayDuration}
-            setDisplayDuration={setDisplayDuration}
-            textColor={textColor}
-            setTextColor={setTextColor}
-            backgroundColor={backgroundColor}
-            setBackgroundColor={setBackgroundColor}
-            textAlignment={textAlignment}
-            setTextAlignment={setTextAlignment}
-            fontFamily={fontFamily}
-            setFontFamily={setFontFamily}
-            textShadow={textShadow}
-            setTextShadow={setTextShadow}
-            textAnimation={textAnimation}
-            setTextAnimation={setTextAnimation}
-            effects={effects}
-            setEffects={setEffects}
-            useGradient={useGradient}
-            setUseGradient={setUseGradient}
-            gradientColor={gradientColor}
-            setGradientColor={setGradientColor}
-          />
-        ) : isGiftAlert ? (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-foreground">Add New Alert</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="message-enabled"
-                checked={messageEnabled}
-                onCheckedChange={setMessageEnabled}
-              />
-              <Label htmlFor="message-enabled" className="text-foreground">Enable Alert Message</Label>
-            </div>
-
-            {messageEnabled && (
-              <>
-                <div className="space-y-2">
-                  <Input
-                    placeholder="Alert Message"
-                    value={giftMessageText}
-                    onChange={(e) => setGiftMessageText(e.target.value)}
-                    className="text-foreground bg-background"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-foreground">Font Size (px)</Label>
-                  <Input
-                    type="number"
-                    min="12"
-                    max="72"
-                    value={fontSize}
-                    onChange={(e) => setFontSize(Number(e.target.value))}
-                    className="text-foreground bg-background"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-foreground">Animation Speed (ms)</Label>
-                  <Input
-                    type="number"
-                    min="50"
-                    max="500"
-                    value={giftCountAnimationSpeed}
-                    onChange={(e) => setGiftCountAnimationSpeed(Number(e.target.value))}
-                    className="text-foreground bg-background"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-foreground">Text Color</Label>
-                  <Input
-                    type="color"
-                    value={giftTextColor}
-                    onChange={(e) => setGiftTextColor(e.target.value)}
-                    className="h-10 text-foreground bg-background"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-foreground">Counter Color</Label>
-                  <Input
-                    type="color"
-                    value={giftCountColor}
-                    onChange={(e) => setGiftCountColor(e.target.value)}
-                    className="h-10 text-foreground bg-background"
-                  />
-                </div>
-              </>
-            )}
+            <Input
+              placeholder="Alert Title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              className="text-foreground bg-background border-input"
+            />
           </div>
-        ) : null}
 
-        <AlertMediaUpload 
-          isUploading={isUploading}
-          isMessageAlert={isMessageAlert}
-        />
-        
-        <div className="sticky bottom-0 pt-4 bg-background/95 backdrop-blur">
-          <Button 
-            type="submit" 
-            className="w-full bg-primary text-black hover:bg-primary/90" 
-            disabled={isUploading}
-          >
-            {isUploading ? "Uploading..." : "Add Alert"}
-          </Button>
-        </div>
-      </form>
-    </DialogContent>
+          <AlertTypeSelector
+            isGiftAlert={isGiftAlert}
+            setIsGiftAlert={setIsGiftAlert}
+            isMessageAlert={isMessageAlert}
+            setIsMessageAlert={setIsMessageAlert}
+          />
+
+          {isMessageAlert ? (
+            <MessageAlertFields
+              messageText={messageText}
+              setMessageText={setMessageText}
+              displayDuration={displayDuration}
+              setDisplayDuration={setDisplayDuration}
+              textColor={textColor}
+              setTextColor={setTextColor}
+              backgroundColor={backgroundColor}
+              setBackgroundColor={setBackgroundColor}
+              textAlignment={textAlignment}
+              setTextAlignment={setTextAlignment}
+              fontFamily={fontFamily}
+              setFontFamily={setFontFamily}
+              textShadow={textShadow}
+              setTextShadow={setTextShadow}
+              textAnimation={textAnimation}
+              setTextAnimation={setTextAnimation}
+              effects={effects}
+              setEffects={setEffects}
+              useGradient={useGradient}
+              setUseGradient={setUseGradient}
+              gradientColor={gradientColor}
+              setGradientColor={setGradientColor}
+            />
+          ) : isGiftAlert ? (
+            <GiftAlertFields
+              messageEnabled={messageEnabled}
+              setMessageEnabled={setMessageEnabled}
+              giftMessageText={giftMessageText}
+              setGiftMessageText={setGiftMessageText}
+              fontSize={fontSize}
+              setFontSize={setFontSize}
+              giftCountAnimationSpeed={giftCountAnimationSpeed}
+              setGiftCountAnimationSpeed={setGiftCountAnimationSpeed}
+              giftTextColor={giftTextColor}
+              setGiftTextColor={setGiftTextColor}
+              giftCountColor={giftCountColor}
+              setGiftCountColor={setGiftCountColor}
+            />
+          ) : null}
+
+          <AlertMediaUpload 
+            isUploading={isUploading}
+            isMessageAlert={isMessageAlert}
+          />
+          
+          <div className="sticky bottom-0 pt-4 bg-background/95 backdrop-blur">
+            <Button 
+              type="submit" 
+              className="w-full bg-primary text-black hover:bg-primary/90" 
+              disabled={isUploading}
+            >
+              {isUploading ? "Uploading..." : "Add Alert"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 };
 
