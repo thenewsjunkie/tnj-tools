@@ -41,20 +41,13 @@ const MessageAlertDialog = ({ open, onOpenChange, selectedAlert }: MessageAlertD
     try {
       const effects = confettiEnabled ? ['confetti'] : [];
       
+      // Only include fields that exist in the alert_queue table
       const { error } = await supabase
         .from('alert_queue')
         .insert({
           alert_id: selectedAlert.id,
           status: 'pending',
           message_text: message,
-          font_size: fontSize,
-          display_duration: duration,
-          text_color: textColor,
-          background_color: backgroundColor,
-          text_alignment: textAlignment,
-          transition_type: transition,
-          text_animation: textAnimation,
-          effects
         });
 
       if (error) throw error;
