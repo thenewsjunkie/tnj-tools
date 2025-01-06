@@ -77,68 +77,73 @@ const MessageAlertDialog = ({ open, onOpenChange, selectedAlert }: MessageAlertD
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] bg-background border-border">
         <DialogHeader>
-          <DialogTitle>Queue Message Alert</DialogTitle>
+          <DialogTitle className="text-foreground">Queue Message Alert</DialogTitle>
         </DialogHeader>
         
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="message">Message</Label>
+            <Label htmlFor="message" className="text-foreground">Message</Label>
             <Input
               id="message"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Enter your message"
+              className="bg-card text-card-foreground border-input"
             />
           </div>
 
           <div className="grid gap-2">
-            <Label>Font Size ({fontSize}px)</Label>
+            <Label className="text-foreground">Font Size ({fontSize}px)</Label>
             <Slider
               value={[fontSize]}
               onValueChange={(value) => setFontSize(value[0])}
               min={24}
               max={120}
               step={1}
+              className="bg-transparent"
             />
           </div>
 
           <div className="grid gap-2">
-            <Label>Duration ({duration}s)</Label>
+            <Label className="text-foreground">Duration ({duration}s)</Label>
             <Slider
               value={[duration]}
               onValueChange={(value) => setDuration(value[0])}
               min={1}
               max={30}
               step={1}
+              className="bg-transparent"
             />
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="textColor">Text Color</Label>
+            <Label htmlFor="textColor" className="text-foreground">Text Color</Label>
             <Input
               id="textColor"
               type="color"
               value={textColor}
               onChange={(e) => setTextColor(e.target.value)}
+              className="h-10 px-3 py-2 bg-card text-card-foreground border-input"
             />
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="backgroundColor">Background Color</Label>
+            <Label htmlFor="backgroundColor" className="text-foreground">Background Color</Label>
             <Input
               id="backgroundColor"
               type="color"
               value={backgroundColor}
               onChange={(e) => setBackgroundColor(e.target.value)}
+              className="h-10 px-3 py-2 bg-card text-card-foreground border-input"
             />
           </div>
 
           <div className="grid gap-2">
-            <Label>Text Alignment</Label>
+            <Label className="text-foreground">Text Alignment</Label>
             <Select value={textAlignment} onValueChange={setTextAlignment}>
-              <SelectTrigger>
+              <SelectTrigger className="bg-card text-card-foreground border-input">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -150,9 +155,9 @@ const MessageAlertDialog = ({ open, onOpenChange, selectedAlert }: MessageAlertD
           </div>
 
           <div className="grid gap-2">
-            <Label>Transition</Label>
+            <Label className="text-foreground">Transition</Label>
             <Select value={transition} onValueChange={setTransition}>
-              <SelectTrigger>
+              <SelectTrigger className="bg-card text-card-foreground border-input">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -164,9 +169,9 @@ const MessageAlertDialog = ({ open, onOpenChange, selectedAlert }: MessageAlertD
           </div>
 
           <div className="grid gap-2">
-            <Label>Text Animation</Label>
+            <Label className="text-foreground">Text Animation</Label>
             <Select value={textAnimation} onValueChange={setTextAnimation}>
-              <SelectTrigger>
+              <SelectTrigger className="bg-card text-card-foreground border-input">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -180,10 +185,18 @@ const MessageAlertDialog = ({ open, onOpenChange, selectedAlert }: MessageAlertD
         </div>
 
         <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)}
+            className="bg-card text-card-foreground border-input hover:bg-accent"
+          >
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting}>
+          <Button 
+            onClick={handleSubmit} 
+            disabled={isSubmitting}
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+          >
             Queue Alert
           </Button>
         </div>
