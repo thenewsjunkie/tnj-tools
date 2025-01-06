@@ -38,12 +38,12 @@ const AlertSelector = ({
   // Determine the initial type based on the selected alert's properties
   const getInitialType = () => {
     if (selectedAlert.media_type === 'message' || selectedAlert.message_enabled) {
-      return 'message';
+      return 'message' as const;
     }
     if (selectedAlert.is_gift_alert) {
-      return 'gift';
+      return 'gift' as const;
     }
-    return 'standard';
+    return null;
   };
 
   return (
