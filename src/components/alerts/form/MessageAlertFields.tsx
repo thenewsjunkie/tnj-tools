@@ -67,25 +67,26 @@ const MessageAlertFields = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 text-foreground">
       <div className="space-y-2">
-        <Label>Message Text</Label>
+        <Label className="text-foreground">Message Text</Label>
         <Input
           value={messageText}
           onChange={(e) => setMessageText(e.target.value)}
           placeholder="Enter your message"
-          className="h-24"
+          className="h-24 text-foreground bg-background border-input"
         />
       </div>
 
       <div className="space-y-2">
-        <Label>Display Duration (seconds)</Label>
+        <Label className="text-foreground">Display Duration (seconds)</Label>
         <Slider
           value={[displayDuration]}
           onValueChange={([value]) => setDisplayDuration(value)}
           min={1}
           max={60}
           step={1}
+          className="py-4"
         />
         <div className="text-sm text-muted-foreground text-right">
           {displayDuration} seconds
@@ -94,47 +95,49 @@ const MessageAlertFields = ({
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label>Text Color</Label>
+          <Label className="text-foreground">Text Color</Label>
           <Input
             type="color"
             value={textColor}
             onChange={(e) => setTextColor(e.target.value)}
+            className="h-10 bg-background border-input"
           />
         </div>
 
         <div className="space-y-2">
-          <Label>Background Color</Label>
+          <Label className="text-foreground">Background Color</Label>
           <Input
             type="color"
             value={backgroundColor}
             onChange={(e) => setBackgroundColor(e.target.value)}
+            className="h-10 bg-background border-input"
           />
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label>Text Alignment</Label>
+        <Label className="text-foreground">Text Alignment</Label>
         <Select value={textAlignment} onValueChange={(value: 'left' | 'center' | 'right') => setTextAlignment(value)}>
-          <SelectTrigger>
+          <SelectTrigger className="bg-background text-foreground border-input">
             <SelectValue placeholder="Select alignment" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="left">Left</SelectItem>
-            <SelectItem value="center">Center</SelectItem>
-            <SelectItem value="right">Right</SelectItem>
+            <SelectItem value="left" className="text-foreground">Left</SelectItem>
+            <SelectItem value="center" className="text-foreground">Center</SelectItem>
+            <SelectItem value="right" className="text-foreground">Right</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       <div className="space-y-2">
-        <Label>Font</Label>
+        <Label className="text-foreground">Font</Label>
         <Select value={fontFamily} onValueChange={setFontFamily}>
-          <SelectTrigger>
+          <SelectTrigger className="bg-background text-foreground border-input">
             <SelectValue placeholder="Select font" />
           </SelectTrigger>
           <SelectContent>
             {availableFonts.map(font => (
-              <SelectItem key={font} value={font}>{font}</SelectItem>
+              <SelectItem key={font} value={font} className="text-foreground">{font}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -145,29 +148,30 @@ const MessageAlertFields = ({
           checked={textShadow}
           onCheckedChange={setTextShadow}
         />
-        <Label>Enable Text Shadow/Glow</Label>
+        <Label className="text-foreground">Enable Text Shadow/Glow</Label>
       </div>
 
       <div className="space-y-2">
-        <Label>Text Animation</Label>
+        <Label className="text-foreground">Text Animation</Label>
         <Select value={textAnimation} onValueChange={setTextAnimation}>
-          <SelectTrigger>
+          <SelectTrigger className="bg-background text-foreground border-input">
             <SelectValue placeholder="Select animation" />
           </SelectTrigger>
           <SelectContent>
             {availableAnimations.map(animation => (
-              <SelectItem key={animation} value={animation}>{animation}</SelectItem>
+              <SelectItem key={animation} value={animation} className="text-foreground">{animation}</SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
       <div className="space-y-2">
-        <Label>Effects</Label>
+        <Label className="text-foreground">Effects</Label>
         <div className="flex flex-wrap gap-2">
           {availableEffects.map(effect => (
             <button
               key={effect}
+              type="button"
               onClick={() => toggleEffect(effect)}
               className={`px-3 py-1 rounded-full text-sm ${
                 effects.includes(effect)
@@ -187,16 +191,17 @@ const MessageAlertFields = ({
             checked={useGradient}
             onCheckedChange={setUseGradient}
           />
-          <Label>Use Background Gradient</Label>
+          <Label className="text-foreground">Use Background Gradient</Label>
         </div>
         
         {useGradient && (
           <div className="space-y-2">
-            <Label>Gradient End Color</Label>
+            <Label className="text-foreground">Gradient End Color</Label>
             <Input
               type="color"
               value={gradientColor}
               onChange={(e) => setGradientColor(e.target.value)}
+              className="h-10 bg-background border-input"
             />
           </div>
         )}
