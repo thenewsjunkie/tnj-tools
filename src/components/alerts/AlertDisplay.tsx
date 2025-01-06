@@ -61,12 +61,10 @@ export const AlertDisplay = ({
   }
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center">
-      <AlertContent
-        currentAlert={currentAlert}
-        onComplete={handleAlertContentComplete}
-        onError={handleError}
-      />
-    </div>
+    <AlertContent
+      currentAlert={currentAlert}
+      onComplete={handleAlertContentComplete}
+      onError={handleError}
+    />
   );
 };
