@@ -42,7 +42,7 @@ const MessageAlertDialog = ({ open, onOpenChange, selectedAlert }: MessageAlertD
       console.log('[MessageAlertDialog] Queueing alert with data:', {
         alert_id: selectedAlert.id,
         status: 'pending',
-        message_text: message,
+        username: null, // Required by schema
       });
       
       const { error } = await supabase
@@ -50,7 +50,7 @@ const MessageAlertDialog = ({ open, onOpenChange, selectedAlert }: MessageAlertD
         .insert({
           alert_id: selectedAlert.id,
           status: 'pending',
-          message_text: message,
+          username: null, // Required by schema
         });
 
       if (error) {
