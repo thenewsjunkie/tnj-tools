@@ -161,6 +161,33 @@ export type Database = {
         }
         Relationships: []
       }
+      audio_conversations: {
+        Row: {
+          answer_text: string
+          created_at: string | null
+          id: string
+          question_text: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          answer_text: string
+          created_at?: string | null
+          id?: string
+          question_text: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          answer_text?: string
+          created_at?: string | null
+          id?: string
+          question_text?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       bot_instances: {
         Row: {
           created_at: string | null
