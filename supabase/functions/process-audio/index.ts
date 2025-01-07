@@ -91,76 +91,74 @@ serve(async (req) => {
 
         // Convert answer to speech
         console.log('[process-audio] Converting response to speech')
-        try {
-          const speechResponse = await fetch('https://api.openai.com/v1/audio/speech', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${openAIApiKey}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              model: 'tts-1',
-              input: answer,
-              voice: 'alloy',
-            }),
-          })
+        const speechResponse = await fetch('https://api.openai.com/v1/audio/speech', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openAIApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'tts-1',
+            input: answer,
+            voice: 'alloy',
+          }),
+        })
 
-          if (!speechResponse.ok) {
-            const errorText = await speechResponse.text()
-            console.error('[process-audio] Speech API error:', errorText)
-            throw new Error(`Speech API error: ${speechResponse.statusText} - ${errorText}`)
-          }
-
-          const audioBuffer = await speechResponse.arrayBuffer()
-          console.log('[process-audio] Speech conversion successful, buffer size:', audioBuffer.byteLength)
-          
-          // Store in Supabase
-          try {
-            const supabase = createClient(
-              Deno.env.get('SUPABASE_URL') ?? '',
-              Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-            )
-            
-            const { data, error } = await supabase
-              .from('audio_conversations')
-              .insert({
-                question_text: transcription.text,
-                answer_text: answer,
-              })
-              .select()
-              .single()
-
-            if (error) {
-              console.error('[process-audio] Supabase error:', error)
-              throw error
-            }
-
-            console.log('[process-audio] Process completed successfully')
-            return new Response(
-              JSON.stringify({
-                success: true,
-                conversation: data,
-                audioResponse: Array.from(new Uint8Array(audioBuffer)),
-              }),
-              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            )
-          } catch (supabaseError) {
-            console.error('[process-audio] Supabase operation failed:', supabaseError)
-            throw new Error(`Supabase error: ${supabaseError.message}`)
-          }
-        } catch (speechError) {
-          console.error('[process-audio] Text-to-speech error:', speechError)
-          throw speechError
+        if (!speechResponse.ok) {
+          const errorText = await speechResponse.text()
+          console.error('[process-audio] Speech API error:', errorText)
+          throw new Error(`Speech API error: ${speechResponse.statusText} - ${errorText}`)
         }
-      } catch (processingError) {
-        console.error('[process-audio] Error processing audio:', processingError)
-        throw processingError
+
+        const audioBuffer = await speechResponse.arrayBuffer()
+        console.log('[process-audio] Speech conversion successful, buffer size:', audioBuffer.byteLength)
+
+        // Initialize Supabase client
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')
+        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+
+        if (!supabaseUrl || !supabaseKey) {
+          console.error('[process-audio] Supabase credentials missing')
+          throw new Error('Supabase credentials are not configured')
+        }
+
+        const supabase = createClient(supabaseUrl, supabaseKey)
+        
+        // Store conversation in Supabase
+        console.log('[process-audio] Storing conversation in Supabase')
+        const { data: conversationData, error: conversationError } = await supabase
+          .from('audio_conversations')
+          .insert({
+            question_text: transcription.text,
+            answer_text: answer,
+            status: 'completed'
+          })
+          .select()
+          .single()
+
+        if (conversationError) {
+          console.error('[process-audio] Supabase error:', conversationError)
+          throw conversationError
+        }
+
+        console.log('[process-audio] Process completed successfully')
+        return new Response(
+          JSON.stringify({
+            success: true,
+            conversation: conversationData,
+            audioResponse: Array.from(new Uint8Array(audioBuffer)),
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      } catch (error) {
+        console.error('[process-audio] Error processing audio:', error)
+        throw error
       }
     }
 
     throw new Error('Invalid type specified')
   } catch (error) {
-    console.error('[process-audio] Error processing audio:', error)
+    console.error('[process-audio] Error:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
