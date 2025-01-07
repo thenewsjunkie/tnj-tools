@@ -6,6 +6,19 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const chunks: string[] = [];
+  const chunk_size = 8192;
+  const uint8Array = new Uint8Array(buffer);
+  
+  for (let i = 0; i < uint8Array.length; i += chunk_size) {
+    const chunk = uint8Array.slice(i, i + chunk_size);
+    chunks.push(String.fromCharCode.apply(null, chunk));
+  }
+  
+  return btoa(chunks.join(''));
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -122,9 +135,8 @@ serve(async (req) => {
       throw new Error(`Database error: ${dbError.message}`)
     }
 
-    // Convert ArrayBuffer to Base64
-    const uint8Array = new Uint8Array(audioResponse)
-    const base64Audio = btoa(String.fromCharCode.apply(null, uint8Array))
+    // Convert ArrayBuffer to Base64 using chunked conversion
+    const base64Audio = arrayBufferToBase64(audioResponse);
 
     return new Response(
       JSON.stringify({
