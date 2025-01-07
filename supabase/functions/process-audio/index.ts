@@ -6,11 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-interface RequestBody {
-  type: 'transcribe'
-  audioData: string
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -22,7 +17,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { type, audioData } = await req.json() as RequestBody
+    const { type, audioData } = await req.json()
 
     if (!audioData) {
       throw new Error('No audio data provided')
@@ -64,7 +59,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4',
         messages: [
           {
             role: 'system',
@@ -101,6 +96,7 @@ serve(async (req) => {
         model: 'tts-1',
         voice: 'alloy',
         input: gptResponseText,
+        response_format: 'mp3',
       }),
     })
 
@@ -126,13 +122,17 @@ serve(async (req) => {
       throw new Error(`Database error: ${dbError.message}`)
     }
 
+    // Convert ArrayBuffer to Base64
+    const uint8Array = new Uint8Array(audioResponse)
+    const base64Audio = btoa(String.fromCharCode.apply(null, uint8Array))
+
     return new Response(
       JSON.stringify({
         conversation: {
           question_text: transcribedText,
           answer_text: gptResponseText,
         },
-        audioResponse,
+        audioResponse: base64Audio,
       }),
       {
         headers: {

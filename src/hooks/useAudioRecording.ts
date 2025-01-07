@@ -76,10 +76,16 @@ export const useAudioRecording = ({ onProcessingComplete, onError }: UseAudioRec
               throw new Error('Invalid response from server')
             }
 
-            const audioArray = new Uint8Array(data.audioResponse)
+            // Convert base64 to ArrayBuffer
+            const binaryString = atob(data.audioResponse)
+            const bytes = new Uint8Array(binaryString.length)
+            for (let i = 0; i < binaryString.length; i++) {
+              bytes[i] = binaryString.charCodeAt(i)
+            }
+
             onProcessingComplete({
               conversation: data.conversation,
-              audioResponse: audioArray
+              audioResponse: bytes.buffer
             })
           } catch (error) {
             onError(error instanceof Error ? error : new Error('Failed to process audio'))
@@ -91,7 +97,7 @@ export const useAudioRecording = ({ onProcessingComplete, onError }: UseAudioRec
         reader.readAsDataURL(audioBlob)
       }
 
-      mediaRecorder.current.start(100) // Reduced chunk size for better compatibility
+      mediaRecorder.current.start(100)
       setIsRecording(true)
     } catch (error) {
       onError(error instanceof Error ? error : new Error('Failed to access microphone'))
