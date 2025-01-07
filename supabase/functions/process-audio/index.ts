@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1"
-import { Configuration, OpenAIApi } from "https://esm.sh/openai@3.2.1"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -34,12 +33,6 @@ serve(async (req) => {
     const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0))
     const audioBlob = new Blob([binaryData], { type: 'audio/mp4' })
 
-    // Initialize OpenAI
-    const configuration = new Configuration({
-      apiKey: Deno.env.get('OPENAI_API_KEY'),
-    })
-    const openai = new OpenAIApi(configuration)
-
     console.log('[process-audio] Transcribing audio...')
     // Transcribe audio using Whisper
     const formData = new FormData()
@@ -64,25 +57,37 @@ serve(async (req) => {
 
     // Get GPT response
     console.log('[process-audio] Getting GPT response...')
-    const completion = await openai.createChatCompletion({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a helpful assistant. Keep your responses concise and friendly.',
-        },
-        {
-          role: 'user',
-          content: transcribedText,
-        },
-      ],
+    const gptResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a helpful assistant. Keep your responses concise and friendly.',
+          },
+          {
+            role: 'user',
+            content: transcribedText,
+          },
+        ],
+      }),
     })
 
-    const gptResponse = completion.data.choices[0]?.message?.content
-    if (!gptResponse) {
+    if (!gptResponse.ok) {
+      throw new Error(`GPT API error: ${await gptResponse.text()}`)
+    }
+
+    const gptData = await gptResponse.json()
+    const gptResponseText = gptData.choices[0]?.message?.content
+    if (!gptResponseText) {
       throw new Error('No response from GPT')
     }
-    console.log('[process-audio] GPT response:', gptResponse)
+    console.log('[process-audio] GPT response:', gptResponseText)
 
     // Convert GPT response to speech
     console.log('[process-audio] Converting to speech...')
@@ -95,7 +100,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'tts-1',
         voice: 'alloy',
-        input: gptResponse,
+        input: gptResponseText,
       }),
     })
 
@@ -112,7 +117,7 @@ serve(async (req) => {
       .from('audio_conversations')
       .insert({
         question_text: transcribedText,
-        answer_text: gptResponse,
+        answer_text: gptResponseText,
         status: 'completed',
       })
 
@@ -125,7 +130,7 @@ serve(async (req) => {
       JSON.stringify({
         conversation: {
           question_text: transcribedText,
-          answer_text: gptResponse,
+          answer_text: gptResponseText,
         },
         audioResponse,
       }),
