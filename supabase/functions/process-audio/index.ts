@@ -7,10 +7,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY')
-const supabaseUrl = Deno.env.get('SUPABASE_URL')
-const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -23,12 +19,17 @@ serve(async (req) => {
     if (type === 'transcribe') {
       console.log('[process-audio] Processing transcription request')
       
+      const openAIApiKey = Deno.env.get('OPENAI_API_KEY')
       if (!openAIApiKey) {
         throw new Error('OpenAI API key is not configured')
       }
 
       // Convert base64 to blob
       const base64Data = audioData.split(',')[1]
+      if (!base64Data) {
+        throw new Error('Invalid audio data format')
+      }
+
       const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0))
       
       // Create form data for Whisper API
@@ -111,7 +112,10 @@ serve(async (req) => {
         console.log('[process-audio] Speech conversion successful, buffer size:', audioBuffer.byteLength)
         
         // Store in Supabase
-        const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
+        const supabase = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        )
         
         const { data, error } = await supabase
           .from('audio_conversations')
