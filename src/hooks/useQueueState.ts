@@ -1,22 +1,34 @@
 import { useState, useEffect, useRef } from "react";
 import { useQueueData } from "./useQueueData";
 import { supabase } from "@/integrations/supabase/client";
-import { Json } from "@/integrations/supabase/types";
-import { RealtimeChannel, RealtimePostgresChangesPayload } from "@supabase/supabase-js";
-
-interface QueueStateValue {
-  isPaused: boolean;
-}
-
-interface SystemSettingsRow {
-  value: Json;
-}
+import { useRealtimeConnection } from "./useRealtimeConnection";
+import { AlertQueueItem } from "@/types/queue";
 
 export const useQueueState = () => {
   const [isPaused, setIsPaused] = useState(false);
   const { queueData } = useQueueData();
-  const channelRef = useRef<RealtimeChannel | null>(null);
   const isInitializedRef = useRef(false);
+
+  // Use the new hook for realtime connection
+  useRealtimeConnection(
+    'queue-state-changes',
+    {
+      event: 'UPDATE',
+      schema: 'public',
+      table: 'system_settings',
+      filter: 'key=eq.queue_state'
+    },
+    (payload) => {
+      console.log('[useQueueState] Received database queue state update:', payload);
+      if (payload.new && 'value' in payload.new) {
+        const value = payload.new.value as { isPaused: boolean };
+        if (value && typeof value === 'object' && 'isPaused' in value) {
+          console.log('[useQueueState] Updating pause state to:', value.isPaused);
+          setIsPaused(!!value.isPaused);
+        }
+      }
+    }
+  );
 
   useEffect(() => {
     if (isInitializedRef.current) return;
@@ -36,50 +48,14 @@ export const useQueueState = () => {
         return;
       }
 
-      const value = data?.value as unknown as QueueStateValue;
+      const value = data?.value as { isPaused: boolean };
       if (value && typeof value === 'object' && 'isPaused' in value) {
         console.log('[useQueueState] Setting initial pause state:', value.isPaused);
         setIsPaused(!!value.isPaused);
       }
     };
 
-    // Load initial state
     loadPauseState();
-
-    // Only set up subscription if we don't already have one
-    if (!channelRef.current) {
-      channelRef.current = supabase.channel('queue-state-changes')
-        .on(
-          'postgres_changes',
-          { 
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'system_settings',
-            filter: 'key=eq.queue_state'
-          },
-          (payload: RealtimePostgresChangesPayload<SystemSettingsRow>) => {
-            console.log('[useQueueState] Received database queue state update:', payload);
-            if (payload.new && 'value' in payload.new) {
-              const value = payload.new.value as unknown as QueueStateValue;
-              if (value && typeof value === 'object' && 'isPaused' in value) {
-                console.log('[useQueueState] Updating pause state to:', value.isPaused);
-                setIsPaused(!!value.isPaused);
-              }
-            }
-          }
-        )
-        .subscribe((status) => {
-          console.log('[useQueueState] Subscription status:', status);
-        });
-    }
-
-    return () => {
-      if (channelRef.current) {
-        console.log('[useQueueState] Cleaning up subscription');
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
-    };
   }, []);
 
   const togglePause = async () => {
@@ -94,7 +70,7 @@ export const useQueueState = () => {
       .from('system_settings')
       .upsert({
         key: 'queue_state',
-        value: { isPaused: newPausedState } as unknown as Json,
+        value: { isPaused: newPausedState },
         updated_at: new Date().toISOString()
       });
 
@@ -109,8 +85,8 @@ export const useQueueState = () => {
   };
 
   // Calculate derived state from queue data
-  const currentAlert = queueData?.find(item => item.status === 'playing');
-  const pendingAlerts = queueData?.filter(item => item.status === 'pending') || [];
+  const currentAlert = queueData?.find(item => item.status === 'playing') as AlertQueueItem;
+  const pendingAlerts = (queueData?.filter(item => item.status === 'pending') || []) as AlertQueueItem[];
   const queueCount = pendingAlerts.length;
 
   return {
