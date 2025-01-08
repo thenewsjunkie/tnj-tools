@@ -28,6 +28,7 @@ const TotalScore = () => {
   useEffect(() => {
     const fetchActiveContestants = async () => {
       try {
+        console.log('[TotalScore] Fetching active contestants...');
         const { data: contestants, error } = await supabase
           .from('fritz_contestants')
           .select('name')
@@ -48,6 +49,7 @@ const TotalScore = () => {
 
     const fetchYearlyScores = async () => {
       try {
+        console.log('[TotalScore] Fetching yearly scores for year:', currentYear);
         const { data, error } = await supabase
           .from('fritz_yearly_scores')
           .select('*')
@@ -59,13 +61,22 @@ const TotalScore = () => {
           return;
         }
 
-        console.log('[TotalScore] Fetched scores:', data);
+        console.log('[TotalScore] Raw scores from database:', data);
+
+        if (!data || data.length === 0) {
+          console.log('[TotalScore] No scores found for year:', currentYear);
+          setScores([]);
+          return;
+        }
 
         // Filter scores to only show default contestants plus Josh or Custom if they're active
         const filteredScores = data.filter(score => {
           const name = score.contestant_name;
-          return DEFAULT_CONTESTANTS.includes(name) || 
-                 (activeContestants.includes(name) && (name === 'Josh' || name === 'Custom'));
+          const isDefaultContestant = DEFAULT_CONTESTANTS.includes(name);
+          const isSpecialContestant = activeContestants.includes(name) && 
+                                    (name === 'Josh' || name === 'Custom');
+          
+          return isDefaultContestant || isSpecialContestant;
         });
 
         console.log('[TotalScore] Filtered scores:', filteredScores);
@@ -75,6 +86,7 @@ const TotalScore = () => {
       }
     };
 
+    // Initial fetch
     fetchActiveContestants();
     fetchYearlyScores();
 
@@ -122,7 +134,7 @@ const TotalScore = () => {
       yearlyScoresChannel.unsubscribe();
       contestantsChannel.unsubscribe();
     };
-  }, [currentYear, activeContestants]);
+  }, [currentYear]);
 
   // Create placeholder scores to maintain consistent height
   const placeholderCount = Math.max(0, 4 - scores.length);
