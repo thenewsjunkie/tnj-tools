@@ -2,10 +2,12 @@ import { useEffect, useRef } from 'react';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
+type RealtimeEvent = 'INSERT' | 'UPDATE' | 'DELETE';
+
 export const useRealtimeConnection = (
   channelName: string,
   eventConfig: {
-    event: 'INSERT' | 'UPDATE' | 'DELETE';
+    event: RealtimeEvent;
     schema: string;
     table: string;
     filter?: string;
@@ -24,7 +26,7 @@ export const useRealtimeConnection = (
     console.log(`[${channelName}] Setting up new channel`);
     channelRef.current = supabase.channel(channelName)
       .on(
-        'postgres_changes',
+        'postgres_changes' as any, // Type assertion needed due to Supabase types
         {
           event: eventConfig.event,
           schema: eventConfig.schema,
