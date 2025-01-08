@@ -27,41 +27,59 @@ const TotalScore = () => {
 
   useEffect(() => {
     const fetchActiveContestants = async () => {
-      const { data: contestants } = await supabase
-        .from('fritz_contestants')
-        .select('name')
-        .not('name', 'is', null);
+      try {
+        const { data: contestants, error } = await supabase
+          .from('fritz_contestants')
+          .select('name')
+          .not('name', 'is', null);
 
-      const activeNames = contestants?.map(c => c.name) || [];
-      setActiveContestants(activeNames as string[]);
+        if (error) {
+          console.error('[TotalScore] Error fetching active contestants:', error);
+          return;
+        }
+
+        const activeNames = contestants?.map(c => c.name) || [];
+        console.log('[TotalScore] Active contestants:', activeNames);
+        setActiveContestants(activeNames as string[]);
+      } catch (error) {
+        console.error('[TotalScore] Error in fetchActiveContestants:', error);
+      }
     };
 
     const fetchYearlyScores = async () => {
-      const { data, error } = await supabase
-        .from('fritz_yearly_scores')
-        .select('*')
-        .eq('year', currentYear)
-        .order('total_score', { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from('fritz_yearly_scores')
+          .select('*')
+          .eq('year', currentYear)
+          .order('total_score', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching yearly scores:', error);
-        return;
+        if (error) {
+          console.error('[TotalScore] Error fetching yearly scores:', error);
+          return;
+        }
+
+        console.log('[TotalScore] Fetched scores:', data);
+
+        // Filter scores to only show default contestants plus Josh or Custom if they're active
+        const filteredScores = data.filter(score => {
+          const name = score.contestant_name;
+          return DEFAULT_CONTESTANTS.includes(name) || 
+                 (activeContestants.includes(name) && (name === 'Josh' || name === 'Custom'));
+        });
+
+        console.log('[TotalScore] Filtered scores:', filteredScores);
+        setScores(filteredScores);
+      } catch (error) {
+        console.error('[TotalScore] Error in fetchYearlyScores:', error);
       }
-
-      // Filter scores to only show default contestants plus Josh or Custom if they're active
-      const filteredScores = data.filter(score => {
-        const name = score.contestant_name;
-        return DEFAULT_CONTESTANTS.includes(name) || 
-               (activeContestants.includes(name) && (name === 'Josh' || name === 'Custom'));
-      });
-
-      setScores(filteredScores);
     };
 
     fetchActiveContestants();
     fetchYearlyScores();
 
-    const channel = supabase
+    // Subscribe to real-time updates for yearly scores
+    const yearlyScoresChannel = supabase
       .channel('yearly-scores-changes')
       .on(
         'postgres_changes',
@@ -71,13 +89,16 @@ const TotalScore = () => {
           table: 'fritz_yearly_scores',
           filter: `year=eq.${currentYear}`
         },
-        () => {
+        (payload) => {
+          console.log('[TotalScore] Yearly scores update received:', payload);
           fetchYearlyScores();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[TotalScore] Yearly scores subscription status:', status);
+      });
 
-    // Also listen for changes to active contestants
+    // Subscribe to changes in active contestants
     const contestantsChannel = supabase
       .channel('contestants-changes')
       .on(
@@ -87,16 +108,19 @@ const TotalScore = () => {
           schema: 'public',
           table: 'fritz_contestants'
         },
-        () => {
+        (payload) => {
+          console.log('[TotalScore] Contestants update received:', payload);
           fetchActiveContestants();
           fetchYearlyScores();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[TotalScore] Contestants subscription status:', status);
+      });
 
     return () => {
-      supabase.removeChannel(channel);
-      supabase.removeChannel(contestantsChannel);
+      yearlyScoresChannel.unsubscribe();
+      contestantsChannel.unsubscribe();
     };
   }, [currentYear, activeContestants]);
 
