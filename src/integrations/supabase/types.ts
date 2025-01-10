@@ -15,7 +15,9 @@ export type Database = {
           created_at: string
           gift_count: number | null
           id: string
+          max_duration: number | null
           played_at: string | null
+          state_changed_at: string | null
           status: string
           username: string | null
         }
@@ -24,7 +26,9 @@ export type Database = {
           created_at?: string
           gift_count?: number | null
           id?: string
+          max_duration?: number | null
           played_at?: string | null
+          state_changed_at?: string | null
           status?: string
           username?: string | null
         }
@@ -33,7 +37,9 @@ export type Database = {
           created_at?: string
           gift_count?: number | null
           id?: string
+          max_duration?: number | null
           played_at?: string | null
+          state_changed_at?: string | null
           status?: string
           username?: string | null
         }
@@ -633,6 +639,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_stale_alerts: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       update_contestant_score: {
         Args: {
           p_contestant_name: string
