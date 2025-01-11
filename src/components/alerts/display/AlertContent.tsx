@@ -1,4 +1,4 @@
-import React, { useState, useCallback, memo } from "react";
+import React, { useState, useCallback, memo, useEffect } from "react";
 import VideoAlert from "../media/VideoAlert";
 import ImageAlert from "../media/ImageAlert";
 import AlertMessage from "../AlertMessage";
@@ -18,26 +18,44 @@ interface AlertContentProps {
   };
   onComplete: () => void;
   onError: (error: any) => void;
+  onMediaLoaded: () => void;
 }
 
 export const AlertContent: React.FC<AlertContentProps> = memo(({
   currentAlert,
   onComplete,
-  onError
+  onError,
+  onMediaLoaded
 }) => {
   const [isMediaComplete, setIsMediaComplete] = useState(false);
   const [isCountComplete, setIsCountComplete] = useState(!currentAlert.is_gift_alert);
 
+  useEffect(() => {
+    console.log('[AlertContent] Component mounted with alert:', {
+      mediaType: currentAlert.media_type,
+      isGiftAlert: currentAlert.is_gift_alert,
+      messageEnabled: currentAlert.message_enabled
+    });
+
+    return () => {
+      console.log('[AlertContent] Component unmounting');
+    };
+  }, [currentAlert]);
+
   const handleComplete = useCallback(() => {
+    console.log('[AlertContent] Media completed');
     setIsMediaComplete(true);
     if (isCountComplete) {
+      console.log('[AlertContent] Both media and count complete, triggering onComplete');
       onComplete();
     }
   }, [isCountComplete, onComplete]);
 
   const handleCountComplete = useCallback(() => {
+    console.log('[AlertContent] Count animation completed');
     setIsCountComplete(true);
     if (isMediaComplete) {
+      console.log('[AlertContent] Both media and count complete, triggering onComplete');
       onComplete();
     }
   }, [isMediaComplete, onComplete]);
@@ -45,6 +63,14 @@ export const AlertContent: React.FC<AlertContentProps> = memo(({
   const displayMessage = currentAlert.message_enabled && currentAlert.message_text 
     ? currentAlert.message_text
     : '';
+
+  useEffect(() => {
+    console.log('[AlertContent] State updated:', {
+      isMediaComplete,
+      isCountComplete,
+      displayMessage: !!displayMessage
+    });
+  }, [isMediaComplete, isCountComplete, displayMessage]);
 
   return (
     <div className="fixed top-0 left-0 right-0">
@@ -55,12 +81,14 @@ export const AlertContent: React.FC<AlertContentProps> = memo(({
               mediaUrl={currentAlert.media_url}
               onComplete={handleComplete}
               onError={onError}
+              onMediaLoaded={onMediaLoaded}
             />
           ) : (
             <ImageAlert 
               mediaUrl={currentAlert.media_url}
               onComplete={handleComplete}
               onError={onError}
+              onMediaLoaded={onMediaLoaded}
             />
           )}
         </div>

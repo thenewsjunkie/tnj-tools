@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AlertContent } from "./display/AlertContent";
 import { useAlertTimer } from "./display/useAlertTimer";
 
@@ -23,11 +23,29 @@ export const AlertDisplay = ({
   onComplete,
 }: AlertDisplayProps) => {
   const [hasError, setHasError] = useState(false);
+  const [isMediaLoaded, setIsMediaLoaded] = useState(false);
+
+  useEffect(() => {
+    console.log('[AlertDisplay] Alert mounted:', {
+      mediaType: currentAlert.media_type,
+      mediaUrl: currentAlert.media_url,
+      isGiftAlert: currentAlert.is_gift_alert
+    });
+    
+    return () => {
+      console.log('[AlertDisplay] Alert unmounted');
+    };
+  }, [currentAlert]);
 
   const handleError = (error: any) => {
     console.error('[AlertDisplay] Error:', error);
     setHasError(true);
     onComplete();
+  };
+
+  const handleMediaLoaded = () => {
+    console.log('[AlertDisplay] Media loaded');
+    setIsMediaLoaded(true);
   };
 
   const handleAlertContentComplete = () => {
@@ -45,6 +63,7 @@ export const AlertDisplay = ({
   console.log('[AlertDisplay] Current state:', {
     isGiftAlert: currentAlert.is_gift_alert,
     hasError,
+    isMediaLoaded,
     currentAlert
   });
 
@@ -58,6 +77,7 @@ export const AlertDisplay = ({
       currentAlert={currentAlert}
       onComplete={handleAlertContentComplete}
       onError={handleError}
+      onMediaLoaded={handleMediaLoaded}
     />
   );
 };

@@ -8,6 +8,7 @@ export const useQueueState = () => {
   const [isPaused, setIsPaused] = useState(false);
   const { queueData } = useQueueData();
   const isInitializedRef = useRef(false);
+  const prevAlertRef = useRef<AlertQueueItem | null>(null);
 
   // Use the new hook for realtime connection
   useRealtimeConnection(
@@ -88,6 +89,18 @@ export const useQueueState = () => {
   const currentAlert = queueData?.find(item => item.status === 'playing') as AlertQueueItem;
   const pendingAlerts = (queueData?.filter(item => item.status === 'pending') || []) as AlertQueueItem[];
   const queueCount = pendingAlerts.length;
+
+  // Log when current alert changes
+  useEffect(() => {
+    if (currentAlert?.id !== prevAlertRef.current?.id) {
+      console.log('[useQueueState] Current alert changed:', {
+        from: prevAlertRef.current?.id,
+        to: currentAlert?.id,
+        currentAlert
+      });
+      prevAlertRef.current = currentAlert;
+    }
+  }, [currentAlert]);
 
   return {
     isPaused,
