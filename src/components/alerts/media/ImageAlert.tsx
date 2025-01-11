@@ -4,9 +4,10 @@ interface ImageAlertProps {
   mediaUrl: string;
   onComplete: () => void;
   onError: (error: any) => void;
+  onMediaLoaded: () => void;
 }
 
-const ImageAlert = ({ mediaUrl, onComplete, onError }: ImageAlertProps) => {
+const ImageAlert = ({ mediaUrl, onComplete, onError, onMediaLoaded }: ImageAlertProps) => {
   const completedRef = useRef(false);
 
   const handleComplete = () => {
@@ -34,6 +35,7 @@ const ImageAlert = ({ mediaUrl, onComplete, onError }: ImageAlertProps) => {
 
   const handleImageLoad = () => {
     console.log('[ImageAlert] Image loaded successfully');
+    onMediaLoaded();
   };
 
   const handleImageError = (error: any) => {

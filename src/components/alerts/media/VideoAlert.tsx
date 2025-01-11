@@ -4,9 +4,10 @@ interface VideoAlertProps {
   mediaUrl: string;
   onComplete: () => void;
   onError: (error: any) => void;
+  onMediaLoaded: () => void;
 }
 
-const VideoAlert = ({ mediaUrl, onComplete, onError }: VideoAlertProps) => {
+const VideoAlert = ({ mediaUrl, onComplete, onError, onMediaLoaded }: VideoAlertProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const completedRef = useRef(false);
   const unmountedRef = useRef(false);
@@ -74,6 +75,7 @@ const VideoAlert = ({ mediaUrl, onComplete, onError }: VideoAlertProps) => {
   const handleVideoLoadedMetadata = () => {
     console.log('[VideoAlert] Video metadata loaded. Mount count:', mountCountRef.current);
     if (videoRef.current && !unmountedRef.current) {
+      onMediaLoaded();
       videoRef.current.play().catch(error => {
         if (!unmountedRef.current) {
           console.error('[VideoAlert] Autoplay after metadata failed:', error);
