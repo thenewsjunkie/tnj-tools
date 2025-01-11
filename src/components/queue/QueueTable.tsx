@@ -70,6 +70,7 @@ export const QueueTable = ({ items, onStatusUpdate, onDelete }: QueueTableProps)
                     variant="outline"
                     size="sm"
                     onClick={() => onStatusUpdate(item.id)}
+                    className="text-white"
                   >
                     Mark Complete
                   </Button>
@@ -78,6 +79,7 @@ export const QueueTable = ({ items, onStatusUpdate, onDelete }: QueueTableProps)
                   variant="outline"
                   size="sm"
                   onClick={() => onDelete(item.id)}
+                  className="text-white"
                 >
                   Delete
                 </Button>
@@ -85,6 +87,7 @@ export const QueueTable = ({ items, onStatusUpdate, onDelete }: QueueTableProps)
                   variant="outline"
                   size="sm"
                   onClick={() => handleRequeue(item)}
+                  className="text-white"
                 >
                   <Redo className="h-4 w-4" />
                 </Button>
