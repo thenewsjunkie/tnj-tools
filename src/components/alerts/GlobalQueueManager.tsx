@@ -78,7 +78,16 @@ const GlobalQueueManager = () => {
 
     // Only set up timer if there's a current alert and queue is not paused
     if (currentAlert && !isPaused) {
-      let timeout = 6000; // Base timeout for video alerts
+      console.log('[GlobalQueueManager] Current alert details:', {
+        alertId: currentAlert.id,
+        alertTitle: currentAlert.alert?.title,
+        mediaType: currentAlert.alert?.media_type,
+        displayDuration: currentAlert.alert?.display_duration
+      });
+
+      let timeout = currentAlert.alert?.display_duration 
+        ? currentAlert.alert.display_duration * 1000 
+        : 6000; // Use display_duration from database or default to 6 seconds
       
       if (currentAlert.alert?.is_gift_alert) {
         const giftCount = currentAlert.gift_count || 1;
@@ -95,13 +104,12 @@ const GlobalQueueManager = () => {
         const countingTime = firstSegmentTime + secondSegmentTime + thirdSegmentTime;
         
         timeout = 8000 + countingTime + 2000;
-      } else if (currentAlert.alert?.media_type && !currentAlert.alert.media_type.startsWith('video')) {
-        timeout = 5000;
       }
       
       console.log('[GlobalQueueManager] Setting up alert completion timer for', timeout, 'ms');
       timerRef.current = setTimeout(async () => {
         try {
+          console.log('[GlobalQueueManager] Timer completed, handling alert completion');
           await handleAlertComplete();
         } catch (error) {
           console.error('[GlobalQueueManager] Error completing alert:', error);
