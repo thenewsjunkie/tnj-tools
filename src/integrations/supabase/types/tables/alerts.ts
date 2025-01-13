@@ -10,6 +10,7 @@ export interface Alert {
   gift_count_animation_speed?: number | null;
   gift_text_color?: string | null;
   gift_count_color?: string | null;
+  display_duration?: number | null;
   created_at: string;
 }
 
@@ -63,6 +64,7 @@ export interface AlertsTable {
     gift_count_animation_speed: number | null;
     gift_text_color: string | null;
     gift_count_color: string | null;
+    display_duration: number | null;
   };
   Insert: {
     created_at?: string;
@@ -77,6 +79,7 @@ export interface AlertsTable {
     gift_count_animation_speed?: number | null;
     gift_text_color?: string | null;
     gift_count_color?: string | null;
+    display_duration?: number | null;
   };
   Update: {
     created_at?: string;
@@ -91,6 +94,7 @@ export interface AlertsTable {
     gift_count_animation_speed?: number | null;
     gift_text_color?: string | null;
     gift_count_color?: string | null;
+    display_duration?: number | null;
   };
   Relationships: [];
 }
