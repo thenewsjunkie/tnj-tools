@@ -21,7 +21,6 @@ const GlobalQueueManager = () => {
     },
     async (payload) => {
       console.log('[GlobalQueueManager] Received alert completion update:', payload);
-      // Recheck pause state before processing next alert
       const { data: settings } = await supabase
         .from('system_settings')
         .select('value')
@@ -34,8 +33,6 @@ const GlobalQueueManager = () => {
       if (!currentlyPaused) {
         console.log('[GlobalQueueManager] Queue not paused, processing next alert');
         processNextAlert(false);
-      } else {
-        console.log('[GlobalQueueManager] Queue is paused, not processing next alert');
       }
     }
   );
@@ -45,7 +42,6 @@ const GlobalQueueManager = () => {
     isInitializedRef.current = true;
     
     const initializeQueue = async () => {
-      // Get current queue state from database to ensure consistency
       const { data: settings } = await supabase
         .from('system_settings')
         .select('value')
@@ -55,65 +51,41 @@ const GlobalQueueManager = () => {
       const queueState = settings?.value as { isPaused: boolean } | null;
       const currentlyPaused = queueState?.isPaused ?? false;
       
-      console.log('[GlobalQueueManager] Initial queue state:', { currentlyPaused });
-
-      // Only process initial alert if not paused and no current alert
       if (!currentAlert && !currentlyPaused) {
         console.log('[GlobalQueueManager] No current alert and queue not paused, processing initial alert');
         processNextAlert(false);
-      } else {
-        console.log('[GlobalQueueManager] Queue is paused or has current alert, not processing initial alert');
       }
     };
 
     initializeQueue();
   }, [currentAlert, processNextAlert]);
 
-  // Effect to handle alert completion timing
   useEffect(() => {
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
     }
 
-    // Only set up timer if there's a current alert and queue is not paused
     if (currentAlert && !isPaused) {
-      console.log('[GlobalQueueManager] Current alert details:', {
-        alertId: currentAlert.id,
-        alertTitle: currentAlert.alert?.title,
-        mediaType: currentAlert.alert?.media_type,
-        displayDuration: currentAlert.alert?.display_duration
-      });
+      console.log('[GlobalQueueManager] Setting up alert timer for:', currentAlert.alert?.title);
 
-      let timeout = currentAlert.alert?.display_duration 
-        ? currentAlert.alert.display_duration * 1000 
-        : 6000; // Use display_duration from database or default to 6 seconds
-      
-      if (currentAlert.alert?.is_gift_alert) {
-        const giftCount = currentAlert.gift_count || 1;
-        const baseAnimationSpeed = currentAlert.alert.gift_count_animation_speed || 100;
-        
-        const firstSegmentCount = Math.min(10, giftCount);
-        const secondSegmentCount = Math.max(0, Math.min(40, giftCount - 10));
-        const thirdSegmentCount = Math.max(0, giftCount - 50);
-        
-        const firstSegmentTime = firstSegmentCount * baseAnimationSpeed;
-        const secondSegmentTime = secondSegmentCount * (baseAnimationSpeed / 1.5);
-        const thirdSegmentTime = thirdSegmentCount * (baseAnimationSpeed / 3);
-        
-        const countingTime = firstSegmentTime + secondSegmentTime + thirdSegmentTime;
-        
-        timeout = 8000 + countingTime + 2000;
+      // For video alerts, we rely on the video's natural end event
+      if (currentAlert.alert?.media_type.startsWith('video')) {
+        console.log('[GlobalQueueManager] Video alert detected, using natural end event');
+        return;
       }
-      
-      console.log('[GlobalQueueManager] Setting up alert completion timer for', timeout, 'ms');
+
+      // For other alerts, use the display duration
+      const displayDuration = currentAlert.alert?.display_duration ?? 5;
+      const timeout = displayDuration * 1000;
+
+      console.log('[GlobalQueueManager] Setting timer for', timeout, 'ms');
       timerRef.current = setTimeout(async () => {
         try {
           console.log('[GlobalQueueManager] Timer completed, handling alert completion');
           await handleAlertComplete();
         } catch (error) {
           console.error('[GlobalQueueManager] Error completing alert:', error);
-          // Attempt to complete alert again after a short delay
           setTimeout(async () => {
             try {
               await handleAlertComplete();
@@ -131,17 +103,6 @@ const GlobalQueueManager = () => {
       }
     };
   }, [currentAlert, isPaused, handleAlertComplete]);
-
-  // Effect to handle pause state changes
-  useEffect(() => {
-    console.log('[GlobalQueueManager] Pause state changed:', isPaused);
-    
-    // If queue is paused, clear any existing completion timer
-    if (isPaused && timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  }, [isPaused]);
 
   return null;
 };
