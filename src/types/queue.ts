@@ -11,6 +11,7 @@ export interface AlertQueueItem {
     message_text?: string;
     message_enabled?: boolean;
     font_size?: number;
+    display_duration?: number;
     is_gift_alert?: boolean;
     gift_count_animation_speed?: number;
     gift_text_color?: string;
