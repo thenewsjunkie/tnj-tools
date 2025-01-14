@@ -39,37 +39,36 @@ export const useRealtimeManager = (
     if (!channelMap.has(channelKey)) {
       console.log(`[RealtimeManager] Creating new channel for ${channelKey}`);
       
-      const channel = supabase.channel(channelKey, {
-        config: {
-          broadcast: { self: true },
-          presence: { key: '' },
-        }
-      })
-      .on('postgres_changes', {
-        event: config.event,
-        schema: config.schema,
-        table: config.table,
-        filter: config.filter
-      }, (payload) => {
-        console.log(`[RealtimeManager] Received event on ${channelKey}:`, payload);
-        subscriptionCallbacks.get(channelKey)?.forEach(callback => callback(payload));
-      })
-      .subscribe((status) => {
-        console.log(`[RealtimeManager] Subscription status for ${channelKey}:`, status);
-        
-        if (status === 'CHANNEL_ERROR') {
-          console.log(`[RealtimeManager] Channel error, scheduling reconnect for ${channelKey}`);
-          setTimeout(() => {
-            if (channelMap.has(channelKey)) {
-              const channel = channelMap.get(channelKey);
-              if (channel) {
-                console.log(`[RealtimeManager] Attempting to reconnect ${channelKey}`);
-                channel.subscribe();
+      const channel = supabase.channel(channelKey)
+        .on(
+          'postgres_changes',
+          {
+            event: config.event,
+            schema: config.schema,
+            table: config.table,
+            filter: config.filter
+          },
+          (payload) => {
+            console.log(`[RealtimeManager] Received event on ${channelKey}:`, payload);
+            subscriptionCallbacks.get(channelKey)?.forEach(callback => callback(payload));
+          }
+        )
+        .subscribe((status) => {
+          console.log(`[RealtimeManager] Subscription status for ${channelKey}:`, status);
+          
+          if (status === 'CHANNEL_ERROR') {
+            console.log(`[RealtimeManager] Channel error, scheduling reconnect for ${channelKey}`);
+            setTimeout(() => {
+              if (channelMap.has(channelKey)) {
+                const channel = channelMap.get(channelKey);
+                if (channel) {
+                  console.log(`[RealtimeManager] Attempting to reconnect ${channelKey}`);
+                  channel.subscribe();
+                }
               }
-            }
-          }, RECONNECT_DELAY);
-        }
-      });
+            }, RECONNECT_DELAY);
+          }
+        });
 
       channelMap.set(channelKey, channel);
     }
