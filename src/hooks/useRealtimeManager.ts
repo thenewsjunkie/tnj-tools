@@ -2,16 +2,19 @@ import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
+type DatabaseEvent = 'INSERT' | 'UPDATE' | 'DELETE';
+
 type ChannelConfig = {
-  event: 'INSERT' | 'UPDATE' | 'DELETE';
+  event: DatabaseEvent;
   schema: string;
   table: string;
   filter?: string;
 };
 
-const RECONNECT_DELAY = 5000; // 5 seconds
 const channelMap = new Map<string, RealtimeChannel>();
 const subscriptionCallbacks = new Map<string, Set<(payload: any) => void>>();
+
+const RECONNECT_DELAY = 5000;
 
 const getChannelKey = (channelName: string, config: ChannelConfig) => 
   `${channelName}-${config.event}-${config.table}-${config.filter || ''}`;
@@ -37,6 +40,7 @@ export const useRealtimeManager = (
     // If channel doesn't exist, create it
     if (!channelMap.has(channelKey)) {
       console.log(`[RealtimeManager] Creating new channel for ${channelKey}`);
+      
       const channel = supabase.channel(channelName)
         .on(
           'postgres_changes',
@@ -51,9 +55,6 @@ export const useRealtimeManager = (
             subscriptionCallbacks.get(channelKey)?.forEach(callback => callback(payload));
           }
         )
-        .on('system', { event: '*' }, (status) => {
-          console.log(`[RealtimeManager] System event on ${channelKey}:`, status);
-        })
         .subscribe((status) => {
           console.log(`[RealtimeManager] Subscription status for ${channelKey}:`, status);
           
