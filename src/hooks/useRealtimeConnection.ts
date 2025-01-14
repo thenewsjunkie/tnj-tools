@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { RealtimeChannel } from '@supabase/supabase-js';
+import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
 interface PostgresChangesFilter {
@@ -12,10 +12,11 @@ interface PostgresChangesFilter {
 export const useRealtimeConnection = (
   channelName: string,
   changes: PostgresChangesFilter,
-  callback: (payload: any) => void
+  callback: (payload: RealtimePostgresChangesPayload<any>) => void
 ) => {
   const channelRef = useRef<RealtimeChannel | null>(null);
   const retryTimeoutRef = useRef<NodeJS.Timeout>();
+  const retryCountRef = useRef(0);
 
   useEffect(() => {
     const setupChannel = () => {
@@ -48,18 +49,22 @@ export const useRealtimeConnection = (
           console.log(`[${channelName}] Presence state changed`);
         })
         .on(
-          'postgres_changes',
+          'postgres_changes' as const,
           changes,
           callback
         )
-        .subscribe(async (status) => {
+        .subscribe(async (status, err) => {
           if (status === 'SUBSCRIBED') {
             console.log(`[${channelName}] Successfully connected`);
+            retryCountRef.current = 0;
           } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-            console.log(`[${channelName}] Connection lost, scheduling reconnect`);
+            console.log(`[${channelName}] Connection lost, scheduling reconnect`, err);
             // Use exponential backoff for retry (15s, then 30s, then 60s)
-            const retryDelay = Math.min(15000 * Math.pow(2, channel.retryCount ?? 0), 60000);
-            retryTimeoutRef.current = setTimeout(setupChannel, retryDelay);
+            const retryDelay = Math.min(15000 * Math.pow(2, retryCountRef.current), 60000);
+            retryTimeoutRef.current = setTimeout(() => {
+              retryCountRef.current += 1;
+              setupChannel();
+            }, retryDelay);
           }
         });
     };
