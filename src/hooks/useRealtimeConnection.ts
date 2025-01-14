@@ -31,28 +31,38 @@ export const useRealtimeConnection = (
 
     console.log(`[${channelName}] Setting up new channel`);
     
-    const channel = supabase.channel(channelName)
-      .on(
-        'postgres_changes',
-        filter,
-        (payload) => {
-          console.log(`[${channelName}] Received event:`, payload);
-          onEvent(payload);
-        }
-      )
-      .on('system', { event: 'connected' }, () => {
+    const channel = supabase.channel(channelName);
+
+    // Add postgres changes listener
+    channel.on(
+      'postgres_changes' as const,
+      filter,
+      (payload) => {
+        console.log(`[${channelName}] Received event:`, payload);
+        onEvent(payload);
+      }
+    );
+
+    // Add system event listener
+    channel.on(
+      'system' as const,
+      { event: 'connected' },
+      () => {
         setIsConnected(true);
         retryCountRef.current = 0;
         console.log(`[${channelName}] Successfully connected`);
-      })
-      .subscribe((status) => {
-        console.log(`[${channelName}] Subscription status:`, status);
-        
-        if (status !== 'SUBSCRIBED') {
-          setIsConnected(false);
-          scheduleReconnect();
-        }
-      });
+      }
+    );
+
+    // Subscribe to the channel
+    channel.subscribe((status) => {
+      console.log(`[${channelName}] Subscription status:`, status);
+      
+      if (status !== 'SUBSCRIBED') {
+        setIsConnected(false);
+        scheduleReconnect();
+      }
+    });
 
     channelRef.current = channel;
     startHeartbeat();
