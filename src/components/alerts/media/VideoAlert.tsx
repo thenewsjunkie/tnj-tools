@@ -11,6 +11,7 @@ const VideoAlert = ({ mediaUrl, onComplete, onError, onMediaLoaded }: VideoAlert
   const videoRef = useRef<HTMLVideoElement>(null);
   const completedRef = useRef(false);
   const unmountedRef = useRef(false);
+  const mountCountRef = useRef(0);
   const playAttemptedRef = useRef(false);
 
   const handleComplete = () => {
@@ -22,21 +23,22 @@ const VideoAlert = ({ mediaUrl, onComplete, onError, onMediaLoaded }: VideoAlert
   };
 
   useEffect(() => {
-    console.log('[VideoAlert] Setting up video element');
+    mountCountRef.current += 1;
+    console.log('[VideoAlert] Component mounted. Mount count:', mountCountRef.current);
     completedRef.current = false;
     unmountedRef.current = false;
     playAttemptedRef.current = false;
     
     if (videoRef.current) {
       const videoElement = videoRef.current;
+      console.log('[VideoAlert] Setting up video element');
+      
       videoElement.load();
       videoElement.muted = true;
 
       const handlePlay = () => {
-        if (!playAttemptedRef.current) {
-          console.log('[VideoAlert] Video started playing');
-          playAttemptedRef.current = true;
-        }
+        console.log('[VideoAlert] Video started playing');
+        playAttemptedRef.current = true;
       };
 
       const handleEnded = () => {
