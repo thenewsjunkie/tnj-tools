@@ -1,9 +1,8 @@
 import { useRealtimeManager } from './useRealtimeManager';
-
-type DatabaseEvent = 'INSERT' | 'UPDATE' | 'DELETE';
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 type ChannelConfig = {
-  event: DatabaseEvent;
+  event: 'INSERT' | 'UPDATE' | 'DELETE';
   schema: string;
   table: string;
   filter?: string;
@@ -12,7 +11,7 @@ type ChannelConfig = {
 export const useRealtimeConnection = (
   channelName: string,
   eventConfig: ChannelConfig,
-  onEvent: (payload: any) => void
+  onEvent: (payload: RealtimePostgresChangesPayload<any>) => void
 ) => {
   useRealtimeManager(channelName, eventConfig, onEvent);
 };
