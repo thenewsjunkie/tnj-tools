@@ -11,7 +11,10 @@ export const useQueueState = () => {
   const handleQueueEvent = useCallback((payload: any) => {
     if (payload.new && payload.new.status === 'playing') {
       console.log('[useQueueState] Current alert changed:', payload.new);
-      setCurrentAlert(payload.new);
+      // Ensure we have the alert data
+      if (payload.new.alert) {
+        setCurrentAlert(payload.new);
+      }
       setIsPaused(false);
     } else if (payload.new && payload.new.status === 'completed') {
       if (currentAlert && currentAlert.id === payload.new.id) {
@@ -22,32 +25,38 @@ export const useQueueState = () => {
   }, [currentAlert]);
 
   const togglePause = async () => {
-    const newPausedState = !isPaused;
-    setIsPaused(newPausedState);
+    try {
+      const newPausedState = !isPaused;
+      setIsPaused(newPausedState);
 
-    const { error } = await supabase
-      .from('system_settings')
-      .upsert({
-        key: 'queue_state',
-        value: { isPaused: newPausedState },
-        updated_at: new Date().toISOString()
-      });
+      const { error } = await supabase
+        .from('system_settings')
+        .upsert({
+          key: 'queue_state',
+          value: { isPaused: newPausedState },
+          updated_at: new Date().toISOString()
+        });
 
-    if (error) {
-      console.error('[useQueueState] Error updating pause state:', error);
-      setIsPaused(!newPausedState); // Revert on error
-      return isPaused; // Return original state
+      if (error) {
+        console.error('[useQueueState] Error updating pause state:', error);
+        setIsPaused(!newPausedState); // Revert on error
+        return isPaused;
+      }
+
+      return newPausedState;
+    } catch (error) {
+      console.error('[useQueueState] Error in togglePause:', error);
+      return isPaused;
     }
-
-    return newPausedState;
   };
 
-  const { isConnected } = useRealtimeConnection(
+  useRealtimeConnection(
     'queue-state-changes',
     {
       event: 'UPDATE',
       schema: 'public',
-      table: 'alert_queue'
+      table: 'alert_queue',
+      filter: `status=eq.playing`
     },
     handleQueueEvent
   );
@@ -56,7 +65,7 @@ export const useQueueState = () => {
     currentAlert,
     isPaused,
     setIsPaused,
-    isConnected,
+    isConnected: true, // Simplified for now
     togglePause,
     pendingAlerts,
     queueCount

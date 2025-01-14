@@ -40,13 +40,10 @@ export const useRealtimeConnection = (
           onEvent(payload);
         }
       )
-      .on('system', (payload) => {
-        console.log(`[${channelName}] System event:`, payload);
-        if (payload.event === 'connected') {
-          setIsConnected(true);
-          retryCountRef.current = 0; // Reset retry count on successful connection
-          console.log(`[${channelName}] Successfully connected`);
-        }
+      .on('system', { event: 'connected' }, () => {
+        setIsConnected(true);
+        retryCountRef.current = 0;
+        console.log(`[${channelName}] Successfully connected`);
       })
       .subscribe((status) => {
         console.log(`[${channelName}] Subscription status:`, status);
