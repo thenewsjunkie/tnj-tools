@@ -4,15 +4,17 @@ import { useQueueActions } from "./useQueueActions";
 
 export const useAlertQueue = () => {
   const { queueData, refetch: refetchQueue } = useQueueData();
-  const { currentAlert, pendingAlerts, queueCount } = useQueueState();
+  const { currentAlert, isPaused, togglePause } = useQueueState();
   const { handleAlertComplete, processNextAlert } = useQueueActions(refetchQueue);
 
   return {
     currentAlert,
-    queueCount,
-    pendingAlerts,
-    processNextAlert: (isPaused: boolean) => processNextAlert(isPaused, currentAlert, pendingAlerts),
+    queueCount: queueData?.length || 0,
+    pendingAlerts: queueData || [],
+    processNextAlert: (isPaused: boolean) => processNextAlert(isPaused, currentAlert, queueData || []),
     refetchQueue,
-    handleAlertComplete: () => handleAlertComplete(currentAlert)
+    handleAlertComplete: () => handleAlertComplete(currentAlert),
+    isPaused,
+    togglePause
   };
 };

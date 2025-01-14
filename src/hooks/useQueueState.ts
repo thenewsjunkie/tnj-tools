@@ -1,9 +1,12 @@
 import { useState, useCallback } from 'react';
 import { useRealtimeConnection } from './useRealtimeConnection';
+import { supabase } from "@/integrations/supabase/client";
 
 export const useQueueState = () => {
   const [currentAlert, setCurrentAlert] = useState<any>(null);
   const [isPaused, setIsPaused] = useState(false);
+  const [pendingAlerts, setPendingAlerts] = useState<any[]>([]);
+  const [queueCount, setQueueCount] = useState(0);
 
   const handleQueueEvent = useCallback((payload: any) => {
     if (payload.new && payload.new.status === 'playing') {
@@ -18,10 +21,34 @@ export const useQueueState = () => {
     }
   }, [currentAlert]);
 
+  const togglePause = async () => {
+    const newPausedState = !isPaused;
+    setIsPaused(newPausedState);
+
+    const { error } = await supabase
+      .from('system_settings')
+      .upsert({
+        key: 'queue_state',
+        value: { isPaused: newPausedState },
+        updated_at: new Date().toISOString()
+      });
+
+    if (error) {
+      console.error('[useQueueState] Error updating pause state:', error);
+      setIsPaused(!newPausedState); // Revert on error
+      return isPaused; // Return original state
+    }
+
+    return newPausedState;
+  };
+
   const { isConnected } = useRealtimeConnection(
     'queue-state-changes',
-    'UPDATE',
-    'alert_queue',
+    {
+      event: 'UPDATE',
+      schema: 'public',
+      table: 'alert_queue'
+    },
     handleQueueEvent
   );
 
@@ -29,6 +56,9 @@ export const useQueueState = () => {
     currentAlert,
     isPaused,
     setIsPaused,
-    isConnected
+    isConnected,
+    togglePause,
+    pendingAlerts,
+    queueCount
   };
 };

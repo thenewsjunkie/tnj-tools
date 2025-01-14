@@ -10,7 +10,6 @@ const GlobalQueueManager = () => {
   const isInitializedRef = useRef(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Use the new hook for realtime connection
   useRealtimeConnection(
     'alert-queue',
     {

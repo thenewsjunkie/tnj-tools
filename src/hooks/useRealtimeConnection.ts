@@ -1,12 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
-import { RealtimeChannel } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+import { supabase } from "@/integrations/supabase/client";
 
 const INITIAL_RETRY_DELAY = 1000; // 1 second
 const MAX_RETRY_DELAY = 30000; // 30 seconds
 const HEARTBEAT_INTERVAL = 30000; // 30 seconds
 
-export const useRealtimeConnection = (channelName: string, eventType: 'INSERT' | 'UPDATE' | 'DELETE' | '*', table: string, onEvent: (payload: any) => void) => {
+type PostgresChangesFilter = {
+  event: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
+  schema?: string;
+  table?: string;
+  filter?: string;
+}
+
+export const useRealtimeConnection = (
+  channelName: string,
+  filter: PostgresChangesFilter,
+  onEvent: (payload: RealtimePostgresChangesPayload<any>) => void
+) => {
   const [isConnected, setIsConnected] = useState(false);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const retryCountRef = useRef(0);
@@ -21,17 +32,17 @@ export const useRealtimeConnection = (channelName: string, eventType: 'INSERT' |
     console.log(`[${channelName}] Setting up new channel`);
     
     const channel = supabase.channel(channelName)
-      .on('postgres_changes', {
-        event: eventType,
-        schema: 'public',
-        table: table
-      }, (payload) => {
-        console.log(`[${channelName}] Received event:`, payload);
-        onEvent(payload);
-      })
+      .on(
+        'postgres_changes',
+        filter,
+        (payload) => {
+          console.log(`[${channelName}] Received event:`, payload);
+          onEvent(payload);
+        }
+      )
       .on('system', (payload) => {
         console.log(`[${channelName}] System event:`, payload);
-        if (payload.status === 'ok' && payload.message?.includes('Subscribed')) {
+        if (payload.event === 'connected') {
           setIsConnected(true);
           retryCountRef.current = 0; // Reset retry count on successful connection
           console.log(`[${channelName}] Successfully connected`);
@@ -63,7 +74,7 @@ export const useRealtimeConnection = (channelName: string, eventType: 'INSERT' |
         event: 'heartbeat',
         payload: { timestamp: Date.now() }
       }).then((response) => {
-        if (!response.ok) {
+        if (response !== 'ok') {
           console.log(`[${channelName}] Heartbeat failed, reconnecting...`);
           scheduleReconnect();
         }
@@ -98,7 +109,7 @@ export const useRealtimeConnection = (channelName: string, eventType: 'INSERT' |
         clearInterval(heartbeatTimeoutRef.current);
       }
     };
-  }, [channelName, eventType, table]);
+  }, [channelName]);
 
   return { isConnected };
 };
