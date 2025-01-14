@@ -49,8 +49,8 @@ export const useRealtimeConnection = (
           console.log(`[${channelName}] Presence state changed`);
         })
         .on(
-          'postgres_changes' as const,
-          changes,
+          'postgres_changes',
+          { event: changes.event, schema: changes.schema, table: changes.table, filter: changes.filter },
           callback
         )
         .subscribe(async (status, err) => {
