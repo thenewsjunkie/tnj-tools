@@ -33,11 +33,11 @@ export const useRealtimeConnection = (
     
     const channel = supabase.channel(channelName);
 
-    // Add postgres changes listener
+    // Add postgres changes listener with proper type casting
     channel.on(
       'postgres_changes' as const,
       filter,
-      (payload) => {
+      (payload: RealtimePostgresChangesPayload<any>) => {
         console.log(`[${channelName}] Received event:`, payload);
         onEvent(payload);
       }
