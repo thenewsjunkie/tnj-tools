@@ -12,42 +12,33 @@ export type Database = {
       alert_queue: {
         Row: {
           alert_id: string
-          completed_at: string | null
           created_at: string
-          duration: number | null
           gift_count: number | null
           id: string
           max_duration: number | null
           played_at: string | null
-          scheduled_for: string | null
           state_changed_at: string | null
           status: string
           username: string | null
         }
         Insert: {
           alert_id: string
-          completed_at?: string | null
           created_at?: string
-          duration?: number | null
           gift_count?: number | null
           id?: string
           max_duration?: number | null
           played_at?: string | null
-          scheduled_for?: string | null
           state_changed_at?: string | null
           status?: string
           username?: string | null
         }
         Update: {
           alert_id?: string
-          completed_at?: string | null
           created_at?: string
-          duration?: number | null
           gift_count?: number | null
           id?: string
           max_duration?: number | null
           played_at?: string | null
-          scheduled_for?: string | null
           state_changed_at?: string | null
           status?: string
           username?: string | null
@@ -651,15 +642,6 @@ export type Database = {
       cleanup_stale_alerts: {
         Args: Record<PropertyKey, never>
         Returns: undefined
-      }
-      get_next_alert: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          id: string
-          alert_id: string
-          username: string
-          scheduled_for: string
-        }[]
       }
       update_contestant_score: {
         Args: {

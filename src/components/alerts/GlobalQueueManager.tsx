@@ -3,7 +3,6 @@ import { useQueueState } from "@/hooks/useQueueState";
 import { useAlertQueue } from "@/hooks/useAlertQueue";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeConnection } from "@/hooks/useRealtimeConnection";
-import { cleanupStaleAlerts } from "@/utils/alertCleanup";
 
 const GlobalQueueManager = () => {
   const { isPaused } = useQueueState();
@@ -22,8 +21,6 @@ const GlobalQueueManager = () => {
     },
     async (payload) => {
       console.log('[GlobalQueueManager] Received alert completion update:', payload);
-      await cleanupStaleAlerts();
-      
       const { data: settings } = await supabase
         .from('system_settings')
         .select('value')
@@ -45,8 +42,6 @@ const GlobalQueueManager = () => {
     isInitializedRef.current = true;
     
     const initializeQueue = async () => {
-      await cleanupStaleAlerts();
-      
       const { data: settings } = await supabase
         .from('system_settings')
         .select('value')
@@ -108,12 +103,6 @@ const GlobalQueueManager = () => {
       }
     };
   }, [currentAlert, isPaused, handleAlertComplete]);
-
-  // Run cleanup periodically
-  useEffect(() => {
-    const cleanup = setInterval(cleanupStaleAlerts, 5000);
-    return () => clearInterval(cleanup);
-  }, []);
 
   return null;
 };

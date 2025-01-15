@@ -16,7 +16,7 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
       .from('alert_queue')
       .update({ 
         status: 'completed',
-        completed_at: new Date().toISOString()
+        played_at: new Date().toISOString()
       })
       .eq('id', currentAlert.id);
 
@@ -81,21 +81,25 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
       return;
     }
 
-    // Call the get_next_alert function
-    const { data: nextAlert, error } = await supabase
-      .rpc('get_next_alert');
-
-    if (error) {
-      console.error('[useQueueActions] Error getting next alert:', error);
-      return;
-    }
-
-    if (!nextAlert || nextAlert.length === 0) {
+    const nextAlert = pendingAlerts[0];
+    if (!nextAlert) {
       console.log('[useQueueActions] No pending alerts in queue');
       return;
     }
 
-    console.log('[useQueueActions] Next alert retrieved:', nextAlert[0]);
+    console.log('[useQueueActions] Setting next alert to playing:', nextAlert.id);
+
+    const { error } = await supabase
+      .from('alert_queue')
+      .update({ status: 'playing' })
+      .eq('id', nextAlert.id);
+
+    if (error) {
+      console.error('[useQueueActions] Error updating alert status:', error);
+      return;
+    }
+
+    console.log('[useQueueActions] Alert status updated to playing');
     await refetchQueue();
   };
 
