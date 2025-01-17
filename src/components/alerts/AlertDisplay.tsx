@@ -14,6 +14,7 @@ interface AlertDisplayProps {
     gift_count_animation_speed?: number;
     gift_text_color?: string;
     gift_count_color?: string;
+    display_duration?: number;
   };
   onComplete: () => void;
 }
@@ -29,7 +30,8 @@ export const AlertDisplay = ({
     console.log('[AlertDisplay] Alert mounted:', {
       mediaType: currentAlert.media_type,
       mediaUrl: currentAlert.media_url,
-      isGiftAlert: currentAlert.is_gift_alert
+      isGiftAlert: currentAlert.is_gift_alert,
+      displayDuration: currentAlert.display_duration
     });
     
     return () => {
@@ -53,7 +55,7 @@ export const AlertDisplay = ({
     onComplete();
   };
 
-  // Use alert timer
+  // Use alert timer with display_duration
   useAlertTimer({
     currentAlert,
     onComplete: handleAlertContentComplete
