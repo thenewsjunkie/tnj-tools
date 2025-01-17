@@ -25,14 +25,16 @@ const AlertMessage = ({
   useGiftAnimation({ isGiftAlert, giftCount });
 
   if (isGiftAlert) {
-    // Extract username from the message
-    const username = message.split(' ')[0];
+    // Extract and decode username from the message
+    const encodedUsername = message.split(' ')[0];
+    const username = decodeURIComponent(encodedUsername);
     
     // Replace {count} placeholder with actual count
     const formattedMessage = message.replace('{count}', giftCount.toString());
     
     console.log('[AlertMessage] Gift alert details:', {
-      username,
+      encodedUsername,
+      decodedUsername: username,
       giftCount,
       originalMessage: message,
       formattedMessage
@@ -74,9 +76,10 @@ const AlertMessage = ({
     );
   }
 
-  // Find the username by looking for the word that comes before "just subscribed"
+  // Find and decode the username for regular alerts
   const subscribedIndex = message.indexOf(' just');
-  const username = subscribedIndex === -1 ? message : message.slice(0, subscribedIndex);
+  const encodedUsername = subscribedIndex === -1 ? message : message.slice(0, subscribedIndex);
+  const username = decodeURIComponent(encodedUsername);
   const restOfMessage = subscribedIndex === -1 ? '' : message.slice(subscribedIndex);
 
   return (
