@@ -20,7 +20,10 @@ const AlertTriggerHandler = ({ alertSlug, username, giftCount }: AlertTriggerHan
 
   // Function to format username from URL
   const formatUsername = (username: string) => {
-    return username.split('-').map(word => 
+    // First decode any URL-encoded characters
+    const decodedUsername = decodeURIComponent(username);
+    // Then format with proper capitalization
+    return decodedUsername.split('-').map(word => 
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
   };
