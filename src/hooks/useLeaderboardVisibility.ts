@@ -59,9 +59,10 @@ export const useLeaderboardVisibility = () => {
         .single();
       
       if (data?.value && typeof data.value === 'object' && 'isVisible' in data.value) {
-        console.log(`[useLeaderboardVisibility ${instanceIdRef.current}] Initial state:`, data.value);
-        setIsVisible(data.value.isVisible);
-        if (data.value.isVisible) {
+        const typedValue = data.value as { isVisible: boolean };
+        console.log(`[useLeaderboardVisibility ${instanceIdRef.current}] Initial state:`, typedValue);
+        setIsVisible(typedValue.isVisible);
+        if (typedValue.isVisible) {
           startHideTimer();
         }
       }
@@ -84,7 +85,6 @@ export const useLeaderboardVisibility = () => {
           
           if (payload.new && 
               typeof payload.new.value === 'object' && 
-              payload.new.value !== null &&
               'isVisible' in payload.new.value) {
             
             const newValue = payload.new.value;
