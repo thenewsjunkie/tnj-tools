@@ -1,9 +1,33 @@
 import { Link } from "react-router-dom";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { useTheme } from "@/components/theme/ThemeProvider";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const { theme } = useTheme();
+  
+  useEffect(() => {
+    // Set up realtime connection with debug logging
+    const channel = supabase.channel('system')
+      .on('system', { event: '*' }, (status) => {
+        console.log('Realtime system status:', status);
+      })
+      .subscribe((status) => {
+        console.log('Subscription status:', status);
+        
+        if (status === 'SUBSCRIBED') {
+          console.log('Successfully connected to realtime channel');
+        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+          console.log('Realtime connection issue:', status);
+        }
+      });
+
+    return () => {
+      console.log('Cleaning up realtime connection');
+      supabase.removeChannel(channel);
+    };
+  }, []);
   
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
