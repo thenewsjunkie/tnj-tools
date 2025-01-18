@@ -4,6 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 
 type RealtimeEvent = 'INSERT' | 'UPDATE' | 'DELETE';
 
+// Store shared channel instances
+const sharedChannels: Record<string, RealtimeChannel> = {};
+
 export const useRealtimeConnection = (
   channelName: string,
   eventConfig: {
@@ -15,18 +18,32 @@ export const useRealtimeConnection = (
   onEvent: (payload: any) => void
 ) => {
   const channelRef = useRef<RealtimeChannel | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
 
   const setupChannel = () => {
-    if (channelRef.current) {
-      console.log(`[${channelName}] Cleaning up existing channel before setup`);
-      supabase.removeChannel(channelRef.current);
+    // Check if a shared channel already exists
+    if (sharedChannels[channelName]) {
+      console.log(`[${channelName}] Using existing shared channel`);
+      channelRef.current = sharedChannels[channelName];
+      
+      // Add new event listener to existing channel
+      channelRef.current.on(
+        'postgres_changes' as any,
+        {
+          event: eventConfig.event,
+          schema: eventConfig.schema,
+          table: eventConfig.table,
+          filter: eventConfig.filter
+        },
+        onEvent
+      );
+      
+      return;
     }
 
-    console.log(`[${channelName}] Setting up new channel`);
-    channelRef.current = supabase.channel(channelName)
+    console.log(`[${channelName}] Setting up new shared channel`);
+    const channel = supabase.channel(channelName)
       .on(
-        'postgres_changes' as any, // Type assertion needed due to Supabase types
+        'postgres_changes' as any,
         {
           event: eventConfig.event,
           schema: eventConfig.schema,
@@ -46,37 +63,36 @@ export const useRealtimeConnection = (
         
         if (status === 'SUBSCRIBED') {
           console.log(`[${channelName}] Successfully connected`);
-          if (reconnectTimeoutRef.current) {
-            clearTimeout(reconnectTimeoutRef.current);
-            reconnectTimeoutRef.current = undefined;
-          }
-        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-          console.log(`[${channelName}] Connection lost, scheduling reconnect`);
-          // Attempt to reconnect after 5 seconds
-          reconnectTimeoutRef.current = setTimeout(() => {
-            console.log(`[${channelName}] Attempting to reconnect`);
-            setupChannel();
-          }, 5000);
+          // Store the channel instance for reuse
+          sharedChannels[channelName] = channel;
         }
       });
+
+    channelRef.current = channel;
   };
 
   useEffect(() => {
     setupChannel();
 
     return () => {
-      console.log(`[${channelName}] Cleaning up channel`);
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-      }
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
+      // Only clean up if this is the last subscriber
+      const channel = channelRef.current;
+      if (channel) {
+        // Remove this specific event listener
+        channel.unsubscribe();
+        
+        // Check if there are any other subscribers before removing the shared channel
+        const hasOtherSubscribers = Object.values(sharedChannels).includes(channel);
+        if (!hasOtherSubscribers) {
+          console.log(`[${channelName}] Cleaning up shared channel`);
+          delete sharedChannels[channelName];
+          supabase.removeChannel(channel);
+        }
       }
     };
   }, [channelName]);
 
   return {
-    channel: channelRef.current,
-    reconnect: setupChannel
+    channel: channelRef.current
   };
 };
