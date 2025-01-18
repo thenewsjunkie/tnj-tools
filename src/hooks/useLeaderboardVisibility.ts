@@ -6,7 +6,10 @@ export const LEADERBOARD_DISPLAY_DURATION = 10000; // 10 seconds
 
 type SystemSettingsRow = {
   key: string;
-  value: Json;
+  value: {
+    isVisible: boolean;
+    lastUpdated?: string;
+  };
   updated_at: string;
 }
 
@@ -84,7 +87,7 @@ export const useLeaderboardVisibility = () => {
               payload.new.value !== null &&
               'isVisible' in payload.new.value) {
             
-            const newValue = payload.new.value as { isVisible: boolean };
+            const newValue = payload.new.value;
             console.log(`[useLeaderboardVisibility ${instanceIdRef.current}] Setting visibility to:`, newValue.isVisible);
             setIsVisible(newValue.isVisible);
             
