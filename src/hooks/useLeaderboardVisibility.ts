@@ -1,9 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types/helpers";
+import type { LeaderboardVisibilityValue } from "@/integrations/supabase/types/tables/system";
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
-import type { SystemSettingsRow, LeaderboardVisibilityValue } from '@/integrations/supabase/types/tables/system';
 
 export const LEADERBOARD_DISPLAY_DURATION = 10000; // 10 seconds
+
+type SystemSettingsRow = {
+  key: string;
+  value: Json;
+  updated_at: string;
+}
 
 export const useLeaderboardVisibility = () => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -23,51 +30,73 @@ export const useLeaderboardVisibility = () => {
     
     timerRef.current = setTimeout(async () => {
       console.log(`[useLeaderboardVisibility ${instanceIdRef.current}] Auto-hiding leaderboard`);
-      const { error: hideError } = await supabase
+      const { data, error: hideError } = await supabase
         .from('system_settings')
         .update({
-          value: { isVisible: false },
+          value: { isVisible: false } as unknown as Json,
           updated_at: new Date().toISOString()
         })
-        .eq('key', 'leaderboard_visibility');
+        .eq('key', 'leaderboard_visibility')
+        .select();
 
       if (hideError) {
         console.error(`[useLeaderboardVisibility ${instanceIdRef.current}] Error hiding leaderboard:`, hideError);
       } else {
-        console.log(`[useLeaderboardVisibility ${instanceIdRef.current}] Hide operation successful`);
+        console.log(`[useLeaderboardVisibility ${instanceIdRef.current}] Hide operation successful:`, data);
       }
     }, LEADERBOARD_DISPLAY_DURATION);
+  };
+
+  const handleVisibilityRequest = async () => {
+    console.log(`[useLeaderboardVisibility ${instanceIdRef.current}] Received show request`);
+    
+    const { error } = await supabase
+      .from('system_settings')
+      .update({
+        value: { isVisible: true } as unknown as Json,
+        updated_at: new Date().toISOString()
+      })
+      .eq('key', 'leaderboard_visibility');
+
+    if (error) {
+      console.error(`[useLeaderboardVisibility ${instanceIdRef.current}] Error updating visibility:`, error);
+      return;
+    }
   };
 
   useEffect(() => {
     console.log(`[useLeaderboardVisibility ${instanceIdRef.current}] Hook mounted`);
 
-    // Initial fetch of visibility state
-    const fetchInitialState = async () => {
-      const { data } = await supabase
-        .from('system_settings')
-        .select('value')
-        .eq('key', 'leaderboard_visibility')
-        .single();
-      
-      if (data?.value) {
-        const typedValue = data.value as LeaderboardVisibilityValue;
-        console.log(`[useLeaderboardVisibility ${instanceIdRef.current}] Initial state:`, typedValue);
-        setIsVisible(typedValue.isVisible);
-        if (typedValue.isVisible) {
-          startHideTimer();
-        }
-      }
+    // Handle POST requests using a custom event
+    const handlePostRequest = async () => {
+      handleVisibilityRequest();
     };
 
-    fetchInitialState();
+    // Create a route handler for POST requests
+    const originalFetchFunction = window.fetch;
+    if (typeof window !== 'undefined') {
+      window.fetch = async function(input, init) {
+        if (input === '/leaderboard/obs' && init?.method === 'POST') {
+          handlePostRequest();
+          return new Response(null, { status: 200 });
+        }
+        return originalFetchFunction.apply(this, [input, init]);
+      };
+    }
+
+    // Also listen for message events
+    window.addEventListener('message', (event) => {
+      if (event.data === 'show-leaderboard') {
+        handleVisibilityRequest();
+      }
+    });
 
     // Set up realtime subscription
     const channel = supabase.channel('leaderboard-visibility')
       .on(
         'postgres_changes',
         {
-          event: '*',  // Listen to all events (INSERT, UPDATE, DELETE)
+          event: '*',
           schema: 'public',
           table: 'system_settings',
           filter: 'key=eq.leaderboard_visibility'
@@ -76,11 +105,12 @@ export const useLeaderboardVisibility = () => {
           console.log(`[useLeaderboardVisibility ${instanceIdRef.current}] Received visibility update:`, payload);
           
           if (payload.new && 
-              typeof payload.new.value === 'object' && 
-              'isVisible' in payload.new.value) {
+              typeof payload.new === 'object' && 
+              'value' in payload.new && 
+              payload.new.value !== null && 
+              typeof payload.new.value === 'object') {
             
-            const newValue = payload.new.value as LeaderboardVisibilityValue;
-            console.log(`[useLeaderboardVisibility ${instanceIdRef.current}] Setting visibility to:`, newValue.isVisible);
+            const newValue = payload.new.value as { isVisible: boolean };
             setIsVisible(newValue.isVisible);
             
             if (newValue.isVisible) {
@@ -97,6 +127,11 @@ export const useLeaderboardVisibility = () => {
     return () => {
       console.log(`[useLeaderboardVisibility ${instanceIdRef.current}] Hook unmounting`);
       clearExistingTimer();
+      
+      if (typeof window !== 'undefined') {
+        window.fetch = originalFetchFunction;
+      }
+      
       supabase.removeChannel(channel);
     };
   }, []);
