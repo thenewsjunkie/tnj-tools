@@ -1,17 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+import type { SystemSettingsRow } from '@/integrations/supabase/types/tables/system';
 
 export const LEADERBOARD_DISPLAY_DURATION = 10000; // 10 seconds
-
-type SystemSettingsRow = {
-  key: string;
-  value: {
-    isVisible: boolean;
-    lastUpdated?: string;
-  };
-  updated_at: string;
-}
 
 export const useLeaderboardVisibility = () => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -87,7 +79,7 @@ export const useLeaderboardVisibility = () => {
               typeof payload.new.value === 'object' && 
               'isVisible' in payload.new.value) {
             
-            const newValue = payload.new.value;
+            const newValue = payload.new.value as { isVisible: boolean };
             console.log(`[useLeaderboardVisibility ${instanceIdRef.current}] Setting visibility to:`, newValue.isVisible);
             setIsVisible(newValue.isVisible);
             
