@@ -10,17 +10,18 @@ const GlobalQueueManager = () => {
   const isInitializedRef = useRef(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Use the new hook for realtime connection
+  // Listen for ALL alert status changes
   useRealtimeConnection(
     'alert-queue',
     {
       event: 'UPDATE',
       schema: 'public',
-      table: 'alert_queue',
-      filter: 'status=eq.completed'
+      table: 'alert_queue'
     },
     async (payload) => {
-      console.log('[GlobalQueueManager] Received alert completion update:', payload);
+      console.log('[GlobalQueueManager] Received alert status update:', payload);
+      
+      // Get current queue state
       const { data: settings } = await supabase
         .from('system_settings')
         .select('value')
@@ -30,13 +31,40 @@ const GlobalQueueManager = () => {
       const queueState = settings?.value as { isPaused: boolean } | null;
       const currentlyPaused = queueState?.isPaused ?? false;
 
-      if (!currentlyPaused) {
-        console.log('[GlobalQueueManager] Queue not paused, processing next alert');
-        processNextAlert(false);
+      // Handle different alert states
+      if (payload.new.status === 'completed') {
+        console.log('[GlobalQueueManager] Alert completed, processing next if not paused');
+        if (!currentlyPaused) {
+          processNextAlert(false);
+        }
+      } else if (payload.new.status === 'playing') {
+        console.log('[GlobalQueueManager] Alert now playing, setting up cleanup timer');
+        // Set up cleanup timer based on alert duration
+        const duration = payload.new.duration || 5000;
+        const maxDuration = payload.new.max_duration || duration + 5000;
+        
+        if (timerRef.current) {
+          clearTimeout(timerRef.current);
+        }
+        
+        timerRef.current = setTimeout(async () => {
+          console.log('[GlobalQueueManager] Checking if alert needs cleanup');
+          const { data: currentState } = await supabase
+            .from('alert_queue')
+            .select('status, state_changed_at')
+            .eq('id', payload.new.id)
+            .single();
+            
+          if (currentState?.status === 'playing') {
+            console.log('[GlobalQueueManager] Alert appears stuck, forcing completion');
+            await handleAlertComplete();
+          }
+        }, maxDuration);
       }
     }
   );
 
+  // Initialize queue on component mount
   useEffect(() => {
     if (isInitializedRef.current) return;
     isInitializedRef.current = true;
@@ -58,51 +86,37 @@ const GlobalQueueManager = () => {
     };
 
     initializeQueue();
+
+    // Clean up any stuck alerts on mount
+    const cleanupStuckAlerts = async () => {
+      const { data: stuckAlerts } = await supabase
+        .from('alert_queue')
+        .select('*')
+        .eq('status', 'playing');
+
+      if (stuckAlerts?.length) {
+        console.log('[GlobalQueueManager] Found stuck alerts, cleaning up:', stuckAlerts);
+        await supabase
+          .from('alert_queue')
+          .update({ 
+            status: 'completed',
+            completed_at: new Date().toISOString()
+          })
+          .eq('status', 'playing');
+      }
+    };
+
+    cleanupStuckAlerts();
   }, [currentAlert, processNextAlert]);
 
+  // Cleanup on unmount
   useEffect(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-
-    if (currentAlert && !isPaused) {
-      console.log('[GlobalQueueManager] Setting up alert timer for:', currentAlert.alert?.title);
-
-      // For video alerts, we rely on the video's natural end event
-      if (currentAlert.alert?.media_type.startsWith('video')) {
-        console.log('[GlobalQueueManager] Video alert detected, using natural end event');
-        return;
-      }
-
-      // For other alerts, use the display duration
-      const displayDuration = currentAlert.alert?.display_duration ?? 5;
-      const timeout = displayDuration * 1000;
-
-      console.log('[GlobalQueueManager] Setting timer for', timeout, 'ms');
-      timerRef.current = setTimeout(async () => {
-        try {
-          console.log('[GlobalQueueManager] Timer completed, handling alert completion');
-          await handleAlertComplete();
-        } catch (error) {
-          console.error('[GlobalQueueManager] Error completing alert:', error);
-          setTimeout(async () => {
-            try {
-              await handleAlertComplete();
-            } catch (retryError) {
-              console.error('[GlobalQueueManager] Retry error completing alert:', retryError);
-            }
-          }, 2000);
-        }
-      }, timeout);
-    }
-
     return () => {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
       }
     };
-  }, [currentAlert, isPaused, handleAlertComplete]);
+  }, []);
 
   return null;
 };
