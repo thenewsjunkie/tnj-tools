@@ -14,7 +14,8 @@ export const triggerLeaderboard = async () => {
     const { error: visibilityError } = await supabase
       .from('system_settings')
       .update({
-        value: { isVisible: true }
+        value: { isVisible: true },
+        updated_at: new Date().toISOString()
       })
       .eq('key', 'leaderboard_visibility');
 
