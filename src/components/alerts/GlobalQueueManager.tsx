@@ -6,7 +6,7 @@ import { useRealtimeConnection } from "@/hooks/useRealtimeConnection";
 
 const GlobalQueueManager = () => {
   const { isPaused } = useQueueState();
-  const { currentAlert, processNextAlert, handleAlertComplete } = useAlertQueue();
+  const { currentAlert, processNextAlert } = useAlertQueue();
   const isInitializedRef = useRef(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -57,7 +57,14 @@ const GlobalQueueManager = () => {
             
           if (currentState?.status === 'playing') {
             console.log('[GlobalQueueManager] Alert appears stuck, forcing completion');
-            await handleAlertComplete();
+            // Directly update the alert status in the database
+            await supabase
+              .from('alert_queue')
+              .update({ 
+                status: 'completed',
+                completed_at: new Date().toISOString()
+              })
+              .eq('id', payload.new.id);
           }
         }, maxDuration);
       }
