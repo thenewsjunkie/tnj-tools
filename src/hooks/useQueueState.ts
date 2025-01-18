@@ -9,9 +9,12 @@ export const useQueueState = () => {
   const { queueData } = useQueueData();
   const isInitializedRef = useRef(false);
   const prevAlertRef = useRef<AlertQueueItem | null>(null);
+  const reconnectAttempts = useRef(0);
+  const maxReconnectAttempts = 5;
+  const reconnectDelay = 5000; // 5 seconds
 
-  // Use the new hook for realtime connection
-  useRealtimeConnection(
+  // Use the hook for realtime connection with improved error handling
+  const { channel } = useRealtimeConnection(
     'queue-state-changes',
     {
       event: 'UPDATE',
@@ -26,6 +29,8 @@ export const useQueueState = () => {
         if (value && typeof value === 'object' && 'isPaused' in value) {
           console.log('[useQueueState] Updating pause state to:', value.isPaused);
           setIsPaused(!!value.isPaused);
+          // Reset reconnect attempts on successful update
+          reconnectAttempts.current = 0;
         }
       }
     }
@@ -38,21 +43,25 @@ export const useQueueState = () => {
     console.log('[useQueueState] Initializing queue state');
     
     const loadPauseState = async () => {
-      const { data, error } = await supabase
-        .from('system_settings')
-        .select('value')
-        .eq('key', 'queue_state')
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from('system_settings')
+          .select('value')
+          .eq('key', 'queue_state')
+          .single();
 
-      if (error) {
-        console.error('[useQueueState] Error loading pause state:', error);
-        return;
-      }
+        if (error) {
+          console.error('[useQueueState] Error loading pause state:', error);
+          return;
+        }
 
-      const value = data?.value as { isPaused: boolean };
-      if (value && typeof value === 'object' && 'isPaused' in value) {
-        console.log('[useQueueState] Setting initial pause state:', value.isPaused);
-        setIsPaused(!!value.isPaused);
+        const value = data?.value as { isPaused: boolean };
+        if (value && typeof value === 'object' && 'isPaused' in value) {
+          console.log('[useQueueState] Setting initial pause state:', value.isPaused);
+          setIsPaused(!!value.isPaused);
+        }
+      } catch (error) {
+        console.error('[useQueueState] Failed to load pause state:', error);
       }
     };
 
@@ -63,26 +72,32 @@ export const useQueueState = () => {
     console.log('[useQueueState] Toggling pause state from:', isPaused);
     const newPausedState = !isPaused;
 
-    // Update local state immediately for responsive UI
-    setIsPaused(newPausedState);
+    try {
+      // Update local state immediately for responsive UI
+      setIsPaused(newPausedState);
 
-    // Persist to database
-    const { error } = await supabase
-      .from('system_settings')
-      .upsert({
-        key: 'queue_state',
-        value: { isPaused: newPausedState },
-        updated_at: new Date().toISOString()
-      });
+      // Persist to database
+      const { error } = await supabase
+        .from('system_settings')
+        .upsert({
+          key: 'queue_state',
+          value: { isPaused: newPausedState },
+          updated_at: new Date().toISOString()
+        });
 
-    if (error) {
-      console.error('[useQueueState] Error updating pause state:', error);
-      // Revert local state if database update fails
+      if (error) {
+        console.error('[useQueueState] Error updating pause state:', error);
+        // Revert local state if database update fails
+        setIsPaused(isPaused);
+        return isPaused;
+      }
+
+      return newPausedState;
+    } catch (error) {
+      console.error('[useQueueState] Failed to toggle pause state:', error);
       setIsPaused(isPaused);
       return isPaused;
     }
-
-    return newPausedState;
   };
 
   // Calculate derived state from queue data
