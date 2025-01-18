@@ -49,7 +49,7 @@ export const handleGiftStats = async (currentAlert: any) => {
         [yearKey]: ((existingStats.yearly_gifts as Record<string, number>)[yearKey] || 0) + currentAlert.gift_count
       };
 
-      await supabase
+      const { error: updateError } = await supabase
         .from('gift_stats')
         .update({
           total_gifts: existingStats.total_gifts + currentAlert.gift_count,
@@ -58,23 +58,35 @@ export const handleGiftStats = async (currentAlert: any) => {
           yearly_gifts: yearlyGifts
         })
         .eq('username', currentAlert.username.toLowerCase());
+
+      if (updateError) {
+        console.error('[useGiftQueueActions] Error updating gift stats:', updateError);
+        return;
+      }
     } else {
       // Create new stats record
       const monthlyGifts: Record<string, number> = { [monthKey]: currentAlert.gift_count };
       const yearlyGifts: Record<string, number> = { [yearKey]: currentAlert.gift_count };
 
-      await supabase
+      const { error: insertError } = await supabase
         .from('gift_stats')
         .insert({
           username: currentAlert.username.toLowerCase(),
           total_gifts: currentAlert.gift_count,
           last_gift_date: now.toISOString(),
           monthly_gifts: monthlyGifts,
-          yearly_gifts: yearlyGifts
+          yearly_gifts: yearlyGifts,
+          is_test_data: false
         });
+
+      if (insertError) {
+        console.error('[useGiftQueueActions] Error inserting gift stats:', insertError);
+        return;
+      }
     }
 
     // Only trigger leaderboard after gift stats are fully updated
+    console.log('[useGiftQueueActions] Gift stats updated, triggering leaderboard');
     await triggerLeaderboard();
   }
 };
