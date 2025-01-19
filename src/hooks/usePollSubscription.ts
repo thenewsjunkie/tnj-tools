@@ -12,7 +12,6 @@ export const usePollSubscription = (onDataChange: FetchCallback) => {
 
     // Create a single channel for all poll-related changes
     const channel = supabase.channel('poll-updates')
-      // Listen for ALL poll changes
       .on(
         'postgres_changes',
         {
@@ -22,11 +21,10 @@ export const usePollSubscription = (onDataChange: FetchCallback) => {
         },
         (payload) => {
           console.log('Poll change detected:', payload);
-          // Fetch data for any poll changes since we need to check status
+          // Always fetch data for any poll changes
           onDataChange();
         }
       )
-      // Listen for poll option changes
       .on(
         'postgres_changes',
         {
@@ -46,7 +44,7 @@ export const usePollSubscription = (onDataChange: FetchCallback) => {
     // Cleanup subscription on unmount
     return () => {
       console.log('Cleaning up poll subscription');
-      supabase.removeChannel(channel);
+      void supabase.removeChannel(channel);
     };
   }, [onDataChange]);
 };
