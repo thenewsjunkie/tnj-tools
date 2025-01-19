@@ -1,4 +1,8 @@
 project_id = "gpmandlkcdompmdvethh"
-[functions.twitch-bot]
-verify_jwt = false
-timeout_seconds = 300
+
+[global.env]
+SUPABASE_URL = "env"
+SUPABASE_SERVICE_ROLE_KEY = "env"
+TWITCH_CHANNEL_NAME = "env"
+TWITCH_CLIENT_ID = "env"
+TWITCH_CLIENT_SECRET = "env"
