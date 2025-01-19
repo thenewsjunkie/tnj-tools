@@ -11,7 +11,15 @@ const POLLS_PER_PAGE = 10;
 
 export default function Polls() {
   const [currentPage, setCurrentPage] = useState(1);
-  const [editingPoll, setEditingPoll] = useState<{ id: string; question: string } | null>(null);
+  const [editingPoll, setEditingPoll] = useState<{ 
+    id: string; 
+    question: string;
+    options?: Array<{
+      id: string;
+      text: string;
+      votes: number;
+    }>;
+  } | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -75,13 +83,26 @@ export default function Polls() {
     if (!editingPoll) return;
 
     try {
-      const { error } = await supabase
+      // Update poll question
+      const { error: pollError } = await supabase
         .from('polls')
         .update({ question: editingPoll.question })
         .eq('id', editingPoll.id)
         .eq('status', 'active');
 
-      if (error) throw error;
+      if (pollError) throw pollError;
+
+      // Update poll options
+      if (editingPoll.options) {
+        const updatePromises = editingPoll.options.map(option =>
+          supabase
+            .from('poll_options')
+            .update({ text: option.text })
+            .eq('id', option.id)
+        );
+
+        await Promise.all(updatePromises);
+      }
 
       toast({
         title: "Poll updated successfully",

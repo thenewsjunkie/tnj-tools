@@ -6,6 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
+interface PollOption {
+  id: string;
+  text: string;
+  votes: number;
+}
+
 interface PollCardProps {
   poll: {
     id: string;
@@ -13,25 +19,46 @@ interface PollCardProps {
     status: string;
     created_at: string;
     image_url?: string;
-    poll_options: Array<{
-      id: string;
-      text: string;
-      votes: number;
-    }>;
+    poll_options: PollOption[];
   };
-  editingPoll: { id: string; question: string } | null;
-  setEditingPoll: (poll: { id: string; question: string } | null) => void;
+  editingPoll: { 
+    id: string; 
+    question: string;
+    options?: PollOption[];
+  } | null;
+  setEditingPoll: (poll: { 
+    id: string; 
+    question: string;
+    options?: PollOption[];
+  } | null) => void;
   handleDelete: (pollId: string) => Promise<void>;
   handleUpdatePoll: () => Promise<void>;
 }
 
 export function PollCard({ poll, editingPoll, setEditingPoll, handleDelete, handleUpdatePoll }: PollCardProps) {
+  const handleEditClick = () => {
+    setEditingPoll({ 
+      id: poll.id, 
+      question: poll.question,
+      options: [...poll.poll_options]
+    });
+  };
+
+  const handleOptionChange = (optionId: string, newText: string) => {
+    if (!editingPoll) return;
+    
+    const updatedOptions = editingPoll.options?.map(option => 
+      option.id === optionId ? { ...option, text: newText } : option
+    );
+
+    setEditingPoll({
+      ...editingPoll,
+      options: updatedOptions
+    });
+  };
+
   return (
-    <div 
-      className="p-6 rounded-lg border transition-all duration-200
-        dark:border-white/10 dark:bg-black/40 backdrop-blur-sm
-        hover:dark:bg-black/50"
-    >
+    <div className="p-6 rounded-lg border transition-all duration-200 dark:border-white/10 dark:bg-black/40 backdrop-blur-sm hover:dark:bg-black/50">
       <div className="flex justify-between items-start mb-6">
         <div className="space-y-2">
           <h2 className="text-2xl font-semibold text-foreground mb-2">
@@ -41,8 +68,7 @@ export function PollCard({ poll, editingPoll, setEditingPoll, handleDelete, hand
             <span className="text-sm dark:text-white/60">
               Created {format(new Date(poll.created_at), 'MMM d, yyyy h:mm a')}
             </span>
-            <span className="text-sm px-2 py-1 rounded-full capitalize
-              dark:bg-white/10 dark:text-white/80">
+            <span className="text-sm px-2 py-1 rounded-full capitalize dark:bg-white/10 dark:text-white/80">
               {poll.status}
             </span>
           </div>
@@ -55,9 +81,8 @@ export function PollCard({ poll, editingPoll, setEditingPoll, handleDelete, hand
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="dark:text-white/70 dark:hover:text-white 
-                    dark:hover:bg-white/10 transition-colors"
-                  onClick={() => setEditingPoll({ id: poll.id, question: poll.question })}
+                  className="dark:text-white/70 dark:hover:text-white dark:hover:bg-white/10 transition-colors"
+                  onClick={handleEditClick}
                 >
                   <Pencil className="h-4 w-4" />
                 </Button>
@@ -73,11 +98,24 @@ export function PollCard({ poll, editingPoll, setEditingPoll, handleDelete, hand
                       id="question"
                       value={editingPoll?.question || ''}
                       onChange={(e) => setEditingPoll({ 
-                        id: poll.id, 
+                        ...editingPoll!,
                         question: e.target.value 
                       })}
                       className="dark:bg-black/50 dark:border-white/10"
                     />
+                  </div>
+                  <div className="space-y-3">
+                    <Label>Options</Label>
+                    {editingPoll?.options?.map((option, index) => (
+                      <div key={option.id} className="flex items-center gap-2">
+                        <Input
+                          value={option.text}
+                          onChange={(e) => handleOptionChange(option.id, e.target.value)}
+                          className="dark:bg-black/50 dark:border-white/10"
+                          placeholder={`Option ${index + 1}`}
+                        />
+                      </div>
+                    ))}
                   </div>
                 </div>
                 <div className="flex justify-end gap-3">
@@ -103,8 +141,7 @@ export function PollCard({ poll, editingPoll, setEditingPoll, handleDelete, hand
               <Button
                 variant="ghost"
                 size="icon"
-                className="dark:text-white/70 dark:hover:text-white 
-                  dark:hover:bg-white/10 transition-colors"
+                className="dark:text-white/70 dark:hover:text-white dark:hover:bg-white/10 transition-colors"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -144,12 +181,10 @@ export function PollCard({ poll, editingPoll, setEditingPoll, handleDelete, hand
         {poll.poll_options.map((option) => (
           <div 
             key={option.id}
-            className="flex justify-between items-center p-3 rounded
-              dark:bg-black/30 dark:text-white/90"
+            className="flex justify-between items-center p-3 rounded dark:bg-black/30 dark:text-white/90"
           >
             <span className="font-medium">{option.text}</span>
-            <span className="text-sm px-3 py-1 rounded-full
-              dark:bg-white/10 dark:text-white/80">
+            <span className="text-sm px-3 py-1 rounded-full dark:bg-white/10 dark:text-white/80">
               {option.votes} votes
             </span>
           </div>
