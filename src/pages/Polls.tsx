@@ -3,16 +3,20 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, Pencil } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
 import { QueuePagination } from "@/components/queue/QueuePagination";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const POLLS_PER_PAGE = 10;
 
 export default function Polls() {
   const [currentPage, setCurrentPage] = useState(1);
+  const [editingPoll, setEditingPoll] = useState<{ id: string; question: string } | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -66,6 +70,35 @@ export default function Polls() {
       console.error('Error deleting poll:', error);
       toast({
         title: "Error deleting poll",
+        variant: "destructive",
+        duration: 3000,
+      });
+    }
+  };
+
+  const handleUpdatePoll = async () => {
+    if (!editingPoll) return;
+
+    try {
+      const { error } = await supabase
+        .from('polls')
+        .update({ question: editingPoll.question })
+        .eq('id', editingPoll.id)
+        .eq('status', 'active');
+
+      if (error) throw error;
+
+      toast({
+        title: "Poll updated successfully",
+        duration: 3000,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['polls'] });
+      setEditingPoll(null);
+    } catch (error) {
+      console.error('Error updating poll:', error);
+      toast({
+        title: "Error updating poll",
         variant: "destructive",
         duration: 3000,
       });
@@ -130,37 +163,85 @@ export default function Polls() {
                   </div>
                 </div>
                 
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="dark:text-white/70 dark:hover:text-white 
-                        dark:hover:bg-white/10 transition-colors"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent className="dark:bg-black/90 dark:backdrop-blur-sm dark:border-white/10">
-                    <AlertDialogHeader>
-                      <AlertDialogTitle className="dark:text-white">Delete Poll</AlertDialogTitle>
-                      <AlertDialogDescription className="dark:text-white/70">
-                        Are you sure you want to delete this poll? This action cannot be undone.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel className="dark:bg-white/10 dark:text-white dark:hover:bg-white/20">
-                        Cancel
-                      </AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => handleDelete(poll.id)}
-                        className="bg-red-500 text-white hover:bg-red-600"
+                <div className="flex gap-2">
+                  {poll.status === 'active' && (
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="dark:text-white/70 dark:hover:text-white 
+                            dark:hover:bg-white/10 transition-colors"
+                          onClick={() => setEditingPoll({ id: poll.id, question: poll.question })}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="dark:bg-black/90 dark:backdrop-blur-sm dark:border-white/10">
+                        <DialogHeader>
+                          <DialogTitle className="dark:text-white">Edit Active Poll</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="question">Question</Label>
+                            <Input
+                              id="question"
+                              value={editingPoll?.question || ''}
+                              onChange={(e) => setEditingPoll(prev => prev ? { ...prev, question: e.target.value } : null)}
+                              className="dark:bg-black/50 dark:border-white/10"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex justify-end gap-3">
+                          <Button
+                            variant="ghost"
+                            onClick={() => setEditingPoll(null)}
+                            className="dark:text-white/70 dark:hover:bg-white/10"
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={handleUpdatePoll}
+                            className="dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
+                          >
+                            Save Changes
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  )}
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="dark:text-white/70 dark:hover:text-white 
+                          dark:hover:bg-white/10 transition-colors"
                       >
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="dark:bg-black/90 dark:backdrop-blur-sm dark:border-white/10">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="dark:text-white">Delete Poll</AlertDialogTitle>
+                        <AlertDialogDescription className="dark:text-white/70">
+                          Are you sure you want to delete this poll? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel className="dark:bg-white/10 dark:text-white dark:hover:bg-white/20">
+                          Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDelete(poll.id)}
+                          className="bg-red-500 text-white hover:bg-red-600"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </div>
 
               {poll.image_url && (
