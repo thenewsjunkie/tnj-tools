@@ -20,6 +20,7 @@ const PollsOBS = () => {
   const [totalVotes, setTotalVotes] = useState(0);
 
   const fetchActivePoll = async () => {
+    console.log('OBS: Fetching active poll...');
     const { data: polls, error } = await supabase
       .from('polls')
       .select(`
@@ -33,20 +34,24 @@ const PollsOBS = () => {
         )
       `)
       .eq('status', 'active')
-      .single();
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
     if (error) {
-      console.error('Error fetching active poll:', error);
+      console.error('OBS: Error fetching active poll:', error);
       return;
     }
 
     if (polls) {
+      console.log('OBS: Active poll found:', polls);
       setPoll({
         ...polls,
         options: polls.poll_options
       });
       setTotalVotes(polls.poll_options.reduce((sum, opt) => sum + (opt.votes || 0), 0));
     } else {
+      console.log('OBS: No active poll found');
       setPoll(null);
       setTotalVotes(0);
     }
