@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
@@ -77,6 +78,12 @@ export default function Polls() {
     return (
       <div className="container mx-auto p-6 min-h-screen bg-background">
         <div className="max-w-6xl mx-auto">
+          <Link 
+            to="/admin" 
+            className="inline-flex items-center text-sm mb-8 text-foreground/70 hover:text-foreground transition-colors"
+          >
+            ← Back to Admin Dashboard
+          </Link>
           <h1 className="text-3xl font-bold mb-8 text-foreground">Poll Archive</h1>
           <div className="animate-pulse space-y-4">
             {[...Array(3)].map((_, i) => (
@@ -91,6 +98,12 @@ export default function Polls() {
   return (
     <div className="container mx-auto p-6 min-h-screen bg-background">
       <div className="max-w-6xl mx-auto">
+        <Link 
+          to="/admin" 
+          className="inline-flex items-center text-sm mb-8 text-foreground/70 hover:text-foreground transition-colors"
+        >
+          ← Back to Admin Dashboard
+        </Link>
         <h1 className="text-3xl font-bold mb-8 text-foreground">Poll Archive</h1>
         
         <div className="grid gap-6">
