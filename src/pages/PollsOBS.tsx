@@ -51,23 +51,43 @@ const PollsOBS = () => {
 
     fetchActivePoll();
 
-    // Subscribe to changes
-    const pollsSubscription = supabase
-      .channel('poll-changes')
+    // Subscribe to poll changes (new polls, status changes, etc.)
+    const pollsChannel = supabase
+      .channel('polls-changes')
       .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'polls' },
-        fetchActivePoll
-      )
-      .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'poll_options' },
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'polls',
+          filter: 'status=eq.active'
+        },
         fetchActivePoll
       )
       .subscribe();
 
+    // Subscribe to poll options changes (vote updates)
+    const optionsChannel = supabase
+      .channel('poll-options-changes')
+      .on('postgres_changes',
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'poll_options'
+        },
+        (payload) => {
+          // Only fetch if we have an active poll and the change affects its options
+          if (poll?.id) {
+            fetchActivePoll();
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
-      pollsSubscription.unsubscribe();
+      pollsChannel.unsubscribe();
+      optionsChannel.unsubscribe();
     };
-  }, []);
+  }, [poll?.id]); // Added poll.id as dependency to properly handle option updates
 
   if (!poll) {
     return null; // Return empty for OBS when no active poll
