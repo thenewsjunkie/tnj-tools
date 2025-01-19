@@ -23,7 +23,6 @@ export class TwitchBot {
       if (message.includes("PRIVMSG")) {
         const parsedMessage = MessageParser.parseMessage(message);
         if (parsedMessage) {
-          // Process potential vote
           await this.processVote(parsedMessage.username, parsedMessage.message.trim());
         }
       }
@@ -125,7 +124,25 @@ export class TwitchBot {
   async connect() {
     try {
       console.log('[TwitchBot] Starting connection...');
-      await this.connection.connect();
+      
+      // Get OAuth token
+      const tokenResponse = await fetch('https://id.twitch.tv/oauth2/token', {
+        method: 'POST',
+        body: new URLSearchParams({
+          client_id: this.connection.config.clientId,
+          client_secret: this.connection.config.clientSecret,
+          grant_type: 'client_credentials'
+        })
+      });
+
+      if (!tokenResponse.ok) {
+        throw new Error(`Failed to get OAuth token: ${tokenResponse.status}`);
+      }
+
+      const { access_token } = await tokenResponse.json();
+      
+      // Connect with credentials
+      await this.connection.connect(access_token, this.connection.config.channel);
       this.isConnected = true;
       await this.updateBotStatus('connected');
     } catch (error) {
