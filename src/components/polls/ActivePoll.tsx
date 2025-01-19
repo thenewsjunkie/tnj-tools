@@ -34,7 +34,9 @@ const ActivePoll = () => {
           )
         `)
         .eq('status', 'active')
-        .single();
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching active poll:', error);
@@ -47,6 +49,9 @@ const ActivePoll = () => {
           options: polls.poll_options
         });
         setTotalVotes(polls.poll_options.reduce((sum, opt) => sum + (opt.votes || 0), 0));
+      } else {
+        setPoll(null);
+        setTotalVotes(0);
       }
     };
 

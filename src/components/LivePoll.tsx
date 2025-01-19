@@ -3,7 +3,7 @@ import { BarChart3, ExternalLink, History, Power } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import CreatePollDialog from "./polls/CreatePollDialog";
 import ActivePoll from "./polls/ActivePoll";
@@ -12,6 +12,38 @@ export function LivePoll() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [botStatus, setBotStatus] = useState<'connected' | 'disconnected'>('disconnected');
   const { toast } = useToast();
+
+  // Fetch initial bot status
+  useEffect(() => {
+    const fetchBotStatus = async () => {
+      const { data, error } = await supabase
+        .from('bot_instances')
+        .select('status')
+        .eq('type', 'twitch')
+        .maybeSingle();
+
+      if (!error && data) {
+        setBotStatus(data.status as 'connected' | 'disconnected');
+      }
+    };
+
+    fetchBotStatus();
+
+    // Subscribe to bot status changes
+    const botSubscription = supabase
+      .channel('bot-status')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'bot_instances', filter: 'type=eq.twitch' },
+        (payload) => {
+          setBotStatus(payload.new.status as 'connected' | 'disconnected');
+        }
+      )
+      .subscribe();
+
+    return () => {
+      botSubscription.unsubscribe();
+    };
+  }, []);
 
   const handlePollCreated = () => {
     // Refresh will happen automatically through the subscription
