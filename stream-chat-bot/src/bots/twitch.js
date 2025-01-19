@@ -71,6 +71,7 @@ export class TwitchBot {
     if (self) return;
 
     try {
+      // Store the chat message
       await supabase.from('chat_messages').insert({
         source: 'twitch',
         username: tags['display-name'],
@@ -82,8 +83,74 @@ export class TwitchBot {
           emotes: tags.emotes
         }
       });
+
+      // Check for active poll and process vote
+      await this.processVote(tags['display-name'], message.trim());
+
     } catch (error) {
-      console.error('Error storing Twitch message:', error);
+      console.error('Error handling Twitch message:', error);
+    }
+  }
+
+  async processVote(username, message) {
+    try {
+      // Get active poll
+      const { data: poll, error: pollError } = await supabase
+        .from('polls')
+        .select(`
+          id,
+          poll_options (
+            id,
+            text
+          )
+        `)
+        .eq('status', 'active')
+        .single();
+
+      if (pollError || !poll) return;
+
+      // Find matching option
+      const matchingOption = poll.poll_options.find(
+        option => option.text.toLowerCase() === message.toLowerCase()
+      );
+
+      if (!matchingOption) return;
+
+      // Check if user already voted
+      const { data: existingVote } = await supabase
+        .from('poll_votes')
+        .select('id')
+        .eq('poll_id', poll.id)
+        .eq('username', username)
+        .eq('platform', 'twitch')
+        .single();
+
+      if (existingVote) {
+        console.log(`User ${username} already voted in this poll`);
+        return;
+      }
+
+      // Record the vote
+      const { error: voteError } = await supabase.from('poll_votes').insert({
+        poll_id: poll.id,
+        option_id: matchingOption.id,
+        username: username,
+        platform: 'twitch'
+      });
+
+      if (voteError) {
+        console.error('Error recording vote:', voteError);
+        return;
+      }
+
+      // Increment the vote count
+      await supabase.rpc('increment_poll_option_votes', { 
+        option_id: matchingOption.id 
+      });
+
+      console.log(`Recorded vote from ${username} for option: ${matchingOption.text}`);
+    } catch (error) {
+      console.error('Error processing vote:', error);
     }
   }
 

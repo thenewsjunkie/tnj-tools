@@ -489,6 +489,48 @@ export type Database = {
           },
         ]
       }
+      poll_votes: {
+        Row: {
+          created_at: string | null
+          id: string
+          option_id: string
+          platform: Database["public"]["Enums"]["voting_platform"]
+          poll_id: string
+          username: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          option_id: string
+          platform: Database["public"]["Enums"]["voting_platform"]
+          poll_id: string
+          username: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          option_id?: string
+          platform?: Database["public"]["Enums"]["voting_platform"]
+          poll_id?: string
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poll_votes_option_id_fkey"
+            columns: ["option_id"]
+            isOneToOne: false
+            referencedRelation: "poll_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "poll_votes_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       polls: {
         Row: {
           created_at: string | null
@@ -712,6 +754,7 @@ export type Database = {
         | "domestic_partnership"
       poll_status: "draft" | "active" | "completed"
       review_type: "television" | "movie" | "food" | "product" | "message"
+      voting_platform: "twitch" | "youtube"
     }
     CompositeTypes: {
       [_ in never]: never
