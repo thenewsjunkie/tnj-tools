@@ -10,7 +10,7 @@ import TNJAi from "@/components/AudioChat";
 import Alerts from "@/components/Alerts";
 import Companion from "@/components/Companion";
 import Reviews from "@/components/reviews/Reviews";
-import LivePoll from "@/components/LivePoll";
+import { LivePoll } from "@/components/LivePoll";
 import Stopwatch from "@/components/Stopwatch";
 import TNJLinks from "@/components/TNJLinks";
 
