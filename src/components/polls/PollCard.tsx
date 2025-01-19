@@ -72,7 +72,10 @@ export function PollCard({ poll, editingPoll, setEditingPoll, handleDelete, hand
                     <Input
                       id="question"
                       value={editingPoll?.question || ''}
-                      onChange={(e) => setEditingPoll(prev => prev ? { ...prev, question: e.target.value } : null)}
+                      onChange={(e) => setEditingPoll({ 
+                        id: poll.id, 
+                        question: e.target.value 
+                      })}
                       className="dark:bg-black/50 dark:border-white/10"
                     />
                   </div>
