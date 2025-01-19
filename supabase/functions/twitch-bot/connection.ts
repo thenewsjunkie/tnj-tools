@@ -17,9 +17,9 @@ export class TwitchConnection {
     this.config = config;
   }
 
-  async connect(accessToken?: string, username?: string) {
+  async connect(accessToken: string, username: string, channel: string) {
     try {
-      if (!accessToken || !username) {
+      if (!accessToken || !username || !channel) {
         console.error("[TwitchConnection] Missing authentication credentials");
         throw new Error("Missing authentication credentials");
       }
@@ -29,7 +29,7 @@ export class TwitchConnection {
 
       this.ws.onopen = () => {
         console.log("[TwitchConnection] WebSocket connection established");
-        this.authenticate(accessToken, username);
+        this.authenticate(accessToken, username, channel);
         this.startHeartbeat();
       };
 
@@ -58,12 +58,12 @@ export class TwitchConnection {
     }
   }
 
-  private authenticate(accessToken: string, username: string) {
+  private authenticate(accessToken: string, username: string, channel: string) {
     console.log("[TwitchConnection] Sending authentication commands...");
     this.ws?.send("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership");
     this.ws?.send(`PASS oauth:${accessToken}`);
     this.ws?.send(`NICK ${username}`);
-    this.ws?.send(`JOIN #${username}`);
+    this.ws?.send(`JOIN #${channel}`);
     this.isConnected = true;
     this.onConnectionChange(true);
     this.reconnectAttempts = 0;

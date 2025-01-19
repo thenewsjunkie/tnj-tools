@@ -106,21 +106,6 @@ export class TwitchBot {
     this.updateBotStatus(status ? 'connected' : 'disconnected');
   }
 
-  private async updateBotStatus(status: 'connected' | 'disconnected', errorMessage?: string) {
-    try {
-      await supabase.from('bot_instances').upsert({
-        type: 'twitch',
-        status: status,
-        error_message: errorMessage,
-        last_heartbeat: new Date().toISOString()
-      }, {
-        onConflict: 'type'
-      });
-    } catch (error) {
-      console.error('[TwitchBot] Error updating bot status:', error);
-    }
-  }
-
   async connect() {
     try {
       console.log('[TwitchBot] Starting connection...');
@@ -141,8 +126,8 @@ export class TwitchBot {
 
       const { access_token } = await tokenResponse.json();
       
-      // Connect with credentials
-      await this.connection.connect(access_token, this.connection.config.channel);
+      // Connect with credentials - use 'justinfan123' as username for anonymous chat
+      await this.connection.connect(access_token, 'justinfan123', this.connection.config.channel);
       this.isConnected = true;
       await this.updateBotStatus('connected');
     } catch (error) {
@@ -162,5 +147,20 @@ export class TwitchBot {
 
   getStatus(): string {
     return this.isConnected ? 'connected' : 'disconnected';
+  }
+
+  private async updateBotStatus(status: 'connected' | 'disconnected', errorMessage?: string) {
+    try {
+      await supabase.from('bot_instances').upsert({
+        type: 'twitch',
+        status: status,
+        error_message: errorMessage,
+        last_heartbeat: new Date().toISOString()
+      }, {
+        onConflict: 'type'
+      });
+    } catch (error) {
+      console.error('[TwitchBot] Error updating bot status:', error);
+    }
   }
 }
