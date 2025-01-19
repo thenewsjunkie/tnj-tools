@@ -714,6 +714,12 @@ export type Database = {
           scheduled_for: string
         }[]
       }
+      increment_poll_option_votes: {
+        Args: {
+          option_id: string
+        }
+        Returns: undefined
+      }
       update_contestant_score: {
         Args: {
           p_contestant_name: string
