@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { usePollSubscription } from "@/hooks/usePollSubscription";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PollOption {
   id: string;
