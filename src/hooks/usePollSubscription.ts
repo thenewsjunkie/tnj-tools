@@ -5,6 +5,9 @@ type FetchCallback = () => void;
 
 export const usePollSubscription = (onDataChange: FetchCallback) => {
   useEffect(() => {
+    // Initial fetch
+    onDataChange();
+
     // Create a single channel for all poll-related changes
     const channel = supabase.channel('poll-updates')
       // Listen for poll changes
