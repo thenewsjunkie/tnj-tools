@@ -10,7 +10,7 @@ import TNJAi from "@/components/AudioChat";
 import Alerts from "@/components/Alerts";
 import Companion from "@/components/Companion";
 import Reviews from "@/components/reviews/Reviews";
-import NewsRoundup from "@/components/NewsRoundup";
+import LivePoll from "@/components/LivePoll";
 import Stopwatch from "@/components/Stopwatch";
 import TNJLinks from "@/components/TNJLinks";
 
@@ -62,7 +62,7 @@ const Admin = () => {
             simpleView={true} 
             limit={10} 
           />
-          <NewsRoundup />
+          <LivePoll />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Stopwatch />

@@ -457,54 +457,6 @@ export type Database = {
         }
         Relationships: []
       }
-      news_roundups: {
-        Row: {
-          content: string
-          created_at: string | null
-          id: string
-          sources: Json | null
-          updated_at: string | null
-        }
-        Insert: {
-          content: string
-          created_at?: string | null
-          id?: string
-          sources?: Json | null
-          updated_at?: string | null
-        }
-        Update: {
-          content?: string
-          created_at?: string | null
-          id?: string
-          sources?: Json | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      news_sources: {
-        Row: {
-          created_at: string | null
-          id: string
-          is_active: boolean | null
-          name: string
-          url: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          name: string
-          url: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          name?: string
-          url?: string
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
           approved_at: string | null
