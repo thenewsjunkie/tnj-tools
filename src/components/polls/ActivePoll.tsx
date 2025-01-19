@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { usePollSubscription } from "@/hooks/usePollSubscription";
 
 interface PollOption {
   id: string;
@@ -60,46 +61,8 @@ const ActivePoll = () => {
     }
   };
 
-  useEffect(() => {
-    fetchActivePoll();
-
-    // Create a single channel for all poll-related changes
-    const channel = supabase.channel('poll-updates')
-      // Listen for poll changes
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'polls',
-        },
-        (payload) => {
-          console.log('Poll change detected:', payload);
-          fetchActivePoll();
-        }
-      )
-      // Listen for poll option changes
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'poll_options',
-        },
-        (payload) => {
-          console.log('Poll option change detected:', payload);
-          fetchActivePoll();
-        }
-      )
-      .subscribe((status) => {
-        console.log('Subscription status:', status);
-      });
-
-    return () => {
-      console.log('Cleaning up subscription');
-      supabase.removeChannel(channel);
-    };
-  }, []);
+  // Use the custom hook for subscriptions
+  usePollSubscription(fetchActivePoll);
 
   const archivePoll = async () => {
     if (!poll) return;
