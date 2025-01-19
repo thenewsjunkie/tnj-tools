@@ -12,34 +12,18 @@ export const usePollSubscription = (onDataChange: FetchCallback) => {
 
     // Create a single channel for all poll-related changes
     const channel = supabase.channel('poll-updates')
-      // Listen for poll changes
+      // Listen for ALL poll changes
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE', // Listen for status updates
-          schema: 'public',
-          table: 'polls',
-          filter: 'status=eq.active'
-        },
-        (payload) => {
-          console.log('Poll status change detected:', payload);
-          onDataChange();
-        }
-      )
-      // Listen for new polls
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT', // Listen for new polls
+          event: '*', // Listen for all events
           schema: 'public',
           table: 'polls'
         },
         (payload) => {
-          console.log('New poll detected:', payload);
-          // Check if the new poll is active
-          if ((payload.new as any).status === 'active') {
-            onDataChange();
-          }
+          console.log('Poll change detected:', payload);
+          // Fetch data for any poll changes since we need to check status
+          onDataChange();
         }
       )
       // Listen for poll option changes
