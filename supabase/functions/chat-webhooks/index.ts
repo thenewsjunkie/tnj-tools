@@ -58,7 +58,13 @@ serve(async (req) => {
 
       if (error) {
         console.error("[chat-webhooks] Database error:", error);
-        throw error;
+        return new Response(
+          JSON.stringify({ error: error.message }),
+          { 
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
       }
 
       console.log("[chat-webhooks] Message stored successfully");
