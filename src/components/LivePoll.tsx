@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import CreatePollDialog from "./polls/CreatePollDialog";
 import ActivePoll from "./polls/ActivePoll";
 
-const LivePoll = () => {
+export function LivePoll() {
   const { theme } = useTheme();
   const bgColor = theme === 'light' ? 'bg-white' : 'bg-black/50';
 
@@ -15,35 +15,35 @@ const LivePoll = () => {
   };
 
   return (
-    <Card className={`${bgColor} border border-gray-200 dark:border-white/10`}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-        <CardTitle className="text-xl font-semibold flex items-center gap-2">
-          <BarChart3 className="w-5 h-5" />
-          Live Poll
+    <Card className="dark:border-white/10">
+      <CardHeader className="pb-4">
+        <CardTitle className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Live Poll
+          </div>
+          <div className="flex items-center gap-2">
+            <CreatePollDialog onPollCreated={handlePollCreated} />
+            <Link to="/admin/polls">
+              <Button
+                variant="outline"
+                size="icon"
+                className="alert-icon hover:text-neon-red hover:bg-white/10"
+              >
+                <History className="h-4 w-4" />
+              </Button>
+            </Link>
+            <Link to="/polls/obs">
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <ExternalLink className="h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
         </CardTitle>
-        <div className="flex items-center gap-2">
-          <CreatePollDialog onPollCreated={handlePollCreated} />
-          <Link to="/polls">
-            <Button
-              variant="outline"
-              size="icon"
-              className="alert-icon hover:text-neon-red hover:bg-white/10"
-            >
-              <History className="h-4 w-4" />
-            </Button>
-          </Link>
-          <Link to="/polls/obs">
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <ExternalLink className="h-4 w-4" />
-            </Button>
-          </Link>
-        </div>
       </CardHeader>
       <CardContent>
         <ActivePoll />
       </CardContent>
     </Card>
   );
-};
-
-export default LivePoll;
+}

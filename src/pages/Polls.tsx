@@ -90,13 +90,16 @@ export default function Polls() {
         {data?.polls.map((poll) => (
           <div 
             key={poll.id} 
-            className="p-4 rounded-lg border dark:border-white/10 dark:bg-black/40 backdrop-blur-sm"
+            className="p-6 rounded-lg border dark:border-white/10 dark:bg-black/40 backdrop-blur-sm transition-all hover:dark:bg-black/50"
           >
-            <div className="flex justify-between items-start mb-2">
+            <div className="flex justify-between items-start mb-4">
               <div>
-                <h2 className="text-lg font-semibold dark:text-white">{poll.question}</h2>
+                <h2 className="text-xl font-semibold dark:text-white mb-2">{poll.question}</h2>
                 <p className="text-sm dark:text-white/60">
                   Created {format(new Date(poll.created_at), 'MMM d, yyyy h:mm a')}
+                </p>
+                <p className="text-sm dark:text-white/60 mt-1">
+                  Status: <span className="capitalize">{poll.status}</span>
                 </p>
               </div>
               
@@ -123,7 +126,7 @@ export default function Polls() {
                     </AlertDialogCancel>
                     <AlertDialogAction
                       onClick={() => handleDelete(poll.id)}
-                      className="dark:bg-red-500 dark:text-white dark:hover:bg-red-600"
+                      className="bg-red-500 text-white hover:bg-red-600"
                     >
                       Delete
                     </AlertDialogAction>
@@ -136,18 +139,18 @@ export default function Polls() {
               <img 
                 src={poll.image_url} 
                 alt={poll.question}
-                className="w-full h-40 object-cover rounded-md mb-4"
+                className="w-full h-48 object-cover rounded-md mb-4"
               />
             )}
 
-            <div className="space-y-2">
+            <div className="space-y-2 mt-4 border-t dark:border-white/10 pt-4">
               {poll.poll_options.map((option) => (
                 <div 
                   key={option.id}
-                  className="flex justify-between items-center dark:text-white/90"
+                  className="flex justify-between items-center dark:text-white/90 py-2"
                 >
-                  <span>{option.text}</span>
-                  <span className="text-sm dark:text-white/60">
+                  <span className="font-medium">{option.text}</span>
+                  <span className="text-sm px-3 py-1 rounded-full dark:bg-white/10 dark:text-white/80">
                     {option.votes} votes
                   </span>
                 </div>

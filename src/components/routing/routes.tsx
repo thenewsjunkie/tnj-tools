@@ -113,4 +113,8 @@ export const router = createBrowserRouter([
     path: "/admin/gift-stats",
     element: <AdminRoute><GiftStats /></AdminRoute>,
   },
+  {
+    path: "/admin/polls",
+    element: <AdminRoute><Polls /></AdminRoute>,
+  },
 ]);
