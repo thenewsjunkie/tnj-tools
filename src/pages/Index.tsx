@@ -1,59 +1,16 @@
-import { Link } from "react-router-dom";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { Card } from "@/components/ui/card";
 import { useTheme } from "@/components/theme/ThemeProvider";
-import { useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import TNJLinks from "@/components/TNJLinks";
 
 const Index = () => {
   const { theme } = useTheme();
-  
-  useEffect(() => {
-    // Set up realtime connection with debug logging
-    const channel = supabase.channel('system')
-      .on('system', { event: '*' }, (status) => {
-        console.log('Realtime system status:', status);
-      })
-      .subscribe((status) => {
-        console.log('Subscription status:', status);
-        
-        if (status === 'SUBSCRIBED') {
-          console.log('Successfully connected to realtime channel');
-        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-          console.log('Realtime connection issue:', status);
-        }
-      });
+  const bgColor = theme === 'light' ? 'bg-white' : 'bg-black/50';
 
-    return () => {
-      console.log('Cleaning up realtime connection');
-      supabase.removeChannel(channel);
-    };
-  }, []);
-  
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-      <nav className="fixed top-0 right-0 p-4 flex items-center gap-4">
-        <div className="flex items-center">
-          <ThemeToggle />
-        </div>
-        <Link 
-          to="/login" 
-          className={`${
-            theme === 'light' ? 'text-black' : 'text-white'
-          } hover:text-neon-red transition-colors px-4 py-2 border border-white/20 rounded`}
-        >
-          Login
-        </Link>
-      </nav>
-      
-      <div className={`digital text-[clamp(2rem,10vw,6rem)] leading-none ${
-        theme === 'light' ? 'text-red-600' : 'text-neon-red'
-      } animate-led-flicker tracking-tight mb-8`}>
-        TNJ Tools
-      </div>
-      
-      <div className={`absolute bottom-8 ${theme === 'light' ? 'text-black' : 'text-white/50'} text-sm`}>
-        tnjtools.com
-      </div>
+    <div className="container mx-auto p-4 space-y-4">
+      <Card className={`${bgColor} border border-gray-200 dark:border-white/10`}>
+        <TNJLinks />
+      </Card>
     </div>
   );
 };
