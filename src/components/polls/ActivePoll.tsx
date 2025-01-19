@@ -22,51 +22,55 @@ const ActivePoll = () => {
   const [totalVotes, setTotalVotes] = useState(0);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchActivePoll = async () => {
-      const { data: polls, error } = await supabase
-        .from('polls')
-        .select(`
+  const fetchActivePoll = async () => {
+    console.log('Fetching active poll...');
+    const { data: polls, error } = await supabase
+      .from('polls')
+      .select(`
+        id,
+        question,
+        image_url,
+        poll_options (
           id,
-          question,
-          image_url,
-          poll_options (
-            id,
-            text,
-            votes
-          )
-        `)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+          text,
+          votes
+        )
+      `)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching active poll:', error);
-        return;
-      }
+    if (error) {
+      console.error('Error fetching active poll:', error);
+      return;
+    }
 
-      if (polls) {
-        setPoll({
-          ...polls,
-          options: polls.poll_options
-        });
-        setTotalVotes(polls.poll_options.reduce((sum, opt) => sum + (opt.votes || 0), 0));
-      } else {
-        setPoll(null);
-        setTotalVotes(0);
-      }
-    };
+    if (polls) {
+      console.log('Active poll found:', polls);
+      setPoll({
+        ...polls,
+        options: polls.poll_options
+      });
+      setTotalVotes(polls.poll_options.reduce((sum, opt) => sum + (opt.votes || 0), 0));
+    } else {
+      console.log('No active poll found');
+      setPoll(null);
+      setTotalVotes(0);
+    }
+  };
 
+  useEffect(() => {
     fetchActivePoll();
 
-    // Subscribe to poll status changes and new polls
-    const pollsChannel = supabase
-      .channel('polls-changes')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
+    // Create a single channel for all poll-related changes
+    const channel = supabase.channel('poll-updates')
+      // Listen for poll changes
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
           table: 'polls',
         },
         (payload) => {
@@ -74,27 +78,26 @@ const ActivePoll = () => {
           fetchActivePoll();
         }
       )
-      .subscribe();
-
-    // Subscribe to poll options changes
-    const optionsChannel = supabase
-      .channel('poll-options-changes')
-      .on('postgres_changes',
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'poll_options'
+      // Listen for poll option changes
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'poll_options',
         },
         (payload) => {
           console.log('Poll option change detected:', payload);
           fetchActivePoll();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Subscription status:', status);
+      });
 
     return () => {
-      pollsChannel.unsubscribe();
-      optionsChannel.unsubscribe();
+      console.log('Cleaning up subscription');
+      supabase.removeChannel(channel);
     };
   }, []);
 
