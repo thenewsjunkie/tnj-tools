@@ -126,8 +126,13 @@ export class TwitchBot {
 
       const { access_token } = await tokenResponse.json();
       
-      // Connect with credentials - use 'justinfan123' as username for anonymous chat
-      await this.connection.connect(access_token, 'justinfan123', this.connection.config.channel);
+      // Connect with credentials - use anonymous username for chat
+      await this.connection.connect(
+        access_token,
+        'justinfan123',
+        this.connection.config.channel.toLowerCase() // Ensure channel name is lowercase
+      );
+      
       this.isConnected = true;
       await this.updateBotStatus('connected');
     } catch (error) {

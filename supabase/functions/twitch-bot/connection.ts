@@ -35,10 +35,20 @@ export class TwitchConnection {
 
       this.ws.onmessage = (event) => {
         const message = event.data;
+        console.log("[TwitchConnection] Received message:", message);
+        
         if (message.includes("PONG")) {
           this.lastPong = new Date();
           return;
         }
+        
+        // Handle authentication failures
+        if (message.includes("Login unsuccessful")) {
+          console.error("[TwitchConnection] Authentication failed");
+          this.handleDisconnect();
+          return;
+        }
+        
         this.onMessage(message);
       };
 
