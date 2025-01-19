@@ -457,6 +457,65 @@ export type Database = {
         }
         Relationships: []
       }
+      poll_options: {
+        Row: {
+          created_at: string | null
+          id: string
+          poll_id: string | null
+          text: string
+          votes: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          poll_id?: string | null
+          text: string
+          votes?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          poll_id?: string | null
+          text?: string
+          votes?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poll_options_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      polls: {
+        Row: {
+          created_at: string | null
+          id: string
+          image_url: string | null
+          question: string
+          status: Database["public"]["Enums"]["poll_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          question: string
+          status?: Database["public"]["Enums"]["poll_status"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          question?: string
+          status?: Database["public"]["Enums"]["poll_status"] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           approved_at: string | null
@@ -651,6 +710,7 @@ export type Database = {
         | "widowed"
         | "separated"
         | "domestic_partnership"
+      poll_status: "draft" | "active" | "completed"
       review_type: "television" | "movie" | "food" | "product" | "message"
     }
     CompositeTypes: {

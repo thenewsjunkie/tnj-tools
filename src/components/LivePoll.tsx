@@ -3,10 +3,16 @@ import { BarChart3, ExternalLink } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import CreatePollDialog from "./polls/CreatePollDialog";
+import ActivePoll from "./polls/ActivePoll";
 
 const LivePoll = () => {
   const { theme } = useTheme();
   const bgColor = theme === 'light' ? 'bg-white' : 'bg-black/50';
+
+  const handlePollCreated = () => {
+    // Refresh will happen automatically through the subscription
+  };
 
   return (
     <Card className={`${bgColor} border border-gray-200 dark:border-white/10`}>
@@ -15,16 +21,17 @@ const LivePoll = () => {
           <BarChart3 className="w-5 h-5" />
           Live Poll
         </CardTitle>
-        <Link to="/polls/obs">
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <ExternalLink className="h-4 w-4" />
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <CreatePollDialog onPollCreated={handlePollCreated} />
+          <Link to="/polls/obs">
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <ExternalLink className="h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
       </CardHeader>
       <CardContent>
-        <div className="text-muted-foreground text-center py-8">
-          Live poll feature coming soon...
-        </div>
+        <ActivePoll />
       </CardContent>
     </Card>
   );
