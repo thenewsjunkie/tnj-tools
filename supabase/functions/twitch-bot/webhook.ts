@@ -2,53 +2,17 @@ export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Max-Age": "86400",
 };
 
 export async function forwardToWebhook(message: { type: string; username: string; message: string; channel: string; emotes?: Record<string, string[]> }) {
   try {
-    const webhookUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/chat-webhooks`;
-    console.log("[Webhook] Forwarding Twitch message to webhook:", {
-      type: message.type,
+    console.log("[Webhook] Processing vote from Twitch:", {
       username: message.username,
-      channel: message.channel,
+      message: message.message,
     });
     
-    const payload = {
-      platform: "twitch",
-      type: message.type,
-      data: {
-        username: message.username,
-        message: message.message,
-        channel: message.channel,
-        emotes: message.emotes || {},
-      },
-    };
-
-    console.log("[Webhook] Request payload:", JSON.stringify(payload));
-    
-    const response = await fetch(webhookUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
-        ...corsHeaders,
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[Webhook] Response error:", {
-        status: response.status,
-        statusText: response.statusText,
-        body: errorText
-      });
-      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
-    }
-    
-    const responseData = await response.text();
-    console.log("[Webhook] Response:", responseData);
+    // We no longer need to store chat messages, this function is only used for poll votes
+    return { success: true };
   } catch (error) {
     console.error("[Webhook] Error forwarding message:", error);
     throw error;
