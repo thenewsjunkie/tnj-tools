@@ -22,7 +22,7 @@ export function LivePoll() {
         .eq('type', 'twitch')
         .maybeSingle();
 
-      if (!error && data) {
+      if (!error && data?.status) {
         setBotStatus(data.status as 'connected' | 'disconnected');
       }
     };
@@ -35,7 +35,9 @@ export function LivePoll() {
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'bot_instances', filter: 'type=eq.twitch' },
         (payload) => {
-          setBotStatus(payload.new.status as 'connected' | 'disconnected');
+          if (payload.new) {
+            setBotStatus(payload.new.status as 'connected' | 'disconnected');
+          }
         }
       )
       .subscribe();
