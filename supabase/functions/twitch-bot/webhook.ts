@@ -1,14 +1,11 @@
-import { TwitchMessage } from "./types.ts";
-
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
   "Access-Control-Max-Age": "86400",
 };
 
-export async function forwardToWebhook(message: TwitchMessage & { type: string }) {
+export async function forwardToWebhook(message: { type: string; username: string; message: string; channel: string; emotes?: Record<string, string[]> }) {
   try {
     const webhookUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/chat-webhooks`;
     console.log("[Webhook] Forwarding Twitch message to webhook:", {

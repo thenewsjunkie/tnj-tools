@@ -29,6 +29,17 @@ serve(async (req) => {
     const body = await req.json();
     console.log("[chat-webhooks] Request body:", body);
 
+    if (!body.platform || !body.type || !body.data?.username || !body.data?.message) {
+      console.error("[chat-webhooks] Invalid request body:", body);
+      return new Response(
+        JSON.stringify({ error: "Missing required fields" }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
     const { platform, type, data } = body;
 
     if (type === "chat" && data.message) {
@@ -40,7 +51,8 @@ serve(async (req) => {
           message: data.message,
           message_type: type,
           metadata: {
-            emotes: data.emotes || {}
+            emotes: data.emotes || {},
+            channel: data.channel
           }
         });
 
@@ -52,9 +64,12 @@ serve(async (req) => {
       console.log("[chat-webhooks] Message stored successfully");
     }
 
-    return new Response(JSON.stringify({ success: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ success: true }),
+      { 
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   } catch (error) {
     console.error("[chat-webhooks] Error processing request:", error);
     return new Response(
