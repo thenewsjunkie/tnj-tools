@@ -1,6 +1,8 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, ExternalLink } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const LivePoll = () => {
   const { theme } = useTheme();
@@ -13,6 +15,11 @@ const LivePoll = () => {
           <BarChart3 className="w-5 h-5" />
           Live Poll
         </CardTitle>
+        <Link to="/polls/obs">
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <ExternalLink className="h-4 w-4" />
+          </Button>
+        </Link>
       </CardHeader>
       <CardContent>
         <div className="text-muted-foreground text-center py-8">
