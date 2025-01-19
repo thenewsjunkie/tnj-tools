@@ -60,21 +60,41 @@ const ActivePoll = () => {
 
     fetchActivePoll();
 
-    // Subscribe to changes
-    const pollsSubscription = supabase
-      .channel('poll-changes')
+    // Subscribe to poll status changes and new polls
+    const pollsChannel = supabase
+      .channel('polls-changes')
       .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'polls' },
-        fetchActivePoll
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'polls',
+        },
+        (payload) => {
+          console.log('Poll change detected:', payload);
+          fetchActivePoll();
+        }
       )
+      .subscribe();
+
+    // Subscribe to poll options changes
+    const optionsChannel = supabase
+      .channel('poll-options-changes')
       .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'poll_options' },
-        fetchActivePoll
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'poll_options'
+        },
+        (payload) => {
+          console.log('Poll option change detected:', payload);
+          fetchActivePoll();
+        }
       )
       .subscribe();
 
     return () => {
-      pollsSubscription.unsubscribe();
+      pollsChannel.unsubscribe();
+      optionsChannel.unsubscribe();
     };
   }, []);
 
