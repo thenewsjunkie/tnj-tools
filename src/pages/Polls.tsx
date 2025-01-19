@@ -124,8 +124,8 @@ export default function Polls() {
   const totalPages = Math.ceil((data?.totalCount || 0) / POLLS_PER_PAGE);
 
   return (
-    <div className="container mx-auto p-6 min-h-screen bg-background">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto p-6 max-w-6xl">
         <Link 
           to="/admin" 
           className="inline-flex items-center text-sm mb-8 text-foreground/70 hover:text-foreground transition-colors"
