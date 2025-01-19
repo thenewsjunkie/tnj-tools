@@ -8,102 +8,60 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabase = createClient(
+    console.log("[chat-webhooks] Received request");
+    
+    const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      {
+        auth: {
+          persistSession: false,
+        }
+      }
     );
 
     const body = await req.json();
-    console.log("[ChatWebhooks] Received webhook:", body);
+    console.log("[chat-webhooks] Request body:", body);
 
-    // Process YouTube events
-    if (body.platform === "youtube") {
-      const { type, data } = body;
-      console.log("[ChatWebhooks] Processing YouTube event:", { type, data });
-      
-      if (type === "chat") {
-        const { error } = await supabase.from("chat_messages").insert({
-          source: "youtube",
-          username: data.author.name,
-          message: data.message,
-          message_type: data.superChat ? "superchat" : "chat",
-          superchat_amount: data.superChat?.amount,
-          superchat_expires_at: data.superChat
-            ? new Date(Date.now() + 60000).toISOString()
-            : null,
-          metadata: data,
-        });
+    const { platform, type, data } = body;
 
-        if (error) {
-          console.error("[ChatWebhooks] Error inserting YouTube message:", error);
-          throw error;
-        }
-      } else if (type === "subscription") {
-        const { error } = await supabase.from("chat_messages").insert({
-          source: "youtube",
-          username: data.username,
-          message: `${data.username} just subscribed!`,
-          message_type: "subscription",
-          metadata: data,
-        });
-
-        if (error) {
-          console.error("[ChatWebhooks] Error inserting YouTube subscription:", error);
-          throw error;
-        }
-      }
-    }
-
-    // Process Twitch events
-    if (body.platform === "twitch") {
-      const { type, data } = body;
-      console.log("[ChatWebhooks] Processing Twitch event:", { type, data });
-
-      if (type === "chat") {
-        const { error } = await supabase.from("chat_messages").insert({
-          source: "twitch",
+    if (type === "chat" && data.message) {
+      const { error } = await supabaseClient
+        .from("chat_messages")
+        .insert({
+          source: platform,
           username: data.username,
           message: data.message,
-          message_type: "chat",
-          metadata: data,
+          message_type: type,
+          metadata: {
+            emotes: data.emotes || {}
+          }
         });
 
-        if (error) {
-          console.error("[ChatWebhooks] Error inserting Twitch message:", error);
-          throw error;
-        }
-      } else if (type === "subscription") {
-        const { error } = await supabase.from("chat_messages").insert({
-          source: "twitch",
-          username: data.username,
-          message: `${data.username} just subscribed!`,
-          message_type: "subscription",
-          metadata: data,
-        });
-
-        if (error) {
-          console.error("[ChatWebhooks] Error inserting Twitch subscription:", error);
-          throw error;
-        }
+      if (error) {
+        console.error("[chat-webhooks] Database error:", error);
+        throw error;
       }
+
+      console.log("[chat-webhooks] Message stored successfully");
     }
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
     });
   } catch (error) {
-    console.error("[ChatWebhooks] Error processing webhook:", error);
+    console.error("[chat-webhooks] Error processing request:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      { 
         status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
   }

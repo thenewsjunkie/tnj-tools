@@ -11,7 +11,24 @@ export const corsHeaders = {
 export async function forwardToWebhook(message: TwitchMessage & { type: string }) {
   try {
     const webhookUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/chat-webhooks`;
-    console.log("[Webhook] Forwarding Twitch message to webhook:", message);
+    console.log("[Webhook] Forwarding Twitch message to webhook:", {
+      type: message.type,
+      username: message.username,
+      channel: message.channel,
+    });
+    
+    const payload = {
+      platform: "twitch",
+      type: message.type,
+      data: {
+        username: message.username,
+        message: message.message,
+        channel: message.channel,
+        emotes: message.emotes || {},
+      },
+    };
+
+    console.log("[Webhook] Request payload:", JSON.stringify(payload));
     
     const response = await fetch(webhookUrl, {
       method: "POST",
@@ -20,20 +37,17 @@ export async function forwardToWebhook(message: TwitchMessage & { type: string }
         "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
         ...corsHeaders,
       },
-      body: JSON.stringify({
-        platform: "twitch",
-        type: message.type,
-        data: {
-          username: message.username,
-          message: message.message,
-          channel: message.channel,
-          emotes: message.emotes || {},
-        },
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text();
+      console.error("[Webhook] Response error:", {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText
+      });
+      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
     }
     
     const responseData = await response.text();
