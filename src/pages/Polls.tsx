@@ -75,97 +75,115 @@ export default function Polls() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-6">
-        <h1 className="text-2xl font-bold mb-6 dark:text-white">Poll Archive</h1>
-        <div className="dark:text-white/70">Loading...</div>
+      <div className="container mx-auto p-6 min-h-screen bg-background">
+        <div className="max-w-6xl mx-auto">
+          <h1 className="text-3xl font-bold mb-8 text-foreground">Poll Archive</h1>
+          <div className="animate-pulse space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-48 bg-black/20 rounded-lg" />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6 dark:text-white">Poll Archive</h1>
-      
-      <div className="grid gap-4">
-        {data?.polls.map((poll) => (
-          <div 
-            key={poll.id} 
-            className="p-6 rounded-lg border dark:border-white/10 dark:bg-black/40 backdrop-blur-sm transition-all hover:dark:bg-black/50"
-          >
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h2 className="text-xl font-semibold dark:text-white mb-2">{poll.question}</h2>
-                <p className="text-sm dark:text-white/60">
-                  Created {format(new Date(poll.created_at), 'MMM d, yyyy h:mm a')}
-                </p>
-                <p className="text-sm dark:text-white/60 mt-1">
-                  Status: <span className="capitalize">{poll.status}</span>
-                </p>
-              </div>
-              
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="dark:text-white/70 dark:hover:text-white dark:hover:bg-white/10"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent className="dark:bg-black/90 dark:backdrop-blur-sm dark:border-white/10">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle className="dark:text-white">Delete Poll</AlertDialogTitle>
-                    <AlertDialogDescription className="dark:text-white/70">
-                      Are you sure you want to delete this poll? This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel className="dark:bg-white/10 dark:text-white dark:hover:bg-white/20">
-                      Cancel
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => handleDelete(poll.id)}
-                      className="bg-red-500 text-white hover:bg-red-600"
-                    >
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-
-            {poll.image_url && (
-              <img 
-                src={poll.image_url} 
-                alt={poll.question}
-                className="w-full h-48 object-cover rounded-md mb-4"
-              />
-            )}
-
-            <div className="space-y-2 mt-4 border-t dark:border-white/10 pt-4">
-              {poll.poll_options.map((option) => (
-                <div 
-                  key={option.id}
-                  className="flex justify-between items-center dark:text-white/90 py-2"
-                >
-                  <span className="font-medium">{option.text}</span>
-                  <span className="text-sm px-3 py-1 rounded-full dark:bg-white/10 dark:text-white/80">
-                    {option.votes} votes
-                  </span>
+    <div className="container mx-auto p-6 min-h-screen bg-background">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8 text-foreground">Poll Archive</h1>
+        
+        <div className="grid gap-6">
+          {data?.polls.map((poll) => (
+            <div 
+              key={poll.id} 
+              className="p-6 rounded-lg border transition-all duration-200
+                dark:border-white/10 dark:bg-black/40 backdrop-blur-sm
+                hover:dark:bg-black/50"
+            >
+              <div className="flex justify-between items-start mb-6">
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-semibold text-foreground mb-2">
+                    {poll.question}
+                  </h2>
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm dark:text-white/60">
+                      Created {format(new Date(poll.created_at), 'MMM d, yyyy h:mm a')}
+                    </span>
+                    <span className="text-sm px-2 py-1 rounded-full capitalize
+                      dark:bg-white/10 dark:text-white/80">
+                      {poll.status}
+                    </span>
+                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
+                
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="dark:text-white/70 dark:hover:text-white 
+                        dark:hover:bg-white/10 transition-colors"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="dark:bg-black/90 dark:backdrop-blur-sm dark:border-white/10">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="dark:text-white">Delete Poll</AlertDialogTitle>
+                      <AlertDialogDescription className="dark:text-white/70">
+                        Are you sure you want to delete this poll? This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="dark:bg-white/10 dark:text-white dark:hover:bg-white/20">
+                        Cancel
+                      </AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => handleDelete(poll.id)}
+                        className="bg-red-500 text-white hover:bg-red-600"
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
 
-      <div className="mt-6">
-        <QueuePagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-        />
+              {poll.image_url && (
+                <img 
+                  src={poll.image_url} 
+                  alt={poll.question}
+                  className="w-full h-48 object-cover rounded-md mb-6"
+                />
+              )}
+
+              <div className="space-y-3 border-t dark:border-white/10 pt-4">
+                {poll.poll_options.map((option) => (
+                  <div 
+                    key={option.id}
+                    className="flex justify-between items-center p-3 rounded
+                      dark:bg-black/30 dark:text-white/90"
+                  >
+                    <span className="font-medium">{option.text}</span>
+                    <span className="text-sm px-3 py-1 rounded-full
+                      dark:bg-white/10 dark:text-white/80">
+                      {option.votes} votes
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-8">
+          <QueuePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        </div>
       </div>
     </div>
   );
