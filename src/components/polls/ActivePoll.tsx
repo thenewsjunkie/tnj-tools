@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Archive } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 
 interface PollOption {
   id: string;
@@ -17,6 +20,7 @@ interface Poll {
 const ActivePoll = () => {
   const [poll, setPoll] = useState<Poll | null>(null);
   const [totalVotes, setTotalVotes] = useState(0);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchActivePoll = async () => {
@@ -74,6 +78,27 @@ const ActivePoll = () => {
     };
   }, []);
 
+  const archivePoll = async () => {
+    if (!poll) return;
+
+    const { error } = await supabase
+      .from('polls')
+      .update({ status: 'completed' })
+      .eq('id', poll.id);
+
+    if (error) {
+      console.error('Error archiving poll:', error);
+      toast({
+        title: "Failed to archive poll",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Poll archived successfully",
+      });
+    }
+  };
+
   if (!poll) {
     return (
       <div className="text-muted-foreground text-center py-8">
@@ -117,8 +142,16 @@ const ActivePoll = () => {
         })}
       </div>
       
-      <div className="text-sm text-muted-foreground text-center">
-        {totalVotes} total votes
+      <div className="flex justify-between items-center text-sm text-muted-foreground">
+        <span>{totalVotes} total votes</span>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={archivePoll}
+          className="h-8 w-8 hover:text-neon-red"
+        >
+          <Archive className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );
