@@ -8,6 +8,11 @@ import { supabase } from "@/integrations/supabase/client";
 import CreatePollDialog from "./polls/CreatePollDialog";
 import ActivePoll from "./polls/ActivePoll";
 
+interface BotInstance {
+  status: 'connected' | 'disconnected';
+  type: string;
+}
+
 export function LivePoll() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [botStatus, setBotStatus] = useState<'connected' | 'disconnected'>('disconnected');
@@ -35,8 +40,9 @@ export function LivePoll() {
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'bot_instances', filter: 'type=eq.twitch' },
         (payload) => {
-          if (payload.new) {
-            setBotStatus(payload.new.status as 'connected' | 'disconnected');
+          const newData = payload.new as BotInstance;
+          if (newData && newData.status) {
+            setBotStatus(newData.status);
           }
         }
       )
