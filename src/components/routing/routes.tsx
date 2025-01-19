@@ -18,6 +18,7 @@ import Leaderboard from "@/pages/Leaderboard";
 import LeaderboardOBS from "@/pages/LeaderboardOBS";
 import GiftStats from "@/pages/Admin/GiftStats";
 import StreamReview from "@/pages/StreamReview";
+import Polls from "@/pages/Polls";
 
 export const router = createBrowserRouter([
   {
@@ -83,6 +84,10 @@ export const router = createBrowserRouter([
   {
     path: "/leaderboard/obs",
     element: <LeaderboardOBS />,
+  },
+  {
+    path: "/polls",
+    element: <Polls />,
   },
   {
     path: "/admin",
