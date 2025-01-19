@@ -16,21 +16,37 @@ export const usePollSubscription = (onDataChange: FetchCallback) => {
       .on(
         'postgres_changes',
         {
-          event: '*', // Listen for all events (INSERT, UPDATE, DELETE)
+          event: 'UPDATE', // Listen for status updates
           schema: 'public',
           table: 'polls',
-          filter: 'status=eq.active' // Only listen for active polls
+          filter: 'status=eq.active'
         },
         (payload) => {
-          console.log('Poll change detected:', payload);
+          console.log('Poll status change detected:', payload);
           onDataChange();
+        }
+      )
+      // Listen for new polls
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT', // Listen for new polls
+          schema: 'public',
+          table: 'polls'
+        },
+        (payload) => {
+          console.log('New poll detected:', payload);
+          // Check if the new poll is active
+          if ((payload.new as any).status === 'active') {
+            onDataChange();
+          }
         }
       )
       // Listen for poll option changes
       .on(
         'postgres_changes',
         {
-          event: '*', // Listen for all events (INSERT, UPDATE, DELETE)
+          event: '*', // Listen for all events on poll options
           schema: 'public',
           table: 'poll_options'
         },
