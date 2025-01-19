@@ -5,6 +5,8 @@ type FetchCallback = () => void;
 
 export const usePollSubscription = (onDataChange: FetchCallback) => {
   useEffect(() => {
+    console.log('Setting up poll subscription...');
+    
     // Initial fetch
     onDataChange();
 
@@ -14,9 +16,10 @@ export const usePollSubscription = (onDataChange: FetchCallback) => {
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: '*', // Listen for all events (INSERT, UPDATE, DELETE)
           schema: 'public',
           table: 'polls',
+          filter: 'status=eq.active' // Only listen for active polls
         },
         (payload) => {
           console.log('Poll change detected:', payload);
@@ -27,9 +30,9 @@ export const usePollSubscription = (onDataChange: FetchCallback) => {
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: '*', // Listen for all events (INSERT, UPDATE, DELETE)
           schema: 'public',
-          table: 'poll_options',
+          table: 'poll_options'
         },
         (payload) => {
           console.log('Poll option change detected:', payload);
@@ -40,8 +43,9 @@ export const usePollSubscription = (onDataChange: FetchCallback) => {
         console.log('Subscription status:', status);
       });
 
+    // Cleanup subscription on unmount
     return () => {
-      console.log('Cleaning up subscription');
+      console.log('Cleaning up poll subscription');
       supabase.removeChannel(channel);
     };
   }, [onDataChange]);
