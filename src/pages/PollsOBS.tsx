@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { usePollSubscription } from "@/hooks/usePollSubscription";
 
 interface PollOption {
   id: string;
@@ -18,76 +18,41 @@ const PollsOBS = () => {
   const [poll, setPoll] = useState<Poll | null>(null);
   const [totalVotes, setTotalVotes] = useState(0);
 
-  useEffect(() => {
-    const fetchActivePoll = async () => {
-      const { data: polls, error } = await supabase
-        .from('polls')
-        .select(`
+  const fetchActivePoll = async () => {
+    const { data: polls, error } = await supabase
+      .from('polls')
+      .select(`
+        id,
+        question,
+        image_url,
+        poll_options (
           id,
-          question,
-          image_url,
-          poll_options (
-            id,
-            text,
-            votes
-          )
-        `)
-        .eq('status', 'active')
-        .single();
+          text,
+          votes
+        )
+      `)
+      .eq('status', 'active')
+      .single();
 
-      if (error) {
-        console.error('Error fetching active poll:', error);
-        return;
-      }
+    if (error) {
+      console.error('Error fetching active poll:', error);
+      return;
+    }
 
-      if (polls) {
-        setPoll({
-          ...polls,
-          options: polls.poll_options
-        });
-        setTotalVotes(polls.poll_options.reduce((sum, opt) => sum + (opt.votes || 0), 0));
-      }
-    };
+    if (polls) {
+      setPoll({
+        ...polls,
+        options: polls.poll_options
+      });
+      setTotalVotes(polls.poll_options.reduce((sum, opt) => sum + (opt.votes || 0), 0));
+    } else {
+      setPoll(null);
+      setTotalVotes(0);
+    }
+  };
 
-    fetchActivePoll();
-
-    // Subscribe to poll changes (new polls, status changes, etc.)
-    const pollsChannel = supabase
-      .channel('polls-changes')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'polls',
-          filter: 'status=eq.active'
-        },
-        fetchActivePoll
-      )
-      .subscribe();
-
-    // Subscribe to poll options changes (vote updates)
-    const optionsChannel = supabase
-      .channel('poll-options-changes')
-      .on('postgres_changes',
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'poll_options'
-        },
-        (payload) => {
-          // Only fetch if we have an active poll and the change affects its options
-          if (poll?.id) {
-            fetchActivePoll();
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      pollsChannel.unsubscribe();
-      optionsChannel.unsubscribe();
-    };
-  }, [poll?.id]); // Added poll.id as dependency to properly handle option updates
+  // Use the custom hook for subscriptions
+  usePollSubscription(fetchActivePoll);
 
   if (!poll) {
     return null; // Return empty for OBS when no active poll
