@@ -51,7 +51,6 @@ const CreatePollDialog = ({ onPollCreated }: { onPollCreated: () => void }) => {
     }
 
     try {
-      // Insert poll
       const { data: poll, error: pollError } = await supabase
         .from('polls')
         .insert({
@@ -64,7 +63,6 @@ const CreatePollDialog = ({ onPollCreated }: { onPollCreated: () => void }) => {
 
       if (pollError) throw pollError;
 
-      // Insert options
       const { error: optionsError } = await supabase
         .from('poll_options')
         .insert(
@@ -86,7 +84,6 @@ const CreatePollDialog = ({ onPollCreated }: { onPollCreated: () => void }) => {
       setOpen(false);
       onPollCreated();
       
-      // Reset form
       setQuestion("");
       setImageUrl("");
       setOptions(["", ""]);
@@ -107,18 +104,19 @@ const CreatePollDialog = ({ onPollCreated }: { onPollCreated: () => void }) => {
           <Plus className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] dark:bg-black/90 dark:backdrop-blur-sm dark:border-white/10">
         <DialogHeader>
-          <DialogTitle>Create New Poll</DialogTitle>
+          <DialogTitle className="text-xl font-semibold dark:text-white">Create New Poll</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="question">Question</Label>
+            <Label htmlFor="question" className="dark:text-white/90">Question</Label>
             <Input
               id="question"
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               placeholder="Enter your question"
+              className="dark:bg-black/50 dark:text-white dark:border-white/10 dark:placeholder:text-white/50"
             />
           </div>
           
@@ -132,19 +130,21 @@ const CreatePollDialog = ({ onPollCreated }: { onPollCreated: () => void }) => {
           </div>
 
           <div className="grid gap-2">
-            <Label>Options</Label>
+            <Label className="dark:text-white/90">Options</Label>
             {options.map((option, index) => (
               <div key={index} className="flex gap-2">
                 <Input
                   value={option}
                   onChange={(e) => handleOptionChange(index, e.target.value)}
                   placeholder={`Option ${index + 1}`}
+                  className="dark:bg-black/50 dark:text-white dark:border-white/10 dark:placeholder:text-white/50"
                 />
                 {index >= 2 && (
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => handleRemoveOption(index)}
+                    className="dark:text-white/70 dark:hover:text-white dark:hover:bg-white/10"
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -156,14 +156,19 @@ const CreatePollDialog = ({ onPollCreated }: { onPollCreated: () => void }) => {
                 type="button"
                 variant="outline"
                 onClick={handleAddOption}
-                className="mt-2"
+                className="mt-2 dark:border-white/10 dark:text-white/90 dark:hover:bg-white/10"
               >
                 Add Option
               </Button>
             )}
           </div>
 
-          <Button onClick={handleSubmit}>Create Poll</Button>
+          <Button 
+            onClick={handleSubmit}
+            className="dark:bg-white dark:text-black dark:hover:bg-white/90"
+          >
+            Create Poll
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
