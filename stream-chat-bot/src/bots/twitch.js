@@ -10,28 +10,12 @@ export class TwitchBot {
 
   async connect() {
     try {
-      // Get OAuth token
-      const tokenResponse = await fetch('https://id.twitch.tv/oauth2/token', {
-        method: 'POST',
-        body: new URLSearchParams({
-          client_id: this.config.clientId,
-          client_secret: this.config.clientSecret,
-          grant_type: 'client_credentials'
-        })
-      });
-
-      if (!tokenResponse.ok) {
-        throw new Error(`Failed to get OAuth token: ${tokenResponse.status}`);
-      }
-
-      const { access_token } = await tokenResponse.json();
-
-      // Initialize TMI client
+      // Initialize TMI client with stored access token
       this.client = new tmi.Client({
         options: { debug: true },
         identity: {
           username: this.config.channel,
-          password: `oauth:${access_token}`
+          password: `oauth:${process.env.TWITCH_ACCESS_TOKEN}`
         },
         channels: [this.config.channel]
       });
