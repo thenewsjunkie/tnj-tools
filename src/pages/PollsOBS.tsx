@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Database } from "@/integrations/supabase/types";
 
 interface PollOption {
   id: string;
@@ -13,6 +14,19 @@ interface Poll {
   image_url: string | null;
   options: PollOption[];
 }
+
+// Define types for the real-time payload
+type RealtimePayload<T> = {
+  commit_timestamp: string;
+  eventType: 'INSERT' | 'UPDATE' | 'DELETE';
+  schema: string;
+  table: string;
+  old: T | null;
+  new: T;
+};
+
+type PollRow = Database['public']['Tables']['polls']['Row'];
+type PollOptionRow = Database['public']['Tables']['poll_options']['Row'];
 
 const PollsOBS = () => {
   const [poll, setPoll] = useState<Poll | null>(null);
@@ -69,7 +83,7 @@ const PollsOBS = () => {
           schema: 'public',
           table: 'polls'
         },
-        async (payload) => {
+        async (payload: RealtimePayload<PollRow>) => {
           console.log('OBS: Poll change detected:', payload);
           if (payload.eventType === 'DELETE' || (payload.eventType === 'UPDATE' && payload.new.status !== 'active')) {
             setPoll(null);
@@ -111,7 +125,7 @@ const PollsOBS = () => {
           schema: 'public',
           table: 'poll_options'
         },
-        (payload) => {
+        (payload: RealtimePayload<PollOptionRow>) => {
           console.log('OBS: Poll option change detected:', payload);
           setPoll(currentPoll => {
             if (!currentPoll) return null;
