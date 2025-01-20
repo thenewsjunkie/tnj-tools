@@ -72,6 +72,10 @@ export function LivePoll() {
     };
   }, [toast]);
 
+  const handlePollCreated = () => {
+    // Refresh will happen automatically through the subscription
+  };
+
   const toggleBot = async () => {
     try {
       setIsConnecting(true);
