@@ -15,16 +15,6 @@ interface Poll {
   options: PollOption[];
 }
 
-// Define types for the real-time payload
-type RealtimePayload<T> = {
-  commit_timestamp: string;
-  eventType: 'INSERT' | 'UPDATE' | 'DELETE';
-  schema: string;
-  table: string;
-  old: T | null;
-  new: T;
-};
-
 type PollRow = Database['public']['Tables']['polls']['Row'];
 type PollOptionRow = Database['public']['Tables']['poll_options']['Row'];
 
@@ -32,46 +22,47 @@ const PollsOBS = () => {
   const [poll, setPoll] = useState<Poll | null>(null);
   const [totalVotes, setTotalVotes] = useState(0);
 
-  // Initial fetch of active poll
-  useEffect(() => {
-    const fetchActivePoll = async () => {
-      console.log('OBS: Fetching active poll...');
-      const { data: polls, error } = await supabase
-        .from('polls')
-        .select(`
+  const fetchActivePoll = async () => {
+    console.log('OBS: Fetching active poll...');
+    const { data: polls, error } = await supabase
+      .from('polls')
+      .select(`
+        id,
+        question,
+        image_url,
+        poll_options (
           id,
-          question,
-          image_url,
-          poll_options (
-            id,
-            text,
-            votes
-          )
-        `)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+          text,
+          votes
+        )
+      `)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-      if (error) {
-        console.error('OBS: Error fetching active poll:', error);
-        return;
-      }
+    if (error) {
+      console.error('OBS: Error fetching active poll:', error);
+      return;
+    }
 
-      if (polls) {
-        console.log('OBS: Active poll found:', polls);
-        setPoll({
-          ...polls,
-          options: polls.poll_options
-        });
-        setTotalVotes(polls.poll_options.reduce((sum, opt) => sum + (opt.votes || 0), 0));
-      } else {
-        console.log('OBS: No active poll found');
-        setPoll(null);
-        setTotalVotes(0);
-      }
-    };
+    if (polls) {
+      console.log('OBS: Active poll found:', polls);
+      const formattedPoll = {
+        ...polls,
+        options: polls.poll_options
+      };
+      setPoll(formattedPoll);
+      setTotalVotes(polls.poll_options.reduce((sum, opt) => sum + (opt.votes || 0), 0));
+    } else {
+      console.log('OBS: No active poll found');
+      setPoll(null);
+      setTotalVotes(0);
+    }
+  };
 
+  useEffect(() => {
+    // Initial fetch
     fetchActivePoll();
 
     // Set up real-time subscriptions
@@ -81,41 +72,12 @@ const PollsOBS = () => {
         {
           event: '*',
           schema: 'public',
-          table: 'polls'
+          table: 'polls',
+          filter: 'status=eq.active'
         },
-        async (payload: RealtimePayload<PollRow>) => {
+        async (payload) => {
           console.log('OBS: Poll change detected:', payload);
-          if (payload.eventType === 'DELETE' || (payload.eventType === 'UPDATE' && payload.new.status !== 'active')) {
-            setPoll(null);
-            setTotalVotes(0);
-            return;
-          }
-          
-          if (payload.new.status === 'active') {
-            // Fetch the complete poll data including options
-            const { data: pollData } = await supabase
-              .from('polls')
-              .select(`
-                id,
-                question,
-                image_url,
-                poll_options (
-                  id,
-                  text,
-                  votes
-                )
-              `)
-              .eq('id', payload.new.id)
-              .single();
-
-            if (pollData) {
-              setPoll({
-                ...pollData,
-                options: pollData.poll_options
-              });
-              setTotalVotes(pollData.poll_options.reduce((sum, opt) => sum + (opt.votes || 0), 0));
-            }
-          }
+          await fetchActivePoll(); // Refetch entire poll data to ensure consistency
         }
       )
       .on(
@@ -125,26 +87,12 @@ const PollsOBS = () => {
           schema: 'public',
           table: 'poll_options'
         },
-        (payload: RealtimePayload<PollOptionRow>) => {
+        async (payload) => {
           console.log('OBS: Poll option change detected:', payload);
-          setPoll(currentPoll => {
-            if (!currentPoll) return null;
-            
-            const updatedOptions = currentPoll.options.map(option => {
-              if (option.id === payload.new.id) {
-                return { ...option, ...payload.new };
-              }
-              return option;
-            });
-            
-            const newTotalVotes = updatedOptions.reduce((sum, opt) => sum + (opt.votes || 0), 0);
-            setTotalVotes(newTotalVotes);
-            
-            return {
-              ...currentPoll,
-              options: updatedOptions
-            };
-          });
+          // Only update if we have an active poll and the changed option belongs to it
+          if (poll && payload.new && poll.options.some(opt => opt.id === payload.new.id)) {
+            await fetchActivePoll(); // Refetch to ensure we have latest state
+          }
         }
       )
       .subscribe((status) => {
@@ -153,9 +101,9 @@ const PollsOBS = () => {
 
     return () => {
       console.log('OBS: Cleaning up subscription');
-      void supabase.removeChannel(channel);
+      supabase.removeChannel(channel);
     };
-  }, []);
+  }, [poll?.id]); // Only re-subscribe when poll ID changes
 
   if (!poll) {
     return null; // Return empty for OBS when no active poll
