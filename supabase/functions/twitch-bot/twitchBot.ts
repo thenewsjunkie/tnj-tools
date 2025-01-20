@@ -6,6 +6,7 @@ import { supabase } from "./supabaseClient.ts";
 export class TwitchBot {
   private connection: TwitchConnection;
   private isConnected: boolean = false;
+  private disconnectRequested: boolean = false;
 
   constructor(config: BotConfig) {
     console.log("[TwitchBot] Initializing with channel:", config.channel);
@@ -28,6 +29,7 @@ export class TwitchBot {
       }
     } catch (error) {
       console.error("[TwitchBot] Error handling message:", error);
+      // Don't disconnect on message handling errors
     }
   }
 
@@ -46,7 +48,12 @@ export class TwitchBot {
         .eq('status', 'active')
         .single();
 
-      if (pollError || !poll) {
+      if (pollError) {
+        console.error("[TwitchBot] Error fetching poll:", pollError);
+        return;
+      }
+
+      if (!poll) {
         console.log("[TwitchBot] No active poll found");
         return;
       }
@@ -109,6 +116,7 @@ export class TwitchBot {
   async connect() {
     try {
       console.log('[TwitchBot] Starting connection...');
+      this.disconnectRequested = false;
       
       // Get OAuth token
       const tokenResponse = await fetch('https://id.twitch.tv/oauth2/token', {
@@ -130,7 +138,7 @@ export class TwitchBot {
       await this.connection.connect(
         access_token,
         'justinfan123',
-        this.connection.config.channel.toLowerCase() // Ensure channel name is lowercase
+        this.connection.config.channel.toLowerCase()
       );
       
       this.isConnected = true;
@@ -143,6 +151,8 @@ export class TwitchBot {
   }
 
   async disconnect() {
+    console.log('[TwitchBot] Disconnect requested');
+    this.disconnectRequested = true;
     if (this.connection) {
       await this.connection.disconnect();
       this.isConnected = false;
@@ -156,6 +166,7 @@ export class TwitchBot {
 
   private async updateBotStatus(status: 'connected' | 'disconnected', errorMessage?: string) {
     try {
+      console.log(`[TwitchBot] Updating bot status to ${status}${errorMessage ? `: ${errorMessage}` : ''}`);
       await supabase.from('bot_instances').upsert({
         type: 'twitch',
         status: status,

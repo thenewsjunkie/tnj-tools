@@ -7,6 +7,7 @@ export class TwitchConnection {
   private isConnected: boolean = false;
   private reconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 5;
+  private disconnectRequested: boolean = false;
   config: BotConfig;
 
   constructor(
@@ -24,6 +25,7 @@ export class TwitchConnection {
         throw new Error("Missing authentication credentials");
       }
 
+      this.disconnectRequested = false;
       console.log("[TwitchConnection] Starting connection attempt...");
       this.ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443/");
 
@@ -45,25 +47,27 @@ export class TwitchConnection {
         // Handle authentication failures
         if (message.includes("Login unsuccessful")) {
           console.error("[TwitchConnection] Authentication failed");
-          this.handleDisconnect();
+          this.handleDisconnect(new Error("Authentication failed"));
           return;
         }
         
         this.onMessage(message);
       };
 
-      this.ws.onclose = () => {
-        console.log("[TwitchConnection] WebSocket connection closed");
-        this.handleDisconnect();
+      this.ws.onclose = (event) => {
+        console.log("[TwitchConnection] WebSocket connection closed", event.code, event.reason);
+        if (!this.disconnectRequested) {
+          this.handleDisconnect();
+        }
       };
 
       this.ws.onerror = (error) => {
         console.error("[TwitchConnection] WebSocket error:", error);
-        this.handleDisconnect();
+        this.handleDisconnect(error);
       };
     } catch (error) {
       console.error("[TwitchConnection] Error in connect method:", error);
-      this.handleDisconnect();
+      this.handleDisconnect(error);
       throw error;
     }
   }
@@ -87,13 +91,18 @@ export class TwitchConnection {
         // Check if we haven't received a PONG in the last 5 minutes
         if (this.lastPong && new Date().getTime() - this.lastPong.getTime() > 300000) {
           console.log("[TwitchConnection] No PONG received in 5 minutes, reconnecting...");
-          this.handleDisconnect();
+          this.handleDisconnect(new Error("No PONG response"));
         }
       }
     }, 240000); // Send PING every 4 minutes
   }
 
-  private handleDisconnect() {
+  private handleDisconnect(error?: Error | Event) {
+    if (this.disconnectRequested) {
+      console.log("[TwitchConnection] Disconnect was requested, not attempting reconnect");
+      return;
+    }
+
     this.isConnected = false;
     this.onConnectionChange(false);
     
@@ -102,17 +111,18 @@ export class TwitchConnection {
       this.heartbeatInterval = null;
     }
 
-    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+    if (this.reconnectAttempts < this.maxReconnectAttempts && !this.disconnectRequested) {
       this.reconnectAttempts++;
       console.log(`[TwitchConnection] Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
       setTimeout(() => this.connect(), 5000 * this.reconnectAttempts);
     } else {
-      console.error("[TwitchConnection] Max reconnection attempts reached");
+      console.error("[TwitchConnection] Max reconnection attempts reached or disconnect requested");
     }
   }
 
   disconnect() {
     console.log("[TwitchConnection] Disconnecting...");
+    this.disconnectRequested = true;
     if (this.heartbeatInterval) {
       clearInterval(this.heartbeatInterval);
       this.heartbeatInterval = null;
