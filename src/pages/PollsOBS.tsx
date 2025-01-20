@@ -77,7 +77,7 @@ const PollsOBS = () => {
     // Set up real-time subscriptions
     const channel = supabase.channel('obs-poll-updates')
       .on(
-        'postgres_changes',
+        'postgres_changes' as any,
         {
           event: '*',
           schema: 'public',
@@ -119,7 +119,7 @@ const PollsOBS = () => {
         }
       )
       .on(
-        'postgres_changes',
+        'postgres_changes' as any,
         {
           event: '*',
           schema: 'public',
