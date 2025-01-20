@@ -11,11 +11,13 @@ import ActivePoll from "./polls/ActivePoll";
 interface BotInstance {
   status: 'connected' | 'disconnected';
   type: string;
+  error_message?: string | null;
 }
 
 export function LivePoll() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [botStatus, setBotStatus] = useState<'connected' | 'disconnected'>('disconnected');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Fetch initial bot status
@@ -23,12 +25,13 @@ export function LivePoll() {
     const fetchBotStatus = async () => {
       const { data, error } = await supabase
         .from('bot_instances')
-        .select('status')
+        .select('status, error_message')
         .eq('type', 'twitch')
         .maybeSingle();
 
-      if (!error && data?.status) {
+      if (!error && data) {
         setBotStatus(data.status as 'connected' | 'disconnected');
+        setErrorMessage(data.error_message);
       }
     };
 
@@ -41,8 +44,24 @@ export function LivePoll() {
         { event: '*', schema: 'public', table: 'bot_instances', filter: 'type=eq.twitch' },
         (payload) => {
           const newData = payload.new as BotInstance;
-          if (newData && newData.status) {
+          if (newData) {
             setBotStatus(newData.status);
+            setErrorMessage(newData.error_message);
+            
+            // Show toast for status changes
+            if (newData.status === 'connected') {
+              toast({
+                title: "Twitch bot connected successfully",
+                duration: 3000,
+              });
+            } else if (newData.error_message) {
+              toast({
+                title: "Twitch bot disconnected",
+                description: newData.error_message,
+                variant: "destructive",
+                duration: 5000,
+              });
+            }
           }
         }
       )
@@ -51,15 +70,12 @@ export function LivePoll() {
     return () => {
       botSubscription.unsubscribe();
     };
-  }, []);
-
-  const handlePollCreated = () => {
-    // Refresh will happen automatically through the subscription
-  };
+  }, [toast]);
 
   const toggleBot = async () => {
     try {
       setIsConnecting(true);
+      setErrorMessage(null);
       const action = botStatus === 'connected' ? 'stop' : 'start';
       
       const { error } = await supabase.functions.invoke('twitch-bot', {
@@ -68,17 +84,19 @@ export function LivePoll() {
 
       if (error) throw error;
 
-      setBotStatus(action === 'start' ? 'connected' : 'disconnected');
       toast({
-        title: `Twitch bot ${action === 'start' ? 'connected' : 'disconnected'}`,
+        title: `Twitch bot ${action === 'start' ? 'connecting' : 'disconnecting'}...`,
         duration: 3000,
       });
     } catch (error) {
       console.error('Error toggling bot:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to toggle bot connection';
+      setErrorMessage(errorMessage);
       toast({
         title: "Failed to toggle bot connection",
+        description: errorMessage,
         variant: "destructive",
-        duration: 3000,
+        duration: 5000,
       });
     } finally {
       setIsConnecting(false);
@@ -128,6 +146,11 @@ export function LivePoll() {
             </Link>
           </div>
         </CardTitle>
+        {errorMessage && (
+          <div className="text-sm text-red-500 mt-2">
+            Error: {errorMessage}
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         <ActivePoll />
