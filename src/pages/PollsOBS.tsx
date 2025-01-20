@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Database } from "@/integrations/supabase/types";
+import { usePollSubscription } from "@/hooks/usePollSubscription";
 
 type PollOption = {
   id: string;
@@ -13,12 +13,6 @@ type Poll = {
   question: string;
   image_url: string | null;
   options: PollOption[];
-}
-
-type RealtimePayload<T> = {
-  new: T;
-  old: T;
-  eventType: 'INSERT' | 'UPDATE' | 'DELETE';
 }
 
 const PollsOBS = () => {
@@ -51,11 +45,10 @@ const PollsOBS = () => {
 
     if (polls) {
       console.log('OBS: Active poll found:', polls);
-      const formattedPoll = {
+      setPoll({
         ...polls,
         options: polls.poll_options
-      };
-      setPoll(formattedPoll);
+      });
       setTotalVotes(polls.poll_options.reduce((sum, opt) => sum + (opt.votes || 0), 0));
     } else {
       console.log('OBS: No active poll found');
@@ -64,49 +57,8 @@ const PollsOBS = () => {
     }
   };
 
-  useEffect(() => {
-    // Initial fetch
-    fetchActivePoll();
-
-    // Set up real-time subscriptions
-    const channel = supabase.channel('obs-poll-updates')
-      .on(
-        'postgres_changes' as any,
-        {
-          event: '*',
-          schema: 'public',
-          table: 'polls',
-          filter: 'status=eq.active'
-        },
-        async (payload: RealtimePayload<Database['public']['Tables']['polls']['Row']>) => {
-          console.log('OBS: Poll change detected:', payload);
-          await fetchActivePoll(); // Refetch entire poll data to ensure consistency
-        }
-      )
-      .on(
-        'postgres_changes' as any,
-        {
-          event: '*',
-          schema: 'public',
-          table: 'poll_options'
-        },
-        async (payload: RealtimePayload<Database['public']['Tables']['poll_options']['Row']>) => {
-          console.log('OBS: Poll option change detected:', payload);
-          // Only update if we have an active poll and the changed option belongs to it
-          if (poll && payload.new && poll.options.some(opt => opt.id === payload.new.id)) {
-            await fetchActivePoll(); // Refetch to ensure we have latest state
-          }
-        }
-      )
-      .subscribe((status) => {
-        console.log('OBS: Subscription status:', status);
-      });
-
-    return () => {
-      console.log('OBS: Cleaning up subscription');
-      supabase.removeChannel(channel);
-    };
-  }, [poll?.id]); // Only re-subscribe when poll ID changes
+  // Use the same subscription hook that works in ActivePoll
+  usePollSubscription(fetchActivePoll);
 
   if (!poll) {
     return null; // Return empty for OBS when no active poll
