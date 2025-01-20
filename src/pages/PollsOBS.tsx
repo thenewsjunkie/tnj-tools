@@ -2,21 +2,24 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
 
-interface PollOption {
+type PollOption = {
   id: string;
   text: string;
   votes: number;
 }
 
-interface Poll {
+type Poll = {
   id: string;
   question: string;
   image_url: string | null;
   options: PollOption[];
 }
 
-type PollRow = Database['public']['Tables']['polls']['Row'];
-type PollOptionRow = Database['public']['Tables']['poll_options']['Row'];
+type RealtimePayload<T> = {
+  new: T;
+  old: T;
+  eventType: 'INSERT' | 'UPDATE' | 'DELETE';
+}
 
 const PollsOBS = () => {
   const [poll, setPoll] = useState<Poll | null>(null);
@@ -75,7 +78,7 @@ const PollsOBS = () => {
           table: 'polls',
           filter: 'status=eq.active'
         },
-        async (payload) => {
+        async (payload: RealtimePayload<Database['public']['Tables']['polls']['Row']>) => {
           console.log('OBS: Poll change detected:', payload);
           await fetchActivePoll(); // Refetch entire poll data to ensure consistency
         }
@@ -87,7 +90,7 @@ const PollsOBS = () => {
           schema: 'public',
           table: 'poll_options'
         },
-        async (payload) => {
+        async (payload: RealtimePayload<Database['public']['Tables']['poll_options']['Row']>) => {
           console.log('OBS: Poll option change detected:', payload);
           // Only update if we have an active poll and the changed option belongs to it
           if (poll && payload.new && poll.options.some(opt => opt.id === payload.new.id)) {
