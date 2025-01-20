@@ -46,13 +46,14 @@ export class TwitchBot {
           )
         `)
         .eq('status', 'active')
-        .single();
+        .maybeSingle(); // Changed from .single() to .maybeSingle()
 
       if (pollError) {
         console.error("[TwitchBot] Error fetching poll:", pollError);
         return;
       }
 
+      // If no active poll, just return silently
       if (!poll) {
         console.log("[TwitchBot] No active poll found");
         return;
@@ -75,7 +76,7 @@ export class TwitchBot {
         .eq('poll_id', poll.id)
         .eq('username', username)
         .eq('platform', 'twitch')
-        .single();
+        .maybeSingle(); // Changed from .single() to .maybeSingle()
 
       if (existingVote) {
         console.log(`[TwitchBot] User ${username} already voted in this poll`);
