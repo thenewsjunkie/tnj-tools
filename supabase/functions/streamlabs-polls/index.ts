@@ -1,4 +1,4 @@
-import { serve } from 'https://deno.fresh.dev/std@v1/http/server.ts';
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
@@ -35,6 +35,8 @@ serve(async (req) => {
     // Handle different actions
     switch (action) {
       case 'create_poll': {
+        console.log('Creating Streamlabs poll:', pollData);
+        
         // First ensure we have a valid access token
         const tokenResponse = await fetch('https://streamlabs.com/api/v2.0/token', {
           method: 'POST',
@@ -49,10 +51,12 @@ serve(async (req) => {
         });
 
         if (!tokenResponse.ok) {
+          console.error('Failed to get Streamlabs token:', await tokenResponse.text());
           throw new Error('Failed to get Streamlabs access token');
         }
 
         const tokenData: StreamlabsTokenResponse = await tokenResponse.json();
+        console.log('Got Streamlabs token');
 
         // Create poll in Streamlabs
         const createPollResponse = await fetch('https://streamlabs.com/api/v2.0/polls', {
@@ -69,10 +73,12 @@ serve(async (req) => {
         });
 
         if (!createPollResponse.ok) {
+          console.error('Failed to create Streamlabs poll:', await createPollResponse.text());
           throw new Error('Failed to create Streamlabs poll');
         }
 
         const pollResponse = await createPollResponse.json();
+        console.log('Created Streamlabs poll:', pollResponse);
         
         return new Response(
           JSON.stringify(pollResponse),
@@ -81,6 +87,8 @@ serve(async (req) => {
       }
 
       case 'end_poll': {
+        console.log('Ending Streamlabs poll:', pollData.pollId);
+        
         // Similar OAuth flow as above
         const tokenResponse = await fetch('https://streamlabs.com/api/v2.0/token', {
           method: 'POST',
@@ -95,10 +103,12 @@ serve(async (req) => {
         });
 
         if (!tokenResponse.ok) {
+          console.error('Failed to get Streamlabs token:', await tokenResponse.text());
           throw new Error('Failed to get Streamlabs access token');
         }
 
         const tokenData: StreamlabsTokenResponse = await tokenResponse.json();
+        console.log('Got Streamlabs token');
 
         // End poll in Streamlabs
         const endPollResponse = await fetch(`https://streamlabs.com/api/v2.0/polls/${pollData.pollId}/end`, {
@@ -110,9 +120,11 @@ serve(async (req) => {
         });
 
         if (!endPollResponse.ok) {
+          console.error('Failed to end Streamlabs poll:', await endPollResponse.text());
           throw new Error('Failed to end Streamlabs poll');
         }
 
+        console.log('Successfully ended Streamlabs poll');
         return new Response(
           JSON.stringify({ success: true }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -123,6 +135,7 @@ serve(async (req) => {
         throw new Error('Invalid action');
     }
   } catch (error) {
+    console.error('Error in streamlabs-polls function:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
