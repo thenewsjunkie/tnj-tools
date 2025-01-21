@@ -83,7 +83,7 @@ const AlertMessage = ({
   const restOfMessage = subscribedIndex === -1 ? '' : message.slice(subscribedIndex);
 
   return (
-    <div className="absolute bottom-0 w-full">
+    <div className="absolute bottom-0 w-full mb-4">
       <div 
         className="text-white alert-message-font text-center"
         style={{ 
