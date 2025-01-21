@@ -73,22 +73,9 @@ export const AlertContent: React.FC<AlertContentProps> = memo(({
   }, [isMediaComplete, isCountComplete, displayMessage]);
 
   return (
-    <div className="fixed top-0 left-0 right-0">
-      <div className={`flex ${currentAlert.is_gift_alert ? 'items-center justify-between w-full px-8' : 'flex-col items-center'}`}>
-        {currentAlert.message_enabled && displayMessage && (
-          <AlertMessage 
-            message={displayMessage}
-            fontSize={currentAlert.font_size}
-            isGiftAlert={currentAlert.is_gift_alert}
-            giftCount={currentAlert.gift_count || 1}
-            giftCountAnimationSpeed={currentAlert.gift_count_animation_speed}
-            giftTextColor={currentAlert.gift_text_color}
-            giftCountColor={currentAlert.gift_count_color}
-            onCountComplete={handleCountComplete}
-          />
-        )}
-        
-        <div>
+    <div className="fixed top-0 left-0 right-0 flex flex-col items-center">
+      <div className={`${currentAlert.is_gift_alert ? 'flex items-center justify-between w-full px-8' : 'flex flex-col items-center'}`}>
+        <div className="mb-16">
           {currentAlert.media_type.startsWith('video') ? (
             <VideoAlert 
               mediaUrl={currentAlert.media_url}
@@ -105,6 +92,19 @@ export const AlertContent: React.FC<AlertContentProps> = memo(({
             />
           )}
         </div>
+        
+        {currentAlert.message_enabled && displayMessage && (
+          <AlertMessage 
+            message={displayMessage}
+            fontSize={currentAlert.font_size}
+            isGiftAlert={currentAlert.is_gift_alert}
+            giftCount={currentAlert.gift_count || 1}
+            giftCountAnimationSpeed={currentAlert.gift_count_animation_speed}
+            giftTextColor={currentAlert.gift_text_color}
+            giftCountColor={currentAlert.gift_count_color}
+            onCountComplete={handleCountComplete}
+          />
+        )}
       </div>
     </div>
   );
