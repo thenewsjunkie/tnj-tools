@@ -75,7 +75,7 @@ export const AlertContent: React.FC<AlertContentProps> = memo(({
   return (
     <div className="fixed top-0 left-0 right-0 flex flex-col items-center">
       <div className={`${currentAlert.is_gift_alert ? 'flex items-center justify-between w-full px-8' : 'flex flex-col items-center'}`}>
-        <div className="mb-6">
+        <div className="mb-2">
           {currentAlert.media_type.startsWith('video') ? (
             <VideoAlert 
               mediaUrl={currentAlert.media_url}
