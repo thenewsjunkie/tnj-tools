@@ -21,6 +21,7 @@ interface Poll {
 const ActivePoll = () => {
   const [poll, setPoll] = useState<Poll | null>(null);
   const [totalVotes, setTotalVotes] = useState(0);
+  const [isArchiving, setIsArchiving] = useState(false);
   const { toast } = useToast();
 
   const fetchActivePoll = async () => {
@@ -66,22 +67,39 @@ const ActivePoll = () => {
 
   const archivePoll = async () => {
     if (!poll) return;
+    
+    setIsArchiving(true);
 
-    const { error } = await supabase
-      .from('polls')
-      .update({ status: 'completed' })
-      .eq('id', poll.id);
+    try {
+      // End poll in Streamlabs
+      const { error: streamlabsError } = await supabase.functions.invoke('streamlabs-polls', {
+        body: {
+          action: 'end_poll',
+          pollData: { pollId: poll.id }
+        }
+      });
 
-    if (error) {
+      if (streamlabsError) throw streamlabsError;
+
+      // Update poll status in Supabase
+      const { error } = await supabase
+        .from('polls')
+        .update({ status: 'completed' })
+        .eq('id', poll.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Poll archived successfully",
+      });
+    } catch (error) {
       console.error('Error archiving poll:', error);
       toast({
         title: "Failed to archive poll",
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "Poll archived successfully",
-      });
+    } finally {
+      setIsArchiving(false);
     }
   };
 
@@ -134,6 +152,7 @@ const ActivePoll = () => {
           variant="ghost"
           size="icon"
           onClick={archivePoll}
+          disabled={isArchiving}
           className="h-8 w-8 hover:text-neon-red"
         >
           <Archive className="h-4 w-4" />

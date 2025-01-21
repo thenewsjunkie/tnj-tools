@@ -1,0 +1,2 @@
+[functions.streamlabs-polls]
+verify_jwt = false

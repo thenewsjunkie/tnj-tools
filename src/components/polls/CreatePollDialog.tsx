@@ -13,6 +13,7 @@ const CreatePollDialog = ({ onPollCreated }: { onPollCreated: () => void }) => {
   const [question, setQuestion] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [options, setOptions] = useState(["", ""]);
+  const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
 
   const handleAddOption = () => {
@@ -50,7 +51,10 @@ const CreatePollDialog = ({ onPollCreated }: { onPollCreated: () => void }) => {
       return;
     }
 
+    setIsCreating(true);
+
     try {
+      // First create the poll in Supabase
       const { data: poll, error: pollError } = await supabase
         .from('polls')
         .insert({
@@ -76,9 +80,22 @@ const CreatePollDialog = ({ onPollCreated }: { onPollCreated: () => void }) => {
 
       if (optionsError) throw optionsError;
 
+      // Create the poll in Streamlabs
+      const { error: streamlabsError } = await supabase.functions.invoke('streamlabs-polls', {
+        body: {
+          action: 'create_poll',
+          pollData: {
+            question,
+            options: options.filter(opt => opt.trim()).map(text => ({ text }))
+          }
+        }
+      });
+
+      if (streamlabsError) throw streamlabsError;
+
       toast({
         title: "Success",
-        description: "Poll created successfully",
+        description: "Poll created successfully in both platforms",
       });
       
       setOpen(false);
@@ -94,6 +111,8 @@ const CreatePollDialog = ({ onPollCreated }: { onPollCreated: () => void }) => {
         description: "Failed to create poll",
         variant: "destructive",
       });
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -165,9 +184,10 @@ const CreatePollDialog = ({ onPollCreated }: { onPollCreated: () => void }) => {
 
           <Button 
             onClick={handleSubmit}
+            disabled={isCreating}
             className="dark:bg-white dark:text-black dark:hover:bg-white/90"
           >
-            Create Poll
+            {isCreating ? 'Creating...' : 'Create Poll'}
           </Button>
         </div>
       </DialogContent>
