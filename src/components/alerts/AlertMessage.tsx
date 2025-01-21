@@ -83,9 +83,9 @@ const AlertMessage = ({
   const restOfMessage = subscribedIndex === -1 ? '' : message.slice(subscribedIndex);
 
   return (
-    <div className="mt-2">
+    <div className="relative h-screen">
       <div 
-        className="text-white alert-message-font text-center"
+        className="absolute bottom-32 left-0 right-0 text-white alert-message-font text-center"
         style={{ 
           fontSize: `${fontSize}px`,
           textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
