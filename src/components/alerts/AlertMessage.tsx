@@ -83,21 +83,23 @@ const AlertMessage = ({
   const restOfMessage = subscribedIndex === -1 ? '' : message.slice(subscribedIndex);
 
   return (
-    <div 
-      className="text-white alert-message-font mt-2 text-center"
-      style={{ 
-        fontSize: `${fontSize}px`,
-        textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
-        wordWrap: 'break-word',
-        whiteSpace: 'pre-wrap',
-        lineHeight: '1.2',
-        minHeight: `${fontSize * 1.2}px`
-      }}
-    >
-      <span className="text-[#4CDBC4]">{username}</span>
-      {restOfMessage && (
-        <span className="break-words inline-block">{restOfMessage}</span>
-      )}
+    <div className="fixed bottom-0 left-0 right-0 mb-4">
+      <div 
+        className="text-white alert-message-font text-center"
+        style={{ 
+          fontSize: `${fontSize}px`,
+          textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
+          wordWrap: 'break-word',
+          whiteSpace: 'pre-wrap',
+          lineHeight: '1.2',
+          minHeight: `${fontSize * 1.2}px`
+        }}
+      >
+        <span className="text-[#4CDBC4]">{username}</span>
+        {restOfMessage && (
+          <span className="break-words inline-block">{restOfMessage}</span>
+        )}
+      </div>
     </div>
   );
 };
