@@ -21,43 +21,15 @@ serve(async (req) => {
       });
     }
 
-    // Create Supabase client with anon key instead of service role key
+    // Create Supabase client
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     );
 
     // Parse request body
-    const { contestant, increment, action } = await req.json();
-    console.log(`[update-fritz-score] Request received:`, { contestant, increment, action });
-
-    // Handle clear action
-    if (action === 'clear') {
-      const { error: clearError } = await supabase
-        .from('fritz_contestants')
-        .update({ score: 0 })
-        .not('position', 'is', null);
-
-      if (clearError) {
-        console.error('[update-fritz-score] Error clearing scores:', clearError);
-        return new Response(JSON.stringify({ error: 'Failed to clear scores' }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    // Handle score update (existing functionality)
-    if (!contestant) {
-      return new Response(JSON.stringify({ error: 'Contestant name is required' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+    const { contestant, increment } = await req.json();
+    console.log(`[update-fritz-score] Request received:`, { contestant, increment });
 
     // Format contestant name to match database format
     const formattedName = contestant === 'c-lane' ? 'C-Lane' : 
@@ -99,14 +71,12 @@ serve(async (req) => {
       });
     }
 
-    // Get first row of the result
-    const result = data[0];
-    console.log('[update-fritz-score] Update result:', result);
+    console.log('[update-fritz-score] Update result:', data);
 
     return new Response(JSON.stringify({
-      success: result.success,
-      newScore: result.new_score,
-      newVersion: result.new_version
+      success: true,
+      newScore: data[0].new_score,
+      newVersion: data[0].new_version
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
