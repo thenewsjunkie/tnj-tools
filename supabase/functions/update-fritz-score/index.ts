@@ -29,7 +29,7 @@ serve(async (req) => {
 
     // Parse request body
     const { contestant, increment, action } = await req.json();
-    console.log(`Request received:`, { contestant, increment, action });
+    console.log(`[update-fritz-score] Request received:`, { contestant, increment, action });
 
     // Handle clear action
     if (action === 'clear') {
@@ -39,7 +39,7 @@ serve(async (req) => {
         .not('position', 'is', null);
 
       if (clearError) {
-        console.error('Error clearing scores:', clearError);
+        console.error('[update-fritz-score] Error clearing scores:', clearError);
         return new Response(JSON.stringify({ error: 'Failed to clear scores' }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -64,6 +64,8 @@ serve(async (req) => {
       contestant === 'custom' ? 'Custom' :
       contestant.charAt(0).toUpperCase() + contestant.slice(1);
 
+    console.log('[update-fritz-score] Formatted contestant name:', formattedName);
+
     // Get current contestant data for version
     const { data: contestantData, error: fetchError } = await supabase
       .from('fritz_contestants')
@@ -72,12 +74,14 @@ serve(async (req) => {
       .single();
 
     if (fetchError) {
-      console.error('Error fetching contestant:', fetchError);
+      console.error('[update-fritz-score] Error fetching contestant:', fetchError);
       return new Response(JSON.stringify({ error: 'Contestant not found' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
+
+    console.log('[update-fritz-score] Current contestant version:', contestantData.version);
 
     // Update score using the database function
     const { data, error } = await supabase
@@ -88,7 +92,7 @@ serve(async (req) => {
       });
 
     if (error) {
-      console.error('Error updating score:', error);
+      console.error('[update-fritz-score] Error updating score:', error);
       return new Response(JSON.stringify({ error: 'Failed to update score' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -97,7 +101,22 @@ serve(async (req) => {
 
     // Get first row of the result
     const result = data[0];
+    console.log('[update-fritz-score] Update result:', result);
     
+    // Double check yearly scores table
+    const currentYear = new Date().getFullYear();
+    const { data: yearlyScore, error: yearlyError } = await supabase
+      .from('fritz_yearly_scores')
+      .select('total_score')
+      .eq('contestant_name', formattedName)
+      .eq('year', currentYear)
+      .single();
+      
+    console.log('[update-fritz-score] Current yearly score:', yearlyScore);
+    if (yearlyError) {
+      console.error('[update-fritz-score] Error checking yearly score:', yearlyError);
+    }
+
     return new Response(JSON.stringify({
       success: result.success,
       newScore: result.new_score,
@@ -107,7 +126,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Error:', error);
+    console.error('[update-fritz-score] Error:', error);
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
