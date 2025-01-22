@@ -102,20 +102,6 @@ serve(async (req) => {
     // Get first row of the result
     const result = data[0];
     console.log('[update-fritz-score] Update result:', result);
-    
-    // Double check yearly scores table
-    const currentYear = new Date().getFullYear();
-    const { data: yearlyScore, error: yearlyError } = await supabase
-      .from('fritz_yearly_scores')
-      .select('total_score')
-      .eq('contestant_name', formattedName)
-      .eq('year', currentYear)
-      .single();
-      
-    console.log('[update-fritz-score] Current yearly score:', yearlyScore);
-    if (yearlyError) {
-      console.error('[update-fritz-score] Error checking yearly score:', yearlyError);
-    }
 
     return new Response(JSON.stringify({
       success: result.success,
