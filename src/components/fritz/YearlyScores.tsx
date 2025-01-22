@@ -28,19 +28,16 @@ const YearlyScores = () => {
 
   useEffect(() => {
     const fetchActiveContestants = async () => {
-      console.log('[YearlyScores] Fetching active contestants...');
       const { data: contestants } = await supabase
         .from('fritz_contestants')
         .select('name')
         .not('name', 'is', null);
 
       const activeNames = contestants?.map(c => c.name) || [];
-      console.log('[YearlyScores] Active contestants:', activeNames);
       setActiveContestants(activeNames as string[]);
     };
 
     const fetchYearlyScores = async () => {
-      console.log('[YearlyScores] Fetching yearly scores for year:', currentYear);
       const { data, error } = await supabase
         .from('fritz_yearly_scores')
         .select('*')
@@ -48,11 +45,9 @@ const YearlyScores = () => {
         .order('total_score', { ascending: false });
 
       if (error) {
-        console.error('[YearlyScores] Error fetching yearly scores:', error);
+        console.error('Error fetching yearly scores:', error);
         return;
       }
-
-      console.log('[YearlyScores] Raw scores from database:', data);
 
       // Filter scores to only show default contestants plus Josh or Custom if they're active
       const filteredScores = data.filter(score => {
@@ -61,7 +56,6 @@ const YearlyScores = () => {
                (activeContestants.includes(name) && (name === 'Josh' || name === 'Custom'));
       });
 
-      console.log('[YearlyScores] Filtered scores:', filteredScores);
       setScores(filteredScores);
     };
 
@@ -69,9 +63,7 @@ const YearlyScores = () => {
     fetchYearlyScores();
 
     // Subscribe to real-time changes
-    console.log('[YearlyScores] Setting up real-time subscriptions...');
-    
-    const yearlyScoresChannel = supabase
+    const channel = supabase
       .channel('yearly-scores-changes')
       .on(
         'postgres_changes',
@@ -82,13 +74,11 @@ const YearlyScores = () => {
           filter: `year=eq.${currentYear}`
         },
         (payload) => {
-          console.log('[YearlyScores] Received yearly scores update:', payload);
+          console.log('Received real-time update:', payload);
           fetchYearlyScores();
         }
       )
-      .subscribe((status) => {
-        console.log('[YearlyScores] Yearly scores subscription status:', status);
-      });
+      .subscribe();
 
     // Also listen for changes to active contestants
     const contestantsChannel = supabase
@@ -100,19 +90,15 @@ const YearlyScores = () => {
           schema: 'public',
           table: 'fritz_contestants'
         },
-        (payload) => {
-          console.log('[YearlyScores] Received contestants update:', payload);
+        () => {
           fetchActiveContestants();
           fetchYearlyScores();
         }
       )
-      .subscribe((status) => {
-        console.log('[YearlyScores] Contestants subscription status:', status);
-      });
+      .subscribe();
 
     return () => {
-      console.log('[YearlyScores] Cleaning up subscriptions');
-      supabase.removeChannel(yearlyScoresChannel);
+      supabase.removeChannel(channel);
       supabase.removeChannel(contestantsChannel);
     };
   }, [currentYear, activeContestants]);
