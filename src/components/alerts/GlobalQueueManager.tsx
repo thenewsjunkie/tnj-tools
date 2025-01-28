@@ -10,6 +10,7 @@ const GlobalQueueManager = () => {
   const isInitializedRef = useRef(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isProcessingRef = useRef(false);
 
   // Listen for ALL alert status changes
   useRealtimeConnection(
@@ -35,11 +36,16 @@ const GlobalQueueManager = () => {
       // Handle different alert states
       if (payload.new.status === 'completed') {
         console.log('[GlobalQueueManager] Alert completed, processing next if not paused');
+        // Reset processing flag when alert completes
+        isProcessingRef.current = false;
         if (!currentlyPaused) {
           processNextAlert(false);
         }
       } else if (payload.new.status === 'playing') {
         console.log('[GlobalQueueManager] Alert now playing, setting up cleanup timer');
+        // Set processing flag when alert starts playing
+        isProcessingRef.current = true;
+        
         // Set up cleanup timer based on alert duration
         const duration = payload.new.duration || 5000;
         const maxDuration = payload.new.max_duration || duration + 5000;
@@ -73,7 +79,7 @@ const GlobalQueueManager = () => {
 
   // Set up heartbeat for current alert
   useEffect(() => {
-    if (currentAlert?.id) {
+    if (currentAlert?.id && !isProcessingRef.current) {
       console.log('[GlobalQueueManager] Setting up heartbeat for alert:', currentAlert.id);
       
       // Clear any existing heartbeat interval
@@ -120,7 +126,7 @@ const GlobalQueueManager = () => {
       const queueState = settings?.value as { isPaused: boolean } | null;
       const currentlyPaused = queueState?.isPaused ?? false;
       
-      if (!currentAlert && !currentlyPaused) {
+      if (!currentAlert && !currentlyPaused && !isProcessingRef.current) {
         console.log('[GlobalQueueManager] No current alert and queue not paused, processing initial alert');
         processNextAlert(false);
       }
