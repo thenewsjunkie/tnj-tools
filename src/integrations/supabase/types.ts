@@ -17,6 +17,7 @@ export type Database = {
           duration: number | null
           gift_count: number | null
           id: string
+          last_heartbeat: string | null
           max_duration: number | null
           played_at: string | null
           scheduled_for: string | null
@@ -31,6 +32,7 @@ export type Database = {
           duration?: number | null
           gift_count?: number | null
           id?: string
+          last_heartbeat?: string | null
           max_duration?: number | null
           played_at?: string | null
           scheduled_for?: string | null
@@ -45,6 +47,7 @@ export type Database = {
           duration?: number | null
           gift_count?: number | null
           id?: string
+          last_heartbeat?: string | null
           max_duration?: number | null
           played_at?: string | null
           scheduled_for?: string | null

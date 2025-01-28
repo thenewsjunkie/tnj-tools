@@ -9,6 +9,7 @@ const GlobalQueueManager = () => {
   const { currentAlert, processNextAlert } = useAlertQueue();
   const isInitializedRef = useRef(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Listen for ALL alert status changes
   useRealtimeConnection(
@@ -57,7 +58,6 @@ const GlobalQueueManager = () => {
             
           if (currentState?.status === 'playing') {
             console.log('[GlobalQueueManager] Alert appears stuck, forcing completion');
-            // Directly update the alert status in the database
             await supabase
               .from('alert_queue')
               .update({ 
@@ -70,6 +70,40 @@ const GlobalQueueManager = () => {
       }
     }
   );
+
+  // Set up heartbeat for current alert
+  useEffect(() => {
+    if (currentAlert?.id) {
+      console.log('[GlobalQueueManager] Setting up heartbeat for alert:', currentAlert.id);
+      
+      // Clear any existing heartbeat interval
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+      }
+
+      // Start new heartbeat interval
+      heartbeatIntervalRef.current = setInterval(async () => {
+        console.log('[GlobalQueueManager] Sending heartbeat for alert:', currentAlert.id);
+        const { error } = await supabase
+          .from('alert_queue')
+          .update({ 
+            last_heartbeat: new Date().toISOString()
+          })
+          .eq('id', currentAlert.id)
+          .eq('status', 'playing');
+
+        if (error) {
+          console.error('[GlobalQueueManager] Error sending heartbeat:', error);
+        }
+      }, 5000); // Send heartbeat every 5 seconds
+
+      return () => {
+        if (heartbeatIntervalRef.current) {
+          clearInterval(heartbeatIntervalRef.current);
+        }
+      };
+    }
+  }, [currentAlert?.id]);
 
   // Initialize queue on component mount
   useEffect(() => {
@@ -121,6 +155,9 @@ const GlobalQueueManager = () => {
     return () => {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
+      }
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
       }
     };
   }, []);
