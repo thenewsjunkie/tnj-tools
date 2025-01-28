@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { AlertContent } from "./display/AlertContent";
-import { useAlertTimer } from "./display/useAlertTimer";
 
 interface AlertDisplayProps {
   currentAlert: {
@@ -61,21 +60,6 @@ export const AlertDisplay = ({
       onComplete();
     }
   };
-
-  // Use alert timer with display_duration
-  useAlertTimer({
-    currentAlert,
-    onComplete: handleAlertContentComplete
-  });
-
-  // Add debug logging
-  console.log('[AlertDisplay] Current state:', {
-    isGiftAlert: currentAlert.is_gift_alert,
-    hasError,
-    isMediaLoaded,
-    isCompleting,
-    currentAlert
-  });
 
   if (!currentAlert) {
     console.log('[AlertDisplay] No alert to render');

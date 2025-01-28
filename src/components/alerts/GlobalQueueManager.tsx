@@ -9,7 +9,6 @@ const GlobalQueueManager = () => {
   const { currentAlert, processNextAlert } = useAlertQueue();
   const isInitializedRef = useRef(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isProcessingRef = useRef(false);
   const completingAlertIdRef = useRef<string | null>(null);
 
@@ -48,29 +47,28 @@ const GlobalQueueManager = () => {
           clearTimeout(timerRef.current);
           timerRef.current = null;
         }
-        if (heartbeatIntervalRef.current) {
-          clearInterval(heartbeatIntervalRef.current);
-          heartbeatIntervalRef.current = null;
-        }
         
         // Reset processing flag
         isProcessingRef.current = false;
         
         if (!currentlyPaused) {
-          processNextAlert(false);
+          // Add a small delay before processing the next alert
+          setTimeout(() => {
+            processNextAlert(false);
+          }, 1000);
         }
 
-        // Reset completing alert id after a short delay
+        // Reset completing alert id after a delay
         setTimeout(() => {
           if (completingAlertIdRef.current === payload.new.id) {
             completingAlertIdRef.current = null;
           }
-        }, 1000);
+        }, 2000);
       }
     }
   );
 
-  // Set up initial alert timer and heartbeat when a new alert starts
+  // Set up alert timer when a new alert starts
   useEffect(() => {
     if (currentAlert?.id && !isProcessingRef.current) {
       console.log('[GlobalQueueManager] Setting up new alert:', currentAlert.id);
@@ -79,26 +77,15 @@ const GlobalQueueManager = () => {
       isProcessingRef.current = true;
 
       // Set up cleanup timer based on alert duration
-      const defaultDuration = 5000; // 5 seconds default
-      const defaultMaxDuration = 10000; // 10 seconds default
-      
-      const duration = currentAlert.duration || defaultDuration;
-      const maxDuration = currentAlert.max_duration || defaultMaxDuration;
+      const duration = (currentAlert.duration || 5000);
       
       if (timerRef.current) {
         clearTimeout(timerRef.current);
       }
       
       timerRef.current = setTimeout(async () => {
-        console.log('[GlobalQueueManager] Checking if alert needs cleanup');
-        const { data: currentState } = await supabase
-          .from('alert_queue')
-          .select('status, state_changed_at')
-          .eq('id', currentAlert.id)
-          .single();
-          
-        if (currentState?.status === 'playing' && completingAlertIdRef.current !== currentAlert.id) {
-          console.log('[GlobalQueueManager] Alert appears stuck, forcing completion');
+        console.log('[GlobalQueueManager] Alert duration reached, completing alert');
+        if (completingAlertIdRef.current !== currentAlert.id) {
           completingAlertIdRef.current = currentAlert.id;
           
           await supabase
@@ -109,41 +96,18 @@ const GlobalQueueManager = () => {
             })
             .eq('id', currentAlert.id);
             
-          // Reset completing alert id after a short delay
+          // Reset completing alert id after a delay
           setTimeout(() => {
             if (completingAlertIdRef.current === currentAlert.id) {
               completingAlertIdRef.current = null;
             }
-          }, 1000);
+          }, 2000);
         }
-      }, maxDuration);
-
-      // Set up heartbeat interval
-      if (heartbeatIntervalRef.current) {
-        clearInterval(heartbeatIntervalRef.current);
-      }
-
-      heartbeatIntervalRef.current = setInterval(async () => {
-        console.log('[GlobalQueueManager] Sending heartbeat for alert:', currentAlert.id);
-        const { error } = await supabase
-          .from('alert_queue')
-          .update({ 
-            last_heartbeat: new Date().toISOString()
-          })
-          .eq('id', currentAlert.id)
-          .eq('status', 'playing');
-
-        if (error) {
-          console.error('[GlobalQueueManager] Error sending heartbeat:', error);
-        }
-      }, 5000);
+      }, duration);
 
       return () => {
         if (timerRef.current) {
           clearTimeout(timerRef.current);
-        }
-        if (heartbeatIntervalRef.current) {
-          clearInterval(heartbeatIntervalRef.current);
         }
       };
     }
@@ -193,18 +157,6 @@ const GlobalQueueManager = () => {
 
     cleanupStuckAlerts();
   }, [currentAlert, processNextAlert]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-      if (heartbeatIntervalRef.current) {
-        clearInterval(heartbeatIntervalRef.current);
-      }
-    };
-  }, []);
 
   return null;
 };
