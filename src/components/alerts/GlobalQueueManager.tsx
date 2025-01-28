@@ -68,8 +68,11 @@ const GlobalQueueManager = () => {
       isProcessingRef.current = true;
 
       // Set up cleanup timer based on alert duration
-      const duration = currentAlert.duration || 5000;
-      const maxDuration = currentAlert.max_duration || duration + 5000;
+      const defaultDuration = 5000; // 5 seconds default
+      const defaultMaxDuration = 10000; // 10 seconds default
+      
+      const duration = currentAlert.duration || defaultDuration;
+      const maxDuration = currentAlert.max_duration || defaultMaxDuration;
       
       if (timerRef.current) {
         clearTimeout(timerRef.current);

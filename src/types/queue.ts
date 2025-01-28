@@ -19,4 +19,6 @@ export interface AlertQueueItem {
   };
   username?: string;
   gift_count?: number;
+  duration?: number;
+  max_duration?: number;
 }
