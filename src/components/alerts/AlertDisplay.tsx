@@ -31,7 +31,9 @@ export const AlertDisplay = ({
       mediaType: currentAlert.media_type,
       mediaUrl: currentAlert.media_url,
       isGiftAlert: currentAlert.is_gift_alert,
-      displayDuration: currentAlert.display_duration
+      displayDuration: currentAlert.display_duration,
+      messageEnabled: currentAlert.message_enabled,
+      messageText: currentAlert.message_text
     });
     
     return () => {

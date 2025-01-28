@@ -34,13 +34,15 @@ export const AlertContent: React.FC<AlertContentProps> = memo(({
     console.log('[AlertContent] Component mounted with alert:', {
       mediaType: currentAlert.media_type,
       isGiftAlert: currentAlert.is_gift_alert,
-      messageEnabled: currentAlert.message_enabled
+      messageEnabled: currentAlert.message_enabled,
+      isMediaComplete,
+      isCountComplete
     });
 
     return () => {
       console.log('[AlertContent] Component unmounting');
     };
-  }, [currentAlert]);
+  }, [currentAlert, isMediaComplete, isCountComplete]);
 
   const handleComplete = useCallback(() => {
     console.log('[AlertContent] Media completed');
