@@ -48,7 +48,7 @@ const GlobalQueueManager = () => {
           timerRef.current = null;
         }
         
-        // Reset processing flag
+        // Reset processing flag when alert completes
         isProcessingRef.current = false;
         
         if (!currentlyPaused) {
@@ -70,47 +70,56 @@ const GlobalQueueManager = () => {
 
   // Set up alert timer when a new alert starts
   useEffect(() => {
-    if (currentAlert?.id && !isProcessingRef.current) {
-      console.log('[GlobalQueueManager] Setting up new alert:', currentAlert.id);
-      
-      // Set processing flag
-      isProcessingRef.current = true;
+    if (!currentAlert?.id) {
+      // Reset processing state when there's no current alert
+      isProcessingRef.current = false;
+      return;
+    }
 
-      // Set up cleanup timer based on alert duration
-      const duration = (currentAlert.duration || 5000);
-      
+    if (isProcessingRef.current) {
+      // If we're already processing an alert, clean up the existing timer
       if (timerRef.current) {
         clearTimeout(timerRef.current);
+        timerRef.current = null;
       }
-      
-      timerRef.current = setTimeout(async () => {
-        console.log('[GlobalQueueManager] Alert duration reached, completing alert');
-        if (completingAlertIdRef.current !== currentAlert.id) {
-          completingAlertIdRef.current = currentAlert.id;
-          
-          await supabase
-            .from('alert_queue')
-            .update({ 
-              status: 'completed',
-              completed_at: new Date().toISOString()
-            })
-            .eq('id', currentAlert.id);
-            
-          // Reset completing alert id after a delay
-          setTimeout(() => {
-            if (completingAlertIdRef.current === currentAlert.id) {
-              completingAlertIdRef.current = null;
-            }
-          }, 2000);
-        }
-      }, duration);
-
-      return () => {
-        if (timerRef.current) {
-          clearTimeout(timerRef.current);
-        }
-      };
     }
+
+    console.log('[GlobalQueueManager] Setting up new alert:', currentAlert.id);
+    
+    // Set processing flag
+    isProcessingRef.current = true;
+
+    // Set up cleanup timer based on alert duration
+    const duration = (currentAlert.duration || 5000);
+    
+    timerRef.current = setTimeout(async () => {
+      console.log('[GlobalQueueManager] Alert duration reached, completing alert');
+      if (completingAlertIdRef.current !== currentAlert.id) {
+        completingAlertIdRef.current = currentAlert.id;
+        
+        await supabase
+          .from('alert_queue')
+          .update({ 
+            status: 'completed',
+            completed_at: new Date().toISOString()
+          })
+          .eq('id', currentAlert.id);
+          
+        // Reset completing alert id after a delay
+        setTimeout(() => {
+          if (completingAlertIdRef.current === currentAlert.id) {
+            completingAlertIdRef.current = null;
+          }
+        }, 2000);
+      }
+    }, duration);
+
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
   }, [currentAlert?.id]);
 
   // Initialize queue on component mount
