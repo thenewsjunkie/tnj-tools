@@ -33,46 +33,49 @@ const GlobalQueueManager = () => {
       const queueState = settings?.value as { isPaused: boolean } | null;
       const currentlyPaused = queueState?.isPaused ?? false;
 
-      // Handle different alert states
-      if (payload.new.status === 'completed') {
-        console.log('[GlobalQueueManager] Alert completed, processing next if not paused');
-        // Reset processing flag when alert completes
-        isProcessingRef.current = false;
-        if (!currentlyPaused) {
-          processNextAlert(false);
-        }
-      } else if (payload.new.status === 'playing') {
-        console.log('[GlobalQueueManager] Alert now playing, setting up cleanup timer');
-        // Set processing flag when alert starts playing
-        isProcessingRef.current = true;
-        
-        // Set up cleanup timer based on alert duration
-        const duration = payload.new.duration || 5000;
-        const maxDuration = payload.new.max_duration || duration + 5000;
-        
-        if (timerRef.current) {
-          clearTimeout(timerRef.current);
-        }
-        
-        timerRef.current = setTimeout(async () => {
-          console.log('[GlobalQueueManager] Checking if alert needs cleanup');
-          const { data: currentState } = await supabase
-            .from('alert_queue')
-            .select('status, state_changed_at')
-            .eq('id', payload.new.id)
-            .single();
-            
-          if (currentState?.status === 'playing') {
-            console.log('[GlobalQueueManager] Alert appears stuck, forcing completion');
-            await supabase
-              .from('alert_queue')
-              .update({ 
-                status: 'completed',
-                completed_at: new Date().toISOString()
-              })
-              .eq('id', payload.new.id);
+      // Only handle status changes, not heartbeat updates
+      if (payload.old && payload.old.status !== payload.new.status) {
+        // Handle different alert states
+        if (payload.new.status === 'completed') {
+          console.log('[GlobalQueueManager] Alert completed, processing next if not paused');
+          // Reset processing flag when alert completes
+          isProcessingRef.current = false;
+          if (!currentlyPaused) {
+            processNextAlert(false);
           }
-        }, maxDuration);
+        } else if (payload.new.status === 'playing' && !isProcessingRef.current) {
+          console.log('[GlobalQueueManager] Alert now playing, setting up cleanup timer');
+          // Set processing flag when alert starts playing
+          isProcessingRef.current = true;
+          
+          // Set up cleanup timer based on alert duration
+          const duration = payload.new.duration || 5000;
+          const maxDuration = payload.new.max_duration || duration + 5000;
+          
+          if (timerRef.current) {
+            clearTimeout(timerRef.current);
+          }
+          
+          timerRef.current = setTimeout(async () => {
+            console.log('[GlobalQueueManager] Checking if alert needs cleanup');
+            const { data: currentState } = await supabase
+              .from('alert_queue')
+              .select('status, state_changed_at')
+              .eq('id', payload.new.id)
+              .single();
+              
+            if (currentState?.status === 'playing') {
+              console.log('[GlobalQueueManager] Alert appears stuck, forcing completion');
+              await supabase
+                .from('alert_queue')
+                .update({ 
+                  status: 'completed',
+                  completed_at: new Date().toISOString()
+                })
+                .eq('id', payload.new.id);
+            }
+          }, maxDuration);
+        }
       }
     }
   );
@@ -86,6 +89,9 @@ const GlobalQueueManager = () => {
       if (heartbeatIntervalRef.current) {
         clearInterval(heartbeatIntervalRef.current);
       }
+
+      // Set processing flag
+      isProcessingRef.current = true;
 
       // Start new heartbeat interval
       heartbeatIntervalRef.current = setInterval(async () => {
