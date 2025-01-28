@@ -11,6 +11,7 @@ const GlobalQueueManager = () => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isProcessingRef = useRef(false);
+  const completingAlertIdRef = useRef<string | null>(null);
 
   // Listen for alert status changes
   useRealtimeConnection(
@@ -33,28 +34,38 @@ const GlobalQueueManager = () => {
       const queueState = settings?.value as { isPaused: boolean } | null;
       const currentlyPaused = queueState?.isPaused ?? false;
 
-      // Only handle actual status changes
-      if (payload.old && payload.old.status !== payload.new.status) {
+      // Only handle actual status changes and prevent duplicate completions
+      if (payload.old && 
+          payload.old.status !== payload.new.status && 
+          payload.new.status === 'completed' &&
+          completingAlertIdRef.current !== payload.new.id) {
         console.log('[GlobalQueueManager] Status changed from', payload.old.status, 'to', payload.new.status);
         
-        if (payload.new.status === 'completed') {
-          console.log('[GlobalQueueManager] Alert completed, processing next if not paused');
-          // Clean up any existing timers
-          if (timerRef.current) {
-            clearTimeout(timerRef.current);
-            timerRef.current = null;
-          }
-          if (heartbeatIntervalRef.current) {
-            clearInterval(heartbeatIntervalRef.current);
-            heartbeatIntervalRef.current = null;
-          }
-          // Reset processing flag
-          isProcessingRef.current = false;
-          
-          if (!currentlyPaused) {
-            processNextAlert(false);
-          }
+        completingAlertIdRef.current = payload.new.id;
+        
+        // Clean up any existing timers
+        if (timerRef.current) {
+          clearTimeout(timerRef.current);
+          timerRef.current = null;
         }
+        if (heartbeatIntervalRef.current) {
+          clearInterval(heartbeatIntervalRef.current);
+          heartbeatIntervalRef.current = null;
+        }
+        
+        // Reset processing flag
+        isProcessingRef.current = false;
+        
+        if (!currentlyPaused) {
+          processNextAlert(false);
+        }
+
+        // Reset completing alert id after a short delay
+        setTimeout(() => {
+          if (completingAlertIdRef.current === payload.new.id) {
+            completingAlertIdRef.current = null;
+          }
+        }, 1000);
       }
     }
   );
@@ -86,8 +97,10 @@ const GlobalQueueManager = () => {
           .eq('id', currentAlert.id)
           .single();
           
-        if (currentState?.status === 'playing') {
+        if (currentState?.status === 'playing' && completingAlertIdRef.current !== currentAlert.id) {
           console.log('[GlobalQueueManager] Alert appears stuck, forcing completion');
+          completingAlertIdRef.current = currentAlert.id;
+          
           await supabase
             .from('alert_queue')
             .update({ 
@@ -95,6 +108,13 @@ const GlobalQueueManager = () => {
               completed_at: new Date().toISOString()
             })
             .eq('id', currentAlert.id);
+            
+          // Reset completing alert id after a short delay
+          setTimeout(() => {
+            if (completingAlertIdRef.current === currentAlert.id) {
+              completingAlertIdRef.current = null;
+            }
+          }, 1000);
         }
       }, maxDuration);
 

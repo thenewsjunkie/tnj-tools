@@ -25,6 +25,7 @@ export const AlertDisplay = ({
 }: AlertDisplayProps) => {
   const [hasError, setHasError] = useState(false);
   const [isMediaLoaded, setIsMediaLoaded] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
 
   useEffect(() => {
     console.log('[AlertDisplay] Alert mounted:', {
@@ -42,7 +43,10 @@ export const AlertDisplay = ({
   const handleError = (error: any) => {
     console.error('[AlertDisplay] Error:', error);
     setHasError(true);
-    onComplete();
+    if (!isCompleting) {
+      setIsCompleting(true);
+      onComplete();
+    }
   };
 
   const handleMediaLoaded = () => {
@@ -52,7 +56,10 @@ export const AlertDisplay = ({
 
   const handleAlertContentComplete = () => {
     console.log('[AlertDisplay] Alert content completed');
-    onComplete();
+    if (!isCompleting) {
+      setIsCompleting(true);
+      onComplete();
+    }
   };
 
   // Use alert timer with display_duration
@@ -66,6 +73,7 @@ export const AlertDisplay = ({
     isGiftAlert: currentAlert.is_gift_alert,
     hasError,
     isMediaLoaded,
+    isCompleting,
     currentAlert
   });
 
