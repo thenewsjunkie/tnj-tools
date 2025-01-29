@@ -26,7 +26,9 @@ export const useAudioRecording = ({
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      mediaRecorder.current = new MediaRecorder(stream)
+      mediaRecorder.current = new MediaRecorder(stream, {
+        mimeType: 'audio/webm'
+      })
       audioChunks.current = []
 
       mediaRecorder.current.ondataavailable = async (event) => {
