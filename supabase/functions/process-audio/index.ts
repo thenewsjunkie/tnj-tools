@@ -63,6 +63,8 @@ serve(async (req) => {
     const blob = new Blob([binaryAudio], { type: 'audio/mpeg' })
     formData.append('file', blob, 'audio.mp3')
     formData.append('model', 'whisper-1')
+    formData.append('language', 'en')
+    formData.append('response_format', 'json')
 
     console.log('Sending to Whisper API...')
     const whisperResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
@@ -121,11 +123,15 @@ serve(async (req) => {
 
     // Store conversation in database
     console.log('Storing conversation...')
-    const { error: dbError } = await supabase.from('audio_conversations').insert({
-      question_text: text,
-      answer_text: answer,
-      status: 'completed'
-    })
+    const { data: conversationData, error: dbError } = await supabase
+      .from('audio_conversations')
+      .insert({
+        question_text: text,
+        answer_text: answer,
+        status: 'completed'
+      })
+      .select()
+      .single()
 
     if (dbError) throw dbError
 
