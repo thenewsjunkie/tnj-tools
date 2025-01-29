@@ -26,9 +26,13 @@ export const useAudioRecording = ({
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      
+      // Try to use WAV format
+      const mimeType = 'audio/wav'
       mediaRecorder.current = new MediaRecorder(stream, {
-        mimeType: 'audio/webm'
+        mimeType: mimeType
       })
+      
       audioChunks.current = []
 
       mediaRecorder.current.ondataavailable = async (event) => {
@@ -37,7 +41,7 @@ export const useAudioRecording = ({
           
           // Stream the chunk for real-time transcription
           const formData = new FormData()
-          formData.append('file', event.data, 'chunk.webm')
+          formData.append('file', event.data, 'chunk.wav')
           
           const { data, error } = await supabase.functions.invoke('process-audio', {
             body: { 
@@ -59,7 +63,7 @@ export const useAudioRecording = ({
 
       mediaRecorder.current.onstop = async () => {
         setIsProcessing(true)
-        const audioBlob = new Blob(audioChunks.current, { type: 'audio/webm' })
+        const audioBlob = new Blob(audioChunks.current, { type: mimeType })
         
         try {
           const { data, error } = await supabase.functions.invoke('process-audio', {

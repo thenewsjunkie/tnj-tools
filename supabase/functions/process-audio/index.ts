@@ -28,10 +28,12 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY is not configured')
     }
 
+    console.log('Converting audio to WAV format...')
+    
     // Prepare form data for Whisper API
     const formData = new FormData()
-    const blob = new Blob([binaryAudio], { type: 'audio/webm' })
-    formData.append('file', blob, 'audio.webm')
+    const blob = new Blob([binaryAudio], { type: 'audio/wav' }) // Changed to WAV format
+    formData.append('file', blob, 'audio.wav') // Changed file extension
     formData.append('model', 'whisper-1')
 
     console.log('Sending audio to Whisper API...')
@@ -60,7 +62,7 @@ serve(async (req) => {
       )
     }
 
-    // Get AI response using streaming
+    // Get AI response
     console.log('Getting AI response...')
     const completion = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
