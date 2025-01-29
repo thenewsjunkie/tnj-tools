@@ -1,22 +1,9 @@
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1"
+import "https://deno.land/x/xhr@0.1.0/mod.ts"
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-function arrayBufferToBase64(buffer: ArrayBuffer): string {
-  const chunks: string[] = [];
-  const chunk_size = 8192;
-  const uint8Array = new Uint8Array(buffer);
-  
-  for (let i = 0; i < uint8Array.length; i += chunk_size) {
-    const chunk = uint8Array.slice(i, i + chunk_size);
-    chunks.push(String.fromCharCode.apply(null, chunk));
-  }
-  
-  return btoa(chunks.join(''));
 }
 
 serve(async (req) => {
@@ -25,29 +12,23 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
-
-    const { type, audioData } = await req.json()
-
-    if (!audioData) {
+    const { audio, streaming } = await req.json()
+    
+    if (!audio) {
       throw new Error('No audio data provided')
     }
 
-    // Convert base64 to blob
-    const base64Data = audioData.split(',')[1]
-    const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0))
-    const audioBlob = new Blob([binaryData], { type: 'audio/mp4' })
-
-    console.log('[process-audio] Transcribing audio...')
-    // Transcribe audio using Whisper
+    // Convert base64 to binary
+    const binaryAudio = Uint8Array.from(atob(audio), c => c.charCodeAt(0))
+    
+    // Prepare form data for Whisper API
     const formData = new FormData()
-    formData.append('file', audioBlob, 'audio.mp4')
+    const blob = new Blob([binaryAudio], { type: 'audio/webm' })
+    formData.append('file', blob, 'audio.webm')
     formData.append('model', 'whisper-1')
 
-    const transcriptionResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+    // Get transcription from Whisper API
+    const whisperResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
@@ -55,51 +36,76 @@ serve(async (req) => {
       body: formData,
     })
 
-    if (!transcriptionResponse.ok) {
-      throw new Error(`Whisper API error: ${await transcriptionResponse.text()}`)
+    if (!whisperResponse.ok) {
+      throw new Error(`Whisper API error: ${await whisperResponse.text()}`)
     }
 
-    const transcriptionData = await transcriptionResponse.json()
-    const transcribedText = transcriptionData.text
-    console.log('[process-audio] Transcribed text:', transcribedText)
+    const { text } = await whisperResponse.json()
 
-    // Get GPT response
-    console.log('[process-audio] Getting GPT response...')
-    const gptResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    // If streaming, return just the transcription
+    if (streaming) {
+      return new Response(
+        JSON.stringify({ text }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Get AI response using streaming
+    const completion = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful assistant. Keep your responses concise and friendly.',
+            content: 'You are TNJ, a helpful and knowledgeable AI assistant. Keep responses concise and natural.'
           },
-          {
-            role: 'user',
-            content: transcribedText,
-          },
+          { role: 'user', content: text }
         ],
+        stream: true,
       }),
     })
 
-    if (!gptResponse.ok) {
-      throw new Error(`GPT API error: ${await gptResponse.text()}`)
+    let answer = ''
+    const reader = completion.body?.getReader()
+    const decoder = new TextDecoder()
+
+    if (reader) {
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        
+        const chunk = decoder.decode(value)
+        const lines = chunk.split('\n')
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+            const data = JSON.parse(line.slice(6))
+            answer += data.choices[0].delta.content || ''
+          }
+        }
+      }
     }
 
-    const gptData = await gptResponse.json()
-    const gptResponseText = gptData.choices[0]?.message?.content
-    if (!gptResponseText) {
-      throw new Error('No response from GPT')
-    }
-    console.log('[process-audio] GPT response:', gptResponseText)
+    // Store conversation in database
+    const { data: conversation, error: dbError } = await supabaseClient
+      .from('audio_conversations')
+      .insert({
+        question_text: text,
+        answer_text: answer,
+        status: 'completed'
+      })
+      .select()
+      .single()
 
-    // Convert GPT response to speech
-    console.log('[process-audio] Converting to speech...')
-    const ttsResponse = await fetch('https://api.openai.com/v1/audio/speech', {
+    if (dbError) throw dbError
+
+    // Generate speech from answer
+    const speechResponse = await fetch('https://api.openai.com/v1/audio/speech', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
@@ -107,64 +113,36 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: 'tts-1',
+        input: answer,
         voice: 'alloy',
-        input: gptResponseText,
         response_format: 'mp3',
       }),
     })
 
-    if (!ttsResponse.ok) {
-      throw new Error(`Text-to-speech API error: ${await ttsResponse.text()}`)
+    if (!speechResponse.ok) {
+      throw new Error('Failed to generate speech')
     }
 
-    const audioResponse = await ttsResponse.arrayBuffer()
-    console.log('[process-audio] Audio response generated')
-
-    // Save conversation to database
-    console.log('[process-audio] Saving conversation...')
-    const { error: dbError } = await supabaseClient
-      .from('audio_conversations')
-      .insert({
-        question_text: transcribedText,
-        answer_text: gptResponseText,
-        status: 'completed',
-      })
-
-    if (dbError) {
-      console.error('[process-audio] Supabase error:', dbError)
-      throw new Error(`Database error: ${dbError.message}`)
-    }
-
-    // Convert ArrayBuffer to Base64 using chunked conversion
-    const base64Audio = arrayBufferToBase64(audioResponse);
+    const audioBuffer = await speechResponse.arrayBuffer()
 
     return new Response(
       JSON.stringify({
         conversation: {
-          question_text: transcribedText,
-          answer_text: gptResponseText,
+          question_text: text,
+          answer_text: answer
         },
-        audioResponse: base64Audio,
+        audioResponse: Array.from(new Uint8Array(audioBuffer))
       }),
-      {
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-        },
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
+
   } catch (error) {
-    console.error('[process-audio] Error:', error)
+    console.error('Error:', error)
     return new Response(
-      JSON.stringify({
-        error: error instanceof Error ? error.message : 'An unknown error occurred',
-      }),
+      JSON.stringify({ error: error.message }),
       {
         status: 500,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-        },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     )
   }

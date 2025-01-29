@@ -2,11 +2,22 @@ import { useState, useRef } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 
 interface UseAudioRecordingProps {
-  onProcessingComplete: (data: { conversation: any; audioResponse: ArrayBuffer }) => void
-  onError: (error: Error) => void
+  onStreamingTranscript?: (text: string) => void;
+  onProcessingComplete?: (data: {
+    conversation: {
+      question_text: string;
+      answer_text: string;
+    };
+    audioResponse: ArrayBuffer;
+  }) => void;
+  onError?: (error: Error) => void;
 }
 
-export const useAudioRecording = ({ onProcessingComplete, onError }: UseAudioRecordingProps) => {
+export const useAudioRecording = ({
+  onStreamingTranscript,
+  onProcessingComplete,
+  onError
+}: UseAudioRecordingProps) => {
   const [isRecording, setIsRecording] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const mediaRecorder = useRef<MediaRecorder | null>(null)
@@ -14,102 +25,83 @@ export const useAudioRecording = ({ onProcessingComplete, onError }: UseAudioRec
 
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          sampleRate: 44100,
-        }
-      })
-
-      // Try different MIME types in order of preference
-      const mimeTypes = [
-        'audio/mp4',
-        'audio/aac',
-        'audio/webm',
-        'audio/ogg',
-        'audio/wav',
-      ]
-
-      let selectedMimeType = ''
-      for (const mimeType of mimeTypes) {
-        if (MediaRecorder.isTypeSupported(mimeType)) {
-          selectedMimeType = mimeType
-          break
-        }
-      }
-
-      if (!selectedMimeType) {
-        throw new Error('No supported audio MIME type found')
-      }
-
-      mediaRecorder.current = new MediaRecorder(stream, {
-        mimeType: selectedMimeType,
-        audioBitsPerSecond: 128000
-      })
-      
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      mediaRecorder.current = new MediaRecorder(stream)
       audioChunks.current = []
 
-      mediaRecorder.current.ondataavailable = (event) => {
+      mediaRecorder.current.ondataavailable = async (event) => {
         if (event.data.size > 0) {
           audioChunks.current.push(event.data)
+          
+          // Stream the chunk for real-time transcription
+          const formData = new FormData()
+          formData.append('file', event.data, 'chunk.webm')
+          
+          const { data, error } = await supabase.functions.invoke('process-audio', {
+            body: { 
+              audio: await blobToBase64(event.data),
+              streaming: true
+            }
+          })
+
+          if (error) {
+            onError?.(new Error(error.message))
+            return
+          }
+
+          if (data?.text) {
+            onStreamingTranscript?.(data.text)
+          }
         }
       }
 
       mediaRecorder.current.onstop = async () => {
         setIsProcessing(true)
-        const audioBlob = new Blob(audioChunks.current, { type: selectedMimeType })
-        const reader = new FileReader()
+        const audioBlob = new Blob(audioChunks.current, { type: 'audio/webm' })
         
-        reader.onload = async () => {
-          try {
-            const { data, error } = await supabase.functions.invoke('process-audio', {
-              body: {
-                type: 'transcribe',
-                audioData: reader.result,
-              },
-            })
-
-            if (error) throw error
-
-            if (!data.audioResponse || !data.conversation) {
-              throw new Error('Invalid response from server')
+        try {
+          const { data, error } = await supabase.functions.invoke('process-audio', {
+            body: { 
+              audio: await blobToBase64(audioBlob),
+              streaming: false
             }
+          })
 
-            // Convert base64 to ArrayBuffer
-            const binaryString = atob(data.audioResponse)
-            const bytes = new Uint8Array(binaryString.length)
-            for (let i = 0; i < binaryString.length; i++) {
-              bytes[i] = binaryString.charCodeAt(i)
-            }
+          if (error) throw error
 
-            onProcessingComplete({
-              conversation: data.conversation,
-              audioResponse: bytes.buffer
-            })
-          } catch (error) {
-            onError(error instanceof Error ? error : new Error('Failed to process audio'))
-          } finally {
-            setIsProcessing(false)
-          }
+          onProcessingComplete?.(data)
+        } catch (error) {
+          onError?.(error as Error)
+        } finally {
+          setIsProcessing(false)
         }
-
-        reader.readAsDataURL(audioBlob)
       }
 
-      mediaRecorder.current.start(100)
+      mediaRecorder.current.start(1000) // Stream in 1-second chunks
       setIsRecording(true)
     } catch (error) {
-      onError(error instanceof Error ? error : new Error('Failed to access microphone'))
+      onError?.(error as Error)
     }
   }
 
   const stopRecording = () => {
     if (mediaRecorder.current && isRecording) {
       mediaRecorder.current.stop()
-      setIsRecording(false)
       mediaRecorder.current.stream.getTracks().forEach(track => track.stop())
+      setIsRecording(false)
     }
+  }
+
+  const blobToBase64 = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const base64 = (reader.result as string).split(',')[1]
+        resolve(base64)
+      }
+      reader.onerror = reject
+      reader.readAsDataURL(blob)
+    })
   }
 
   return {

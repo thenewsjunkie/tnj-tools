@@ -16,6 +16,7 @@ const TNJAi = () => {
     question_text?: string;
     answer_text?: string;
   } | null>(null)
+  const [interimTranscript, setInterimTranscript] = useState("")
   
   const {
     isRecording,
@@ -23,8 +24,12 @@ const TNJAi = () => {
     startRecording,
     stopRecording
   } = useAudioRecording({
+    onStreamingTranscript: (text) => {
+      setInterimTranscript(text)
+    },
     onProcessingComplete: (data) => {
       setCurrentConversation(data.conversation)
+      setInterimTranscript("")
       if (audioPlayer.current) {
         audioPlayer.current.src = URL.createObjectURL(
           new Blob([data.audioResponse], { type: 'audio/mpeg' })
@@ -84,7 +89,10 @@ const TNJAi = () => {
             onVolumeChange={handleVolumeChange}
           />
 
-          <ConversationDisplay conversation={currentConversation} />
+          <ConversationDisplay 
+            conversation={currentConversation} 
+            interimTranscript={interimTranscript}
+          />
           
           <audio
             ref={audioPlayer}
