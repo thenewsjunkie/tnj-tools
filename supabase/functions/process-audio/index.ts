@@ -1,6 +1,5 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts"
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,24 +18,24 @@ serve(async (req) => {
       throw new Error('No audio data provided')
     }
 
-    // Convert base64 to binary
-    const binaryAudio = Uint8Array.from(atob(audio), c => c.charCodeAt(0))
-    
     // Get OpenAI API key
     const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')
     if (!OPENAI_API_KEY) {
       throw new Error('OPENAI_API_KEY is not configured')
     }
 
-    console.log('Converting audio to WAV format...')
+    // Convert base64 to binary
+    const binaryAudio = Uint8Array.from(atob(audio), c => c.charCodeAt(0))
+    
+    console.log('Sending audio to Whisper API...')
     
     // Prepare form data for Whisper API
     const formData = new FormData()
-    const blob = new Blob([binaryAudio], { type: 'audio/wav' }) // Changed to WAV format
-    formData.append('file', blob, 'audio.wav') // Changed file extension
+    const blob = new Blob([binaryAudio], { type: 'audio/webm' })
+    formData.append('file', blob, 'audio.webm')
     formData.append('model', 'whisper-1')
 
-    console.log('Sending audio to Whisper API...')
+    // Send to Whisper API
     const whisperResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
       headers: {
@@ -83,37 +82,27 @@ serve(async (req) => {
     })
 
     if (!completion.ok) {
-      const errorText = await completion.text()
-      console.error('OpenAI Chat API error:', errorText)
-      throw new Error(`OpenAI Chat API error: ${errorText}`)
+      throw new Error('Failed to get AI response')
     }
 
     const completionData = await completion.json()
     const answer = completionData.choices[0].message.content
-    console.log('AI response:', answer)
-
-    // Initialize Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
 
     // Store conversation in database
     console.log('Storing conversation...')
-    const { data: conversation, error: dbError } = await supabaseClient
-      .from('audio_conversations')
-      .insert({
-        question_text: text,
-        answer_text: answer,
-        status: 'completed'
-      })
-      .select()
-      .single()
+    const { data: conversation, error: dbError } = await supabase.functions.invoke('supabase-js', {
+      body: {
+        action: 'insert',
+        table: 'audio_conversations',
+        data: {
+          question_text: text,
+          answer_text: answer,
+          status: 'completed'
+        }
+      }
+    })
 
-    if (dbError) {
-      console.error('Database error:', dbError)
-      throw dbError
-    }
+    if (dbError) throw dbError
 
     // Generate speech from answer
     console.log('Generating speech...')
@@ -132,8 +121,6 @@ serve(async (req) => {
     })
 
     if (!speechResponse.ok) {
-      const errorText = await speechResponse.text()
-      console.error('Speech API error:', errorText)
       throw new Error('Failed to generate speech')
     }
 

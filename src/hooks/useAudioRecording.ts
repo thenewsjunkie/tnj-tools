@@ -23,12 +23,23 @@ export const useAudioRecording = ({
   const mediaRecorder = useRef<MediaRecorder | null>(null)
   const audioChunks = useRef<Blob[]>([])
 
+  // Helper function to get supported mime type
+  const getSupportedMimeType = () => {
+    const types = [
+      'audio/webm',
+      'audio/webm;codecs=opus',
+      'audio/ogg;codecs=opus',
+      'audio/mp4'
+    ]
+    return types.find(type => MediaRecorder.isTypeSupported(type)) || 'audio/webm'
+  }
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mimeType = getSupportedMimeType()
+      console.log('Using MIME type:', mimeType)
       
-      // Try to use WAV format
-      const mimeType = 'audio/wav'
       mediaRecorder.current = new MediaRecorder(stream, {
         mimeType: mimeType
       })
@@ -41,7 +52,7 @@ export const useAudioRecording = ({
           
           // Stream the chunk for real-time transcription
           const formData = new FormData()
-          formData.append('file', event.data, 'chunk.wav')
+          formData.append('file', event.data, `chunk${mimeType.includes('webm') ? '.webm' : '.mp4'}`)
           
           const { data, error } = await supabase.functions.invoke('process-audio', {
             body: { 
