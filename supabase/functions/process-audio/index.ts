@@ -24,18 +24,47 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY is not configured')
     }
 
-    // Convert base64 to binary
-    const binaryAudio = Uint8Array.from(atob(audio), c => c.charCodeAt(0))
+    // Process base64 in chunks to prevent memory issues
+    function processBase64Chunks(base64String: string, chunkSize = 32768) {
+      const chunks: Uint8Array[] = [];
+      let position = 0;
+      
+      while (position < base64String.length) {
+        const chunk = base64String.slice(position, position + chunkSize);
+        const binaryChunk = atob(chunk);
+        const bytes = new Uint8Array(binaryChunk.length);
+        
+        for (let i = 0; i < binaryChunk.length; i++) {
+          bytes[i] = binaryChunk.charCodeAt(i);
+        }
+        
+        chunks.push(bytes);
+        position += chunkSize;
+      }
+
+      const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
+      const result = new Uint8Array(totalLength);
+      let offset = 0;
+
+      for (const chunk of chunks) {
+        result.set(chunk, offset);
+        offset += chunk.length;
+      }
+
+      return result;
+    }
+
+    // Process audio in chunks
+    const binaryAudio = processBase64Chunks(audio)
+    console.log('Audio data size:', binaryAudio.length, 'bytes')
     
-    console.log('Sending audio to Whisper API...')
-    
-    // Prepare form data for Whisper API
+    // Prepare form data
     const formData = new FormData()
-    const blob = new Blob([binaryAudio], { type: 'audio/webm' })
-    formData.append('file', blob, 'audio.webm')
+    const blob = new Blob([binaryAudio], { type: 'audio/mpeg' })
+    formData.append('file', blob, 'audio.mp3')
     formData.append('model', 'whisper-1')
 
-    // Send to Whisper API
+    console.log('Sending to Whisper API...')
     const whisperResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
       headers: {
@@ -82,6 +111,8 @@ serve(async (req) => {
     })
 
     if (!completion.ok) {
+      const errorText = await completion.text()
+      console.error('Chat API error:', errorText)
       throw new Error('Failed to get AI response')
     }
 
@@ -90,16 +121,10 @@ serve(async (req) => {
 
     // Store conversation in database
     console.log('Storing conversation...')
-    const { data: conversation, error: dbError } = await supabase.functions.invoke('supabase-js', {
-      body: {
-        action: 'insert',
-        table: 'audio_conversations',
-        data: {
-          question_text: text,
-          answer_text: answer,
-          status: 'completed'
-        }
-      }
+    const { error: dbError } = await supabase.from('audio_conversations').insert({
+      question_text: text,
+      answer_text: answer,
+      status: 'completed'
     })
 
     if (dbError) throw dbError
@@ -121,6 +146,8 @@ serve(async (req) => {
     })
 
     if (!speechResponse.ok) {
+      const errorText = await speechResponse.text()
+      console.error('Speech API error:', errorText)
       throw new Error('Failed to generate speech')
     }
 

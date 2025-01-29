@@ -26,10 +26,10 @@ export const useAudioRecording = ({
   // Helper function to get supported mime type
   const getSupportedMimeType = () => {
     const types = [
+      'audio/mp3',
+      'audio/mpeg',
       'audio/webm',
-      'audio/webm;codecs=opus',
       'audio/ogg;codecs=opus',
-      'audio/mp4'
     ]
     return types.find(type => MediaRecorder.isTypeSupported(type)) || 'audio/webm'
   }
@@ -41,7 +41,8 @@ export const useAudioRecording = ({
       console.log('Using MIME type:', mimeType)
       
       mediaRecorder.current = new MediaRecorder(stream, {
-        mimeType: mimeType
+        mimeType: mimeType,
+        audioBitsPerSecond: 128000
       })
       
       audioChunks.current = []
@@ -50,24 +51,28 @@ export const useAudioRecording = ({
         if (event.data.size > 0) {
           audioChunks.current.push(event.data)
           
-          // Stream the chunk for real-time transcription
-          const formData = new FormData()
-          formData.append('file', event.data, `chunk${mimeType.includes('webm') ? '.webm' : '.mp4'}`)
+          // Create a single blob from all chunks for streaming
+          const audioBlob = new Blob(audioChunks.current, { type: mimeType })
           
-          const { data, error } = await supabase.functions.invoke('process-audio', {
-            body: { 
-              audio: await blobToBase64(event.data),
-              streaming: true
+          try {
+            const { data, error } = await supabase.functions.invoke('process-audio', {
+              body: { 
+                audio: await blobToBase64(audioBlob),
+                streaming: true
+              }
+            })
+
+            if (error) {
+              console.error('Streaming transcription error:', error)
+              onError?.(new Error(error.message))
+              return
             }
-          })
 
-          if (error) {
-            onError?.(new Error(error.message))
-            return
-          }
-
-          if (data?.text) {
-            onStreamingTranscript?.(data.text)
+            if (data?.text) {
+              onStreamingTranscript?.(data.text)
+            }
+          } catch (error) {
+            console.error('Error during streaming transcription:', error)
           }
         }
       }
@@ -77,6 +82,7 @@ export const useAudioRecording = ({
         const audioBlob = new Blob(audioChunks.current, { type: mimeType })
         
         try {
+          console.log('Sending complete audio for processing...')
           const { data, error } = await supabase.functions.invoke('process-audio', {
             body: { 
               audio: await blobToBase64(audioBlob),
@@ -84,19 +90,25 @@ export const useAudioRecording = ({
             }
           })
 
-          if (error) throw error
+          if (error) {
+            console.error('Processing error:', error)
+            throw error
+          }
 
           onProcessingComplete?.(data)
         } catch (error) {
+          console.error('Final processing error:', error)
           onError?.(error as Error)
         } finally {
           setIsProcessing(false)
         }
       }
 
-      mediaRecorder.current.start(1000) // Stream in 1-second chunks
+      // Collect data more frequently (every 250ms instead of 1000ms)
+      mediaRecorder.current.start(250)
       setIsRecording(true)
     } catch (error) {
+      console.error('Recording setup error:', error)
       onError?.(error as Error)
     }
   }
