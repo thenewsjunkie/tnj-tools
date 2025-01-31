@@ -19,6 +19,10 @@ interface EditAlertFormFieldsProps {
   setGiftTextColor: (value: string) => void;
   giftCountColor: string;
   setGiftCountColor: (value: string) => void;
+  repeatCount: number;
+  setRepeatCount: (value: number) => void;
+  repeatDelay: number;
+  setRepeatDelay: (value: number) => void;
 }
 
 const EditAlertFormFields = ({
@@ -38,6 +42,10 @@ const EditAlertFormFields = ({
   setGiftTextColor,
   giftCountColor,
   setGiftCountColor,
+  repeatCount,
+  setRepeatCount,
+  repeatDelay,
+  setRepeatDelay,
 }: EditAlertFormFieldsProps) => {
   return (
     <>
@@ -126,6 +134,35 @@ const EditAlertFormFields = ({
           )}
         </>
       )}
+
+      <div className="space-y-4 pt-4 border-t border-border">
+        <Label className="text-foreground text-lg">Repeat Settings</Label>
+        <div className="space-y-2">
+          <Label className="text-foreground">Repeat Count</Label>
+          <Input
+            type="number"
+            min="1"
+            max="10"
+            value={repeatCount}
+            onChange={(e) => setRepeatCount(Number(e.target.value))}
+            className="text-foreground bg-background border-input"
+          />
+          <p className="text-sm text-muted-foreground">Number of times to play the alert (1-10)</p>
+        </div>
+        <div className="space-y-2">
+          <Label className="text-foreground">Repeat Delay (ms)</Label>
+          <Input
+            type="number"
+            min="0"
+            max="10000"
+            step="100"
+            value={repeatDelay}
+            onChange={(e) => setRepeatDelay(Number(e.target.value))}
+            className="text-foreground bg-background border-input"
+          />
+          <p className="text-sm text-muted-foreground">Delay between repeats in milliseconds (0-10000)</p>
+        </div>
+      </div>
     </>
   );
 };

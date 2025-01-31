@@ -20,6 +20,8 @@ interface EditAlertDialogProps {
     gift_count_animation_speed?: number;
     gift_text_color?: string;
     gift_count_color?: string;
+    repeat_count?: number;
+    repeat_delay?: number;
   };
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -35,11 +37,12 @@ const EditAlertDialog = ({ alert, open, onOpenChange, onAlertUpdated }: EditAler
   const [giftCountAnimationSpeed, setGiftCountAnimationSpeed] = useState(alert.gift_count_animation_speed || 100);
   const [giftTextColor, setGiftTextColor] = useState(alert.gift_text_color || "#FFFFFF");
   const [giftCountColor, setGiftCountColor] = useState(alert.gift_count_color || "#4CDBC4");
+  const [repeatCount, setRepeatCount] = useState(alert.repeat_count || 1);
+  const [repeatDelay, setRepeatDelay] = useState(alert.repeat_delay || 1000);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    // Update all form fields when alert prop changes
     setTitle(alert.title);
     setMessageEnabled(alert.message_enabled || false);
     setMessageText(alert.message_text || "");
@@ -48,6 +51,8 @@ const EditAlertDialog = ({ alert, open, onOpenChange, onAlertUpdated }: EditAler
     setGiftCountAnimationSpeed(alert.gift_count_animation_speed || 100);
     setGiftTextColor(alert.gift_text_color || "#FFFFFF");
     setGiftCountColor(alert.gift_count_color || "#4CDBC4");
+    setRepeatCount(alert.repeat_count || 1);
+    setRepeatDelay(alert.repeat_delay || 1000);
   }, [alert]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,7 +82,6 @@ const EditAlertDialog = ({ alert, open, onOpenChange, onAlertUpdated }: EditAler
         mediaUrl = publicUrl.publicUrl;
         mediaType = file.type;
 
-        // Delete old media file
         const oldFileName = alert.media_url.split('/').pop();
         if (oldFileName) {
           await supabase.storage
@@ -85,17 +89,6 @@ const EditAlertDialog = ({ alert, open, onOpenChange, onAlertUpdated }: EditAler
             .remove([oldFileName]);
         }
       }
-
-      console.log('[EditAlertDialog] Updating alert with data:', {
-        title,
-        messageEnabled,
-        messageText,
-        fontSize,
-        isGiftAlert,
-        giftCountAnimationSpeed,
-        giftTextColor,
-        giftCountColor
-      });
 
       const { error: dbError } = await supabase
         .from('alerts')
@@ -109,7 +102,9 @@ const EditAlertDialog = ({ alert, open, onOpenChange, onAlertUpdated }: EditAler
           is_gift_alert: isGiftAlert,
           gift_count_animation_speed: giftCountAnimationSpeed,
           gift_text_color: giftTextColor,
-          gift_count_color: giftCountColor
+          gift_count_color: giftCountColor,
+          repeat_count: repeatCount,
+          repeat_delay: repeatDelay
         })
         .eq('id', alert.id);
 
@@ -158,6 +153,10 @@ const EditAlertDialog = ({ alert, open, onOpenChange, onAlertUpdated }: EditAler
             setGiftTextColor={setGiftTextColor}
             giftCountColor={giftCountColor}
             setGiftCountColor={setGiftCountColor}
+            repeatCount={repeatCount}
+            setRepeatCount={setRepeatCount}
+            repeatDelay={repeatDelay}
+            setRepeatDelay={setRepeatDelay}
           />
           
           <div className="space-y-2">

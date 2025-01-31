@@ -116,6 +116,8 @@ export type Database = {
           media_url: string
           message_enabled: boolean | null
           message_text: string | null
+          repeat_count: number | null
+          repeat_delay: number | null
           text_alignment: string | null
           text_animation: string | null
           text_color: string | null
@@ -143,6 +145,8 @@ export type Database = {
           media_url: string
           message_enabled?: boolean | null
           message_text?: string | null
+          repeat_count?: number | null
+          repeat_delay?: number | null
           text_alignment?: string | null
           text_animation?: string | null
           text_color?: string | null
@@ -170,6 +174,8 @@ export type Database = {
           media_url?: string
           message_enabled?: boolean | null
           message_text?: string | null
+          repeat_count?: number | null
+          repeat_delay?: number | null
           text_alignment?: string | null
           text_animation?: string | null
           text_color?: string | null

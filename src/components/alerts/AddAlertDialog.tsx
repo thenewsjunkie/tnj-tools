@@ -22,6 +22,8 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
   const [giftCountAnimationSpeed, setGiftCountAnimationSpeed] = useState(100);
   const [giftTextColor, setGiftTextColor] = useState("#FFFFFF");
   const [giftCountColor, setGiftCountColor] = useState("#4CDBC4");
+  const [repeatCount, setRepeatCount] = useState(1);
+  const [repeatDelay, setRepeatDelay] = useState(1000);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
@@ -66,7 +68,9 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
           is_gift_alert: isGiftAlert,
           gift_count_animation_speed: giftCountAnimationSpeed,
           gift_text_color: giftTextColor,
-          gift_count_color: giftCountColor
+          gift_count_color: giftCountColor,
+          repeat_count: repeatCount,
+          repeat_delay: repeatDelay
         })
         .select('*')
         .single();
@@ -81,6 +85,8 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
       setGiftCountAnimationSpeed(100);
       setGiftTextColor("#FFFFFF");
       setGiftCountColor("#4CDBC4");
+      setRepeatCount(1);
+      setRepeatDelay(1000);
       if (fileInput) fileInput.value = "";
       onAlertAdded();
     } catch (error) {
@@ -187,6 +193,35 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
               )}
             </>
           )}
+
+          <div className="space-y-4 pt-4 border-t border-border">
+            <Label className="text-foreground text-lg">Repeat Settings</Label>
+            <div className="space-y-2">
+              <Label className="text-foreground">Repeat Count</Label>
+              <Input
+                type="number"
+                min="1"
+                max="10"
+                value={repeatCount}
+                onChange={(e) => setRepeatCount(Number(e.target.value))}
+                className="text-foreground bg-background"
+              />
+              <p className="text-sm text-muted-foreground">Number of times to play the alert (1-10)</p>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-foreground">Repeat Delay (ms)</Label>
+              <Input
+                type="number"
+                min="0"
+                max="10000"
+                step="100"
+                value={repeatDelay}
+                onChange={(e) => setRepeatDelay(Number(e.target.value))}
+                className="text-foreground bg-background"
+              />
+              <p className="text-sm text-muted-foreground">Delay between repeats in milliseconds (0-10000)</p>
+            </div>
+          </div>
 
           <div className="space-y-2">
             <Input
