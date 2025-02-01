@@ -65,28 +65,39 @@ const AlertTriggerHandler = ({ alertSlug, username, giftCount }: AlertTriggerHan
           return;
         }
 
-        // Add to queue
+        // Get repeat count and delay from the alert
+        const repeatCount = matchingAlert.repeat_count || 1;
+        const repeatDelay = matchingAlert.repeat_delay || 1000;
+
+        console.log('[AlertTriggerHandler] Creating', repeatCount, 'queue entries with delay:', repeatDelay);
+
+        // Create an array of queue entries based on repeat count
+        const queueEntries = Array.from({ length: repeatCount }, (_, index) => ({
+          alert_id: matchingAlert.id,
+          username: username ? formatUsername(username) : null,
+          gift_count: parsedGiftCount,
+          status: 'pending',
+          // Add delay based on position in sequence
+          scheduled_for: new Date(Date.now() + (index * repeatDelay)).toISOString()
+        }));
+
+        // Insert all queue entries
         const { error: queueError } = await supabase
           .from('alert_queue')
-          .insert({
-            alert_id: matchingAlert.id,
-            username: username ? formatUsername(username) : null,
-            gift_count: parsedGiftCount,
-            status: 'pending'
-          });
+          .insert(queueEntries);
 
         if (queueError) {
-          console.error('[AlertTriggerHandler] Error queueing alert:', queueError);
+          console.error('[AlertTriggerHandler] Error queueing alerts:', queueError);
           toast({
             title: "Error",
             description: "Failed to queue alert",
             variant: "destructive",
           });
         } else {
-          console.log('[AlertTriggerHandler] Alert queued successfully with gift count:', parsedGiftCount);
+          console.log('[AlertTriggerHandler] Alerts queued successfully');
           toast({
             title: "Alert Queued",
-            description: "Alert has been added to the queue",
+            description: `Alert will play ${repeatCount} times`,
           });
         }
       } else {
