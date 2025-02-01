@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import EditAlertFormFields from "./edit/EditAlertFormFields";
+import AlertFormFields from "./form/AlertFormFields";
 
 interface EditAlertDialogProps {
   alert: {
@@ -136,7 +136,7 @@ const EditAlertDialog = ({ alert, open, onOpenChange, onAlertUpdated }: EditAler
           <DialogTitle className="text-foreground">Edit Alert</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          <EditAlertFormFields
+          <AlertFormFields
             title={title}
             setTitle={setTitle}
             messageEnabled={messageEnabled}
