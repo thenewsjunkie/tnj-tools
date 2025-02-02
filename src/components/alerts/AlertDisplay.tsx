@@ -72,6 +72,11 @@ export const AlertDisplay = ({
     return null;
   }
 
+  console.log('[AlertDisplay] Raw alert data:', {
+    repeat_count: currentAlert.repeat_count,
+    repeat_delay: currentAlert.repeat_delay
+  });
+
   // Only provide fallback values if the properties are undefined or null
   const transformedAlert = {
     mediaType: currentAlert.media_type,
@@ -87,6 +92,8 @@ export const AlertDisplay = ({
     repeatCount: currentAlert.repeat_count === undefined ? 1 : currentAlert.repeat_count,
     repeatDelay: currentAlert.repeat_delay === undefined ? 1000 : currentAlert.repeat_delay
   };
+
+  console.log('[AlertDisplay] Transformed alert data:', transformedAlert);
 
   return (
     <AlertContent

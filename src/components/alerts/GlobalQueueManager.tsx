@@ -85,7 +85,14 @@ const GlobalQueueManager = () => {
       }
     }
 
-    console.log('[GlobalQueueManager] Setting up new alert:', currentAlert);
+    console.log('[GlobalQueueManager] Setting up new alert:', {
+      ...currentAlert,
+      alert: {
+        ...currentAlert.alert,
+        repeat_count: currentAlert.alert.repeat_count,
+        repeat_delay: currentAlert.alert.repeat_delay
+      }
+    });
     
     // Set processing flag
     isProcessingRef.current = true;
