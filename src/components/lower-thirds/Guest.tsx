@@ -33,10 +33,9 @@ const Guest = ({ imageUrl, type, isVisible }: GuestProps) => {
 
   return (
     <div 
-      className={`relative bg-black/85 overflow-hidden rounded-l-lg transition-opacity duration-300 ${shouldRender ? 'opacity-100' : 'opacity-0'}`}
+      className={`absolute right-0 top-0 bottom-0 bg-black/85 overflow-hidden rounded-r-lg transition-opacity duration-300 ${shouldRender ? 'opacity-100' : 'opacity-0'}`}
       style={{ 
         width: '240px',
-        height: '280px',
       }}
     >
       {imageUrl && (
