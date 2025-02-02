@@ -1,20 +1,31 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface ImageAlertProps {
   mediaUrl: string;
   onComplete: () => void;
   onError: (error: any) => void;
   onMediaLoaded: () => void;
+  repeatCount?: number;
 }
 
-const ImageAlert = ({ mediaUrl, onComplete, onError, onMediaLoaded }: ImageAlertProps) => {
+const ImageAlert = ({ 
+  mediaUrl, 
+  onComplete, 
+  onError, 
+  onMediaLoaded,
+  repeatCount = 1 
+}: ImageAlertProps) => {
   const completedRef = useRef(false);
+  const [displayCount, setDisplayCount] = useState(0);
 
   const handleComplete = () => {
-    if (!completedRef.current) {
+    if (!completedRef.current && displayCount >= repeatCount - 1) {
       completedRef.current = true;
-      console.log('[ImageAlert] Triggering completion callback');
+      console.log('[ImageAlert] All repeats completed, triggering completion callback');
       onComplete();
+    } else {
+      console.log('[ImageAlert] Repeat display', displayCount + 1, 'of', repeatCount);
+      setDisplayCount(prev => prev + 1);
     }
   };
 
@@ -23,7 +34,7 @@ const ImageAlert = ({ mediaUrl, onComplete, onError, onMediaLoaded }: ImageAlert
     completedRef.current = false;
     
     const timer = setTimeout(() => {
-      console.log('[ImageAlert] Image timer completed, calling onComplete');
+      console.log('[ImageAlert] Image timer completed, calling handleComplete');
       handleComplete();
     }, 5000);
     
@@ -31,7 +42,7 @@ const ImageAlert = ({ mediaUrl, onComplete, onError, onMediaLoaded }: ImageAlert
       console.log('[ImageAlert] Cleaning up image timer');
       clearTimeout(timer);
     };
-  }, [onComplete]);
+  }, [displayCount, repeatCount]);
 
   const handleImageLoad = () => {
     console.log('[ImageAlert] Image loaded successfully');

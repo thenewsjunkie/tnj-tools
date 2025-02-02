@@ -15,6 +15,7 @@ interface AlertContentProps {
     gift_count_animation_speed?: number;
     gift_text_color?: string;
     gift_count_color?: string;
+    repeat_count?: number;
   };
   onComplete: () => void;
   onError: (error: any) => void;
@@ -35,6 +36,7 @@ export const AlertContent: React.FC<AlertContentProps> = memo(({
       mediaType: currentAlert.media_type,
       isGiftAlert: currentAlert.is_gift_alert,
       messageEnabled: currentAlert.message_enabled,
+      repeatCount: currentAlert.repeat_count,
       isMediaComplete,
       isCountComplete
     });
@@ -84,6 +86,7 @@ export const AlertContent: React.FC<AlertContentProps> = memo(({
               onComplete={handleComplete}
               onError={onError}
               onMediaLoaded={onMediaLoaded}
+              repeatCount={currentAlert.repeat_count}
             />
           ) : (
             <ImageAlert 
@@ -91,6 +94,7 @@ export const AlertContent: React.FC<AlertContentProps> = memo(({
               onComplete={handleComplete}
               onError={onError}
               onMediaLoaded={onMediaLoaded}
+              repeatCount={currentAlert.repeat_count}
             />
           )}
         </div>
