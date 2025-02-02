@@ -72,8 +72,8 @@ export const AlertContent: React.FC<AlertContentProps> = memo(({
 
   return (
     <div className="fixed inset-0 flex items-center justify-center pointer-events-none">
-      <div className="relative flex flex-col items-center max-w-full">
-        <div className="w-full flex justify-center">
+      <div className="relative flex flex-col items-center">
+        <div className="flex justify-center" style={{ maxHeight: '70vh', width: 'auto' }}>
           {currentAlert.mediaType.startsWith('video') ? (
             <VideoAlert 
               mediaUrl={currentAlert.mediaUrl}
