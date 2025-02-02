@@ -35,7 +35,11 @@ const VideoAlert = ({
       alertLogger.videoAlert('Video metadata loaded');
       alertLogger.videoAlert('Video duration:', video.duration);
       onMediaLoaded();
-      video.play().catch(onError);
+      // Attempt to play the video
+      video.play().catch(error => {
+        alertLogger.videoAlert('Error playing video:', error);
+        onError(error);
+      });
     };
 
     const handleEnded = () => {
@@ -50,7 +54,10 @@ const VideoAlert = ({
         setTimeout(() => {
           if (video) {
             video.currentTime = 0;
-            video.play().catch(onError);
+            video.play().catch(error => {
+              alertLogger.videoAlert('Error replaying video:', error);
+              onError(error);
+            });
           }
         }, repeatDelay);
         
@@ -77,6 +84,8 @@ const VideoAlert = ({
       src={mediaUrl}
       className="max-h-[70vh] w-auto"
       playsInline
+      autoPlay
+      muted
     />
   );
 };

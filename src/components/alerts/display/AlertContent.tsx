@@ -79,7 +79,7 @@ export const AlertContent: React.FC<AlertContentProps> = memo(({
   }, [isMediaComplete, isCountComplete, displayMessage]);
 
   return (
-    <div className="fixed inset-0 flex flex-col items-center justify-center">
+    <div className="fixed inset-0 flex items-center justify-center">
       <div className="relative">
         {currentAlert.mediaType.startsWith('video') ? (
           <VideoAlert 
