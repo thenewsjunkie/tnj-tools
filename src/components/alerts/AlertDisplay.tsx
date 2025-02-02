@@ -84,8 +84,8 @@ export const AlertDisplay = ({
     giftCountAnimationSpeed: currentAlert.gift_count_animation_speed,
     giftTextColor: currentAlert.gift_text_color,
     giftCountColor: currentAlert.gift_count_color,
-    repeatCount: currentAlert.repeat_count,
-    repeatDelay: currentAlert.repeat_delay
+    repeatCount: currentAlert.repeat_count || 1,
+    repeatDelay: currentAlert.repeat_delay || 1000
   };
 
   return (
