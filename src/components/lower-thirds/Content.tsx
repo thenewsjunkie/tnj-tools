@@ -51,6 +51,14 @@ const Content = ({ lowerThird, currentTime, isVisible }: ContentProps) => {
       {/* Left accent bar */}
       <div className={`absolute left-0 top-0 bottom-0 w-1 ${getAccentColor()} rounded-l-lg`}></div>
 
+      {type !== "guest" && (
+        <div className="absolute -top-16 left-0 z-10">
+          <div className={`bg-gradient-to-r ${getGradient()} text-white px-8 py-4 text-xl font-bold uppercase rounded-t-lg`}>
+            {type}
+          </div>
+        </div>
+      )}
+
       <div className="relative flex justify-between items-start w-full">
         <div className="flex items-center gap-8 flex-1 min-w-0">
           {/* Logo section */}

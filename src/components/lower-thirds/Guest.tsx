@@ -49,7 +49,7 @@ const Guest = ({ imageUrl, type, isVisible }: GuestProps) => {
               objectPosition: 'center 20%'
             }}
           />
-          <div className="absolute bottom-0 left-0 w-full bg-black/85 text-white py-3 text-xl font-bold uppercase text-center">
+          <div className="absolute bottom-0 left-0 w-full bg-gradient-to-r from-[#1A1F2C] to-[#4A3B8C] text-white py-3 text-xl font-bold uppercase text-center">
             {type}
           </div>
         </>
