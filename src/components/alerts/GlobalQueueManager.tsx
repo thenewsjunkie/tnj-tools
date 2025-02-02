@@ -99,14 +99,18 @@ const GlobalQueueManager = () => {
 
     updatePlayedAt();
 
-    // Calculate total duration based on repeat count and display duration
+    // Calculate total duration based on repeat count, display duration, and repeat delay
     const displayDuration = (currentAlert.alert.display_duration || 5) * 1000;
     const repeatCount = currentAlert.alert.repeat_count || 1;
-    const totalDuration = displayDuration * repeatCount;
+    const repeatDelay = currentAlert.alert.repeat_delay || 1000;
+    
+    // Add repeat delay time for each repeat after the first one
+    const totalDuration = (displayDuration * repeatCount) + (repeatDelay * (repeatCount - 1));
     
     console.log('[GlobalQueueManager] Alert duration:', {
       displayDuration,
       repeatCount,
+      repeatDelay,
       totalDuration
     });
 
