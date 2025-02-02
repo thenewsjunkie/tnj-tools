@@ -16,6 +16,8 @@ export interface AlertQueueItem {
     gift_count_animation_speed?: number;
     gift_text_color?: string;
     gift_count_color?: string;
+    repeat_count?: number;
+    repeat_delay?: number;
   };
   username?: string;
   gift_count?: number;
