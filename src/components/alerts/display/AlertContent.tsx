@@ -70,18 +70,10 @@ export const AlertContent: React.FC<AlertContentProps> = memo(({
     ? currentAlert.messageText
     : '';
 
-  useEffect(() => {
-    console.log('[AlertContent] State updated:', {
-      isMediaComplete,
-      isCountComplete,
-      displayMessage: !!displayMessage
-    });
-  }, [isMediaComplete, isCountComplete, displayMessage]);
-
   return (
-    <div className="fixed top-0 left-0 right-0 flex flex-col items-center">
-      <div className={`${currentAlert.isGiftAlert ? 'flex items-center justify-between w-full px-8' : 'flex flex-col items-center'}`}>
-        <div className="mb-2">
+    <div className="fixed inset-0 flex items-center justify-center pointer-events-none">
+      <div className="relative flex flex-col items-center max-w-full">
+        <div className="w-full flex justify-center">
           {currentAlert.mediaType.startsWith('video') ? (
             <VideoAlert 
               mediaUrl={currentAlert.mediaUrl}
@@ -103,16 +95,18 @@ export const AlertContent: React.FC<AlertContentProps> = memo(({
         </div>
         
         {currentAlert.messageEnabled && displayMessage && (
-          <AlertMessage 
-            message={displayMessage}
-            fontSize={currentAlert.fontSize}
-            isGiftAlert={currentAlert.isGiftAlert}
-            giftCount={currentAlert.giftCount || 1}
-            giftCountAnimationSpeed={currentAlert.giftCountAnimationSpeed}
-            giftTextColor={currentAlert.giftTextColor}
-            giftCountColor={currentAlert.giftCountColor}
-            onCountComplete={handleCountComplete}
-          />
+          <div className="absolute -bottom-16 left-0 right-0 flex justify-center">
+            <AlertMessage 
+              message={displayMessage}
+              fontSize={currentAlert.fontSize}
+              isGiftAlert={currentAlert.isGiftAlert}
+              giftCount={currentAlert.giftCount || 1}
+              giftCountAnimationSpeed={currentAlert.giftCountAnimationSpeed}
+              giftTextColor={currentAlert.giftTextColor}
+              giftCountColor={currentAlert.giftCountColor}
+              onCountComplete={handleCountComplete}
+            />
+          </div>
         )}
       </div>
     </div>
