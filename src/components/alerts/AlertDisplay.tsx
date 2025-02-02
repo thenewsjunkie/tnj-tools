@@ -72,7 +72,7 @@ export const AlertDisplay = ({
     return null;
   }
 
-  // Transform snake_case to camelCase for the AlertContent component
+  // Only provide fallback values if the properties are undefined or null
   const transformedAlert = {
     mediaType: currentAlert.media_type,
     mediaUrl: currentAlert.media_url,
@@ -84,8 +84,8 @@ export const AlertDisplay = ({
     giftCountAnimationSpeed: currentAlert.gift_count_animation_speed,
     giftTextColor: currentAlert.gift_text_color,
     giftCountColor: currentAlert.gift_count_color,
-    repeatCount: currentAlert.repeat_count || 1,
-    repeatDelay: currentAlert.repeat_delay || 1000
+    repeatCount: currentAlert.repeat_count === undefined ? 1 : currentAlert.repeat_count,
+    repeatDelay: currentAlert.repeat_delay === undefined ? 1000 : currentAlert.repeat_delay
   };
 
   return (
