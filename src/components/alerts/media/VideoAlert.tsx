@@ -35,6 +35,7 @@ const VideoAlert = ({
       alertLogger.videoAlert('Video metadata loaded');
       alertLogger.videoAlert('Video duration:', video.duration);
       onMediaLoaded();
+      video.play().catch(onError);
     };
 
     const handleEnded = () => {
@@ -48,7 +49,8 @@ const VideoAlert = ({
         
         setTimeout(() => {
           if (video) {
-            video.play();
+            video.currentTime = 0;
+            video.play().catch(onError);
           }
         }, repeatDelay);
         
@@ -73,9 +75,8 @@ const VideoAlert = ({
     <video
       ref={videoRef}
       src={mediaUrl}
-      autoPlay
-      className="max-w-full h-auto"
-      style={{ maxHeight: '70vh' }}
+      className="max-h-[70vh] w-auto"
+      playsInline
     />
   );
 };
