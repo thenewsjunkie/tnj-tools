@@ -23,6 +23,7 @@ const VideoAlert = ({
   const mountCountRef = useRef(0);
   const playAttemptedRef = useRef(false);
   const [playCount, setPlayCount] = useState(0);
+  const delayTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleComplete = () => {
     if (!completedRef.current && !unmountedRef.current) {
@@ -33,8 +34,14 @@ const VideoAlert = ({
         onComplete();
       } else {
         console.log('[VideoAlert] Scheduling repeat play', playCount + 1, 'of', repeatCount, 'with delay:', repeatDelay);
-        // Add delay before starting next repeat
-        setTimeout(() => {
+        
+        // Clear any existing timeout
+        if (delayTimeoutRef.current) {
+          clearTimeout(delayTimeoutRef.current);
+        }
+        
+        // Set up new timeout for delay
+        delayTimeoutRef.current = setTimeout(() => {
           if (!unmountedRef.current && videoRef.current) {
             console.log('[VideoAlert] Starting next repeat after delay');
             videoRef.current.currentTime = 0;
@@ -93,6 +100,13 @@ const VideoAlert = ({
       return () => {
         console.log('[VideoAlert] Cleaning up video element');
         unmountedRef.current = true;
+        
+        // Clear any pending timeouts
+        if (delayTimeoutRef.current) {
+          clearTimeout(delayTimeoutRef.current);
+          delayTimeoutRef.current = null;
+        }
+        
         if (!completedRef.current) {
           videoElement.pause();
         }
