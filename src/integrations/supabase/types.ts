@@ -419,6 +419,7 @@ export type Database = {
         Row: {
           created_at: string | null
           display_order: number
+          duration_seconds: number | null
           guest_image_url: string | null
           id: string
           is_active: boolean | null
@@ -435,6 +436,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           display_order: number
+          duration_seconds?: number | null
           guest_image_url?: string | null
           id?: string
           is_active?: boolean | null
@@ -451,6 +453,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           display_order?: number
+          duration_seconds?: number | null
           guest_image_url?: string | null
           id?: string
           is_active?: boolean | null

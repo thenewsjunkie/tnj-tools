@@ -7,8 +7,9 @@ interface TextFieldsProps {
     primary_text: string;
     secondary_text: string;
     ticker_text: string;
+    duration_seconds?: number;
   };
-  onChange: (field: string, value: string) => void;
+  onChange: (field: string, value: string | number) => void;
 }
 
 const TextFields = ({ formData, onChange }: TextFieldsProps) => {
@@ -51,6 +52,18 @@ const TextFields = ({ formData, onChange }: TextFieldsProps) => {
           value={formData.ticker_text}
           onChange={(e) => onChange("ticker_text", e.target.value)}
           placeholder="Scrolling text (optional)"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="duration_seconds">Duration (seconds)</Label>
+        <Input
+          id="duration_seconds"
+          type="number"
+          min="0"
+          value={formData.duration_seconds || ""}
+          onChange={(e) => onChange("duration_seconds", parseInt(e.target.value) || 0)}
+          placeholder="Leave empty for no auto-deactivation"
         />
       </div>
     </>
