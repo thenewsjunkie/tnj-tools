@@ -23,16 +23,27 @@ const VideoAlert = ({
   const [playCount, setPlayCount] = useState(0);
 
   const handleComplete = () => {
-    if (!completedRef.current && !unmountedRef.current && playCount >= repeatCount - 1) {
-      completedRef.current = true;
-      console.log('[VideoAlert] All repeats completed, triggering completion callback');
-      onComplete();
-    } else if (!unmountedRef.current) {
-      console.log('[VideoAlert] Repeat play', playCount + 1, 'of', repeatCount);
-      if (videoRef.current) {
-        videoRef.current.currentTime = 0;
-        videoRef.current.play();
-        setPlayCount(prev => prev + 1);
+    if (!completedRef.current && !unmountedRef.current) {
+      // Check if we've played enough times
+      if (playCount >= repeatCount - 1) {
+        completedRef.current = true;
+        console.log('[VideoAlert] All repeats completed, triggering completion callback');
+        onComplete();
+      } else {
+        console.log('[VideoAlert] Repeat play', playCount + 1, 'of', repeatCount);
+        if (videoRef.current) {
+          videoRef.current.currentTime = 0;
+          const playPromise = videoRef.current.play();
+          if (playPromise) {
+            playPromise.catch((error) => {
+              if (!unmountedRef.current) {
+                console.error('[VideoAlert] Error during repeat play:', error);
+                onError(error);
+              }
+            });
+          }
+          setPlayCount(prev => prev + 1);
+        }
       }
     }
   };
@@ -43,6 +54,7 @@ const VideoAlert = ({
     completedRef.current = false;
     unmountedRef.current = false;
     playAttemptedRef.current = false;
+    setPlayCount(0);
     
     if (videoRef.current) {
       const videoElement = videoRef.current;
@@ -83,7 +95,7 @@ const VideoAlert = ({
         videoElement.removeEventListener('error', handleError);
       };
     }
-  }, [onComplete, onError, playCount, repeatCount]);
+  }, [onComplete, onError, repeatCount]);
 
   const handleVideoLoadedMetadata = async () => {
     console.log('[VideoAlert] Video metadata loaded');
