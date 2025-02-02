@@ -10,7 +10,22 @@ export const useQueueData = () => {
         .from('alert_queue')
         .select(`
           *,
-          alert:alerts(*)
+          alert:alerts(
+            id,
+            title,
+            media_url,
+            media_type,
+            message_text,
+            message_enabled,
+            font_size,
+            is_gift_alert,
+            gift_count_animation_speed,
+            gift_text_color,
+            gift_count_color,
+            display_duration,
+            repeat_count,
+            repeat_delay
+          )
         `)
         .in('status', ['pending', 'playing'])
         .order('created_at', { ascending: true });
@@ -19,16 +34,21 @@ export const useQueueData = () => {
         console.error('[useQueueData] Error fetching queue:', error);
         throw error;
       }
+
+      if (data && data.length > 0) {
+        console.log('[useQueueData] Raw alert data from database:', {
+          alert: data[0].alert,
+          repeat_count: data[0].alert.repeat_count,
+          repeat_delay: data[0].alert.repeat_delay
+        });
+      }
+
       console.log('[useQueueData] Queue data fetched:', data);
       return data || [];
     },
-    // Reduced from 10 seconds to 2 seconds for more responsive updates
     refetchInterval: 2000,
-    // Enable background refetching for more responsive updates
     refetchIntervalInBackground: true,
-    // Reduced stale time to refresh data more frequently
     staleTime: 1000,
-    // Keep unused data in cache for longer to prevent unnecessary refetches
     gcTime: 60000,
   });
 

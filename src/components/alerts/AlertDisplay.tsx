@@ -74,10 +74,11 @@ export const AlertDisplay = ({
 
   console.log('[AlertDisplay] Raw alert data:', {
     repeat_count: currentAlert.repeat_count,
-    repeat_delay: currentAlert.repeat_delay
+    repeat_delay: currentAlert.repeat_delay,
+    currentAlert
   });
 
-  // Only provide fallback values if the properties are undefined or null
+  // Transform the alert data, preserving original values if they exist
   const transformedAlert = {
     mediaType: currentAlert.media_type,
     mediaUrl: currentAlert.media_url,
@@ -89,8 +90,9 @@ export const AlertDisplay = ({
     giftCountAnimationSpeed: currentAlert.gift_count_animation_speed,
     giftTextColor: currentAlert.gift_text_color,
     giftCountColor: currentAlert.gift_count_color,
-    repeatCount: currentAlert.repeat_count === undefined ? 1 : currentAlert.repeat_count,
-    repeatDelay: currentAlert.repeat_delay === undefined ? 1000 : currentAlert.repeat_delay
+    // Only use default values if the properties are actually undefined
+    repeatCount: currentAlert.repeat_count ?? 1,
+    repeatDelay: currentAlert.repeat_delay ?? 1000
   };
 
   console.log('[AlertDisplay] Transformed alert data:', transformedAlert);
