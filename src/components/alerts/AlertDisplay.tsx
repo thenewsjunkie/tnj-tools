@@ -72,13 +72,25 @@ export const AlertDisplay = ({
     return null;
   }
 
+  // Transform snake_case to camelCase for the AlertContent component
+  const transformedAlert = {
+    mediaType: currentAlert.media_type,
+    mediaUrl: currentAlert.media_url,
+    messageEnabled: currentAlert.message_enabled,
+    messageText: currentAlert.message_text,
+    fontSize: currentAlert.font_size,
+    isGiftAlert: currentAlert.is_gift_alert,
+    giftCount: currentAlert.gift_count,
+    giftCountAnimationSpeed: currentAlert.gift_count_animation_speed,
+    giftTextColor: currentAlert.gift_text_color,
+    giftCountColor: currentAlert.gift_count_color,
+    repeatCount: currentAlert.repeat_count,
+    repeatDelay: currentAlert.repeat_delay
+  };
+
   return (
     <AlertContent
-      currentAlert={{
-        ...currentAlert,
-        repeat_count: currentAlert.repeat_count,
-        repeat_delay: currentAlert.repeat_delay
-      }}
+      currentAlert={transformedAlert}
       onComplete={handleAlertContentComplete}
       onError={handleError}
       onMediaLoaded={handleMediaLoaded}
