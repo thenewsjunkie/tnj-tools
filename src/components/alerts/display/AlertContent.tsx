@@ -80,8 +80,8 @@ export const AlertContent: React.FC<AlertContentProps> = memo(({
 
   return (
     <div className="fixed top-0 left-0 right-0 flex flex-col items-center">
-      <div className={`${currentAlert.isGiftAlert ? 'flex items-center justify-between w-full px-8' : 'flex flex-col items-center'}`}>
-        <div className="mb-2">
+      <div className="flex flex-col items-center w-full">
+        <div className="w-full flex justify-center mb-4">
           {currentAlert.mediaType.startsWith('video') ? (
             <VideoAlert 
               mediaUrl={currentAlert.mediaUrl}
@@ -103,16 +103,18 @@ export const AlertContent: React.FC<AlertContentProps> = memo(({
         </div>
         
         {currentAlert.messageEnabled && displayMessage && (
-          <AlertMessage 
-            message={displayMessage}
-            fontSize={currentAlert.fontSize}
-            isGiftAlert={currentAlert.isGiftAlert}
-            giftCount={currentAlert.giftCount || 1}
-            giftCountAnimationSpeed={currentAlert.giftCountAnimationSpeed}
-            giftTextColor={currentAlert.giftTextColor}
-            giftCountColor={currentAlert.giftCountColor}
-            onCountComplete={handleCountComplete}
-          />
+          <div className="w-full mt-2">
+            <AlertMessage 
+              message={displayMessage}
+              fontSize={currentAlert.fontSize}
+              isGiftAlert={currentAlert.isGiftAlert}
+              giftCount={currentAlert.giftCount || 1}
+              giftCountAnimationSpeed={currentAlert.giftCountAnimationSpeed}
+              giftTextColor={currentAlert.giftTextColor}
+              giftCountColor={currentAlert.giftCountColor}
+              onCountComplete={handleCountComplete}
+            />
+          </div>
         )}
       </div>
     </div>
