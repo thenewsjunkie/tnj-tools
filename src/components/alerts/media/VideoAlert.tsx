@@ -6,6 +6,7 @@ interface VideoAlertProps {
   onError: (error: any) => void;
   onMediaLoaded: () => void;
   repeatCount?: number;
+  repeatDelay?: number;
 }
 
 const VideoAlert = ({ 
@@ -13,7 +14,8 @@ const VideoAlert = ({
   onComplete, 
   onError, 
   onMediaLoaded,
-  repeatCount = 1
+  repeatCount = 1,
+  repeatDelay = 1000
 }: VideoAlertProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const completedRef = useRef(false);
@@ -30,20 +32,24 @@ const VideoAlert = ({
         console.log('[VideoAlert] All repeats completed, triggering completion callback');
         onComplete();
       } else {
-        console.log('[VideoAlert] Repeat play', playCount + 1, 'of', repeatCount);
-        if (videoRef.current) {
-          videoRef.current.currentTime = 0;
-          const playPromise = videoRef.current.play();
-          if (playPromise) {
-            playPromise.catch((error) => {
-              if (!unmountedRef.current) {
-                console.error('[VideoAlert] Error during repeat play:', error);
-                onError(error);
-              }
-            });
+        console.log('[VideoAlert] Scheduling repeat play', playCount + 1, 'of', repeatCount, 'with delay:', repeatDelay);
+        // Add delay before starting next repeat
+        setTimeout(() => {
+          if (!unmountedRef.current && videoRef.current) {
+            console.log('[VideoAlert] Starting next repeat after delay');
+            videoRef.current.currentTime = 0;
+            const playPromise = videoRef.current.play();
+            if (playPromise) {
+              playPromise.catch((error) => {
+                if (!unmountedRef.current) {
+                  console.error('[VideoAlert] Error during repeat play:', error);
+                  onError(error);
+                }
+              });
+            }
+            setPlayCount(prev => prev + 1);
           }
-          setPlayCount(prev => prev + 1);
-        }
+        }, repeatDelay);
       }
     }
   };
