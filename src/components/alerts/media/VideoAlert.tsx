@@ -14,8 +14,8 @@ const VideoAlert = ({
   onComplete, 
   onError, 
   onMediaLoaded,
-  repeatCount = 1,
-  repeatDelay = 1000
+  repeatCount = 1, // Default to 1 if not provided
+  repeatDelay = 1000 // Default to 1000ms if not provided
 }: VideoAlertProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const completedRef = useRef(false);
@@ -29,7 +29,7 @@ const VideoAlert = ({
     if (!completedRef.current && !unmountedRef.current) {
       console.log('[VideoAlert] Video ended, play count:', playCount);
       
-      // Check if we've played enough times
+      // Check if we've played enough times (subtract 1 since playCount starts at 0)
       if (playCount >= repeatCount - 1) {
         console.log('[VideoAlert] All repeats completed, triggering completion callback');
         completedRef.current = true;
