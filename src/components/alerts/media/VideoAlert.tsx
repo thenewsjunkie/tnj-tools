@@ -27,10 +27,12 @@ const VideoAlert = ({
 
   const handleComplete = () => {
     if (!completedRef.current && !unmountedRef.current) {
+      console.log('[VideoAlert] Video ended, play count:', playCount);
+      
       // Check if we've played enough times
       if (playCount >= repeatCount - 1) {
-        completedRef.current = true;
         console.log('[VideoAlert] All repeats completed, triggering completion callback');
+        completedRef.current = true;
         onComplete();
       } else {
         console.log('[VideoAlert] Scheduling repeat play', playCount + 1, 'of', repeatCount, 'with delay:', repeatDelay);
@@ -82,7 +84,6 @@ const VideoAlert = ({
       };
 
       const handleEnded = () => {
-        console.log('[VideoAlert] Video ended, play count:', playCount);
         handleComplete();
       };
 
