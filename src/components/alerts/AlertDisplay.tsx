@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { AlertContent } from "./display/AlertContent";
+import { alertLogger } from "@/utils/alertLogger";
 
 interface AlertDisplayProps {
   currentAlert: {
@@ -29,24 +30,20 @@ export const AlertDisplay = ({
   const [isCompleting, setIsCompleting] = useState(false);
 
   useEffect(() => {
-    console.log('[AlertDisplay] Alert mounted:', {
+    alertLogger.alertDisplay('Alert mounted:', {
       mediaType: currentAlert.media_type,
       mediaUrl: currentAlert.media_url,
-      isGiftAlert: currentAlert.is_gift_alert,
-      displayDuration: currentAlert.display_duration,
-      messageEnabled: currentAlert.message_enabled,
-      messageText: currentAlert.message_text,
       repeatCount: currentAlert.repeat_count,
       repeatDelay: currentAlert.repeat_delay
     });
     
     return () => {
-      console.log('[AlertDisplay] Alert unmounted');
+      alertLogger.alertDisplay('Alert unmounted');
     };
   }, [currentAlert]);
 
   const handleError = (error: any) => {
-    console.error('[AlertDisplay] Error:', error);
+    alertLogger.alertDisplay('Error:', error);
     setHasError(true);
     if (!isCompleting) {
       setIsCompleting(true);
@@ -55,12 +52,12 @@ export const AlertDisplay = ({
   };
 
   const handleMediaLoaded = () => {
-    console.log('[AlertDisplay] Media loaded');
+    alertLogger.alertDisplay('Media loaded');
     setIsMediaLoaded(true);
   };
 
   const handleAlertContentComplete = () => {
-    console.log('[AlertDisplay] Alert content completed');
+    alertLogger.alertDisplay('Alert content completed');
     if (!isCompleting) {
       setIsCompleting(true);
       onComplete();
@@ -68,17 +65,10 @@ export const AlertDisplay = ({
   };
 
   if (!currentAlert) {
-    console.log('[AlertDisplay] No alert to render');
     return null;
   }
 
-  console.log('[AlertDisplay] Raw alert data:', {
-    repeat_count: currentAlert.repeat_count,
-    repeat_delay: currentAlert.repeat_delay,
-    currentAlert
-  });
-
-  // Transform the alert data, preserving original values if they exist
+  // Transform the alert data, preserving original values
   const transformedAlert = {
     mediaType: currentAlert.media_type,
     mediaUrl: currentAlert.media_url,
@@ -90,12 +80,9 @@ export const AlertDisplay = ({
     giftCountAnimationSpeed: currentAlert.gift_count_animation_speed,
     giftTextColor: currentAlert.gift_text_color,
     giftCountColor: currentAlert.gift_count_color,
-    // Only use default values if the properties are actually undefined
     repeatCount: currentAlert.repeat_count ?? 1,
     repeatDelay: currentAlert.repeat_delay ?? 1000
   };
-
-  console.log('[AlertDisplay] Transformed alert data:', transformedAlert);
 
   return (
     <AlertContent

@@ -1,4 +1,5 @@
-import React, { useRef, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { alertLogger } from "@/utils/alertLogger";
 
 interface VideoAlertProps {
   mediaUrl: string;
@@ -9,149 +10,72 @@ interface VideoAlertProps {
   repeatDelay?: number;
 }
 
-const VideoAlert = ({ 
-  mediaUrl, 
-  onComplete, 
-  onError, 
+const VideoAlert = ({
+  mediaUrl,
+  onComplete,
+  onError,
   onMediaLoaded,
-  repeatCount = 1, // Default to 1 if not provided
-  repeatDelay = 1000 // Default to 1000ms if not provided
+  repeatCount = 1,
+  repeatDelay = 1000
 }: VideoAlertProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const completedRef = useRef(false);
-  const unmountedRef = useRef(false);
-  const mountCountRef = useRef(0);
-  const playAttemptedRef = useRef(false);
   const [playCount, setPlayCount] = useState(0);
-  const delayTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const handleComplete = () => {
-    if (!completedRef.current && !unmountedRef.current) {
-      console.log('[VideoAlert] Video ended, play count:', playCount);
-      
-      // Check if we've played enough times (subtract 1 since playCount starts at 0)
-      if (playCount >= repeatCount - 1) {
-        console.log('[VideoAlert] All repeats completed, triggering completion callback');
-        completedRef.current = true;
-        onComplete();
-      } else {
-        console.log('[VideoAlert] Scheduling repeat play', playCount + 1, 'of', repeatCount, 'with delay:', repeatDelay);
-        
-        // Clear any existing timeout
-        if (delayTimeoutRef.current) {
-          clearTimeout(delayTimeoutRef.current);
-        }
-        
-        // Set up new timeout for delay
-        delayTimeoutRef.current = setTimeout(() => {
-          if (!unmountedRef.current && videoRef.current) {
-            console.log('[VideoAlert] Starting next repeat after delay');
-            videoRef.current.currentTime = 0;
-            const playPromise = videoRef.current.play();
-            if (playPromise) {
-              playPromise.catch((error) => {
-                if (!unmountedRef.current) {
-                  console.error('[VideoAlert] Error during repeat play:', error);
-                  onError(error);
-                }
-              });
-            }
-            setPlayCount(prev => prev + 1);
-          }
-        }, repeatDelay);
-      }
-    }
-  };
+  const mountCountRef = useRef(0);
 
   useEffect(() => {
     mountCountRef.current += 1;
-    console.log('[VideoAlert] Component mounted. Mount count:', mountCountRef.current);
-    completedRef.current = false;
-    unmountedRef.current = false;
-    playAttemptedRef.current = false;
-    setPlayCount(0);
+    alertLogger.videoAlert('Component mounted. Mount count:', mountCountRef.current);
     
-    if (videoRef.current) {
-      const videoElement = videoRef.current;
-      console.log('[VideoAlert] Setting up video element');
-      
-      videoElement.load();
-      videoElement.muted = true;
+    const video = videoRef.current;
+    if (!video) return;
 
-      const handlePlay = () => {
-        console.log('[VideoAlert] Video started playing');
-        playAttemptedRef.current = true;
-      };
+    alertLogger.videoAlert('Setting up video element');
 
-      const handleEnded = () => {
-        handleComplete();
-      };
-
-      const handleError = (e: Event) => {
-        if (!unmountedRef.current) {
-          console.error('[VideoAlert] Video error:', e);
-          onError(e);
-        }
-      };
-
-      videoElement.addEventListener('play', handlePlay);
-      videoElement.addEventListener('ended', handleEnded);
-      videoElement.addEventListener('error', handleError);
-
-      return () => {
-        console.log('[VideoAlert] Cleaning up video element');
-        unmountedRef.current = true;
-        
-        // Clear any pending timeouts
-        if (delayTimeoutRef.current) {
-          clearTimeout(delayTimeoutRef.current);
-          delayTimeoutRef.current = null;
-        }
-        
-        if (!completedRef.current) {
-          videoElement.pause();
-        }
-        videoElement.removeEventListener('play', handlePlay);
-        videoElement.removeEventListener('ended', handleEnded);
-        videoElement.removeEventListener('error', handleError);
-      };
-    }
-  }, [onComplete, onError, repeatCount]);
-
-  const handleVideoLoadedMetadata = async () => {
-    console.log('[VideoAlert] Video metadata loaded');
-    if (videoRef.current && !unmountedRef.current && !playAttemptedRef.current) {
-      const duration = videoRef.current.duration;
-      console.log('[VideoAlert] Video duration:', duration);
-      
-      // Update the GlobalQueueManager with actual media duration
-      window.dispatchEvent(new CustomEvent('media-duration-update', { 
-        detail: { duration } 
-      }));
-      
+    const handleLoadedMetadata = () => {
+      alertLogger.videoAlert('Video metadata loaded');
+      alertLogger.videoAlert('Video duration:', video.duration);
       onMediaLoaded();
-      try {
-        await videoRef.current.play();
-      } catch (error) {
-        if (!unmountedRef.current) {
-          console.error('[VideoAlert] Autoplay failed:', error);
-          onError(error);
+    };
+
+    const handleEnded = () => {
+      alertLogger.videoAlert('Video ended, play count:', playCount);
+      setPlayCount(prev => {
+        if (prev + 1 >= repeatCount) {
+          alertLogger.videoAlert('All repeats completed, triggering completion callback');
+          onComplete();
+          return prev;
         }
-      }
-    }
-  };
+        
+        setTimeout(() => {
+          if (video) {
+            video.play();
+          }
+        }, repeatDelay);
+        
+        return prev + 1;
+      });
+    };
+
+    video.addEventListener('loadedmetadata', handleLoadedMetadata);
+    video.addEventListener('ended', handleEnded);
+    video.addEventListener('error', onError);
+    video.addEventListener('play', () => alertLogger.videoAlert('Video started playing'));
+
+    return () => {
+      alertLogger.videoAlert('Cleaning up video element');
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      video.removeEventListener('ended', handleEnded);
+      video.removeEventListener('error', onError);
+    };
+  }, [mediaUrl, onComplete, onError, onMediaLoaded, playCount, repeatCount, repeatDelay]);
 
   return (
     <video
       ref={videoRef}
       src={mediaUrl}
-      className="max-h-[70vh] w-auto"
-      onError={(e) => !unmountedRef.current && onError(e)}
-      onLoadedMetadata={handleVideoLoadedMetadata}
-      playsInline
-      muted={true}
-      controls={false}
-      loop={false}
+      autoPlay
+      className="max-w-full h-auto"
+      style={{ maxHeight: '70vh' }}
     />
   );
 };
