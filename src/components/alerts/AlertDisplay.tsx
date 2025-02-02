@@ -14,6 +14,8 @@ interface AlertDisplayProps {
     gift_text_color?: string;
     gift_count_color?: string;
     display_duration?: number;
+    repeat_count?: number;
+    repeat_delay?: number;
   };
   onComplete: () => void;
 }
@@ -33,7 +35,9 @@ export const AlertDisplay = ({
       isGiftAlert: currentAlert.is_gift_alert,
       displayDuration: currentAlert.display_duration,
       messageEnabled: currentAlert.message_enabled,
-      messageText: currentAlert.message_text
+      messageText: currentAlert.message_text,
+      repeatCount: currentAlert.repeat_count,
+      repeatDelay: currentAlert.repeat_delay
     });
     
     return () => {
@@ -70,7 +74,11 @@ export const AlertDisplay = ({
 
   return (
     <AlertContent
-      currentAlert={currentAlert}
+      currentAlert={{
+        ...currentAlert,
+        repeat_count: currentAlert.repeat_count,
+        repeat_delay: currentAlert.repeat_delay
+      }}
       onComplete={handleAlertContentComplete}
       onError={handleError}
       onMediaLoaded={handleMediaLoaded}
