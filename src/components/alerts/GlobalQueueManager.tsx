@@ -84,14 +84,33 @@ const GlobalQueueManager = () => {
       }
     }
 
-    console.log('[GlobalQueueManager] Setting up new alert:', currentAlert.id);
+    console.log('[GlobalQueueManager] Setting up new alert:', currentAlert);
     
     // Set processing flag
     isProcessingRef.current = true;
 
-    // Set up cleanup timer based on alert duration
-    const duration = (currentAlert.duration || 5000);
+    // Update played_at timestamp when alert starts playing
+    const updatePlayedAt = async () => {
+      await supabase
+        .from('alert_queue')
+        .update({ played_at: new Date().toISOString() })
+        .eq('id', currentAlert.id);
+    };
+
+    updatePlayedAt();
+
+    // Calculate total duration based on repeat count and display duration
+    const displayDuration = (currentAlert.alert.display_duration || 5) * 1000;
+    const repeatCount = currentAlert.alert.repeat_count || 1;
+    const totalDuration = displayDuration * repeatCount;
     
+    console.log('[GlobalQueueManager] Alert duration:', {
+      displayDuration,
+      repeatCount,
+      totalDuration
+    });
+
+    // Set up cleanup timer based on total duration
     timerRef.current = setTimeout(async () => {
       console.log('[GlobalQueueManager] Alert duration reached, completing alert');
       if (completingAlertIdRef.current !== currentAlert.id) {
@@ -112,7 +131,7 @@ const GlobalQueueManager = () => {
           }
         }, 2000);
       }
-    }, duration);
+    }, totalDuration);
 
     return () => {
       if (timerRef.current) {
