@@ -79,40 +79,40 @@ export const AlertContent: React.FC<AlertContentProps> = memo(({
   }, [isMediaComplete, isCountComplete, displayMessage]);
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center">
-      <div className="relative">
-        {currentAlert.mediaType.startsWith('video') ? (
-          <VideoAlert 
-            mediaUrl={currentAlert.mediaUrl}
-            onComplete={handleComplete}
-            onError={onError}
-            onMediaLoaded={onMediaLoaded}
-            repeatCount={currentAlert.repeatCount}
-            repeatDelay={currentAlert.repeatDelay}
-          />
-        ) : (
-          <ImageAlert 
-            mediaUrl={currentAlert.mediaUrl}
-            onComplete={handleComplete}
-            onError={onError}
-            onMediaLoaded={onMediaLoaded}
-            repeatCount={currentAlert.repeatCount}
-          />
-        )}
+    <div className="fixed top-0 left-0 right-0 flex flex-col items-center">
+      <div className={`${currentAlert.isGiftAlert ? 'flex items-center justify-between w-full px-8' : 'flex flex-col items-center'}`}>
+        <div className="mb-2">
+          {currentAlert.mediaType.startsWith('video') ? (
+            <VideoAlert 
+              mediaUrl={currentAlert.mediaUrl}
+              onComplete={handleComplete}
+              onError={onError}
+              onMediaLoaded={onMediaLoaded}
+              repeatCount={currentAlert.repeatCount}
+              repeatDelay={currentAlert.repeatDelay}
+            />
+          ) : (
+            <ImageAlert 
+              mediaUrl={currentAlert.mediaUrl}
+              onComplete={handleComplete}
+              onError={onError}
+              onMediaLoaded={onMediaLoaded}
+              repeatCount={currentAlert.repeatCount}
+            />
+          )}
+        </div>
         
         {currentAlert.messageEnabled && displayMessage && (
-          <div className="absolute -bottom-16 left-0 right-0">
-            <AlertMessage 
-              message={displayMessage}
-              fontSize={currentAlert.fontSize}
-              isGiftAlert={currentAlert.isGiftAlert}
-              giftCount={currentAlert.giftCount || 1}
-              giftCountAnimationSpeed={currentAlert.giftCountAnimationSpeed}
-              giftTextColor={currentAlert.giftTextColor}
-              giftCountColor={currentAlert.giftCountColor}
-              onCountComplete={handleCountComplete}
-            />
-          </div>
+          <AlertMessage 
+            message={displayMessage}
+            fontSize={currentAlert.fontSize}
+            isGiftAlert={currentAlert.isGiftAlert}
+            giftCount={currentAlert.giftCount || 1}
+            giftCountAnimationSpeed={currentAlert.giftCountAnimationSpeed}
+            giftTextColor={currentAlert.giftTextColor}
+            giftCountColor={currentAlert.giftCountColor}
+            onCountComplete={handleCountComplete}
+          />
         )}
       </div>
     </div>
