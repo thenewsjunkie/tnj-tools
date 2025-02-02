@@ -120,6 +120,14 @@ const VideoAlert = ({
   const handleVideoLoadedMetadata = async () => {
     console.log('[VideoAlert] Video metadata loaded');
     if (videoRef.current && !unmountedRef.current && !playAttemptedRef.current) {
+      const duration = videoRef.current.duration;
+      console.log('[VideoAlert] Video duration:', duration);
+      
+      // Update the GlobalQueueManager with actual media duration
+      window.dispatchEvent(new CustomEvent('media-duration-update', { 
+        detail: { duration } 
+      }));
+      
       onMediaLoaded();
       try {
         await videoRef.current.play();

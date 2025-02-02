@@ -11,6 +11,7 @@ const GlobalQueueManager = () => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const isProcessingRef = useRef(false);
   const completingAlertIdRef = useRef<string | null>(null);
+  const mediaDurationRef = useRef<number>(0);
 
   // Listen for alert status changes
   useRealtimeConnection(
@@ -100,7 +101,10 @@ const GlobalQueueManager = () => {
     updatePlayedAt();
 
     // Calculate total duration based on repeat count, display duration, and repeat delay
-    const displayDuration = (currentAlert.alert.display_duration || 5) * 1000;
+    const displayDuration = Math.max(
+      (currentAlert.alert.display_duration || 5) * 1000,
+      mediaDurationRef.current * 1000 // Convert media duration to milliseconds
+    );
     const repeatCount = currentAlert.alert.repeat_count || 1;
     const repeatDelay = currentAlert.alert.repeat_delay || 1000;
     
@@ -109,6 +113,7 @@ const GlobalQueueManager = () => {
     
     console.log('[GlobalQueueManager] Alert duration:', {
       displayDuration,
+      mediaDuration: mediaDurationRef.current,
       repeatCount,
       repeatDelay,
       totalDuration
@@ -135,7 +140,7 @@ const GlobalQueueManager = () => {
           }
         }, 2000);
       }
-    }, totalDuration);
+    }, totalDuration + 1000); // Add 1 second buffer
 
     return () => {
       if (timerRef.current) {
@@ -189,6 +194,11 @@ const GlobalQueueManager = () => {
 
     cleanupStuckAlerts();
   }, [currentAlert, processNextAlert]);
+
+  // Method to update media duration
+  const updateMediaDuration = (duration: number) => {
+    mediaDurationRef.current = duration;
+  };
 
   return null;
 };
