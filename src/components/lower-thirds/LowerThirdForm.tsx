@@ -41,6 +41,7 @@ const LowerThirdForm = ({ initialData, onSubmit, submitLabel = "Create Lower Thi
     guest_image_url: initialData?.guest_image_url ?? "",
     logo_url: initialData?.logo_url ?? "",
     display_order: initialData?.display_order ?? 0,
+    duration_seconds: initialData?.duration_seconds ?? null,
   });
 
   const [defaultLogo, setDefaultLogo] = useState<string>("");
