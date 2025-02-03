@@ -22,7 +22,7 @@ const LowerThirdsCard = ({
 
   // Toggle active state mutation
   const toggleActiveMutation = useMutation({
-    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
+    mutationFn: async ({ id, isActive, duration }: { id: string; isActive: boolean; duration?: number }) => {
       if (isActive) {
         await supabase
           .from("lower_thirds")
@@ -32,7 +32,10 @@ const LowerThirdsCard = ({
 
       const { error } = await supabase
         .from("lower_thirds")
-        .update({ is_active: isActive })
+        .update({ 
+          is_active: isActive,
+          duration_seconds: duration || null 
+        })
         .eq("id", id);
 
       if (error) throw error;
@@ -113,8 +116,8 @@ const LowerThirdsCard = ({
         ) : (
           <SortableLowerThirds
             lowerThirds={lowerThirds}
-            onToggleActive={(id, isActive) =>
-              toggleActiveMutation.mutate({ id, isActive })
+            onToggleActive={(id, isActive, duration) =>
+              toggleActiveMutation.mutate({ id, isActive, duration })
             }
             onDelete={(id) => deleteMutation.mutate(id)}
             onEdit={() => {}}

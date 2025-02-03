@@ -22,7 +22,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 interface SortableLowerThirdsProps {
   lowerThirds: Tables<"lower_thirds">[];
-  onToggleActive: (id: string, isActive: boolean) => void;
+  onToggleActive: (id: string, isActive: boolean, duration?: number) => void;
   onDelete: (id: string) => void;
   onEdit: (lowerThird: Tables<"lower_thirds">) => void;
   onQuickEdit: (lowerThird: Tables<"lower_thirds">) => void;
@@ -31,6 +31,8 @@ interface SortableLowerThirdsProps {
 const SortableLowerThirds = ({
   lowerThirds,
   onToggleActive,
+  onDelete,
+  onEdit,
   onQuickEdit,
 }: SortableLowerThirdsProps) => {
   const [items, setItems] = useState(lowerThirds);

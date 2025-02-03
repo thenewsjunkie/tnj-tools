@@ -4,11 +4,13 @@ import { Tables } from "@/integrations/supabase/types";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { GripVertical, Pencil } from "lucide-react";
+import { GripVertical, Pencil, Timer } from "lucide-react";
+import { ButtonGroup } from "@/components/ui/button-group";
+import { useState } from "react";
 
 interface SortableLowerThirdItemProps {
   lowerThird: Tables<"lower_thirds">;
-  onToggleActive: (id: string, isActive: boolean) => void;
+  onToggleActive: (id: string, isActive: boolean, duration?: number) => void;
   onQuickEdit: (lowerThird: Tables<"lower_thirds">) => void;
 }
 
@@ -17,6 +19,8 @@ const SortableLowerThirdItem = ({
   onToggleActive,
   onQuickEdit,
 }: SortableLowerThirdItemProps) => {
+  const [showDurationButtons, setShowDurationButtons] = useState(false);
+
   const {
     attributes,
     listeners,
@@ -30,6 +34,11 @@ const SortableLowerThirdItem = ({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+  };
+
+  const handleDurationSelect = (duration: number) => {
+    onToggleActive(lowerThird.id, true, duration);
+    setShowDurationButtons(false);
   };
 
   return (
@@ -64,18 +73,61 @@ const SortableLowerThirdItem = ({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Switch
-            checked={lowerThird.is_active}
-            onCheckedChange={(checked) => onToggleActive(lowerThird.id, checked)}
-            key={`switch-${lowerThird.id}-${lowerThird.is_active}`}
-          />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onQuickEdit(lowerThird)}
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
+          {showDurationButtons ? (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleDurationSelect(30)}
+              >
+                30s
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleDurationSelect(60)}
+              >
+                60s
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleDurationSelect(90)}
+              >
+                90s
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowDurationButtons(false)}
+              >
+                Cancel
+              </Button>
+            </div>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setShowDurationButtons(true)}
+                className={lowerThird.is_active ? "text-neon-red" : ""}
+              >
+                <Timer className="h-4 w-4" />
+              </Button>
+              <Switch
+                checked={lowerThird.is_active}
+                onCheckedChange={(checked) => onToggleActive(lowerThird.id, checked)}
+                key={`switch-${lowerThird.id}-${lowerThird.is_active}`}
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onQuickEdit(lowerThird)}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </Card>
