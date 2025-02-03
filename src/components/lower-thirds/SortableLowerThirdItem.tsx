@@ -74,7 +74,7 @@ const SortableLowerThirdItem = ({
         </div>
         <div className="flex items-center gap-2">
           {showDurationButtons ? (
-            <div className="flex gap-2">
+            <ButtonGroup className="flex gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -103,7 +103,7 @@ const SortableLowerThirdItem = ({
               >
                 Cancel
               </Button>
-            </div>
+            </ButtonGroup>
           ) : (
             <>
               <Button
