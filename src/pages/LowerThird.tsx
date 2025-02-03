@@ -12,12 +12,10 @@ const LowerThird = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Update time every second
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
 
-    // Fetch active lower third every 2 seconds
     const fetchActiveLowerThird = async () => {
       setIsLoading(true);
       const { data, error } = await supabase
@@ -37,17 +35,14 @@ const LowerThird = () => {
       }
 
       if (data) {
-        // If we have a new lower third or the current one changed
-        if (!lowerThird || lowerThird.id !== data.id || lowerThird.updated_at !== data.updated_at) {
-          setIsVisible(false);
+        setIsVisible(false);
+        setTimeout(() => {
+          setLowerThird(data);
+          setIsLoading(false);
           setTimeout(() => {
-            setLowerThird(data);
-            setIsLoading(false);
-            setTimeout(() => {
-              setIsVisible(true);
-            }, 50);
-          }, 400);
-        }
+            setIsVisible(true);
+          }, 50);
+        }, 400);
       } else {
         setIsVisible(false);
         setTimeout(() => {
@@ -57,16 +52,72 @@ const LowerThird = () => {
       }
     };
 
-    // Initial fetch
     fetchActiveLowerThird();
 
-    // Set up polling interval
-    const pollInterval = setInterval(fetchActiveLowerThird, 2000);
+    const channel = supabase
+      .channel("schema-db-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "lower_thirds",
+          filter: "is_active=eq.true",
+        },
+        (payload) => {
+          console.log("Lower third changed:", payload);
+          if (payload.eventType === "DELETE" || !payload.new.is_active) {
+            setIsVisible(false);
+            setTimeout(() => {
+              setLowerThird(null);
+            }, 400);
+          } else {
+            setIsVisible(false);
+            setTimeout(() => {
+              setLowerThird(payload.new as Tables<"lower_thirds">);
+              setTimeout(() => {
+                setIsVisible(true);
+              }, 50);
+            }, 400);
+          }
+        }
+      )
+      .subscribe();
 
-    // Clean up
+    const updateChannel = supabase
+      .channel("active-lower-third-updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "lower_thirds",
+        },
+        (payload) => {
+          if (lowerThird && payload.old.id === lowerThird.id) {
+            if (!payload.new.is_active) {
+              setIsVisible(false);
+              setTimeout(() => {
+                setLowerThird(null);
+              }, 400);
+            } else {
+              setIsVisible(false);
+              setTimeout(() => {
+                setLowerThird(payload.new as Tables<"lower_thirds">);
+                setTimeout(() => {
+                  setIsVisible(true);
+                }, 50);
+              }, 400);
+            }
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       clearInterval(timer);
-      clearInterval(pollInterval);
+      supabase.removeChannel(channel);
+      supabase.removeChannel(updateChannel);
     };
   }, [lowerThird?.id]);
 
