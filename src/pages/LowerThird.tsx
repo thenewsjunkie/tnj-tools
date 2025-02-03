@@ -17,7 +17,6 @@ const LowerThird = () => {
     }, 1000);
 
     const fetchActiveLowerThird = async () => {
-      setIsLoading(true);
       const { data, error } = await supabase
         .from("lower_thirds")
         .select("*")
@@ -26,13 +25,11 @@ const LowerThird = () => {
 
       if (error) {
         console.error("Error fetching lower third:", error);
-        if (isVisible) {
+        if (lowerThird) {
           setIsVisible(false);
-          setTimeout(() => {
-            setLowerThird(null);
-            setIsLoading(false);
-          }, 400);
+          setTimeout(() => setLowerThird(null), 400);
         }
+        setIsLoading(false);
         return;
       }
 
@@ -42,46 +39,40 @@ const LowerThird = () => {
           const activatedAt = new Date(data.updated_at);
           const expiresAt = new Date(activatedAt.getTime() + data.duration_seconds * 1000);
           if (expiresAt <= new Date()) {
-            if (isVisible) {
+            if (lowerThird) {
               setIsVisible(false);
-              setTimeout(() => {
-                setLowerThird(null);
-                setIsLoading(false);
-              }, 400);
+              setTimeout(() => setLowerThird(null), 400);
             }
+            setIsLoading(false);
             return;
           }
         }
 
-        // Only update if the data has changed
+        // Only update if we have a new lower third or if the current one was updated
         if (!lowerThird || lowerThird.id !== data.id || lowerThird.updated_at !== data.updated_at) {
-          setIsVisible(false);
-          setTimeout(() => {
+          if (lowerThird) {
+            setIsVisible(false);
+            setTimeout(() => {
+              setLowerThird(data);
+              setIsLoading(false);
+              requestAnimationFrame(() => setIsVisible(true));
+            }, 400);
+          } else {
             setLowerThird(data);
             setIsLoading(false);
-            setTimeout(() => {
-              setIsVisible(true);
-            }, 50);
-          }, 400);
+            requestAnimationFrame(() => setIsVisible(true));
+          }
         } else {
           setIsLoading(false);
         }
+      } else if (lowerThird) {
+        setIsVisible(false);
+        setTimeout(() => setLowerThird(null), 400);
+        setIsLoading(false);
       } else {
-        if (isVisible) {
-          setIsVisible(false);
-          setTimeout(() => {
-            setLowerThird(null);
-            setIsLoading(false);
-          }, 400);
-        }
+        setIsLoading(false);
       }
     };
-
-    // Initial fetch
-    fetchActiveLowerThird();
-
-    // Set up polling every 2 seconds
-    const pollInterval = setInterval(fetchActiveLowerThird, 2000);
 
     // Set up real-time subscription
     const channel = supabase
@@ -94,19 +85,20 @@ const LowerThird = () => {
           table: "lower_thirds",
           filter: "is_active=eq.true",
         },
-        (payload) => {
-          console.log("Lower third changed:", payload);
+        () => {
           fetchActiveLowerThird();
         }
       )
       .subscribe();
 
+    // Initial fetch
+    fetchActiveLowerThird();
+
     return () => {
       clearInterval(timer);
-      clearInterval(pollInterval);
       supabase.removeChannel(channel);
     };
-  }, [lowerThird, isVisible]);
+  }, [lowerThird]);
 
   if (!lowerThird || isLoading) return null;
 
