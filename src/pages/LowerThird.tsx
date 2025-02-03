@@ -26,11 +26,13 @@ const LowerThird = () => {
 
       if (error) {
         console.error("Error fetching lower third:", error);
-        setIsVisible(false);
-        setTimeout(() => {
-          setLowerThird(null);
-          setIsLoading(false);
-        }, 400);
+        if (isVisible) {
+          setIsVisible(false);
+          setTimeout(() => {
+            setLowerThird(null);
+            setIsLoading(false);
+          }, 400);
+        }
         return;
       }
 
@@ -40,29 +42,38 @@ const LowerThird = () => {
           const activatedAt = new Date(data.updated_at);
           const expiresAt = new Date(activatedAt.getTime() + data.duration_seconds * 1000);
           if (expiresAt <= new Date()) {
-            setIsVisible(false);
-            setTimeout(() => {
-              setLowerThird(null);
-              setIsLoading(false);
-            }, 400);
+            if (isVisible) {
+              setIsVisible(false);
+              setTimeout(() => {
+                setLowerThird(null);
+                setIsLoading(false);
+              }, 400);
+            }
             return;
           }
         }
 
-        setIsVisible(false);
-        setTimeout(() => {
-          setLowerThird(data);
-          setIsLoading(false);
+        // Only update if the data has changed
+        if (!lowerThird || lowerThird.id !== data.id || lowerThird.updated_at !== data.updated_at) {
+          setIsVisible(false);
           setTimeout(() => {
-            setIsVisible(true);
-          }, 50);
-        }, 400);
-      } else {
-        setIsVisible(false);
-        setTimeout(() => {
-          setLowerThird(null);
+            setLowerThird(data);
+            setIsLoading(false);
+            setTimeout(() => {
+              setIsVisible(true);
+            }, 50);
+          }, 400);
+        } else {
           setIsLoading(false);
-        }, 400);
+        }
+      } else {
+        if (isVisible) {
+          setIsVisible(false);
+          setTimeout(() => {
+            setLowerThird(null);
+            setIsLoading(false);
+          }, 400);
+        }
       }
     };
 
@@ -95,7 +106,7 @@ const LowerThird = () => {
       clearInterval(pollInterval);
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [lowerThird, isVisible]);
 
   if (!lowerThird || isLoading) return null;
 
@@ -106,13 +117,7 @@ const LowerThird = () => {
       <div className="flex items-end w-full">
         {type === "guest" && guest_image_url ? (
           <Guest imageUrl={guest_image_url} type={type} isVisible={isVisible} />
-        ) : (
-          <div className="absolute -top-16 left-0 z-10">
-            <div className={`bg-black/85 text-white px-8 py-4 text-xl font-bold uppercase ${isVisible ? 'animate-fade-in' : ''}`}>
-              {type}
-            </div>
-          </div>
-        )}
+        ) : null}
 
         <div className={`flex-1 relative overflow-hidden ${isVisible ? 'animate-slide-in-bottom' : ''}`} style={{ height: type === "guest" ? '280px' : 'auto' }}>
           <Content lowerThird={lowerThird} currentTime={currentTime} isVisible={isVisible} />
