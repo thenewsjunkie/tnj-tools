@@ -17,6 +17,7 @@ const LowerThird = () => {
     }, 1000);
 
     const fetchActiveLowerThird = async () => {
+      setIsLoading(true);
       const { data, error } = await supabase
         .from("lower_thirds")
         .select("*")
@@ -25,56 +26,34 @@ const LowerThird = () => {
 
       if (error) {
         console.error("Error fetching lower third:", error);
-        if (lowerThird) {
-          setIsVisible(false);
-          setTimeout(() => setLowerThird(null), 400);
-        }
-        setIsLoading(false);
+        setIsVisible(false);
+        setTimeout(() => {
+          setLowerThird(null);
+          setIsLoading(false);
+        }, 400);
         return;
       }
 
       if (data) {
-        // Check if the lower third should still be active based on duration
-        if (data.duration_seconds) {
-          const activatedAt = new Date(data.updated_at);
-          const expiresAt = new Date(activatedAt.getTime() + data.duration_seconds * 1000);
-          if (expiresAt <= new Date()) {
-            if (lowerThird) {
-              setIsVisible(false);
-              setTimeout(() => setLowerThird(null), 400);
-            }
-            setIsLoading(false);
-            return;
-          }
-        }
-
-        // Only update if we have a new lower third or if the current one was updated
-        if (!lowerThird || lowerThird.id !== data.id || lowerThird.updated_at !== data.updated_at) {
-          if (lowerThird) {
-            setIsVisible(false);
-            setTimeout(() => {
-              setLowerThird(data);
-              setIsLoading(false);
-              requestAnimationFrame(() => setIsVisible(true));
-            }, 400);
-          } else {
-            setLowerThird(data);
-            setIsLoading(false);
-            requestAnimationFrame(() => setIsVisible(true));
-          }
-        } else {
-          setIsLoading(false);
-        }
-      } else if (lowerThird) {
         setIsVisible(false);
-        setTimeout(() => setLowerThird(null), 400);
-        setIsLoading(false);
+        setTimeout(() => {
+          setLowerThird(data);
+          setIsLoading(false);
+          setTimeout(() => {
+            setIsVisible(true);
+          }, 50);
+        }, 400);
       } else {
-        setIsLoading(false);
+        setIsVisible(false);
+        setTimeout(() => {
+          setLowerThird(null);
+          setIsLoading(false);
+        }, 400);
       }
     };
 
-    // Set up real-time subscription
+    fetchActiveLowerThird();
+
     const channel = supabase
       .channel("schema-db-changes")
       .on(
@@ -85,20 +64,62 @@ const LowerThird = () => {
           table: "lower_thirds",
           filter: "is_active=eq.true",
         },
-        () => {
-          fetchActiveLowerThird();
+        (payload) => {
+          console.log("Lower third changed:", payload);
+          if (payload.eventType === "DELETE" || !payload.new.is_active) {
+            setIsVisible(false);
+            setTimeout(() => {
+              setLowerThird(null);
+            }, 400);
+          } else {
+            setIsVisible(false);
+            setTimeout(() => {
+              setLowerThird(payload.new as Tables<"lower_thirds">);
+              setTimeout(() => {
+                setIsVisible(true);
+              }, 50);
+            }, 400);
+          }
         }
       )
       .subscribe();
 
-    // Initial fetch
-    fetchActiveLowerThird();
+    const updateChannel = supabase
+      .channel("active-lower-third-updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "lower_thirds",
+        },
+        (payload) => {
+          if (lowerThird && payload.old.id === lowerThird.id) {
+            if (!payload.new.is_active) {
+              setIsVisible(false);
+              setTimeout(() => {
+                setLowerThird(null);
+              }, 400);
+            } else {
+              setIsVisible(false);
+              setTimeout(() => {
+                setLowerThird(payload.new as Tables<"lower_thirds">);
+                setTimeout(() => {
+                  setIsVisible(true);
+                }, 50);
+              }, 400);
+            }
+          }
+        }
+      )
+      .subscribe();
 
     return () => {
       clearInterval(timer);
       supabase.removeChannel(channel);
+      supabase.removeChannel(updateChannel);
     };
-  }, [lowerThird]);
+  }, [lowerThird?.id]);
 
   if (!lowerThird || isLoading) return null;
 
@@ -109,7 +130,13 @@ const LowerThird = () => {
       <div className="flex items-end w-full">
         {type === "guest" && guest_image_url ? (
           <Guest imageUrl={guest_image_url} type={type} isVisible={isVisible} />
-        ) : null}
+        ) : (
+          <div className="absolute -top-16 left-0 z-10">
+            <div className={`bg-black/85 text-white px-8 py-4 text-xl font-bold uppercase ${isVisible ? 'animate-fade-in' : ''}`}>
+              {type}
+            </div>
+          </div>
+        )}
 
         <div className={`flex-1 relative overflow-hidden ${isVisible ? 'animate-slide-in-bottom' : ''}`} style={{ height: type === "guest" ? '280px' : 'auto' }}>
           <Content lowerThird={lowerThird} currentTime={currentTime} isVisible={isVisible} />
