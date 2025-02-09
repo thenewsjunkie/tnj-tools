@@ -63,16 +63,32 @@ const LowerThird = () => {
           event: "*",
           schema: "public",
           table: "lower_thirds",
-          filter: "is_active=eq.true",
         },
         (payload) => {
           console.log("Lower third changed:", payload);
-          if (payload.eventType === "DELETE" || !payload.new.is_active) {
-            setIsVisible(false);
-            setTimeout(() => {
-              setLowerThird(null);
-            }, 400);
-          } else {
+          
+          // If this is the currently displayed lower third
+          if (lowerThird && payload.old.id === lowerThird.id) {
+            // Check if it was deactivated or deleted
+            if (payload.eventType === "DELETE" || !payload.new.is_active) {
+              console.log("Lower third deactivated or deleted");
+              setIsVisible(false);
+              setTimeout(() => {
+                setLowerThird(null);
+              }, 400);
+            } else {
+              // Update the current lower third with new data
+              setIsVisible(false);
+              setTimeout(() => {
+                setLowerThird(payload.new as Tables<"lower_thirds">);
+                setTimeout(() => {
+                  setIsVisible(true);
+                }, 50);
+              }, 400);
+            }
+          } else if (payload.eventType !== "DELETE" && payload.new.is_active) {
+            // A different lower third was activated
+            console.log("New lower third activated");
             setIsVisible(false);
             setTimeout(() => {
               setLowerThird(payload.new as Tables<"lower_thirds">);
@@ -85,40 +101,9 @@ const LowerThird = () => {
       )
       .subscribe();
 
-    const updateChannel = supabase
-      .channel("active-lower-third-updates")
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "lower_thirds",
-        },
-        (payload) => {
-          if (lowerThird && payload.old.id === lowerThird.id) {
-            if (!payload.new.is_active) {
-              setIsVisible(false);
-              setTimeout(() => {
-                setLowerThird(null);
-              }, 400);
-            } else {
-              setIsVisible(false);
-              setTimeout(() => {
-                setLowerThird(payload.new as Tables<"lower_thirds">);
-                setTimeout(() => {
-                  setIsVisible(true);
-                }, 50);
-              }, 400);
-            }
-          }
-        }
-      )
-      .subscribe();
-
     return () => {
       clearInterval(timer);
       supabase.removeChannel(channel);
-      supabase.removeChannel(updateChannel);
     };
   }, [lowerThird?.id]);
 
