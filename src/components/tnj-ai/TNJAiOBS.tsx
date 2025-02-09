@@ -15,6 +15,7 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
   const [loadingDots, setLoadingDots] = useState('.')
   const [showQuestion, setShowQuestion] = useState(false)
   const [showAnswer, setShowAnswer] = useState(false)
+  const [dismissTimer, setDismissTimer] = useState<NodeJS.Timeout | null>(null)
 
   // Handle dots animation
   useEffect(() => {
@@ -30,57 +31,54 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
     return () => clearInterval(interval)
   }, [isProcessing])
 
-  // Handle message animations and visibility
-  useEffect(() => {
-    if (isProcessing || (conversation && conversation.answer_text)) {
-      console.log('TNJ AI OBS: Showing overlay - Processing:', isProcessing, 'Conversation:', conversation)
-      setShouldShow(true)
-
-      // When a new conversation starts, animate in the question first
-      if (conversation?.question_text) {
-        setShowQuestion(true)
-        
-        // After question appears, show the answer (if available)
-        if (conversation.answer_text) {
-          // Delay answer appearance to simulate typing
-          setTimeout(() => {
-            setShowAnswer(true)
-          }, 1000)
-        }
-      }
-      return
-    }
-
-    if (!isProcessing && conversation?.answer_text) {
-      console.log('TNJ AI OBS: Setting up auto-dismiss timer')
-      const timer = setTimeout(() => {
-        console.log('TNJ AI OBS: Auto-dismissing')
-        // Animate out messages before hiding
-        setShowAnswer(false)
-        setTimeout(() => {
-          setShowQuestion(false)
-          setTimeout(() => {
-            setShouldShow(false)
-          }, 300)
-        }, 300)
-      }, 30000) // 30 seconds
-
-      return () => clearTimeout(timer)
-    }
-  }, [isProcessing, conversation])
-
-  // Reset animation states when conversation changes
+  // Reset animations when conversation changes
   useEffect(() => {
     if (!conversation) {
       setShowQuestion(false)
       setShowAnswer(false)
+      setShouldShow(false)
+      if (dismissTimer) {
+        clearTimeout(dismissTimer)
+        setDismissTimer(null)
+      }
+      return
+    }
+
+    // Show the component and animate in the question
+    setShouldShow(true)
+    setShowQuestion(true)
+    setShowAnswer(false)
+
+    // If we have an answer, animate it in after a delay
+    if (conversation.answer_text) {
+      setTimeout(() => {
+        setShowAnswer(true)
+        
+        // Start the dismiss timer after the answer appears
+        const timer = setTimeout(() => {
+          console.log('Starting dismiss animation')
+          setShowAnswer(false)
+          setTimeout(() => {
+            setShowQuestion(false)
+            setTimeout(() => {
+              setShouldShow(false)
+            }, 300)
+          }, 300)
+        }, 30000)
+        
+        setDismissTimer(timer)
+      }, 1000)
+    }
+
+    // Cleanup
+    return () => {
+      if (dismissTimer) {
+        clearTimeout(dismissTimer)
+      }
     }
   }, [conversation])
 
-  console.log('TNJ AI OBS Component:', { conversation, isProcessing, shouldShow })
-
   if (!shouldShow) {
-    console.log('TNJ AI OBS: Not showing overlay')
     return null
   }
 
@@ -95,7 +93,7 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
         ) : conversation?.answer_text ? (
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2 mb-4">
-              <Computer className="h-18 w-18 text-neon-red" />
+              <Computer className="h-6 w-6 text-neon-red" />
               <span className="text-neon-red font-semibold text-2xl leading-none">TNJ AI</span>
             </div>
             {conversation.question_text && (

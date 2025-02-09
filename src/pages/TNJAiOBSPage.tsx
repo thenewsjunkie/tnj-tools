@@ -25,13 +25,15 @@ const TNJAiOBSPage = () => {
       if (data && !error) {
         console.log('Fetched conversation:', data)
         setCurrentConversation(data)
+        setIsProcessing(!data.answer_text) // Set processing if we only have a question
       } else {
         console.log('No active conversation found or error:', error)
         setCurrentConversation(null)
+        setIsProcessing(false)
       }
     }
 
-    // Subscribe to ALL changes on the audio_conversations table
+    // Subscribe to changes on the audio_conversations table
     const subscription = supabase
       .channel('audio_conversations_changes')
       .on(
@@ -44,29 +46,35 @@ const TNJAiOBSPage = () => {
         async (payload: any) => {
           console.log('Audio conversation change detected:', payload)
           
-          // If this is a new conversation starting (only question, no answer)
-          if (payload.new?.question_text && !payload.new?.answer_text) {
-            console.log('New question detected, setting processing state')
+          // If this is a new question with is_shown_in_obs = true
+          if (payload.new?.is_shown_in_obs && payload.new?.question_text) {
+            console.log('New question detected')
             setIsProcessing(true)
             setCurrentConversation({
-              question_text: payload.new.question_text
+              question_text: payload.new.question_text,
+              answer_text: undefined
             })
           }
           
-          // If this is an answer being added
-          if (payload.new?.is_shown_in_obs === true && payload.new?.answer_text) {
-            console.log('Answer received, updating conversation')
+          // If an answer is added to a shown conversation
+          if (payload.new?.is_shown_in_obs && payload.new?.answer_text) {
+            console.log('Answer received')
             setCurrentConversation({
               question_text: payload.new.question_text,
               answer_text: payload.new.answer_text
             })
             setIsProcessing(false)
           }
+
+          // If is_shown_in_obs becomes false, clear the conversation
+          if (payload.new?.is_shown_in_obs === false) {
+            console.log('Conversation hidden from OBS')
+            setCurrentConversation(null)
+            setIsProcessing(false)
+          }
         }
       )
-      .subscribe((status) => {
-        console.log('Subscription status:', status)
-      })
+      .subscribe()
 
     // Initial fetch
     fetchMostRecentConversation()
