@@ -50,9 +50,11 @@ const TNJAiOBSPage = () => {
     cleanupCompletedConversations()
     fetchMostRecentConversation()
 
-    // Subscribe to changes on the audio_conversations table
-    const subscription = supabase
-      .channel('audio_conversations_changes')
+    // Set up realtime subscription
+    const channel = supabase.channel('audio_conversations_changes')
+
+    // Subscribe to INSERT events
+    channel
       .on(
         'postgres_changes',
         {
@@ -72,6 +74,7 @@ const TNJAiOBSPage = () => {
           }
         }
       )
+      // Subscribe to UPDATE events
       .on(
         'postgres_changes',
         {
@@ -94,13 +97,15 @@ const TNJAiOBSPage = () => {
           }
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        console.log('Subscription status:', status)
+      })
 
     // Set up periodic cleanup
     const cleanupInterval = setInterval(cleanupCompletedConversations, 5000)
 
     return () => {
-      subscription.unsubscribe()
+      channel.unsubscribe()
       clearInterval(cleanupInterval)
     }
   }, [])
