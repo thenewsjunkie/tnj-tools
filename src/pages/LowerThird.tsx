@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
@@ -22,7 +23,7 @@ const LowerThird = () => {
         .from("lower_thirds")
         .select("*")
         .eq("is_active", true)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error("Error fetching lower third:", error);
