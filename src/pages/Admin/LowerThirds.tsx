@@ -108,20 +108,28 @@ const LowerThirds = () => {
       console.log('Deleting lower third with ID:', id);
       
       // First, ensure it's not active
-      await supabase
+      const { error: deactivateError } = await supabase
         .from("lower_thirds")
         .update({ is_active: false })
         .eq("id", id);
       
+      if (deactivateError) {
+        console.error('Error deactivating lower third:', deactivateError);
+        throw deactivateError;
+      }
+
+      // Add a small delay to ensure deactivation is processed
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       // Then delete it
-      const { error, count } = await supabase
+      const { error: deleteError, count } = await supabase
         .from("lower_thirds")
         .delete()
         .eq("id", id);
 
-      if (error) {
-        console.error('Delete error:', error);
-        throw error;
+      if (deleteError) {
+        console.error('Delete error:', deleteError);
+        throw deleteError;
       }
 
       // If no rows were affected, throw an error
@@ -129,16 +137,22 @@ const LowerThirds = () => {
         throw new Error('No lower third found with the specified ID');
       }
 
+      // Add a small delay before returning to ensure deletion is processed
+      await new Promise(resolve => setTimeout(resolve, 100));
       return id;
     },
     onSuccess: (deletedId) => {
       console.log('Successfully deleted lower third:', deletedId);
-      // Immediately remove the deleted item from the cache
+      
+      // Optimistically update the cache first
       queryClient.setQueryData(["lower-thirds"], (old: LowerThird[] | undefined) => {
         return old ? old.filter(lt => lt.id !== deletedId) : [];
       });
-      // Then invalidate to refetch
-      queryClient.invalidateQueries({ queryKey: ["lower-thirds"] });
+
+      // Wait a bit before refetching to ensure the deletion has propagated
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["lower-thirds"] });
+      }, 500);
       
       toast({
         title: "Lower third deleted",
