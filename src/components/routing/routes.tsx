@@ -19,7 +19,7 @@ import Leaderboard from "@/pages/Leaderboard";
 import LeaderboardOBS from "@/pages/LeaderboardOBS";
 import GiftStats from "@/pages/Admin/GiftStats";
 import StreamReview from "@/pages/StreamReview";
-import TNJAiOBSPage from "@/pages/TNJAiOBS";
+import TNJAiOBSPage from "@/pages/TNJAiOBSPage";
 
 export const router = createBrowserRouter([
   {
