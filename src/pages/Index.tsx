@@ -1,5 +1,5 @@
+
 import { Link } from "react-router-dom";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,9 +32,6 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
       <nav className="fixed top-0 right-0 p-4 flex items-center gap-4">
-        <div className="flex items-center">
-          <ThemeToggle />
-        </div>
         <Link 
           to="/login" 
           className={`${
