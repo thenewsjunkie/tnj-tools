@@ -192,7 +192,7 @@ export function VideoBytes() {
                 src={fullscreenVideo.video_url}
                 controls
                 autoPlay
-                className="w-full h-full"
+                className="max-w-full max-h-full w-auto h-auto"
               />
             )}
             <Button
