@@ -1,4 +1,3 @@
-
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Video, Plus, Pencil, Trash2, X } from "lucide-react";
 import { VideoUploadForm } from "./video-bytes/VideoUploadForm";
@@ -185,17 +184,15 @@ export function VideoBytes() {
         open={!!fullscreenVideo} 
         onOpenChange={(open) => !open && setFullscreenVideo(null)}
       >
-        <DialogContent className="fixed inset-0 p-0 w-screen h-screen max-w-none m-0 rounded-none bg-black/95">
-          <div className="relative w-full h-full flex items-center justify-center">
+        <DialogContent className="sm:max-w-[100vw] max-h-[100vh] p-0 border-0 bg-black/95">
+          <div className="relative w-full h-full flex items-center justify-center p-4">
             {fullscreenVideo && (
-              <div className="relative w-full h-full flex items-center justify-center p-4">
-                <video
-                  src={fullscreenVideo.video_url}
-                  controls
-                  autoPlay
-                  className="max-w-full max-h-full w-auto h-auto object-contain"
-                />
-              </div>
+              <video
+                src={fullscreenVideo.video_url}
+                controls
+                autoPlay
+                className="max-w-full max-h-full w-auto h-auto object-contain"
+              />
             )}
             <Button
               variant="ghost"
