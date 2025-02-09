@@ -1,19 +1,28 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
-interface VideoUploadFormProps {
-  onSuccess?: () => void;
+interface VideoByteType {
+  id: string;
+  title: string;
+  video_url: string;
+  thumbnail_url: string | null;
+  created_at: string;
 }
 
-export function VideoUploadForm({ onSuccess }: VideoUploadFormProps) {
+interface VideoUploadFormProps {
+  onSuccess?: () => void;
+  editingVideo?: VideoByteType | null;
+}
+
+export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [title, setTitle] = useState("");
@@ -21,8 +30,42 @@ export function VideoUploadForm({ onSuccess }: VideoUploadFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const handleUpload = async (e: React.FormEvent) => {
+  useEffect(() => {
+    if (editingVideo) {
+      setTitle(editingVideo.title);
+    }
+  }, [editingVideo]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (editingVideo) {
+      try {
+        const { error: updateError } = await supabase
+          .from("video_bytes")
+          .update({ title })
+          .eq("id", editingVideo.id);
+
+        if (updateError) throw updateError;
+
+        toast({
+          title: "Success",
+          description: "Video updated successfully",
+        });
+
+        queryClient.invalidateQueries({ queryKey: ["video-bytes"] });
+        onSuccess?.();
+      } catch (error) {
+        console.error("Update error:", error);
+        toast({
+          title: "Update failed",
+          description: "There was an error updating your video",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
+
     if (!videoFile || !title) {
       toast({
         title: "Missing information",
@@ -95,7 +138,7 @@ export function VideoUploadForm({ onSuccess }: VideoUploadFormProps) {
   };
 
   return (
-    <form onSubmit={handleUpload} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="title">Title</Label>
         <Input
@@ -107,17 +150,19 @@ export function VideoUploadForm({ onSuccess }: VideoUploadFormProps) {
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="video">Video File</Label>
-        <Input
-          id="video"
-          type="file"
-          accept="video/*"
-          onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
-          disabled={isUploading}
-          className="cursor-pointer"
-        />
-      </div>
+      {!editingVideo && (
+        <div className="space-y-2">
+          <Label htmlFor="video">Video File</Label>
+          <Input
+            id="video"
+            type="file"
+            accept="video/*"
+            onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
+            disabled={isUploading}
+            className="cursor-pointer"
+          />
+        </div>
+      )}
 
       {isUploading && (
         <div className="space-y-2">
@@ -131,6 +176,11 @@ export function VideoUploadForm({ onSuccess }: VideoUploadFormProps) {
       <Button disabled={isUploading} type="submit" className="w-full">
         {isUploading ? (
           "Uploading..."
+        ) : editingVideo ? (
+          <>
+            <Upload className="w-4 h-4 mr-2" />
+            Update Video
+          </>
         ) : (
           <>
             <Plus className="w-4 h-4 mr-2" />

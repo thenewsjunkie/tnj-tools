@@ -1,12 +1,23 @@
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Video, Plus } from "lucide-react";
+import { Video, Plus, Pencil, Trash2 } from "lucide-react";
 import { VideoUploadForm } from "./video-bytes/VideoUploadForm";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useState, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface VideoByteType {
   id: string;
@@ -18,6 +29,10 @@ interface VideoByteType {
 
 export function VideoBytes() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingVideo, setEditingVideo] = useState<VideoByteType | null>(null);
+  const [deletingVideo, setDeletingVideo] = useState<VideoByteType | null>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: videos, isLoading } = useQuery({
     queryKey: ["video-bytes"],
@@ -35,8 +50,49 @@ export function VideoBytes() {
   const handleVideoPlay = (event: React.SyntheticEvent<HTMLVideoElement>) => {
     const video = event.currentTarget;
     if (video.requestFullscreen) {
-      // Add noKeyboard option to prevent fullscreen instructions
       video.requestFullscreen({ navigationUI: "hide" });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deletingVideo) return;
+
+    try {
+      // Delete from storage first
+      const fileUrl = new URL(deletingVideo.video_url);
+      const filePath = fileUrl.pathname.split('/').pop();
+      if (filePath) {
+        const { error: storageError } = await supabase.storage
+          .from("video_bytes")
+          .remove([filePath]);
+
+        if (storageError) throw storageError;
+      }
+
+      // Then delete from database
+      const { error: dbError } = await supabase
+        .from("video_bytes")
+        .delete()
+        .eq("id", deletingVideo.id);
+
+      if (dbError) throw dbError;
+
+      toast({
+        title: "Success",
+        description: "Video deleted successfully",
+      });
+
+      // Refresh the videos list
+      queryClient.invalidateQueries({ queryKey: ["video-bytes"] });
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete video",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingVideo(null);
     }
   };
 
@@ -74,21 +130,67 @@ export function VideoBytes() {
                   preload="metadata"
                   onPlay={handleVideoPlay}
                 />
-                <h3 className="font-medium">{video.title}</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium">{video.title}</h3>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setEditingVideo(video)}
+                      className="h-8 w-8"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setDeletingVideo(video)}
+                      className="h-8 w-8 text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
         )}
       </CardContent>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isDialogOpen || !!editingVideo} onOpenChange={(open) => {
+        setIsDialogOpen(open);
+        if (!open) setEditingVideo(null);
+      }}>
         <DialogContent className="dark:text-white">
           <DialogHeader>
-            <DialogTitle>Upload Video</DialogTitle>
+            <DialogTitle>{editingVideo ? 'Edit Video' : 'Upload Video'}</DialogTitle>
           </DialogHeader>
-          <VideoUploadForm onSuccess={() => setIsDialogOpen(false)} />
+          <VideoUploadForm 
+            onSuccess={() => {
+              setIsDialogOpen(false);
+              setEditingVideo(null);
+            }}
+            editingVideo={editingVideo}
+          />
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deletingVideo} onOpenChange={(open) => !open && setDeletingVideo(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the video.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
