@@ -33,6 +33,14 @@ const Index = () => {
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
       <nav className="fixed top-0 right-0 p-4 flex items-center gap-4">
         <Link 
+          to="/tnj-ai-obs" 
+          className={`${
+            theme === 'light' ? 'text-black' : 'text-white'
+          } hover:text-neon-red transition-colors px-4 py-2 border border-white/20 rounded`}
+        >
+          TNJ AI OBS
+        </Link>
+        <Link 
           to="/login" 
           className={`${
             theme === 'light' ? 'text-black' : 'text-white'
