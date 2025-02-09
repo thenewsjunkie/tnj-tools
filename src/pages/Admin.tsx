@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,7 +55,7 @@ const Admin = () => {
               setIsQuickEditOpen(true);
             }}
           />
-          <Companion />
+          <LivePoll />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
           <Reviews 
@@ -62,7 +63,7 @@ const Admin = () => {
             simpleView={true} 
             limit={10} 
           />
-          <LivePoll />
+          <Companion />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Stopwatch />
