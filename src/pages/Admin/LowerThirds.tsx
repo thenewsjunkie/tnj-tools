@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -64,7 +65,7 @@ const LowerThirds = () => {
           is_active: lowerThird.is_active,
           style_config: lowerThird.style_config,
           guest_image_url: lowerThird.guest_image_url,
-          logo_url: lowerThird.logo_url, // Add this line to include logo_url in updates
+          logo_url: lowerThird.logo_url,
         })
         .eq("id", lowerThird.id);
 
@@ -104,18 +105,30 @@ const LowerThirds = () => {
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      console.log('Deleting lower third with ID:', id); // Debug log
       const { error } = await supabase
         .from("lower_thirds")
         .delete()
         .eq("id", id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Delete error:', error); // Debug log
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lower-thirds"] });
       toast({
         title: "Lower third deleted",
         description: "The lower third has been deleted successfully.",
+      });
+    },
+    onError: (error) => {
+      console.error('Delete mutation error:', error); // Debug log
+      toast({
+        title: "Error",
+        description: "Failed to delete lower third. Please try again.",
+        variant: "destructive",
       });
     },
   });
