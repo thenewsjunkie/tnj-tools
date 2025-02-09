@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { Type, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -88,7 +89,12 @@ const LowerThirdsCard = ({
         <CardTitle className="flex justify-between items-center">
           Lower Thirds
           <div className="flex items-center gap-2">
-            <Link to="/lower-third" className="text-sm">
+            <a 
+              href="/lower-third" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-sm"
+            >
               <Button 
                 size="sm"
                 variant="outline"
@@ -97,7 +103,7 @@ const LowerThirdsCard = ({
                 <ExternalLink className="h-4 w-4" />
                 Preview
               </Button>
-            </Link>
+            </a>
             <Link to="/admin/lower-thirds">
               <Button 
                 size="sm"
