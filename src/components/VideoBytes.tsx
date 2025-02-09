@@ -4,7 +4,7 @@ import { Video, Plus } from "lucide-react";
 import { VideoUploadForm } from "./video-bytes/VideoUploadForm";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -31,6 +31,13 @@ export function VideoBytes() {
       return data as VideoByteType[];
     },
   });
+
+  const handleVideoPlay = (event: React.SyntheticEvent<HTMLVideoElement>) => {
+    const video = event.currentTarget;
+    if (video.requestFullscreen) {
+      video.requestFullscreen();
+    }
+  };
 
   return (
     <Card className="dark:bg-black/50 dark:border-white/10">
@@ -64,6 +71,7 @@ export function VideoBytes() {
                   controls
                   className="w-full rounded-lg bg-muted"
                   preload="metadata"
+                  onPlay={handleVideoPlay}
                 />
                 <h3 className="font-medium">{video.title}</h3>
               </div>
