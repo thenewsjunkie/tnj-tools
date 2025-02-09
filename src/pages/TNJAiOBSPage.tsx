@@ -27,7 +27,7 @@ const TNJAiOBSPage = () => {
 
   // Log state changes for debugging
   useEffect(() => {
-    console.log('TNJ AI OBS: Current conversation updated:', {
+    console.log('TNJ AI OBS: Current state', {
       isProcessing,
       currentConversation
     })

@@ -1,3 +1,4 @@
+
 import { useState, useRef } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 
@@ -14,6 +15,7 @@ export const useAudioRecording = ({ onProcessingComplete, onError }: UseAudioRec
 
   const startRecording = async () => {
     try {
+      setIsProcessing(true) // Set processing state immediately when starting
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
@@ -57,7 +59,6 @@ export const useAudioRecording = ({ onProcessingComplete, onError }: UseAudioRec
       }
 
       mediaRecorder.current.onstop = async () => {
-        setIsProcessing(true)
         const audioBlob = new Blob(audioChunks.current, { type: selectedMimeType })
         const reader = new FileReader()
         
@@ -99,7 +100,9 @@ export const useAudioRecording = ({ onProcessingComplete, onError }: UseAudioRec
 
       mediaRecorder.current.start(100)
       setIsRecording(true)
+      setIsProcessing(false) // Reset processing state after setup is complete
     } catch (error) {
+      setIsProcessing(false)
       onError(error instanceof Error ? error : new Error('Failed to access microphone'))
     }
   }
@@ -108,6 +111,7 @@ export const useAudioRecording = ({ onProcessingComplete, onError }: UseAudioRec
     if (mediaRecorder.current && isRecording) {
       mediaRecorder.current.stop()
       setIsRecording(false)
+      setIsProcessing(true) // Set processing to true when stopping recording
       mediaRecorder.current.stream.getTracks().forEach(track => track.stop())
     }
   }

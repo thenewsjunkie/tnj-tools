@@ -31,15 +31,9 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
 
   // Handle visibility and auto-dismiss
   useEffect(() => {
-    console.log('TNJ AI OBS: State update received:', { 
-      isProcessing, 
-      conversation,
-      shouldShow 
-    })
-
     // Show when processing starts or when we have a conversation
-    if (isProcessing || conversation) {
-      console.log('TNJ AI OBS: Showing overlay')
+    if (isProcessing || (conversation && conversation.answer_text)) {
+      console.log('TNJ AI OBS: Showing overlay - Processing:', isProcessing, 'Conversation:', conversation)
       setShouldShow(true)
       return
     }
@@ -55,6 +49,8 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
       return () => clearTimeout(timer)
     }
   }, [isProcessing, conversation])
+
+  console.log('TNJ AI OBS Component:', { conversation, isProcessing, shouldShow })
 
   if (!shouldShow) {
     console.log('TNJ AI OBS: Not showing overlay')
