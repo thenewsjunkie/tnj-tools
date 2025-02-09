@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { handleGiftStats } from "./useGiftQueueActions";
 import { QueueStateValue, AlertQueueItem } from "@/types/queue";
@@ -89,9 +90,16 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
 
     console.log('[useQueueActions] Setting next alert to playing:', nextAlert.id);
 
+    // Add a small delay before setting the next alert to playing
+    // This ensures any previous alert states are fully cleaned up
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     const { error } = await supabase
       .from('alert_queue')
-      .update({ status: 'playing' })
+      .update({ 
+        status: 'playing',
+        state_changed_at: new Date().toISOString()
+      })
       .eq('id', nextAlert.id);
 
     if (error) {

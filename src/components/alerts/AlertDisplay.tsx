@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { AlertContent } from "./display/AlertContent";
 
@@ -27,6 +28,7 @@ export const AlertDisplay = ({
   const [hasError, setHasError] = useState(false);
   const [isMediaLoaded, setIsMediaLoaded] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [currentRepeat, setCurrentRepeat] = useState(0);
 
   useEffect(() => {
     console.log('[AlertDisplay] Alert mounted:', {
@@ -37,13 +39,14 @@ export const AlertDisplay = ({
       messageEnabled: currentAlert.message_enabled,
       messageText: currentAlert.message_text,
       repeatCount: currentAlert.repeat_count,
-      repeatDelay: currentAlert.repeat_delay
+      repeatDelay: currentAlert.repeat_delay,
+      currentRepeat
     });
     
     return () => {
       console.log('[AlertDisplay] Alert unmounted');
     };
-  }, [currentAlert]);
+  }, [currentAlert, currentRepeat]);
 
   const handleError = (error: any) => {
     console.error('[AlertDisplay] Error:', error);
@@ -60,10 +63,20 @@ export const AlertDisplay = ({
   };
 
   const handleAlertContentComplete = () => {
-    console.log('[AlertDisplay] Alert content completed');
-    if (!isCompleting) {
-      setIsCompleting(true);
-      onComplete();
+    console.log('[AlertDisplay] Alert content completed, current repeat:', currentRepeat);
+    
+    const targetRepeatCount = currentAlert.repeat_count ?? 1;
+    
+    if (currentRepeat < targetRepeatCount - 1) {
+      // If we haven't reached the target repeat count, increment and continue
+      setCurrentRepeat(prev => prev + 1);
+    } else {
+      // If we've reached the target repeat count, complete the alert
+      if (!isCompleting) {
+        console.log('[AlertDisplay] All repeats completed, triggering onComplete');
+        setIsCompleting(true);
+        onComplete();
+      }
     }
   };
 
@@ -71,12 +84,6 @@ export const AlertDisplay = ({
     console.log('[AlertDisplay] No alert to render');
     return null;
   }
-
-  console.log('[AlertDisplay] Raw alert data:', {
-    repeat_count: currentAlert.repeat_count,
-    repeat_delay: currentAlert.repeat_delay,
-    currentAlert
-  });
 
   // Transform the alert data, preserving original values if they exist
   const transformedAlert = {
@@ -92,10 +99,11 @@ export const AlertDisplay = ({
     giftCountColor: currentAlert.gift_count_color,
     // Only use default values if the properties are actually undefined
     repeatCount: currentAlert.repeat_count ?? 1,
-    repeatDelay: currentAlert.repeat_delay ?? 1000
+    repeatDelay: currentAlert.repeat_delay ?? 1000,
+    currentRepeat // Pass the current repeat count to AlertContent
   };
 
-  console.log('[AlertDisplay] Transformed alert data:', transformedAlert);
+  console.log('[AlertDisplay] Rendering alert content with transformed data:', transformedAlert);
 
   return (
     <AlertContent
