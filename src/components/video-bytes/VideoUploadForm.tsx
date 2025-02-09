@@ -36,7 +36,7 @@ export function VideoUploadForm() {
       const { error: uploadError, data } = await supabase.storage
         .from("video_bytes")
         .upload(filePath, videoFile, {
-          onUploadProgress: (progress) => {
+          onProgress: (progress) => {
             const percent = (progress.loaded / progress.total) * 100;
             setUploadProgress(percent);
           },
