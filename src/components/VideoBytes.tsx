@@ -35,7 +35,8 @@ export function VideoBytes() {
   const handleVideoPlay = (event: React.SyntheticEvent<HTMLVideoElement>) => {
     const video = event.currentTarget;
     if (video.requestFullscreen) {
-      video.requestFullscreen();
+      // Add noKeyboard option to prevent fullscreen instructions
+      video.requestFullscreen({ navigationUI: "hide" });
     }
   };
 
