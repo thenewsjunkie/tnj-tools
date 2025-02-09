@@ -53,12 +53,16 @@ const TNJAiOBSPage = () => {
         .from('audio_conversations')
         .select('question_text, answer_text')
         .eq('is_shown_in_obs', true)
-        .order('shown_in_obs_at', { ascending: false })
+        .order('created_at', { ascending: false }) // Changed from shown_in_obs_at to created_at
         .limit(1)
         .single()
 
       if (data && !error) {
+        console.log('Initial active conversation:', data)
         setCurrentConversation(data)
+      } else {
+        console.log('No active conversation found or error:', error)
+        setCurrentConversation(null) // Reset if no conversation found
       }
     }
 
@@ -88,4 +92,3 @@ const TNJAiOBSPage = () => {
 }
 
 export default TNJAiOBSPage
-
