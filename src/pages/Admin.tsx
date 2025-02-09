@@ -11,7 +11,7 @@ import TNJAi from "@/components/AudioChat";
 import Alerts from "@/components/Alerts";
 import Companion from "@/components/Companion";
 import Reviews from "@/components/reviews/Reviews";
-import { LivePoll } from "@/components/LivePoll";
+import { VideoBytes } from "@/components/VideoBytes";
 import Stopwatch from "@/components/Stopwatch";
 import TNJLinks from "@/components/TNJLinks";
 
@@ -55,7 +55,7 @@ const Admin = () => {
               setIsQuickEditOpen(true);
             }}
           />
-          <LivePoll />
+          <VideoBytes />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
           <Reviews 
