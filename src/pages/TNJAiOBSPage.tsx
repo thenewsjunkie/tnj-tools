@@ -18,7 +18,7 @@ const TNJAiOBSPage = () => {
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: 'INSERT',
           schema: 'public',
           table: 'audio_conversations',
           filter: 'is_shown_in_obs=eq.true'
@@ -30,7 +30,39 @@ const TNJAiOBSPage = () => {
           setIsProcessing(false)
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'audio_conversations',
+          filter: 'is_shown_in_obs=eq.true'
+        },
+        (payload) => {
+          console.log('Conversation updated in OBS:', payload)
+          const { question_text, answer_text } = payload.new
+          setCurrentConversation({ question_text, answer_text })
+          setIsProcessing(false)
+        }
+      )
       .subscribe()
+
+    // Initial fetch of any active conversation
+    const fetchActiveConversation = async () => {
+      const { data, error } = await supabase
+        .from('audio_conversations')
+        .select('question_text, answer_text')
+        .eq('is_shown_in_obs', true)
+        .order('shown_in_obs_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      if (data && !error) {
+        setCurrentConversation(data)
+      }
+    }
+
+    fetchActiveConversation()
 
     return () => {
       subscription.unsubscribe()
@@ -56,3 +88,4 @@ const TNJAiOBSPage = () => {
 }
 
 export default TNJAiOBSPage
+
