@@ -37,6 +37,26 @@ const LowerThird = () => {
       }
 
       if (data) {
+        // Check if the lower third should be active based on its duration
+        if (data.duration_seconds && data.activated_at) {
+          const activatedAt = new Date(data.activated_at);
+          const expirationTime = new Date(activatedAt.getTime() + (data.duration_seconds * 1000));
+          
+          if (new Date() > expirationTime) {
+            console.log("Lower third has expired, deactivating");
+            await supabase
+              .from("lower_thirds")
+              .update({ is_active: false })
+              .eq("id", data.id);
+            setIsVisible(false);
+            setTimeout(() => {
+              setLowerThird(null);
+              setIsLoading(false);
+            }, 400);
+            return;
+          }
+        }
+
         setIsVisible(false);
         setTimeout(() => {
           setLowerThird(data);
@@ -78,6 +98,21 @@ const LowerThird = () => {
                 setLowerThird(null);
               }, 400);
             } else if (payload.new) {
+              // Check if the lower third has expired
+              if (payload.new.duration_seconds && payload.new.activated_at) {
+                const activatedAt = new Date(payload.new.activated_at);
+                const expirationTime = new Date(activatedAt.getTime() + (payload.new.duration_seconds * 1000));
+                
+                if (new Date() > expirationTime) {
+                  console.log("Lower third has expired via payload update");
+                  setIsVisible(false);
+                  setTimeout(() => {
+                    setLowerThird(null);
+                  }, 400);
+                  return;
+                }
+              }
+              
               // Update the current lower third with new data
               setIsVisible(false);
               setTimeout(() => {
@@ -90,6 +125,18 @@ const LowerThird = () => {
           } else if (payload.eventType !== "DELETE" && payload.new && payload.new.is_active) {
             // A different lower third was activated
             console.log("New lower third activated");
+            
+            // Check if the new lower third has already expired
+            if (payload.new.duration_seconds && payload.new.activated_at) {
+              const activatedAt = new Date(payload.new.activated_at);
+              const expirationTime = new Date(activatedAt.getTime() + (payload.new.duration_seconds * 1000));
+              
+              if (new Date() > expirationTime) {
+                console.log("New lower third is already expired");
+                return;
+              }
+            }
+            
             setIsVisible(false);
             setTimeout(() => {
               setLowerThird(payload.new as Tables<"lower_thirds">);
@@ -107,6 +154,28 @@ const LowerThird = () => {
       supabase.removeChannel(channel);
     };
   }, [lowerThird?.id]);
+
+  // Add a timer effect to check for expiration
+  useEffect(() => {
+    if (lowerThird?.duration_seconds && lowerThird.activated_at) {
+      const activatedAt = new Date(lowerThird.activated_at);
+      const expirationTime = new Date(activatedAt.getTime() + (lowerThird.duration_seconds * 1000));
+      
+      if (new Date() > expirationTime) {
+        console.log("Lower third expired via timer check");
+        supabase
+          .from("lower_thirds")
+          .update({ is_active: false })
+          .eq("id", lowerThird.id)
+          .then(() => {
+            setIsVisible(false);
+            setTimeout(() => {
+              setLowerThird(null);
+            }, 400);
+          });
+      }
+    }
+  }, [currentTime, lowerThird]);
 
   if (!lowerThird || isLoading) return null;
 
