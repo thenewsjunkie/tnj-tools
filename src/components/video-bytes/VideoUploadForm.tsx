@@ -8,7 +8,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Plus } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
-export function VideoUploadForm() {
+interface VideoUploadFormProps {
+  onSuccess?: () => void;
+}
+
+export function VideoUploadForm({ onSuccess }: VideoUploadFormProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [title, setTitle] = useState("");
@@ -69,6 +73,9 @@ export function VideoUploadForm() {
       setTitle("");
       setVideoFile(null);
       setUploadProgress(0);
+      
+      // Call onSuccess callback if provided
+      onSuccess?.();
       
     } catch (error) {
       console.error("Upload error:", error);
