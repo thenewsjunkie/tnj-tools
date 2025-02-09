@@ -1,5 +1,6 @@
+
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Video, Plus, Pencil, Trash2, X } from "lucide-react";
+import { Video, Plus } from "lucide-react";
 import { VideoUploadForm } from "./video-bytes/VideoUploadForm";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -7,16 +8,9 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { VideoGrid } from "./video-bytes/VideoGrid";
+import { VideoPlayer } from "./video-bytes/VideoPlayer";
+import { DeleteVideoDialog } from "./video-bytes/DeleteVideoDialog";
 
 interface VideoByteType {
   id: string;
@@ -47,11 +41,6 @@ export function VideoBytes() {
     },
   });
 
-  const handleVideoPlay = (video: VideoByteType) => {
-    console.log("Video clicked:", video); // Debug log
-    setFullscreenVideo(video);
-  };
-
   const handleDelete = async () => {
     if (!deletingVideo) return;
 
@@ -80,7 +69,6 @@ export function VideoBytes() {
         description: "Video deleted successfully",
       });
 
-      // Refresh the videos list
       queryClient.invalidateQueries({ queryKey: ["video-bytes"] });
     } catch (error) {
       console.error("Delete error:", error);
@@ -119,45 +107,12 @@ export function VideoBytes() {
           ) : videos?.length === 0 ? (
             <div className="text-center text-muted-foreground">No videos uploaded yet</div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {videos?.map((video) => (
-                <div key={video.id} className="space-y-2">
-                  <div 
-                    onClick={() => handleVideoPlay(video)} 
-                    className="cursor-pointer"
-                    role="button"
-                    aria-label={`Play ${video.title}`}
-                  >
-                    <video
-                      src={video.video_url}
-                      className="w-full rounded-lg bg-muted"
-                      preload="metadata"
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium">{video.title}</h3>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setEditingVideo(video)}
-                        className="h-7 w-7"
-                      >
-                        <Pencil className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDeletingVideo(video)}
-                        className="h-7 w-7 text-destructive"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <VideoGrid 
+              videos={videos}
+              onPlay={setFullscreenVideo}
+              onEdit={setEditingVideo}
+              onDelete={setDeletingVideo}
+            />
           )}
         </CardContent>
       </Card>
@@ -180,48 +135,16 @@ export function VideoBytes() {
         </DialogContent>
       </Dialog>
 
-      <Dialog 
-        open={!!fullscreenVideo} 
-        onOpenChange={(open) => !open && setFullscreenVideo(null)}
-      >
-        <DialogContent className="sm:max-w-[100vw] max-h-[100vh] p-0 border-0 bg-black/95">
-          <div className="relative w-full h-full flex items-center justify-center p-4">
-            {fullscreenVideo && (
-              <video
-                src={fullscreenVideo.video_url}
-                controls
-                autoPlay
-                className="max-w-full max-h-full w-auto h-auto object-contain"
-              />
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setFullscreenVideo(null)}
-              className="absolute top-4 right-4 text-white hover:text-white/80"
-            >
-              <X className="h-6 w-6" />
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <VideoPlayer 
+        video={fullscreenVideo}
+        onClose={() => setFullscreenVideo(null)}
+      />
 
-      <AlertDialog open={!!deletingVideo} onOpenChange={(open) => !open && setDeletingVideo(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the video.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteVideoDialog 
+        isOpen={!!deletingVideo}
+        onClose={() => setDeletingVideo(null)}
+        onConfirm={handleDelete}
+      />
     </>
   );
 }
