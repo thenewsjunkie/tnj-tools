@@ -63,13 +63,20 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
             <span className="font-mono w-6">{loadingDots}</span>
           </div>
         ) : conversation?.answer_text ? (
-          <div className="flex items-start gap-2">
-            <div className="flex flex-col items-center gap-1">
-              <Computer className="h-18 w-18 text-neon-red" />
-              <span className="text-neon-red font-semibold">TNJ AI</span>
-            </div>
-            <div className="p-3 bg-gradient-to-r from-black/90 to-black/70 rounded">
-              {conversation.answer_text}
+          <div className="flex flex-col gap-4">
+            {conversation.question_text && (
+              <div className="text-white/80 px-2">
+                {conversation.question_text}
+              </div>
+            )}
+            <div className="flex items-start gap-2">
+              <div className="flex flex-col items-center gap-1">
+                <Computer className="h-18 w-18 text-neon-red" />
+                <span className="text-neon-red font-semibold">TNJ AI</span>
+              </div>
+              <div className="p-4 bg-[#33C3F0] rounded-2xl max-w-[80%]">
+                {conversation.answer_text}
+              </div>
             </div>
           </div>
         ) : null}
