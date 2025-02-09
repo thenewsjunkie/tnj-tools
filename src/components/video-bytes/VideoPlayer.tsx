@@ -21,7 +21,7 @@ export function VideoPlayer({ video, onClose }: VideoPlayerProps) {
 
   return (
     <Dialog open={!!video} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[100vw] max-h-[100vh] p-0 border-0 bg-black/95">
+      <DialogContent className="sm:max-w-[100vw] max-h-[100vh] p-0 border-0 bg-black/95" hideCloseButton>
         <div className="relative w-full h-full flex items-center justify-center p-4">
           <video
             src={video.video_url}
