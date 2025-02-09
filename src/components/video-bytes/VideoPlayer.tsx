@@ -1,7 +1,5 @@
 
-import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { X } from "lucide-react";
 
 interface VideoByteType {
   id: string;
@@ -29,14 +27,6 @@ export function VideoPlayer({ video, onClose }: VideoPlayerProps) {
             autoPlay
             className="max-w-full max-h-full w-auto h-auto object-contain"
           />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="absolute top-4 right-4 text-white hover:text-white/80"
-          >
-            <X className="h-6 w-6" />
-          </Button>
         </div>
       </DialogContent>
     </Dialog>
