@@ -1,6 +1,7 @@
+
 import { useState, useRef } from 'react'
 import { Button } from './ui/button'
-import { Mic, Square } from 'lucide-react'
+import { Mic, Square, ExternalLink } from 'lucide-react'
 import { useToast } from './ui/use-toast'
 import { supabase } from '@/integrations/supabase/client'
 import { AudioControls } from './audio/AudioControls'
@@ -61,7 +62,18 @@ const TNJAi = () => {
   return (
     <div className={`rounded-lg ${bgColor} text-card-foreground shadow-sm border border-gray-200 dark:border-white/10`}>
       <div className="p-4">
-        <h2 className="text-xl font-semibold mb-4 tnj-ai-title">TNJ AI</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold tnj-ai-title">TNJ AI</h2>
+          <a 
+            href="/tnj-ai-obs" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-neon-red hover:text-tnj-light transition-colors flex items-center gap-1"
+          >
+            <ExternalLink className="h-4 w-4" />
+            <span className="text-sm">OBS View</span>
+          </a>
+        </div>
         <div className="flex flex-col gap-4">
           <div className="flex gap-4 items-center">
             <Button
