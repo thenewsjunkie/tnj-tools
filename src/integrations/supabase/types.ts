@@ -417,6 +417,7 @@ export type Database = {
       }
       lower_thirds: {
         Row: {
+          activated_at: string | null
           created_at: string | null
           display_order: number
           duration_seconds: number | null
@@ -434,6 +435,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          activated_at?: string | null
           created_at?: string | null
           display_order: number
           duration_seconds?: number | null
@@ -451,6 +453,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          activated_at?: string | null
           created_at?: string | null
           display_order?: number
           duration_seconds?: number | null
