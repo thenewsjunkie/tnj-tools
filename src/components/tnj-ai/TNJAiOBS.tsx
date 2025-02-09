@@ -15,8 +15,6 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
   const [shouldShow, setShouldShow] = useState(false)
   const [loadingDots, setLoadingDots] = useState('.')
 
-  console.log('TNJ AI OBS Component:', { conversation, isProcessing, shouldShow })
-
   // Handle dots animation
   useEffect(() => {
     if (!isProcessing) {
@@ -33,10 +31,16 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
 
   // Handle visibility and auto-dismiss
   useEffect(() => {
-    console.log('TNJ AI OBS: Visibility effect triggered', { isProcessing, answerText: conversation?.answer_text })
-    
-    // Set shouldShow to true when either processing or have an answer
-    setShouldShow(isProcessing || Boolean(conversation?.answer_text))
+    console.log('TNJ AI OBS: State update', { 
+      isProcessing, 
+      conversation,
+      shouldShow 
+    })
+
+    if (isProcessing || (conversation && conversation.answer_text)) {
+      console.log('TNJ AI OBS: Setting shouldShow to true')
+      setShouldShow(true)
+    }
 
     // Only set up auto-dismiss timer if we have an answer
     if (conversation?.answer_text) {
@@ -47,7 +51,7 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
 
       return () => clearTimeout(timer)
     }
-  }, [isProcessing, conversation?.answer_text])
+  }, [isProcessing, conversation])
 
   if (!shouldShow) {
     console.log('TNJ AI OBS: Not showing because shouldShow is false')
