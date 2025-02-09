@@ -105,26 +105,48 @@ const LowerThirds = () => {
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      console.log('Deleting lower third with ID:', id); // Debug log
-      const { error } = await supabase
+      console.log('Deleting lower third with ID:', id);
+      
+      // First, ensure it's not active
+      await supabase
+        .from("lower_thirds")
+        .update({ is_active: false })
+        .eq("id", id);
+      
+      // Then delete it
+      const { error, count } = await supabase
         .from("lower_thirds")
         .delete()
         .eq("id", id);
 
       if (error) {
-        console.error('Delete error:', error); // Debug log
+        console.error('Delete error:', error);
         throw error;
       }
+
+      // If no rows were affected, throw an error
+      if (count === 0) {
+        throw new Error('No lower third found with the specified ID');
+      }
+
+      return id;
     },
-    onSuccess: () => {
+    onSuccess: (deletedId) => {
+      console.log('Successfully deleted lower third:', deletedId);
+      // Immediately remove the deleted item from the cache
+      queryClient.setQueryData(["lower-thirds"], (old: LowerThird[] | undefined) => {
+        return old ? old.filter(lt => lt.id !== deletedId) : [];
+      });
+      // Then invalidate to refetch
       queryClient.invalidateQueries({ queryKey: ["lower-thirds"] });
+      
       toast({
         title: "Lower third deleted",
         description: "The lower third has been deleted successfully.",
       });
     },
     onError: (error) => {
-      console.error('Delete mutation error:', error); // Debug log
+      console.error('Delete mutation error:', error);
       toast({
         title: "Error",
         description: "Failed to delete lower third. Please try again.",
