@@ -56,27 +56,41 @@ const TNJAiOBSPage = () => {
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'audio_conversations',
           filter: 'conversation_state=eq.displaying'
         },
         (payload: any) => {
-          console.log('Audio conversation change detected:', payload)
-          
+          console.log('New conversation inserted:', payload)
           if (payload.new) {
-            console.log('New conversation state:', payload.new.conversation_state)
-            
-            if (payload.new.conversation_state === 'displaying') {
-              setCurrentConversation({
-                question_text: payload.new.question_text,
-                answer_text: payload.new.answer_text
-              })
-              setIsProcessing(!payload.new.answer_text)
-            } else {
-              setCurrentConversation(null)
-              setIsProcessing(false)
-            }
+            setCurrentConversation({
+              question_text: payload.new.question_text,
+              answer_text: payload.new.answer_text
+            })
+            setIsProcessing(!payload.new.answer_text)
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'audio_conversations',
+          filter: 'conversation_state=eq.displaying'
+        },
+        (payload: any) => {
+          console.log('Conversation updated:', payload)
+          if (payload.new) {
+            setCurrentConversation({
+              question_text: payload.new.question_text,
+              answer_text: payload.new.answer_text
+            })
+            setIsProcessing(!payload.new.answer_text)
+          } else {
+            setCurrentConversation(null)
+            setIsProcessing(false)
           }
         }
       )
