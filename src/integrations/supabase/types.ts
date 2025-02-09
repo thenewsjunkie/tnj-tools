@@ -784,10 +784,18 @@ export type Database = {
           scheduled_for: string
         }[]
       }
+      get_next_conversation: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       increment_poll_option_votes: {
         Args: {
           option_id: string
         }
+        Returns: undefined
+      }
+      manage_conversation_queue: {
+        Args: Record<PropertyKey, never>
         Returns: undefined
       }
       update_contestant_score: {

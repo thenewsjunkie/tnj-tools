@@ -14,100 +14,62 @@ const TNJAiOBSPage = () => {
   useEffect(() => {
     // Function to fetch the most recent active conversation
     const fetchMostRecentConversation = async () => {
+      // Call manage_conversation_queue() to handle state transitions
+      await supabase.rpc('manage_conversation_queue')
+      
+      // Then fetch the current displaying conversation
       const { data, error } = await supabase
         .from('audio_conversations')
-        .select('question_text, answer_text, conversation_state, has_been_displayed')
+        .select('question_text, answer_text')
         .eq('conversation_state', 'displaying')
-        .eq('has_been_displayed', false)
-        .order('display_start_time', { ascending: false })
-        .limit(1)
         .maybeSingle()
 
       if (data) {
-        console.log('Fetched conversation:', data)
+        console.log('Current displaying conversation:', data)
         setCurrentConversation({
           question_text: data.question_text,
           answer_text: data.answer_text
         })
-        setIsProcessing(!data.answer_text)
+        setIsProcessing(false)
       } else {
-        console.log('No new active conversation found or error:', error)
+        console.log('No active conversation found or error:', error)
         setCurrentConversation(null)
         setIsProcessing(false)
       }
     }
 
-    // Function to cleanup completed conversations
-    const cleanupCompletedConversations = async () => {
-      const { error } = await supabase
-        .rpc('auto_complete_displayed_conversations')
-      
-      if (error) {
-        console.error('Error cleaning up conversations:', error)
-      }
-    }
-
-    // Run initial cleanup and fetch
-    cleanupCompletedConversations()
+    // Run initial fetch
     fetchMostRecentConversation()
 
     // Set up realtime subscription
     const channel = supabase.channel('audio_conversations_changes')
 
-    // Subscribe to INSERT events
+    // Subscribe to all relevant changes
     channel
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
-          table: 'audio_conversations',
-          filter: 'conversation_state=eq.displaying'
+          table: 'audio_conversations'
         },
-        (payload: any) => {
-          console.log('New conversation inserted:', payload)
-          if (payload.new && !payload.new.has_been_displayed) {
-            setCurrentConversation({
-              question_text: payload.new.question_text,
-              answer_text: payload.new.answer_text
-            })
-            setIsProcessing(!payload.new.answer_text)
-          }
-        }
-      )
-      // Subscribe to UPDATE events
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'audio_conversations',
-          filter: 'conversation_state=eq.displaying'
-        },
-        (payload: any) => {
-          console.log('Conversation updated:', payload)
-          if (payload.new && !payload.new.has_been_displayed) {
-            setCurrentConversation({
-              question_text: payload.new.question_text,
-              answer_text: payload.new.answer_text
-            })
-            setIsProcessing(!payload.new.answer_text)
-          } else {
-            setCurrentConversation(null)
-            setIsProcessing(false)
-          }
+        async (payload: any) => {
+          console.log('Conversation change detected:', payload)
+          
+          // Refetch the current state when any change occurs
+          await fetchMostRecentConversation()
         }
       )
       .subscribe((status) => {
         console.log('Subscription status:', status)
       })
 
-    // Set up periodic cleanup
-    const cleanupInterval = setInterval(cleanupCompletedConversations, 5000)
+    // Set up periodic queue management
+    const queueInterval = setInterval(fetchMostRecentConversation, 5000)
 
     return () => {
       channel.unsubscribe()
-      clearInterval(cleanupInterval)
+      clearInterval(queueInterval)
     }
   }, [])
 
