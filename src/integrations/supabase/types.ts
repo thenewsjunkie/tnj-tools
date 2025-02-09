@@ -188,7 +188,10 @@ export type Database = {
       audio_conversations: {
         Row: {
           answer_text: string
+          conversation_state: string
           created_at: string | null
+          display_end_time: string | null
+          display_start_time: string | null
           id: string
           is_shown_in_obs: boolean | null
           question_text: string
@@ -198,7 +201,10 @@ export type Database = {
         }
         Insert: {
           answer_text: string
+          conversation_state?: string
           created_at?: string | null
+          display_end_time?: string | null
+          display_start_time?: string | null
           id?: string
           is_shown_in_obs?: boolean | null
           question_text: string
@@ -208,7 +214,10 @@ export type Database = {
         }
         Update: {
           answer_text?: string
+          conversation_state?: string
           created_at?: string | null
+          display_end_time?: string | null
+          display_start_time?: string | null
           id?: string
           is_shown_in_obs?: boolean | null
           question_text?: string
@@ -752,6 +761,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auto_complete_displayed_conversations: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       cleanup_stale_alerts: {
         Args: Record<PropertyKey, never>
         Returns: undefined

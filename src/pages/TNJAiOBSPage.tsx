@@ -16,9 +16,9 @@ const TNJAiOBSPage = () => {
     const fetchMostRecentConversation = async () => {
       const { data, error } = await supabase
         .from('audio_conversations')
-        .select('question_text, answer_text, is_shown_in_obs')
-        .eq('is_shown_in_obs', true)
-        .order('created_at', { ascending: false })
+        .select('question_text, answer_text, conversation_state')
+        .eq('conversation_state', 'displaying')
+        .order('display_start_time', { ascending: false })
         .limit(1)
         .single()
 
@@ -28,13 +28,27 @@ const TNJAiOBSPage = () => {
           question_text: data.question_text,
           answer_text: data.answer_text
         })
-        setIsProcessing(!data.answer_text) // Set processing if we only have a question
+        setIsProcessing(!data.answer_text)
       } else {
         console.log('No active conversation found or error:', error)
         setCurrentConversation(null)
         setIsProcessing(false)
       }
     }
+
+    // Function to cleanup completed conversations
+    const cleanupCompletedConversations = async () => {
+      const { error } = await supabase
+        .rpc('auto_complete_displayed_conversations')
+      
+      if (error) {
+        console.error('Error cleaning up conversations:', error)
+      }
+    }
+
+    // Run initial cleanup and fetch
+    cleanupCompletedConversations()
+    fetchMostRecentConversation()
 
     // Subscribe to changes on the audio_conversations table
     const subscription = supabase
@@ -45,23 +59,21 @@ const TNJAiOBSPage = () => {
           event: '*',
           schema: 'public',
           table: 'audio_conversations',
-          filter: 'is_shown_in_obs=eq.true'
+          filter: 'conversation_state=eq.displaying'
         },
         (payload: any) => {
           console.log('Audio conversation change detected:', payload)
           
-          // Handle inserts and updates
           if (payload.new) {
-            if (payload.new.is_shown_in_obs) {
-              console.log('New conversation or update:', payload.new)
+            console.log('New conversation state:', payload.new.conversation_state)
+            
+            if (payload.new.conversation_state === 'displaying') {
               setCurrentConversation({
                 question_text: payload.new.question_text,
                 answer_text: payload.new.answer_text
               })
               setIsProcessing(!payload.new.answer_text)
             } else {
-              // Conversation is no longer shown in OBS
-              console.log('Conversation hidden from OBS')
               setCurrentConversation(null)
               setIsProcessing(false)
             }
@@ -70,11 +82,12 @@ const TNJAiOBSPage = () => {
       )
       .subscribe()
 
-    // Initial fetch
-    fetchMostRecentConversation()
+    // Set up periodic cleanup
+    const cleanupInterval = setInterval(cleanupCompletedConversations, 5000)
 
     return () => {
       subscription.unsubscribe()
+      clearInterval(cleanupInterval)
     }
   }, [])
 
