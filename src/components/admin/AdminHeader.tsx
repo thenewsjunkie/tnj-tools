@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { Settings } from "lucide-react";
+import { Settings, Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const AdminHeader = () => {
@@ -19,7 +19,7 @@ const AdminHeader = () => {
           rel="noopener noreferrer"
           className="flex items-center gap-2 text-foreground hover:text-primary transition-colors"
         >
-          <Settings className="h-5 w-5" />
+          <Github className="h-5 w-5" />
         </a>
         <h1 className="text-foreground text-xl sm:text-2xl digital">TNJ Tools</h1>
         <Link to="/admin/settings">
