@@ -16,8 +16,9 @@ const TNJAiOBSPage = () => {
     const fetchMostRecentConversation = async () => {
       const { data, error } = await supabase
         .from('audio_conversations')
-        .select('question_text, answer_text, conversation_state')
+        .select('question_text, answer_text, conversation_state, has_been_displayed')
         .eq('conversation_state', 'displaying')
+        .eq('has_been_displayed', false)
         .order('display_start_time', { ascending: false })
         .limit(1)
         .maybeSingle()
@@ -30,7 +31,7 @@ const TNJAiOBSPage = () => {
         })
         setIsProcessing(!data.answer_text)
       } else {
-        console.log('No active conversation found or error:', error)
+        console.log('No new active conversation found or error:', error)
         setCurrentConversation(null)
         setIsProcessing(false)
       }
@@ -65,7 +66,7 @@ const TNJAiOBSPage = () => {
         },
         (payload: any) => {
           console.log('New conversation inserted:', payload)
-          if (payload.new) {
+          if (payload.new && !payload.new.has_been_displayed) {
             setCurrentConversation({
               question_text: payload.new.question_text,
               answer_text: payload.new.answer_text
@@ -85,7 +86,7 @@ const TNJAiOBSPage = () => {
         },
         (payload: any) => {
           console.log('Conversation updated:', payload)
-          if (payload.new) {
+          if (payload.new && !payload.new.has_been_displayed) {
             setCurrentConversation({
               question_text: payload.new.question_text,
               answer_text: payload.new.answer_text
