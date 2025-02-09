@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -42,6 +43,7 @@ const LowerThirdForm = ({ initialData, onSubmit, submitLabel = "Create Lower Thi
     logo_url: initialData?.logo_url ?? "",
     display_order: initialData?.display_order ?? 0,
     duration_seconds: initialData?.duration_seconds ?? null,
+    activated_at: initialData?.activated_at ?? null,
   });
 
   const [defaultLogo, setDefaultLogo] = useState<string>("");
