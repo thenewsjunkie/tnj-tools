@@ -1,6 +1,7 @@
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Video } from "lucide-react";
+import { VideoUploadForm } from "./video-bytes/VideoUploadForm";
 
 export function VideoBytes() {
   return (
@@ -12,9 +13,7 @@ export function VideoBytes() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-muted-foreground text-center py-8">
-          Coming soon
-        </div>
+        <VideoUploadForm />
       </CardContent>
     </Card>
   );
