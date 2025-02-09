@@ -1,6 +1,6 @@
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Video, Plus, Pencil, Trash2 } from "lucide-react";
+import { Video, Plus, Pencil, Trash2, X } from "lucide-react";
 import { VideoUploadForm } from "./video-bytes/VideoUploadForm";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -31,6 +31,7 @@ export function VideoBytes() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingVideo, setEditingVideo] = useState<VideoByteType | null>(null);
   const [deletingVideo, setDeletingVideo] = useState<VideoByteType | null>(null);
+  const [fullscreenVideo, setFullscreenVideo] = useState<VideoByteType | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -47,26 +48,8 @@ export function VideoBytes() {
     },
   });
 
-  const handleVideoPlay = (event: React.SyntheticEvent<HTMLVideoElement>) => {
-    const video = event.currentTarget;
-    if (document.fullscreenEnabled) {
-      video.play();
-      video.style.backgroundColor = "black";
-      const enterFullscreen = async () => {
-        try {
-          await video.requestFullscreen({ navigationUI: "hide" });
-          // Listen for fullscreen exit to restore background
-          document.addEventListener('fullscreenchange', () => {
-            if (!document.fullscreenElement) {
-              video.style.backgroundColor = "";
-            }
-          }, { once: true });
-        } catch (err) {
-          console.error("Error attempting to enable fullscreen:", err);
-        }
-      };
-      enterFullscreen();
-    }
+  const handleVideoPlay = (video: VideoByteType) => {
+    setFullscreenVideo(video);
   };
 
   const handleDelete = async () => {
@@ -112,65 +95,68 @@ export function VideoBytes() {
   };
 
   return (
-    <Card className="dark:bg-black/50 dark:border-white/10">
-      <CardHeader className="pb-4">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Video className="h-4 w-4" />
-            Video Bytes
-          </CardTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsDialogOpen(true)}
-            className="h-7 w-7"
-          >
-            <Plus className="h-3 w-3" />
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {isLoading ? (
-          <div className="text-center text-muted-foreground">Loading videos...</div>
-        ) : videos?.length === 0 ? (
-          <div className="text-center text-muted-foreground">No videos uploaded yet</div>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {videos?.map((video) => (
-              <div key={video.id} className="space-y-2">
-                <video
-                  src={video.video_url}
-                  controls
-                  className="w-full rounded-lg bg-muted"
-                  preload="metadata"
-                  onPlay={handleVideoPlay}
-                />
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium">{video.title}</h3>
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setEditingVideo(video)}
-                      className="h-7 w-7"
-                    >
-                      <Pencil className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setDeletingVideo(video)}
-                      className="h-7 w-7 text-destructive"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+    <>
+      <Card className="dark:bg-black/50 dark:border-white/10">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Video className="h-4 w-4" />
+              Video Bytes
+            </CardTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsDialogOpen(true)}
+              className="h-7 w-7"
+            >
+              <Plus className="h-3 w-3" />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {isLoading ? (
+            <div className="text-center text-muted-foreground">Loading videos...</div>
+          ) : videos?.length === 0 ? (
+            <div className="text-center text-muted-foreground">No videos uploaded yet</div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {videos?.map((video) => (
+                <div key={video.id} className="space-y-2">
+                  <video
+                    src={video.video_url}
+                    controls
+                    className="w-full rounded-lg bg-muted"
+                    preload="metadata"
+                    onClick={() => handleVideoPlay(video)}
+                    style={{ cursor: 'pointer' }}
+                  />
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-medium">{video.title}</h3>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setEditingVideo(video)}
+                        className="h-7 w-7"
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setDeletingVideo(video)}
+                        className="h-7 w-7 text-destructive"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Dialog open={isDialogOpen || !!editingVideo} onOpenChange={(open) => {
         setIsDialogOpen(open);
@@ -190,6 +176,29 @@ export function VideoBytes() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={!!fullscreenVideo} onOpenChange={(open) => !open && setFullscreenVideo(null)}>
+        <DialogContent className="fixed inset-0 p-0 w-screen h-screen max-w-none m-0 rounded-none bg-black">
+          <div className="relative w-full h-full flex items-center justify-center">
+            {fullscreenVideo && (
+              <video
+                src={fullscreenVideo.video_url}
+                controls
+                autoPlay
+                className="w-full h-full"
+              />
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setFullscreenVideo(null)}
+              className="absolute top-4 right-4 text-white hover:text-white/80"
+            >
+              <X className="h-6 w-6" />
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <AlertDialog open={!!deletingVideo} onOpenChange={(open) => !open && setDeletingVideo(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -206,6 +215,6 @@ export function VideoBytes() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Card>
+    </>
   );
 }
