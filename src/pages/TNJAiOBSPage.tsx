@@ -12,6 +12,25 @@ const TNJAiOBSPage = () => {
   const [isProcessing, setIsProcessing] = useState(false)
 
   useEffect(() => {
+    // Function to fetch the most recent active conversation
+    const fetchMostRecentConversation = async () => {
+      const { data, error } = await supabase
+        .from('audio_conversations')
+        .select('question_text, answer_text')
+        .eq('is_shown_in_obs', true)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      if (data && !error) {
+        console.log('Fetched conversation:', data)
+        setCurrentConversation(data)
+      } else {
+        console.log('No active conversation found or error:', error)
+        setCurrentConversation(null)
+      }
+    }
+
     // Subscribe to new conversations being shown in OBS
     const subscription = supabase
       .channel('audio_conversations_changes')
@@ -23,10 +42,10 @@ const TNJAiOBSPage = () => {
           table: 'audio_conversations',
           filter: 'is_shown_in_obs=eq.true'
         },
-        (payload) => {
+        async (payload) => {
           console.log('New conversation shown in OBS:', payload)
-          const { question_text, answer_text } = payload.new
-          setCurrentConversation({ question_text, answer_text })
+          // Fetch the most recent conversation instead of using payload directly
+          await fetchMostRecentConversation()
           setIsProcessing(false)
         }
       )
@@ -38,35 +57,17 @@ const TNJAiOBSPage = () => {
           table: 'audio_conversations',
           filter: 'is_shown_in_obs=eq.true'
         },
-        (payload) => {
+        async (payload) => {
           console.log('Conversation updated in OBS:', payload)
-          const { question_text, answer_text } = payload.new
-          setCurrentConversation({ question_text, answer_text })
+          // Fetch the most recent conversation instead of using payload directly
+          await fetchMostRecentConversation()
           setIsProcessing(false)
         }
       )
       .subscribe()
 
-    // Initial fetch of any active conversation
-    const fetchActiveConversation = async () => {
-      const { data, error } = await supabase
-        .from('audio_conversations')
-        .select('question_text, answer_text')
-        .eq('is_shown_in_obs', true)
-        .order('created_at', { ascending: false }) // Changed from shown_in_obs_at to created_at
-        .limit(1)
-        .single()
-
-      if (data && !error) {
-        console.log('Initial active conversation:', data)
-        setCurrentConversation(data)
-      } else {
-        console.log('No active conversation found or error:', error)
-        setCurrentConversation(null) // Reset if no conversation found
-      }
-    }
-
-    fetchActiveConversation()
+    // Initial fetch
+    fetchMostRecentConversation()
 
     return () => {
       subscription.unsubscribe()
