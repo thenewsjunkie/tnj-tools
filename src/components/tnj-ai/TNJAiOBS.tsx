@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from 'react'
 import { Computer } from 'lucide-react'
-import { cn } from '@/lib/utils'
 
 interface TNJAiOBSProps {
   conversation: {
@@ -31,14 +30,12 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
 
   // Handle visibility and auto-dismiss
   useEffect(() => {
-    // Show when processing starts or when we have a conversation
     if (isProcessing || (conversation && conversation.answer_text)) {
       console.log('TNJ AI OBS: Showing overlay - Processing:', isProcessing, 'Conversation:', conversation)
       setShouldShow(true)
       return
     }
 
-    // Auto-dismiss timer for completed conversations
     if (!isProcessing && conversation?.answer_text) {
       console.log('TNJ AI OBS: Setting up auto-dismiss timer')
       const timer = setTimeout(() => {
@@ -58,18 +55,15 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
   }
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center pointer-events-none">
-      <div className={cn(
-        "bg-black/80 text-white p-6 rounded-lg max-w-2xl transition-opacity duration-500",
-        shouldShow ? "opacity-100" : "opacity-0"
-      )}>
+    <div className="fixed top-0 left-0">
+      <div className="text-white">
         {isProcessing ? (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center">
             <Computer className="h-6 w-6" />
             <span className="font-mono w-6">{loadingDots}</span>
           </div>
         ) : conversation?.answer_text ? (
-          <div className="animate-fade-in">
+          <div>
             {conversation.answer_text}
           </div>
         ) : null}
@@ -77,4 +71,3 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
     </div>
   )
 }
-

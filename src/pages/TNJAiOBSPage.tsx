@@ -37,11 +37,11 @@ const TNJAiOBSPage = () => {
       .on(
         'postgres_changes',
         {
-          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+          event: '*',
           schema: 'public',
           table: 'audio_conversations'
         },
-        async (payload) => {
+        async (payload: any) => {
           console.log('Audio conversation change detected:', payload)
           // Check if the new state has is_shown_in_obs = true
           if (payload.new?.is_shown_in_obs === true) {
@@ -72,7 +72,7 @@ const TNJAiOBSPage = () => {
   }, [isProcessing, currentConversation])
 
   return (
-    <div className="h-screen w-screen bg-transparent">
+    <div>
       <TNJAiOBS
         conversation={currentConversation}
         isProcessing={isProcessing}
@@ -82,4 +82,3 @@ const TNJAiOBSPage = () => {
 }
 
 export default TNJAiOBSPage
-
