@@ -49,8 +49,23 @@ export function VideoBytes() {
 
   const handleVideoPlay = (event: React.SyntheticEvent<HTMLVideoElement>) => {
     const video = event.currentTarget;
-    if (video.requestFullscreen) {
-      video.requestFullscreen({ navigationUI: "hide" });
+    if (document.fullscreenEnabled) {
+      video.play();
+      video.style.backgroundColor = "black";
+      const enterFullscreen = async () => {
+        try {
+          await video.requestFullscreen({ navigationUI: "hide" });
+          // Listen for fullscreen exit to restore background
+          document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
+              video.style.backgroundColor = "";
+            }
+          }, { once: true });
+        } catch (err) {
+          console.error("Error attempting to enable fullscreen:", err);
+        }
+      };
+      enterFullscreen();
     }
   };
 
@@ -194,4 +209,3 @@ export function VideoBytes() {
     </Card>
   );
 }
-
