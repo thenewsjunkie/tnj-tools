@@ -1,4 +1,3 @@
-
 import { useState, useRef } from 'react'
 import { Button } from './ui/button'
 import { Mic, Square, ExternalLink } from 'lucide-react'
@@ -68,10 +67,9 @@ const TNJAi = () => {
             href="/tnj-ai-obs" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="text-neon-red hover:text-tnj-light transition-colors flex items-center gap-1"
+            className="text-neon-red hover:text-tnj-light transition-colors"
           >
             <ExternalLink className="h-4 w-4" />
-            <span className="text-sm">OBS View</span>
           </a>
         </div>
         <div className="flex flex-col gap-4">
