@@ -1,7 +1,7 @@
+
 import { Link } from "react-router-dom";
 import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 const AdminHeader = () => {
   return (
@@ -22,7 +22,6 @@ const AdminHeader = () => {
           <Settings className="h-5 w-5" />
           <span className="hidden sm:inline">Settings</span>
         </a>
-        <ThemeToggle />
         <h1 className="text-foreground text-xl sm:text-2xl digital">TNJ Tools</h1>
         <Link to="/admin/settings">
           <Button
