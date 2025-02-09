@@ -15,6 +15,8 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
   const [shouldShow, setShouldShow] = useState(false)
   const [loadingDots, setLoadingDots] = useState('.')
 
+  console.log('TNJ AI OBS Component:', { conversation, isProcessing, shouldShow })
+
   // Handle dots animation
   useEffect(() => {
     if (!isProcessing) {
@@ -31,12 +33,16 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
 
   // Handle visibility and auto-dismiss
   useEffect(() => {
+    console.log('TNJ AI OBS: Visibility effect triggered', { isProcessing, answerText: conversation?.answer_text })
+    
     if (isProcessing || conversation?.answer_text) {
+      console.log('TNJ AI OBS: Setting shouldShow to true')
       setShouldShow(true)
     }
 
     if (conversation?.answer_text) {
       const timer = setTimeout(() => {
+        console.log('TNJ AI OBS: Auto-dismissing')
         setShouldShow(false)
       }, 30000)
 
@@ -44,7 +50,10 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
     }
   }, [isProcessing, conversation?.answer_text])
 
-  if (!shouldShow) return null
+  if (!shouldShow) {
+    console.log('TNJ AI OBS: Not showing because shouldShow is false')
+    return null
+  }
 
   return (
     <div className="fixed inset-0 flex items-center justify-center pointer-events-none">

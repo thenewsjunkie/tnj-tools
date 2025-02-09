@@ -13,12 +13,15 @@ const TNJAiOBSPage = () => {
     isProcessing,
   } = useAudioRecording({
     onProcessingComplete: (data) => {
+      console.log('TNJ AI OBS: Processing complete', data)
       setCurrentConversation(data.conversation)
     },
     onError: (error) => {
       console.error('TNJ AI OBS Error:', error)
     }
   })
+
+  console.log('TNJ AI OBS: Current state', { isProcessing, currentConversation })
 
   return (
     <div className="h-screen w-screen bg-transparent">
