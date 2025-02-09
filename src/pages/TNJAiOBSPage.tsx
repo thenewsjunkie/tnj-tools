@@ -20,9 +20,9 @@ const TNJAiOBSPage = () => {
         .eq('conversation_state', 'displaying')
         .order('display_start_time', { ascending: false })
         .limit(1)
-        .single()
+        .maybeSingle()
 
-      if (data && !error) {
+      if (data) {
         console.log('Fetched conversation:', data)
         setCurrentConversation({
           question_text: data.question_text,
