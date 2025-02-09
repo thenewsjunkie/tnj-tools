@@ -1,3 +1,4 @@
+
 import { useState, useRef } from 'react'
 import { Button } from './ui/button'
 import { Mic, Square, ExternalLink } from 'lucide-react'
@@ -23,8 +24,28 @@ const TNJAi = () => {
     startRecording,
     stopRecording
   } = useAudioRecording({
-    onProcessingComplete: (data) => {
+    onProcessingComplete: async (data) => {
       setCurrentConversation(data.conversation)
+      
+      // Insert conversation into database and mark it for OBS display
+      const { error } = await supabase
+        .from('audio_conversations')
+        .insert({
+          question_text: data.conversation.question_text,
+          answer_text: data.conversation.answer_text,
+          status: 'completed',
+          is_shown_in_obs: true
+        })
+
+      if (error) {
+        console.error('Error saving conversation:', error)
+        toast({
+          title: 'Error',
+          description: 'Failed to save conversation',
+          variant: 'destructive',
+        })
+      }
+
       if (audioPlayer.current) {
         audioPlayer.current.src = URL.createObjectURL(
           new Blob([data.audioResponse], { type: 'audio/mpeg' })

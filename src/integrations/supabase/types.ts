@@ -190,7 +190,9 @@ export type Database = {
           answer_text: string
           created_at: string | null
           id: string
+          is_shown_in_obs: boolean | null
           question_text: string
+          shown_in_obs_at: string | null
           status: string
           updated_at: string | null
         }
@@ -198,7 +200,9 @@ export type Database = {
           answer_text: string
           created_at?: string | null
           id?: string
+          is_shown_in_obs?: boolean | null
           question_text: string
+          shown_in_obs_at?: string | null
           status?: string
           updated_at?: string | null
         }
@@ -206,7 +210,9 @@ export type Database = {
           answer_text?: string
           created_at?: string | null
           id?: string
+          is_shown_in_obs?: boolean | null
           question_text?: string
+          shown_in_obs_at?: string | null
           status?: string
           updated_at?: string | null
         }
