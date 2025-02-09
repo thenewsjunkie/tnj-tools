@@ -1,3 +1,4 @@
+
 import { createBrowserRouter } from "react-router-dom";
 import Index from "@/pages/Index";
 import Login from "@/pages/Login";
@@ -18,6 +19,7 @@ import Leaderboard from "@/pages/Leaderboard";
 import LeaderboardOBS from "@/pages/LeaderboardOBS";
 import GiftStats from "@/pages/Admin/GiftStats";
 import StreamReview from "@/pages/StreamReview";
+import TNJAiOBSPage from "@/pages/TNJAiOBS";
 
 export const router = createBrowserRouter([
   {
@@ -107,5 +109,9 @@ export const router = createBrowserRouter([
   {
     path: "/admin/gift-stats",
     element: <AdminRoute><GiftStats /></AdminRoute>,
+  },
+  {
+    path: "/tnj-ai-obs",
+    element: <TNJAiOBSPage />,
   },
 ]);
