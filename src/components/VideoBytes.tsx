@@ -100,17 +100,17 @@ export function VideoBytes() {
     <Card className="dark:bg-black/50 dark:border-white/10">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Video className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Video className="h-4 w-4" />
             Video Bytes
           </CardTitle>
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setIsDialogOpen(true)}
-            className="h-8 w-8"
+            className="h-7 w-7"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-3 w-3" />
           </Button>
         </div>
       </CardHeader>
@@ -131,23 +131,23 @@ export function VideoBytes() {
                   onPlay={handleVideoPlay}
                 />
                 <div className="flex items-center justify-between">
-                  <h3 className="font-medium">{video.title}</h3>
-                  <div className="flex gap-2">
+                  <h3 className="text-sm font-medium">{video.title}</h3>
+                  <div className="flex gap-1">
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => setEditingVideo(video)}
-                      className="h-8 w-8"
+                      className="h-7 w-7"
                     >
-                      <Pencil className="h-4 w-4" />
+                      <Pencil className="h-3 w-3" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => setDeletingVideo(video)}
-                      className="h-8 w-8 text-destructive"
+                      className="h-7 w-7 text-destructive"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
                 </div>
@@ -194,3 +194,4 @@ export function VideoBytes() {
     </Card>
   );
 }
+
