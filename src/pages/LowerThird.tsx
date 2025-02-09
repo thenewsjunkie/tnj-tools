@@ -5,6 +5,7 @@ import { Tables } from "@/integrations/supabase/types";
 import Guest from "@/components/lower-thirds/Guest";
 import Content from "@/components/lower-thirds/Content";
 import TickerText from "@/components/lower-thirds/TickerText";
+import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
 const LowerThird = () => {
   const [lowerThird, setLowerThird] = useState<Tables<"lower_thirds"> | null>(null);
@@ -64,11 +65,15 @@ const LowerThird = () => {
           schema: "public",
           table: "lower_thirds",
         },
-        (payload) => {
+        (payload: RealtimePostgresChangesPayload<{
+          [key: string]: any;
+          id: string;
+          is_active: boolean;
+        }>) => {
           console.log("Lower third changed:", payload);
           
           // If this is the currently displayed lower third
-          if (lowerThird && payload.old.id === lowerThird.id) {
+          if (lowerThird && payload.old && payload.old.id === lowerThird.id) {
             // Check if it was deactivated or deleted
             if (payload.eventType === "DELETE" || !payload.new.is_active) {
               console.log("Lower third deactivated or deleted");
