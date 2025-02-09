@@ -49,6 +49,7 @@ export function VideoBytes() {
   });
 
   const handleVideoPlay = (video: VideoByteType) => {
+    console.log("Video clicked:", video); // Debug log
     setFullscreenVideo(video);
   };
 
@@ -122,14 +123,18 @@ export function VideoBytes() {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {videos?.map((video) => (
                 <div key={video.id} className="space-y-2">
-                  <video
-                    src={video.video_url}
-                    controls
-                    className="w-full rounded-lg bg-muted"
-                    preload="metadata"
-                    onClick={() => handleVideoPlay(video)}
-                    style={{ cursor: 'pointer' }}
-                  />
+                  <div 
+                    onClick={() => handleVideoPlay(video)} 
+                    className="cursor-pointer"
+                    role="button"
+                    aria-label={`Play ${video.title}`}
+                  >
+                    <video
+                      src={video.video_url}
+                      className="w-full rounded-lg bg-muted"
+                      preload="metadata"
+                    />
+                  </div>
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-medium">{video.title}</h3>
                     <div className="flex gap-1">
@@ -176,7 +181,10 @@ export function VideoBytes() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!fullscreenVideo} onOpenChange={(open) => !open && setFullscreenVideo(null)}>
+      <Dialog 
+        open={!!fullscreenVideo} 
+        onOpenChange={(open) => !open && setFullscreenVideo(null)}
+      >
         <DialogContent className="fixed inset-0 p-0 w-screen h-screen max-w-none m-0 rounded-none bg-black">
           <div className="relative w-full h-full flex items-center justify-center">
             {fullscreenVideo && (
@@ -218,3 +226,4 @@ export function VideoBytes() {
     </>
   );
 }
+
