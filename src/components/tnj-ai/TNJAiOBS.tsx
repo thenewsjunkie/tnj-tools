@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { Computer } from 'lucide-react'
 
@@ -66,7 +65,7 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2 mb-4">
               <Computer className="h-18 w-18 text-neon-red" />
-              <span className="text-neon-red font-semibold">TNJ AI</span>
+              <span className="text-neon-red font-semibold text-2xl leading-none">TNJ AI</span>
             </div>
             {conversation.question_text && (
               <div className="text-white/80 px-2 flex justify-end">
@@ -86,4 +85,3 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
     </div>
   )
 }
-
