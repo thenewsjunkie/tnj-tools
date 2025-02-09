@@ -35,7 +35,7 @@ export function VideoGrid({ videos, onPlay, onEdit, onDelete }: VideoGridProps) 
             />
           </div>
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium">{video.title}</h3>
+            <h3 className="text-xs font-medium">{video.title}</h3>
             <div className="flex gap-1">
               <Button
                 variant="ghost"
