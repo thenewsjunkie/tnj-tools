@@ -64,8 +64,8 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
           </div>
         ) : conversation?.answer_text ? (
           <div className="flex items-start gap-2">
-            <div className="flex items-center gap-1">
-              <Computer className="h-6 w-6 text-neon-red" />
+            <div className="flex flex-col items-center gap-1">
+              <Computer className="h-18 w-18 text-neon-red" />
               <span className="text-neon-red font-semibold">TNJ AI</span>
             </div>
             <div className="p-3 bg-gradient-to-r from-black/90 to-black/70 rounded">
@@ -77,3 +77,4 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
     </div>
   )
 }
+
