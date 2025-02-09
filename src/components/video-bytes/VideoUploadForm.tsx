@@ -3,12 +3,14 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 export function VideoUploadForm() {
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [title, setTitle] = useState("");
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const { toast } = useToast();
@@ -25,6 +27,7 @@ export function VideoUploadForm() {
     }
 
     setIsUploading(true);
+    setUploadProgress(0);
     try {
       // Upload video to storage
       const fileExt = videoFile.name.split(".").pop();
@@ -32,7 +35,12 @@ export function VideoUploadForm() {
 
       const { error: uploadError, data } = await supabase.storage
         .from("video_bytes")
-        .upload(filePath, videoFile);
+        .upload(filePath, videoFile, {
+          onUploadProgress: (progress) => {
+            const percent = (progress.loaded / progress.total) * 100;
+            setUploadProgress(percent);
+          },
+        });
 
       if (uploadError) throw uploadError;
 
@@ -59,6 +67,7 @@ export function VideoUploadForm() {
       // Reset form
       setTitle("");
       setVideoFile(null);
+      setUploadProgress(0);
       
     } catch (error) {
       console.error("Upload error:", error);
@@ -96,6 +105,15 @@ export function VideoUploadForm() {
           className="cursor-pointer"
         />
       </div>
+
+      {isUploading && (
+        <div className="space-y-2">
+          <Progress value={uploadProgress} className="w-full" />
+          <p className="text-sm text-muted-foreground text-center">
+            {Math.round(uploadProgress)}% uploaded
+          </p>
+        </div>
+      )}
 
       <Button disabled={isUploading} type="submit" className="w-full">
         {isUploading ? (
