@@ -43,10 +43,23 @@ const TNJAiOBSPage = () => {
         },
         async (payload: any) => {
           console.log('Audio conversation change detected:', payload)
-          // Check if the new state has is_shown_in_obs = true
-          if (payload.new?.is_shown_in_obs === true) {
-            console.log('Conversation is shown in OBS, updating state')
-            await fetchMostRecentConversation()
+          
+          // If this is a new conversation starting (only question, no answer)
+          if (payload.new?.question_text && !payload.new?.answer_text) {
+            console.log('New question detected, setting processing state')
+            setIsProcessing(true)
+            setCurrentConversation({
+              question_text: payload.new.question_text
+            })
+          }
+          
+          // If this is an answer being added
+          if (payload.new?.is_shown_in_obs === true && payload.new?.answer_text) {
+            console.log('Answer received, updating conversation')
+            setCurrentConversation({
+              question_text: payload.new.question_text,
+              answer_text: payload.new.answer_text
+            })
             setIsProcessing(false)
           }
         }
