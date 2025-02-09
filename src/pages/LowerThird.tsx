@@ -65,23 +65,19 @@ const LowerThird = () => {
           schema: "public",
           table: "lower_thirds",
         },
-        (payload: RealtimePostgresChangesPayload<{
-          [key: string]: any;
-          id: string;
-          is_active: boolean;
-        }>) => {
+        (payload: RealtimePostgresChangesPayload<Tables<"lower_thirds">>) => {
           console.log("Lower third changed:", payload);
           
           // If this is the currently displayed lower third
-          if (lowerThird && payload.old && payload.old.id === lowerThird.id) {
+          if (lowerThird && payload.old && 'id' in payload.old && payload.old.id === lowerThird.id) {
             // Check if it was deactivated or deleted
-            if (payload.eventType === "DELETE" || !payload.new.is_active) {
+            if (payload.eventType === "DELETE" || (payload.new && !payload.new.is_active)) {
               console.log("Lower third deactivated or deleted");
               setIsVisible(false);
               setTimeout(() => {
                 setLowerThird(null);
               }, 400);
-            } else {
+            } else if (payload.new) {
               // Update the current lower third with new data
               setIsVisible(false);
               setTimeout(() => {
@@ -91,7 +87,7 @@ const LowerThird = () => {
                 }, 50);
               }, 400);
             }
-          } else if (payload.eventType !== "DELETE" && payload.new.is_active) {
+          } else if (payload.eventType !== "DELETE" && payload.new && payload.new.is_active) {
             // A different lower third was activated
             console.log("New lower third activated");
             setIsVisible(false);
