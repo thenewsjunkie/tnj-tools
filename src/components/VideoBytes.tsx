@@ -185,18 +185,18 @@ export function VideoBytes() {
         open={!!fullscreenVideo} 
         onOpenChange={(open) => !open && setFullscreenVideo(null)}
       >
-        <DialogContent className="fixed inset-0 p-0 w-screen h-screen max-w-none m-0 rounded-none bg-black">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="relative w-full h-full flex items-center justify-center">
-              {fullscreenVideo && (
+        <DialogContent className="fixed inset-0 p-0 w-screen h-screen max-w-none m-0 rounded-none bg-black/95">
+          <div className="relative w-full h-full flex items-center justify-center">
+            {fullscreenVideo && (
+              <div className="relative w-full h-full flex items-center justify-center p-4">
                 <video
                   src={fullscreenVideo.video_url}
                   controls
                   autoPlay
-                  className="absolute max-h-[90vh] max-w-[90vw] w-auto h-auto object-contain"
+                  className="max-w-full max-h-full w-auto h-auto object-contain"
                 />
-              )}
-            </div>
+              </div>
+            )}
             <Button
               variant="ghost"
               size="icon"
