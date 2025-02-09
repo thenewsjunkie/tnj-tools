@@ -33,14 +33,15 @@ export function VideoUploadForm() {
       const fileExt = videoFile.name.split(".").pop();
       const filePath = `${crypto.randomUUID()}.${fileExt}`;
 
+      const options = {
+        cacheControl: '3600',
+        upsert: false
+      };
+
+      // Set up upload with progress tracking
       const { error: uploadError, data } = await supabase.storage
         .from("video_bytes")
-        .upload(filePath, videoFile, {
-          onProgress: (progress) => {
-            const percent = (progress.loaded / progress.total) * 100;
-            setUploadProgress(percent);
-          },
-        });
+        .upload(filePath, videoFile, options);
 
       if (uploadError) throw uploadError;
 
