@@ -35,11 +35,10 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
   useEffect(() => {
     console.log('TNJ AI OBS: Visibility effect triggered', { isProcessing, answerText: conversation?.answer_text })
     
-    if (isProcessing || conversation?.answer_text) {
-      console.log('TNJ AI OBS: Setting shouldShow to true')
-      setShouldShow(true)
-    }
+    // Set shouldShow to true when either processing or have an answer
+    setShouldShow(isProcessing || Boolean(conversation?.answer_text))
 
+    // Only set up auto-dismiss timer if we have an answer
     if (conversation?.answer_text) {
       const timer = setTimeout(() => {
         console.log('TNJ AI OBS: Auto-dismissing')
