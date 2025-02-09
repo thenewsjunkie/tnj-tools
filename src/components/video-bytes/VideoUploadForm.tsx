@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface VideoUploadFormProps {
   onSuccess?: () => void;
@@ -18,6 +19,7 @@ export function VideoUploadForm({ onSuccess }: VideoUploadFormProps) {
   const [title, setTitle] = useState("");
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,6 +70,9 @@ export function VideoUploadForm({ onSuccess }: VideoUploadFormProps) {
         title: "Success",
         description: "Video uploaded successfully",
       });
+
+      // Invalidate and refetch the videos query
+      queryClient.invalidateQueries({ queryKey: ["video-bytes"] });
 
       // Reset form
       setTitle("");

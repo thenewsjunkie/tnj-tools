@@ -5,9 +5,32 @@ import { VideoUploadForm } from "./video-bytes/VideoUploadForm";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+interface VideoByteType {
+  id: string;
+  title: string;
+  video_url: string;
+  thumbnail_url: string | null;
+  created_at: string;
+}
 
 export function VideoBytes() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const { data: videos, isLoading } = useQuery({
+    queryKey: ["video-bytes"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("video_bytes")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      if (error) throw error;
+      return data as VideoByteType[];
+    },
+  });
 
   return (
     <Card className="dark:bg-black/50 dark:border-white/10">
@@ -27,8 +50,26 @@ export function VideoBytes() {
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
-        {/* Content will go here */}
+      <CardContent className="space-y-4">
+        {isLoading ? (
+          <div className="text-center text-muted-foreground">Loading videos...</div>
+        ) : videos?.length === 0 ? (
+          <div className="text-center text-muted-foreground">No videos uploaded yet</div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {videos?.map((video) => (
+              <div key={video.id} className="space-y-2">
+                <video
+                  src={video.video_url}
+                  controls
+                  className="w-full rounded-lg bg-muted"
+                  preload="metadata"
+                />
+                <h3 className="font-medium">{video.title}</h3>
+              </div>
+            ))}
+          </div>
+        )}
       </CardContent>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
