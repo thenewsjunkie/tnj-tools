@@ -37,13 +37,14 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
       shouldShow 
     })
 
-    if (isProcessing || (conversation && conversation.answer_text)) {
+    // Immediately show when processing or when we have a conversation
+    if (isProcessing || conversation) {
       console.log('TNJ AI OBS: Setting shouldShow to true')
       setShouldShow(true)
     }
 
-    // Only set up auto-dismiss timer if we have an answer
-    if (conversation?.answer_text) {
+    // Only set up auto-dismiss timer if we have a completed conversation
+    if (!isProcessing && conversation?.answer_text) {
       const timer = setTimeout(() => {
         console.log('TNJ AI OBS: Auto-dismissing')
         setShouldShow(false)
