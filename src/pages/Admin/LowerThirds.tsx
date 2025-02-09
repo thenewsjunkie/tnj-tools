@@ -19,12 +19,17 @@ const LowerThirds = () => {
   const { data: lowerThirds, isLoading } = useQuery({
     queryKey: ["lower-thirds"],
     queryFn: async () => {
+      console.log('Fetching lower thirds...');
       const { data, error } = await supabase
         .from("lower_thirds")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching lower thirds:', error);
+        throw error;
+      }
+      console.log('Fetched lower thirds:', data);
       return data as LowerThird[];
     },
   });
@@ -105,54 +110,95 @@ const LowerThirds = () => {
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      console.log('Deleting lower third with ID:', id);
+      console.log('Starting deletion process for lower third with ID:', id);
       
-      // First, ensure it's not active
-      const { error: deactivateError } = await supabase
+      // First, verify the lower third exists
+      const { data: existing, error: checkError } = await supabase
         .from("lower_thirds")
-        .update({ is_active: false })
-        .eq("id", id);
+        .select('id, is_active')
+        .eq('id', id)
+        .single();
       
-      if (deactivateError) {
-        console.error('Error deactivating lower third:', deactivateError);
-        throw deactivateError;
+      if (checkError) {
+        console.error('Error checking lower third existence:', checkError);
+        throw checkError;
       }
 
-      // Add a small delay to ensure deactivation is processed
-      await new Promise(resolve => setTimeout(resolve, 100));
+      if (!existing) {
+        console.error('Lower third not found:', id);
+        throw new Error('Lower third not found');
+      }
+
+      console.log('Found lower third:', existing);
+
+      // Deactivate if active
+      if (existing.is_active) {
+        console.log('Deactivating lower third...');
+        const { error: deactivateError } = await supabase
+          .from("lower_thirds")
+          .update({ is_active: false })
+          .eq("id", id);
+        
+        if (deactivateError) {
+          console.error('Error deactivating lower third:', deactivateError);
+          throw deactivateError;
+        }
+        console.log('Lower third deactivated successfully');
+      }
+
+      // Add a delay after deactivation
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Then delete it
+      // Delete the lower third
+      console.log('Proceeding with deletion...');
       const { error: deleteError, count } = await supabase
         .from("lower_thirds")
         .delete()
         .eq("id", id);
 
       if (deleteError) {
-        console.error('Delete error:', deleteError);
+        console.error('Error deleting lower third:', deleteError);
         throw deleteError;
       }
 
-      // If no rows were affected, throw an error
-      if (count === 0) {
-        throw new Error('No lower third found with the specified ID');
+      console.log('Delete operation completed. Rows affected:', count);
+
+      // Verify deletion
+      const { data: verifyData, error: verifyError } = await supabase
+        .from("lower_thirds")
+        .select('id')
+        .eq('id', id)
+        .single();
+      
+      if (verifyError && verifyError.code !== 'PGRST116') {
+        console.error('Error verifying deletion:', verifyError);
+        throw verifyError;
       }
 
-      // Add a small delay before returning to ensure deletion is processed
-      await new Promise(resolve => setTimeout(resolve, 100));
+      if (verifyData) {
+        console.error('Lower third still exists after deletion!');
+        throw new Error('Failed to delete lower third');
+      }
+
+      console.log('Deletion verified - lower third no longer exists');
       return id;
     },
     onSuccess: (deletedId) => {
-      console.log('Successfully deleted lower third:', deletedId);
+      console.log('Delete mutation succeeded for ID:', deletedId);
       
-      // Optimistically update the cache first
+      // Update cache immediately
       queryClient.setQueryData(["lower-thirds"], (old: LowerThird[] | undefined) => {
-        return old ? old.filter(lt => lt.id !== deletedId) : [];
+        console.log('Updating cache. Old data:', old);
+        const newData = old ? old.filter(lt => lt.id !== deletedId) : [];
+        console.log('New cache data:', newData);
+        return newData;
       });
 
-      // Wait a bit before refetching to ensure the deletion has propagated
+      // Delay the refetch
       setTimeout(() => {
+        console.log('Invalidating queries to trigger refetch...');
         queryClient.invalidateQueries({ queryKey: ["lower-thirds"] });
-      }, 500);
+      }, 1000);
       
       toast({
         title: "Lower third deleted",
