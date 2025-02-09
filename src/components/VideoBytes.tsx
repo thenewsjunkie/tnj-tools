@@ -73,7 +73,7 @@ export function VideoBytes() {
       </CardContent>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="dark:bg-gray-900">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Upload Video</DialogTitle>
           </DialogHeader>
