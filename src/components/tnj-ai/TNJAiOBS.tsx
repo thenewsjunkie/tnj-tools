@@ -65,8 +65,10 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
         ) : conversation?.answer_text ? (
           <div className="flex flex-col gap-4">
             {conversation.question_text && (
-              <div className="text-white/80 px-2">
-                {conversation.question_text}
+              <div className="text-white/80 px-2 flex justify-end">
+                <div className="p-4 bg-gray-600 rounded-2xl max-w-[80%]">
+                  {conversation.question_text}
+                </div>
               </div>
             )}
             <div className="flex items-start gap-2">
@@ -84,4 +86,3 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
     </div>
   )
 }
-
