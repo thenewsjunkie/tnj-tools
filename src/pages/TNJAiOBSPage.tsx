@@ -15,17 +15,23 @@ const TNJAiOBSPage = () => {
     onProcessingComplete: (data) => {
       console.log('TNJ AI OBS: Processing complete with data:', data)
       if (data?.conversation) {
+        console.log('TNJ AI OBS: Setting conversation:', data.conversation)
         setCurrentConversation(data.conversation)
       }
     },
     onError: (error) => {
       console.error('TNJ AI OBS Error:', error)
+      setCurrentConversation(null)
     }
   })
 
+  // Log state changes for debugging
   useEffect(() => {
-    console.log('TNJ AI OBS: Current conversation updated:', currentConversation)
-  }, [currentConversation])
+    console.log('TNJ AI OBS: Current conversation updated:', {
+      isProcessing,
+      currentConversation
+    })
+  }, [isProcessing, currentConversation])
 
   return (
     <div className="h-screen w-screen bg-transparent">
