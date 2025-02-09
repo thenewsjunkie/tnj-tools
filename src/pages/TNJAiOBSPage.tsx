@@ -31,40 +31,29 @@ const TNJAiOBSPage = () => {
       }
     }
 
-    // Subscribe to new conversations being shown in OBS
+    // Subscribe to ALL changes on the audio_conversations table
     const subscription = supabase
       .channel('audio_conversations_changes')
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
           schema: 'public',
-          table: 'audio_conversations',
-          filter: 'is_shown_in_obs=eq.true'
+          table: 'audio_conversations'
         },
         async (payload) => {
-          console.log('New conversation shown in OBS:', payload)
-          // Fetch the most recent conversation instead of using payload directly
-          await fetchMostRecentConversation()
-          setIsProcessing(false)
+          console.log('Audio conversation change detected:', payload)
+          // Check if the new state has is_shown_in_obs = true
+          if (payload.new?.is_shown_in_obs === true) {
+            console.log('Conversation is shown in OBS, updating state')
+            await fetchMostRecentConversation()
+            setIsProcessing(false)
+          }
         }
       )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'audio_conversations',
-          filter: 'is_shown_in_obs=eq.true'
-        },
-        async (payload) => {
-          console.log('Conversation updated in OBS:', payload)
-          // Fetch the most recent conversation instead of using payload directly
-          await fetchMostRecentConversation()
-          setIsProcessing(false)
-        }
-      )
-      .subscribe()
+      .subscribe((status) => {
+        console.log('Subscription status:', status)
+      })
 
     // Initial fetch
     fetchMostRecentConversation()
@@ -93,3 +82,4 @@ const TNJAiOBSPage = () => {
 }
 
 export default TNJAiOBSPage
+
