@@ -14,10 +14,6 @@ const TNJAiOBSPage = () => {
   useEffect(() => {
     // Function to fetch the most recent active conversation
     const fetchMostRecentConversation = async () => {
-      // Call manage_conversation_queue() to handle state transitions
-      await supabase.rpc('manage_conversation_queue')
-      
-      // Then fetch the current displaying conversation
       const { data, error } = await supabase
         .from('audio_conversations')
         .select('question_text, answer_text')
@@ -38,25 +34,29 @@ const TNJAiOBSPage = () => {
       }
     }
 
-    // Run initial fetch
-    fetchMostRecentConversation()
+    // Run initial queue management and fetch
+    const initializeDisplay = async () => {
+      await supabase.rpc('manage_conversation_queue')
+      await fetchMostRecentConversation()
+    }
+    
+    initializeDisplay()
 
     // Set up realtime subscription
     const channel = supabase.channel('audio_conversations_changes')
 
-    // Subscribe to all relevant changes
+    // Subscribe only to relevant changes
     channel
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'UPDATE',
           schema: 'public',
-          table: 'audio_conversations'
+          table: 'audio_conversations',
+          filter: 'conversation_state=eq.displaying'
         },
         async (payload: any) => {
-          console.log('Conversation change detected:', payload)
-          
-          // Refetch the current state when any change occurs
+          console.log('Display conversation updated:', payload)
           await fetchMostRecentConversation()
         }
       )
@@ -64,8 +64,10 @@ const TNJAiOBSPage = () => {
         console.log('Subscription status:', status)
       })
 
-    // Set up periodic queue management
-    const queueInterval = setInterval(fetchMostRecentConversation, 5000)
+    // Run queue management periodically
+    const queueInterval = setInterval(async () => {
+      await supabase.rpc('manage_conversation_queue')
+    }, 5000)
 
     return () => {
       channel.unsubscribe()
