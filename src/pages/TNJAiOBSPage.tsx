@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { TNJAiOBS } from '@/components/tnj-ai/TNJAiOBS'
 import { supabase } from '@/integrations/supabase/client'
 
@@ -11,13 +11,13 @@ const TNJAiOBSPage = () => {
   
   const [isProcessing, setIsProcessing] = useState(false)
 
-  const fetchMostRecentConversation = async () => {
+  const fetchMostRecentConversation = useCallback(async () => {
     const { data, error } = await supabase
       .from('audio_conversations')
       .select('question_text, answer_text')
       .eq('conversation_state', 'displaying')
       .limit(1)
-      .single()
+      .maybeSingle()
 
     if (error) {
       console.log('No active conversation found or error:', error)
@@ -27,14 +27,18 @@ const TNJAiOBSPage = () => {
     }
 
     if (data) {
-      console.log('Current displaying conversation:', data)
-      setCurrentConversation({
-        question_text: data.question_text,
-        answer_text: data.answer_text
-      })
-      setIsProcessing(false)
+      // Only update state if the data has actually changed
+      const hasChanged = JSON.stringify(data) !== JSON.stringify(currentConversation)
+      if (hasChanged) {
+        console.log('Current displaying conversation:', data)
+        setCurrentConversation({
+          question_text: data.question_text,
+          answer_text: data.answer_text
+        })
+        setIsProcessing(false)
+      }
     }
-  }
+  }, [currentConversation]) // Add currentConversation as dependency
 
   useEffect(() => {
     // Run initial queue management and fetch
@@ -56,26 +60,29 @@ const TNJAiOBSPage = () => {
         },
         async (payload) => {
           console.log('Conversation change detected:', payload)
-          // Manage queue and fetch current conversation
-          await supabase.rpc('manage_conversation_queue')
-          await fetchMostRecentConversation()
+          // Only manage queue and fetch if the change affects the displaying conversation
+          const affectedRow = payload.new || payload.old
+          if (affectedRow && affectedRow.conversation_state === 'displaying') {
+            await supabase.rpc('manage_conversation_queue')
+            await fetchMostRecentConversation()
+          }
         }
       )
       .subscribe((status) => {
         console.log('Subscription status:', status)
       })
 
-    // Run queue management periodically as a backup
+    // Run queue management less frequently as a backup
     const queueInterval = setInterval(async () => {
       await supabase.rpc('manage_conversation_queue')
       await fetchMostRecentConversation()
-    }, 5000)
+    }, 10000) // Increased to 10 seconds
 
     return () => {
       channel.unsubscribe()
       clearInterval(queueInterval)
     }
-  }, [])
+  }, [fetchMostRecentConversation]) // Add fetchMostRecentConversation as dependency
 
   // Log state changes for debugging
   useEffect(() => {
