@@ -45,18 +45,19 @@ const TNJAiOBSPage = () => {
     // Set up realtime subscription
     const channel = supabase.channel('audio_conversations_changes')
 
-    // Subscribe only to relevant changes
+    // Subscribe to both new conversations and status changes
     channel
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*',
           schema: 'public',
-          table: 'audio_conversations',
-          filter: 'conversation_state=eq.displaying'
+          table: 'audio_conversations'
         },
         async (payload: any) => {
-          console.log('Display conversation updated:', payload)
+          console.log('Conversation change detected:', payload)
+          // Manage queue and fetch current conversation
+          await supabase.rpc('manage_conversation_queue')
           await fetchMostRecentConversation()
         }
       )
@@ -64,9 +65,10 @@ const TNJAiOBSPage = () => {
         console.log('Subscription status:', status)
       })
 
-    // Run queue management periodically
+    // Run queue management periodically as a backup
     const queueInterval = setInterval(async () => {
       await supabase.rpc('manage_conversation_queue')
+      await fetchMostRecentConversation()
     }, 5000)
 
     return () => {
@@ -94,3 +96,4 @@ const TNJAiOBSPage = () => {
 }
 
 export default TNJAiOBSPage
+
