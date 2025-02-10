@@ -265,6 +265,7 @@ export type Database = {
       }
       fritz_contestants: {
         Row: {
+          auth_token: string | null
           created_at: string | null
           id: string
           image_url: string | null
@@ -275,6 +276,7 @@ export type Database = {
           version: number | null
         }
         Insert: {
+          auth_token?: string | null
           created_at?: string | null
           id?: string
           image_url?: string | null
@@ -285,6 +287,7 @@ export type Database = {
           version?: number | null
         }
         Update: {
+          auth_token?: string | null
           created_at?: string | null
           id?: string
           image_url?: string | null
@@ -798,18 +801,32 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
-      update_contestant_score: {
-        Args: {
-          p_contestant_name: string
-          p_increment: boolean
-          p_current_version: number
-        }
-        Returns: {
-          success: boolean
-          new_score: number
-          new_version: number
-        }[]
-      }
+      update_contestant_score:
+        | {
+            Args: {
+              p_contestant_name: string
+              p_increment: boolean
+              p_current_version: number
+            }
+            Returns: {
+              success: boolean
+              new_score: number
+              new_version: number
+            }[]
+          }
+        | {
+            Args: {
+              p_contestant_name: string
+              p_increment: boolean
+              p_current_version: number
+              p_auth_token: string
+            }
+            Returns: {
+              success: boolean
+              new_score: number
+              new_version: number
+            }[]
+          }
     }
     Enums: {
       alert_type: "standard" | "message" | "gift"

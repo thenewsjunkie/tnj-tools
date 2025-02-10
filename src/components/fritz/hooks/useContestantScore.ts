@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { FritzContestant } from "@/integrations/supabase/types/tables/fritz";
 import { useToast } from "@/components/ui/use-toast";
@@ -22,7 +23,8 @@ export const useContestantScore = (
       .rpc('update_contestant_score', {
         p_contestant_name: contestant.name,
         p_increment: increment,
-        p_current_version: contestant.version
+        p_current_version: contestant.version,
+        p_auth_token: 'fritz_tnj_2024' // Add static auth token
       });
 
     if (error) {

@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
@@ -16,7 +17,11 @@ const FritzScoreHandler = () => {
       
       try {
         const { data, error } = await supabase.functions.invoke('update-fritz-score', {
-          body: { contestant, increment: action === 'up' }
+          body: { 
+            contestant, 
+            increment: action === 'up',
+            auth_token: 'fritz_tnj_2024' // Add static auth token
+          }
         });
 
         if (error) throw error;

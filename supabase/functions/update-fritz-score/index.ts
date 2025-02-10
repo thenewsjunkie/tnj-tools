@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.0";
 
@@ -28,7 +29,7 @@ serve(async (req) => {
     );
 
     // Parse request body
-    const { contestant, increment } = await req.json();
+    const { contestant, increment, auth_token } = await req.json();
     console.log(`[update-fritz-score] Request received:`, { contestant, increment });
 
     // Format contestant name to match database format
@@ -55,12 +56,13 @@ serve(async (req) => {
 
     console.log('[update-fritz-score] Current contestant version:', contestantData.version);
 
-    // Update score using the database function
+    // Update score using the database function with auth token
     const { data, error } = await supabase
       .rpc('update_contestant_score', {
         p_contestant_name: formattedName,
         p_increment: increment,
-        p_current_version: contestantData.version
+        p_current_version: contestantData.version,
+        p_auth_token: auth_token || 'fritz_tnj_2024' // Use default token if not provided
       });
 
     if (error) {
