@@ -11,29 +11,32 @@ const TNJAiOBSPage = () => {
   
   const [isProcessing, setIsProcessing] = useState(false)
 
-  useEffect(() => {
-    // Function to fetch the most recent active conversation
-    const fetchMostRecentConversation = async () => {
-      const { data, error } = await supabase
-        .from('audio_conversations')
-        .select('question_text, answer_text')
-        .eq('conversation_state', 'displaying')
-        .maybeSingle()
+  const fetchMostRecentConversation = async () => {
+    const { data, error } = await supabase
+      .from('audio_conversations')
+      .select('question_text, answer_text')
+      .eq('conversation_state', 'displaying')
+      .limit(1)
+      .single()
 
-      if (data) {
-        console.log('Current displaying conversation:', data)
-        setCurrentConversation({
-          question_text: data.question_text,
-          answer_text: data.answer_text
-        })
-        setIsProcessing(false)
-      } else {
-        console.log('No active conversation found or error:', error)
-        setCurrentConversation(null)
-        setIsProcessing(false)
-      }
+    if (error) {
+      console.log('No active conversation found or error:', error)
+      setCurrentConversation(null)
+      setIsProcessing(false)
+      return
     }
 
+    if (data) {
+      console.log('Current displaying conversation:', data)
+      setCurrentConversation({
+        question_text: data.question_text,
+        answer_text: data.answer_text
+      })
+      setIsProcessing(false)
+    }
+  }
+
+  useEffect(() => {
     // Run initial queue management and fetch
     const initializeDisplay = async () => {
       await supabase.rpc('manage_conversation_queue')
@@ -44,9 +47,6 @@ const TNJAiOBSPage = () => {
 
     // Set up realtime subscription
     const channel = supabase.channel('audio_conversations_changes')
-
-    // Subscribe to both new conversations and status changes
-    channel
       .on(
         'postgres_changes',
         {
@@ -54,7 +54,7 @@ const TNJAiOBSPage = () => {
           schema: 'public',
           table: 'audio_conversations'
         },
-        async (payload: any) => {
+        async (payload) => {
           console.log('Conversation change detected:', payload)
           // Manage queue and fetch current conversation
           await supabase.rpc('manage_conversation_queue')
@@ -96,4 +96,3 @@ const TNJAiOBSPage = () => {
 }
 
 export default TNJAiOBSPage
-
