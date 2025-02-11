@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -273,6 +274,7 @@ export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProp
                 ref={videoRef}
                 src={editingVideo.video_url}
                 controls
+                crossOrigin="anonymous"
                 className="w-full rounded-lg"
                 onTimeUpdate={handleTimeUpdate}
               />
