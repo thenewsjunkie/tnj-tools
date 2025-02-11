@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +28,7 @@ export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProp
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [thumbnailTime, setThumbnailTime] = useState(0);
   const [isThumbnailMode, setIsThumbnailMode] = useState(false);
+  const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -41,27 +41,42 @@ export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProp
 
   const handleGenerateThumbnail = async () => {
     if (!videoRef.current || !editingVideo) return;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = videoRef.current.videoWidth;
-    canvas.height = videoRef.current.videoHeight;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
     
-    // Convert canvas to blob
-    const blob = await new Promise<Blob>((resolve) => {
-      canvas.toBlob((blob) => {
-        if (blob) resolve(blob);
-      }, 'image/jpeg', 0.95);
-    });
-
-    // Upload thumbnail to Supabase storage
-    const filePath = `thumbnails/${editingVideo.id}_${Date.now()}.jpg`;
-    
+    setIsGeneratingThumbnail(true);
     try {
-      const { error: uploadError } = await supabase.storage
+      // Ensure video is ready
+      await videoRef.current.play();
+      videoRef.current.pause();
+
+      const canvas = document.createElement('canvas');
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Could not get canvas context');
+
+      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+      
+      // Convert canvas to blob
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((blob) => {
+          if (blob) resolve(blob);
+          else reject(new Error('Failed to create blob'));
+        }, 'image/jpeg', 0.95);
+      });
+
+      // Delete existing thumbnail if it exists
+      if (editingVideo.thumbnail_url) {
+        const oldPath = editingVideo.thumbnail_url.split('/').pop();
+        if (oldPath) {
+          await supabase.storage
+            .from("video_bytes")
+            .remove([oldPath]);
+        }
+      }
+
+      // Upload new thumbnail
+      const filePath = `thumbnails/${editingVideo.id}_${Date.now()}.jpg`;
+      const { error: uploadError, data } = await supabase.storage
         .from("video_bytes")
         .upload(filePath, blob, {
           contentType: 'image/jpeg',
@@ -88,7 +103,8 @@ export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProp
         description: "Thumbnail updated successfully",
       });
 
-      queryClient.invalidateQueries({ queryKey: ["video-bytes"] });
+      // Invalidate and refetch immediately
+      await queryClient.invalidateQueries({ queryKey: ["video-bytes"] });
       setIsThumbnailMode(false);
     } catch (error) {
       console.error("Thumbnail update error:", error);
@@ -97,6 +113,8 @@ export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProp
         description: "Failed to update thumbnail",
         variant: "destructive",
       });
+    } finally {
+      setIsGeneratingThumbnail(false);
     }
   };
 
@@ -266,8 +284,9 @@ export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProp
                   type="button"
                   onClick={handleGenerateThumbnail}
                   size="sm"
+                  disabled={isGeneratingThumbnail}
                 >
-                  Capture Thumbnail
+                  {isGeneratingThumbnail ? "Generating..." : "Capture Thumbnail"}
                 </Button>
               </div>
             </div>
