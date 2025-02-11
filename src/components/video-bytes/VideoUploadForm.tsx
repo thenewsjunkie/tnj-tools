@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,47 +44,27 @@ export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProp
     
     setIsGeneratingThumbnail(true);
     try {
-      // Create a new video element specifically for capturing
-      const tempVideo = document.createElement('video');
-      tempVideo.crossOrigin = "anonymous";
-      
-      // Load the video with proper CORS headers
-      const response = await fetch(editingVideo.video_url, {
-        mode: 'cors',
-        credentials: 'omit'
-      });
-      
-      if (!response.ok) throw new Error('Failed to fetch video');
-      
-      const videoBlob = await response.blob();
-      const videoUrl = URL.createObjectURL(videoBlob);
-      tempVideo.src = videoUrl;
+      // Ensure video is loaded
+      if (videoRef.current.readyState < 2) { // HAVE_CURRENT_DATA
+        await new Promise<void>((resolve) => {
+          const handleLoaded = () => {
+            videoRef.current?.removeEventListener('loadeddata', handleLoaded);
+            resolve();
+          };
+          videoRef.current?.addEventListener('loadeddata', handleLoaded);
+        });
+      }
 
-      // Wait for video to be loaded
-      await new Promise((resolve, reject) => {
-        tempVideo.onloadeddata = resolve;
-        tempVideo.onerror = reject;
-        tempVideo.load();
-      });
-
-      // Set the current time to match the preview
-      tempVideo.currentTime = thumbnailTime;
-      
-      // Wait for seek to complete
-      await new Promise((resolve) => {
-        tempVideo.onseeked = resolve;
-      });
+      // Pause the video at the current time
+      videoRef.current.pause();
 
       const canvas = document.createElement('canvas');
-      canvas.width = tempVideo.videoWidth;
-      canvas.height = tempVideo.videoHeight;
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
       const ctx = canvas.getContext('2d');
       if (!ctx) throw new Error('Could not get canvas context');
 
-      ctx.drawImage(tempVideo, 0, 0, canvas.width, canvas.height);
-      
-      // Clean up
-      URL.revokeObjectURL(videoUrl);
+      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
       
       // Convert canvas to blob
       const blob = await new Promise<Blob>((resolve, reject) => {
@@ -113,10 +92,6 @@ export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProp
           contentType: 'image/jpeg',
           upsert: true,
           cacheControl: '3600',
-          duplex: 'half',
-          headers: {
-            'x-amz-acl': 'public-read',
-          }
         });
 
       if (uploadError) throw uploadError;
@@ -312,6 +287,7 @@ export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProp
                 crossOrigin="anonymous"
                 className="w-full rounded-lg"
                 onTimeUpdate={handleTimeUpdate}
+                preload="auto"
               />
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">
