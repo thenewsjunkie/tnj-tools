@@ -2,6 +2,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { TNJAiOBS } from '@/components/tnj-ai/TNJAiOBS'
 import { supabase } from '@/integrations/supabase/client'
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js'
+import { Database } from '@/integrations/supabase/types'
+
+type AudioConversation = Database['public']['Tables']['audio_conversations']['Row']
 
 const TNJAiOBSPage = () => {
   const [currentConversation, setCurrentConversation] = useState<{
@@ -38,7 +42,7 @@ const TNJAiOBSPage = () => {
         setIsProcessing(false)
       }
     }
-  }, [currentConversation]) // Add currentConversation as dependency
+  }, [currentConversation])
 
   useEffect(() => {
     // Run initial queue management and fetch
@@ -58,10 +62,10 @@ const TNJAiOBSPage = () => {
           schema: 'public',
           table: 'audio_conversations'
         },
-        async (payload) => {
+        async (payload: RealtimePostgresChangesPayload<AudioConversation>) => {
           console.log('Conversation change detected:', payload)
           // Only manage queue and fetch if the change affects the displaying conversation
-          const affectedRow = payload.new || payload.old
+          const affectedRow = (payload.new || payload.old) as AudioConversation
           if (affectedRow && affectedRow.conversation_state === 'displaying') {
             await supabase.rpc('manage_conversation_queue')
             await fetchMostRecentConversation()
@@ -82,7 +86,7 @@ const TNJAiOBSPage = () => {
       channel.unsubscribe()
       clearInterval(queueInterval)
     }
-  }, [fetchMostRecentConversation]) // Add fetchMostRecentConversation as dependency
+  }, [fetchMostRecentConversation])
 
   // Log state changes for debugging
   useEffect(() => {
