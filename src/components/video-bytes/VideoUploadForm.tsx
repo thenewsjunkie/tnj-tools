@@ -1,11 +1,11 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Upload } from "lucide-react";
+import { Plus, Upload, Camera } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -27,6 +27,9 @@ export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProp
   const [uploadProgress, setUploadProgress] = useState(0);
   const [title, setTitle] = useState("");
   const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [thumbnailTime, setThumbnailTime] = useState(0);
+  const [isThumbnailMode, setIsThumbnailMode] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -35,6 +38,73 @@ export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProp
       setTitle(editingVideo.title);
     }
   }, [editingVideo]);
+
+  const handleGenerateThumbnail = async () => {
+    if (!videoRef.current || !editingVideo) return;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = videoRef.current.videoWidth;
+    canvas.height = videoRef.current.videoHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+    
+    // Convert canvas to blob
+    const blob = await new Promise<Blob>((resolve) => {
+      canvas.toBlob((blob) => {
+        if (blob) resolve(blob);
+      }, 'image/jpeg', 0.95);
+    });
+
+    // Upload thumbnail to Supabase storage
+    const filePath = `thumbnails/${editingVideo.id}_${Date.now()}.jpg`;
+    
+    try {
+      const { error: uploadError } = await supabase.storage
+        .from("video_bytes")
+        .upload(filePath, blob, {
+          contentType: 'image/jpeg',
+          upsert: true
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from("video_bytes")
+        .getPublicUrl(filePath);
+
+      // Update video record with new thumbnail
+      const { error: updateError } = await supabase
+        .from("video_bytes")
+        .update({ thumbnail_url: publicUrl })
+        .eq("id", editingVideo.id);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Success",
+        description: "Thumbnail updated successfully",
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["video-bytes"] });
+      setIsThumbnailMode(false);
+    } catch (error) {
+      console.error("Thumbnail update error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update thumbnail",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    if (videoRef.current) {
+      setThumbnailTime(videoRef.current.currentTime);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -161,6 +231,47 @@ export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProp
             disabled={isUploading}
             className="cursor-pointer"
           />
+        </div>
+      )}
+
+      {editingVideo && (
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <Label>Thumbnail</Label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setIsThumbnailMode(!isThumbnailMode)}
+            >
+              <Camera className="w-4 h-4 mr-2" />
+              {isThumbnailMode ? "Close" : "Change Thumbnail"}
+            </Button>
+          </div>
+
+          {isThumbnailMode && (
+            <div className="space-y-2">
+              <video
+                ref={videoRef}
+                src={editingVideo.video_url}
+                controls
+                className="w-full rounded-lg"
+                onTimeUpdate={handleTimeUpdate}
+              />
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">
+                  Current time: {thumbnailTime.toFixed(2)}s
+                </span>
+                <Button
+                  type="button"
+                  onClick={handleGenerateThumbnail}
+                  size="sm"
+                >
+                  Capture Thumbnail
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
