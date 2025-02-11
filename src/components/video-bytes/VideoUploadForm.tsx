@@ -81,7 +81,12 @@ export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProp
         .from("video_bytes")
         .upload(filePath, blob, {
           contentType: 'image/jpeg',
-          upsert: true
+          upsert: true,
+          cacheControl: '3600',
+          duplex: 'half',
+          headers: {
+            'x-amz-acl': 'public-read',
+          }
         });
 
       if (uploadError) throw uploadError;
