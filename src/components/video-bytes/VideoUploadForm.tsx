@@ -45,17 +45,47 @@ export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProp
     
     setIsGeneratingThumbnail(true);
     try {
-      // Ensure video is ready
-      await videoRef.current.play();
-      videoRef.current.pause();
+      // Create a new video element specifically for capturing
+      const tempVideo = document.createElement('video');
+      tempVideo.crossOrigin = "anonymous";
+      
+      // Load the video with proper CORS headers
+      const response = await fetch(editingVideo.video_url, {
+        mode: 'cors',
+        credentials: 'omit'
+      });
+      
+      if (!response.ok) throw new Error('Failed to fetch video');
+      
+      const videoBlob = await response.blob();
+      const videoUrl = URL.createObjectURL(videoBlob);
+      tempVideo.src = videoUrl;
+
+      // Wait for video to be loaded
+      await new Promise((resolve, reject) => {
+        tempVideo.onloadeddata = resolve;
+        tempVideo.onerror = reject;
+        tempVideo.load();
+      });
+
+      // Set the current time to match the preview
+      tempVideo.currentTime = thumbnailTime;
+      
+      // Wait for seek to complete
+      await new Promise((resolve) => {
+        tempVideo.onseeked = resolve;
+      });
 
       const canvas = document.createElement('canvas');
-      canvas.width = videoRef.current.videoWidth;
-      canvas.height = videoRef.current.videoHeight;
+      canvas.width = tempVideo.videoWidth;
+      canvas.height = tempVideo.videoHeight;
       const ctx = canvas.getContext('2d');
       if (!ctx) throw new Error('Could not get canvas context');
 
-      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(tempVideo, 0, 0, canvas.width, canvas.height);
+      
+      // Clean up
+      URL.revokeObjectURL(videoUrl);
       
       // Convert canvas to blob
       const blob = await new Promise<Blob>((resolve, reject) => {
