@@ -24,15 +24,23 @@ export function VideoGrid({ videos, onPlay, onEdit, onDelete }: VideoGridProps) 
         <div key={video.id} className="space-y-2">
           <div 
             onClick={() => onPlay(video)} 
-            className="cursor-pointer"
+            className="cursor-pointer relative aspect-video bg-muted"
             role="button"
             aria-label={`Play ${video.title}`}
           >
-            <video
-              src={video.video_url}
-              className="w-full rounded-lg bg-muted"
-              preload="metadata"
-            />
+            {video.thumbnail_url ? (
+              <img 
+                src={video.thumbnail_url} 
+                alt={video.title}
+                className="w-full h-full object-cover rounded-lg"
+              />
+            ) : (
+              <video
+                src={video.video_url}
+                className="w-full h-full rounded-lg"
+                preload="metadata"
+              />
+            )}
           </div>
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-medium">{video.title}</h3>
