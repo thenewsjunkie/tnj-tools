@@ -44,35 +44,15 @@ export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProp
     
     setIsGeneratingThumbnail(true);
     try {
-      // Ensure video is loaded
-      if (videoRef.current.readyState < 2) { // HAVE_CURRENT_DATA
-        await new Promise<void>((resolve) => {
-          const handleLoaded = () => {
-            videoRef.current?.removeEventListener('loadeddata', handleLoaded);
-            resolve();
-          };
-          videoRef.current?.addEventListener('loadeddata', handleLoaded);
-        });
-      }
-
-      // Pause the video at the current time
-      videoRef.current.pause();
-
-      const canvas = document.createElement('canvas');
-      canvas.width = videoRef.current.videoWidth;
-      canvas.height = videoRef.current.videoHeight;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) throw new Error('Could not get canvas context');
-
-      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-      
-      // Convert canvas to blob
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob((blob) => {
-          if (blob) resolve(blob);
-          else reject(new Error('Failed to create blob'));
-        }, 'image/jpeg', 0.95);
+      // Call the edge function to generate thumbnail
+      const { data, error } = await supabase.functions.invoke('generate-video-thumbnail', {
+        body: {
+          videoUrl: editingVideo.video_url,
+          timestamp: videoRef.current.currentTime
+        }
       });
+
+      if (error) throw error;
 
       // Delete existing thumbnail if it exists
       if (editingVideo.thumbnail_url) {
@@ -84,27 +64,10 @@ export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProp
         }
       }
 
-      // Upload new thumbnail
-      const filePath = `thumbnails/${editingVideo.id}_${Date.now()}.jpg`;
-      const { error: uploadError, data } = await supabase.storage
-        .from("video_bytes")
-        .upload(filePath, blob, {
-          contentType: 'image/jpeg',
-          upsert: true,
-          cacheControl: '3600',
-        });
-
-      if (uploadError) throw uploadError;
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from("video_bytes")
-        .getPublicUrl(filePath);
-
       // Update video record with new thumbnail
       const { error: updateError } = await supabase
         .from("video_bytes")
-        .update({ thumbnail_url: publicUrl })
+        .update({ thumbnail_url: data.url })
         .eq("id", editingVideo.id);
 
       if (updateError) throw updateError;
