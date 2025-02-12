@@ -1,7 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { createFFmpeg, fetchFile } from 'https://esm.sh/@ffmpeg/ffmpeg@0.9.7'
+import { createFFmpeg } from 'https://esm.sh/@ffmpeg/ffmpeg@0.8.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -51,7 +51,10 @@ serve(async (req) => {
 
     // Initialize FFmpeg
     console.log('Initializing FFmpeg...')
-    const ffmpeg = createFFmpeg({ log: true })
+    const ffmpeg = createFFmpeg({
+      log: true,
+      corePath: 'https://unpkg.com/@ffmpeg/core@0.8.5/dist/ffmpeg-core.js'
+    })
     await ffmpeg.load()
     console.log('FFmpeg loaded')
 
