@@ -15,44 +15,48 @@ const TNJAiOBSPage = () => {
   
   const [isProcessing, setIsProcessing] = useState(false)
 
-  const fetchMostRecentConversation = useCallback(async () => {
+  const fetchNewConversation = useCallback(async () => {
     const { data, error } = await supabase
       .from('audio_conversations')
       .select('question_text, answer_text')
       .eq('conversation_state', 'displaying')
+      .eq('has_been_displayed', false)
       .limit(1)
       .maybeSingle()
 
     if (error) {
-      console.log('No active conversation found or error:', error)
+      console.log('No new conversation found or error:', error)
       setCurrentConversation(null)
       setIsProcessing(false)
       return
     }
 
     if (data) {
-      // Only update state if the data has actually changed
-      const hasChanged = JSON.stringify(data) !== JSON.stringify(currentConversation)
-      if (hasChanged) {
-        console.log('Current displaying conversation:', data)
-        setCurrentConversation({
-          question_text: data.question_text,
-          answer_text: data.answer_text
+      console.log('New conversation:', data)
+      setCurrentConversation({
+        question_text: data.question_text,
+        answer_text: data.answer_text
+      })
+      setIsProcessing(false)
+
+      // Mark conversation as displayed
+      const { error: updateError } = await supabase
+        .from('audio_conversations')
+        .update({ 
+          has_been_displayed: true,
+          display_start_time: new Date().toISOString(),
+          display_end_time: new Date(Date.now() + 30000).toISOString() // 30 seconds from now
         })
-        setIsProcessing(false)
+        .eq('question_text', data.question_text)
+        .eq('answer_text', data.answer_text)
+
+      if (updateError) {
+        console.error('Error marking conversation as displayed:', updateError)
       }
     }
-  }, [currentConversation])
+  }, [])
 
   useEffect(() => {
-    // Run initial queue management and fetch
-    const initializeDisplay = async () => {
-      await supabase.rpc('manage_conversation_queue')
-      await fetchMostRecentConversation()
-    }
-    
-    initializeDisplay()
-
     // Set up realtime subscription
     const channel = supabase.channel('audio_conversations_changes')
       .on(
@@ -64,11 +68,9 @@ const TNJAiOBSPage = () => {
         },
         async (payload: RealtimePostgresChangesPayload<AudioConversation>) => {
           console.log('Conversation change detected:', payload)
-          // Only manage queue and fetch if the change affects the displaying conversation
-          const affectedRow = (payload.new || payload.old) as AudioConversation
-          if (affectedRow && affectedRow.conversation_state === 'displaying') {
-            await supabase.rpc('manage_conversation_queue')
-            await fetchMostRecentConversation()
+          // Only check for new conversations when a change occurs
+          if (payload.new && payload.new.conversation_state === 'displaying' && !payload.new.has_been_displayed) {
+            await fetchNewConversation()
           }
         }
       )
@@ -76,17 +78,24 @@ const TNJAiOBSPage = () => {
         console.log('Subscription status:', status)
       })
 
-    // Run queue management less frequently as a backup
-    const queueInterval = setInterval(async () => {
-      await supabase.rpc('manage_conversation_queue')
-      await fetchMostRecentConversation()
-    }, 10000) // Increased to 10 seconds
+    // Initial fetch
+    fetchNewConversation()
 
     return () => {
       channel.unsubscribe()
-      clearInterval(queueInterval)
     }
-  }, [fetchMostRecentConversation])
+  }, [fetchNewConversation])
+
+  // Clear conversation after 30 seconds
+  useEffect(() => {
+    if (currentConversation) {
+      const timer = setTimeout(() => {
+        setCurrentConversation(null)
+      }, 30000)
+
+      return () => clearTimeout(timer)
+    }
+  }, [currentConversation])
 
   // Log state changes for debugging
   useEffect(() => {
