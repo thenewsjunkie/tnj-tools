@@ -41,21 +41,26 @@ export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProp
   }, [editingVideo]);
 
   const handleGenerateThumbnail = async () => {
-    if (!videoRef.current || !editingVideo) return;
+    if (!editingVideo) return;
     
     setIsGeneratingThumbnail(true);
     try {
-      // Send the video URL and timestamp to the edge function
+      // Get current timestamp from video element if available, otherwise use state
+      const currentTime = videoRef.current?.currentTime ?? thumbnailTime;
+      
+      console.log('Generating thumbnail at timestamp:', currentTime);
+      
       const { data, error } = await supabase.functions.invoke('generate-video-thumbnail', {
         body: {
           videoUrl: editingVideo.video_url,
-          timestamp: Math.floor(videoRef.current.currentTime)
+          timestamp: Math.floor(currentTime)
         }
       });
 
       if (error) throw error;
 
-      // Update video record with new thumbnail
+      console.log('Received thumbnail URL:', data.url);
+
       const { error: updateError } = await supabase
         .from("video_bytes")
         .update({ thumbnail_url: data.url })
@@ -218,15 +223,17 @@ export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProp
           </div>
 
           {isThumbnailMode && (
-            <div className="space-y-2">
-              <video
-                ref={videoRef}
-                src={editingVideo.video_url}
-                controls
-                className="w-full rounded-lg"
-                onTimeUpdate={handleTimeUpdate}
-                preload="auto"
-              />
+            <div className="space-y-4">
+              <div className="aspect-video rounded-lg overflow-hidden bg-black">
+                <video
+                  ref={videoRef}
+                  src={editingVideo.video_url}
+                  controls
+                  className="w-full h-full"
+                  onTimeUpdate={handleTimeUpdate}
+                  preload="auto"
+                />
+              </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">
                   Current time: {thumbnailTime.toFixed(2)}s
@@ -237,9 +244,21 @@ export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProp
                   size="sm"
                   disabled={isGeneratingThumbnail}
                 >
-                  {isGeneratingThumbnail ? "Generating..." : "Capture Thumbnail"}
+                  {isGeneratingThumbnail ? "Generating..." : "Set as Thumbnail"}
                 </Button>
               </div>
+              {editingVideo.thumbnail_url && (
+                <div className="space-y-2">
+                  <Label>Current Thumbnail</Label>
+                  <div className="aspect-video rounded-lg overflow-hidden bg-black">
+                    <img 
+                      src={editingVideo.thumbnail_url} 
+                      alt="Current thumbnail"
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
