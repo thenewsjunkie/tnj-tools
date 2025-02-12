@@ -1,7 +1,8 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { FFmpeg } from 'https://esm.sh/@ffmpeg/ffmpeg@0.12.7'
+import { FFmpeg } from 'https://esm.sh/@ffmpeg/ffmpeg@0.11.0'
+import { fetchFile } from 'https://esm.sh/@ffmpeg/util@0.11.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -28,6 +29,15 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // Initialize FFmpeg
+    console.log('Initializing FFmpeg...')
+    const ffmpeg = new FFmpeg()
+    await ffmpeg.load({
+      coreURL: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
+      wasmURL: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.wasm',
+    })
+    console.log('FFmpeg loaded')
+
     // First verify if video exists and is accessible
     try {
       const preflightResponse = await fetch(videoUrl, { method: 'HEAD' })
@@ -40,24 +50,14 @@ serve(async (req) => {
       throw new Error(`Failed to verify video accessibility: ${error.message}`)
     }
 
-    // Download video file
+    // Download and process video file
     console.log('Downloading video...')
-    const response = await fetch(videoUrl)
-    if (!response.ok) {
-      throw new Error(`Failed to fetch video: ${response.statusText}`)
-    }
-    const videoBuffer = await response.arrayBuffer()
-    console.log('Video downloaded, size:', videoBuffer.byteLength)
-
-    // Initialize FFmpeg
-    console.log('Initializing FFmpeg...')
-    const ffmpeg = new FFmpeg()
-    await ffmpeg.load()
-    console.log('FFmpeg loaded')
+    const videoFile = await fetchFile(videoUrl)
+    console.log('Video downloaded')
 
     // Write video file to FFmpeg's virtual filesystem
     console.log('Writing video to FFmpeg filesystem...')
-    await ffmpeg.writeFile('input.mp4', new Uint8Array(videoBuffer))
+    await ffmpeg.writeFile('input.mp4', videoFile)
     console.log('Video written to FFmpeg filesystem')
 
     // Extract frame at specified timestamp
@@ -74,7 +74,7 @@ serve(async (req) => {
 
     // Read the generated thumbnail
     const thumbnailData = await ffmpeg.readFile('thumbnail.jpg')
-    if (!thumbnailData || thumbnailData.length === 0) {
+    if (!thumbnailData) {
       throw new Error('Failed to generate thumbnail')
     }
     const thumbnailBlob = new Blob([thumbnailData], { type: 'image/jpeg' })
