@@ -68,8 +68,12 @@ const TNJAiOBSPage = () => {
         },
         async (payload: RealtimePostgresChangesPayload<AudioConversation>) => {
           console.log('Conversation change detected:', payload)
-          // Only check for new conversations when a change occurs
-          if (payload.new && payload.new.conversation_state === 'displaying' && !payload.new.has_been_displayed) {
+          // Only check for new conversations when a change occurs and ensure payload.new exists
+          if (payload.new && 
+              'conversation_state' in payload.new && 
+              'has_been_displayed' in payload.new && 
+              payload.new.conversation_state === 'displaying' && 
+              !payload.new.has_been_displayed) {
             await fetchNewConversation()
           }
         }
