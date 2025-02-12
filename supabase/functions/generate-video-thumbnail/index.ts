@@ -2,7 +2,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 import { FFmpeg } from 'https://esm.sh/@ffmpeg/ffmpeg@0.11.0'
-import { fetchFile } from 'https://esm.sh/@ffmpeg/util@0.11.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -52,12 +51,16 @@ serve(async (req) => {
 
     // Download and process video file
     console.log('Downloading video...')
-    const videoFile = await fetchFile(videoUrl)
+    const response = await fetch(videoUrl)
+    if (!response.ok) {
+      throw new Error(`Failed to fetch video: ${response.statusText}`)
+    }
+    const videoBuffer = await response.arrayBuffer()
     console.log('Video downloaded')
 
     // Write video file to FFmpeg's virtual filesystem
     console.log('Writing video to FFmpeg filesystem...')
-    await ffmpeg.writeFile('input.mp4', videoFile)
+    await ffmpeg.writeFile('input.mp4', new Uint8Array(videoBuffer))
     console.log('Video written to FFmpeg filesystem')
 
     // Extract frame at specified timestamp
