@@ -45,7 +45,8 @@ const TNJAiOBSPage = () => {
         .update({ 
           has_been_displayed: true,
           display_start_time: new Date().toISOString(),
-          display_end_time: new Date(Date.now() + 30000).toISOString() // 30 seconds from now
+          display_end_time: new Date(Date.now() + 30000).toISOString(), // 30 seconds from now
+          conversation_state: 'displaying'
         })
         .eq('question_text', data.question_text)
         .eq('answer_text', data.answer_text)
@@ -53,6 +54,21 @@ const TNJAiOBSPage = () => {
       if (updateError) {
         console.error('Error marking conversation as displayed:', updateError)
       }
+
+      // Set up a timer to mark the conversation as completed
+      setTimeout(async () => {
+        const { error: completeError } = await supabase
+          .from('audio_conversations')
+          .update({
+            conversation_state: 'completed'
+          })
+          .eq('question_text', data.question_text)
+          .eq('answer_text', data.answer_text)
+
+        if (completeError) {
+          console.error('Error marking conversation as completed:', completeError)
+        }
+      }, 30000)
     }
   }, [])
 
