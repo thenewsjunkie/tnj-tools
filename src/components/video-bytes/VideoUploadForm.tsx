@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,7 +61,7 @@ export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProp
         if (oldPath) {
           await supabase.storage
             .from("video_bytes")
-            .remove([oldPath]);
+            .remove([`thumbnails/${oldPath}`]);
         }
       }
 

@@ -26,8 +26,12 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Download video file
-    const response = await fetch(videoUrl)
+    // Download video file with proper headers
+    const response = await fetch(videoUrl, {
+      headers: {
+        'Origin': '*',
+      }
+    })
     if (!response.ok) {
       throw new Error('Failed to fetch video')
     }
