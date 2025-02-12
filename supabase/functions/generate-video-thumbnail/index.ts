@@ -30,7 +30,7 @@ serve(async (req) => {
     // Download video file
     const response = await fetch(videoUrl)
     if (!response.ok) {
-      throw new Error('Failed to fetch video')
+      throw new Error(`Failed to fetch video: ${response.statusText}`)
     }
     const videoBuffer = await response.arrayBuffer()
 
@@ -53,6 +53,7 @@ serve(async (req) => {
       '-i', 'input.mp4',
       '-vframes', '1',
       '-f', 'image2',
+      '-vf', 'scale=1280:-1', // Scale to 1280px width, maintain aspect ratio
       'thumbnail.jpg'
     ])
 
@@ -68,11 +69,31 @@ serve(async (req) => {
     const fileName = `${crypto.randomUUID()}.jpg`
     const filePath = `thumbnails/${fileName}`
 
+    // Ensure thumbnails directory exists (create it if it doesn't)
+    try {
+      const { data: dirData, error: dirError } = await supabase.storage
+        .from('video_bytes')
+        .list('thumbnails')
+
+      if (dirError) {
+        // If directory doesn't exist, create it with an empty file
+        const emptyBlob = new Blob([''], { type: 'text/plain' })
+        await supabase.storage
+          .from('video_bytes')
+          .upload('thumbnails/.keep', emptyBlob)
+      }
+    } catch (error) {
+      console.log('Directory check/creation error:', error)
+      // Continue anyway as the upload might still work
+    }
+
+    // Upload the thumbnail
     const { error: uploadError } = await supabase.storage
       .from('video_bytes')
       .upload(filePath, thumbnailBlob, {
         contentType: 'image/jpeg',
-        cacheControl: '3600'
+        cacheControl: '3600',
+        upsert: true // Use upsert in case the file already exists
       })
 
     if (uploadError) {
@@ -95,8 +116,14 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error generating thumbnail:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      JSON.stringify({ 
+        error: error.message,
+        details: error.stack 
+      }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
+        status: 500 
+      }
     )
   }
 })
