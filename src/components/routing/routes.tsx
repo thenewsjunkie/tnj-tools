@@ -20,7 +20,6 @@ import LeaderboardOBS from "@/pages/LeaderboardOBS";
 import GiftStats from "@/pages/Admin/GiftStats";
 import StreamReview from "@/pages/StreamReview";
 import TNJAiOBSPage from "@/pages/TNJAiOBSPage";
-import VideoBytesOBS from "@/pages/VideoBytesOBS";
 
 export const router = createBrowserRouter([
   {
@@ -114,9 +113,5 @@ export const router = createBrowserRouter([
   {
     path: "/tnj-ai-obs",
     element: <TNJAiOBSPage />,
-  },
-  {
-    path: "/video-bytes/obs",
-    element: <VideoBytesOBS />,
   },
 ]);
