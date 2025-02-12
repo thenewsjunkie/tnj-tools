@@ -1,7 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { FFmpeg } from 'https://esm.sh/@ffmpeg/ffmpeg@0.11.0'
+import { createFFmpeg, fetchFile } from 'https://esm.sh/@ffmpeg/ffmpeg@0.9.7'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -28,15 +28,6 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Initialize FFmpeg
-    console.log('Initializing FFmpeg...')
-    const ffmpeg = new FFmpeg()
-    await ffmpeg.load({
-      coreURL: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
-      wasmURL: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.wasm',
-    })
-    console.log('FFmpeg loaded')
-
     // First verify if video exists and is accessible
     try {
       const preflightResponse = await fetch(videoUrl, { method: 'HEAD' })
@@ -56,32 +47,42 @@ serve(async (req) => {
       throw new Error(`Failed to fetch video: ${response.statusText}`)
     }
     const videoBuffer = await response.arrayBuffer()
-    console.log('Video downloaded')
+    console.log('Video downloaded, size:', videoBuffer.byteLength)
+
+    // Initialize FFmpeg
+    console.log('Initializing FFmpeg...')
+    const ffmpeg = createFFmpeg({ log: true })
+    await ffmpeg.load()
+    console.log('FFmpeg loaded')
 
     // Write video file to FFmpeg's virtual filesystem
     console.log('Writing video to FFmpeg filesystem...')
-    await ffmpeg.writeFile('input.mp4', new Uint8Array(videoBuffer))
+    ffmpeg.FS('writeFile', 'input.mp4', new Uint8Array(videoBuffer))
     console.log('Video written to FFmpeg filesystem')
 
     // Extract frame at specified timestamp
     console.log(`Extracting frame at timestamp: ${timestamp}`)
-    await ffmpeg.exec([
+    await ffmpeg.run(
       '-ss', timestamp.toString(),
       '-i', 'input.mp4',
       '-vframes', '1',
       '-f', 'image2',
-      '-vf', 'scale=1280:-1', // Scale to 1280px width, maintain aspect ratio
+      '-vf', 'scale=1280:-1',
       'thumbnail.jpg'
-    ])
+    )
     console.log('Frame extracted')
 
     // Read the generated thumbnail
-    const thumbnailData = await ffmpeg.readFile('thumbnail.jpg')
+    const thumbnailData = ffmpeg.FS('readFile', 'thumbnail.jpg')
     if (!thumbnailData) {
       throw new Error('Failed to generate thumbnail')
     }
     const thumbnailBlob = new Blob([thumbnailData], { type: 'image/jpeg' })
     console.log('Thumbnail generated, size:', thumbnailData.length)
+
+    // Clean up FFmpeg filesystem
+    ffmpeg.FS('unlink', 'input.mp4')
+    ffmpeg.FS('unlink', 'thumbnail.jpg')
 
     // Upload to Supabase Storage
     const fileName = `${crypto.randomUUID()}.jpg`
