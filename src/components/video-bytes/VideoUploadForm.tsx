@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,7 +26,6 @@ export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProp
   const [uploadProgress, setUploadProgress] = useState(0);
   const [title, setTitle] = useState("");
   const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [thumbnailTime, setThumbnailTime] = useState(0);
   const [isThumbnailMode, setIsThumbnailMode] = useState(false);
   const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -40,26 +38,20 @@ export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProp
     }
   }, [editingVideo]);
 
-  const handleGenerateThumbnail = async () => {
+  const handleThumbnailUpload = async (file: File) => {
     if (!editingVideo) return;
     
     setIsGeneratingThumbnail(true);
     try {
-      // Get current timestamp from video element if available, otherwise use state
-      const currentTime = videoRef.current?.currentTime ?? thumbnailTime;
-      
-      console.log('Generating thumbnail at timestamp:', currentTime);
-      
-      const { data, error } = await supabase.functions.invoke('generate-video-thumbnail', {
-        body: {
-          videoUrl: editingVideo.video_url,
-          timestamp: Math.floor(currentTime)
-        }
+      const formData = new FormData();
+      formData.append('file', file);
+
+      // Use the existing upload-show-note-image function
+      const { data, error: uploadError } = await supabase.functions.invoke('upload-show-note-image', {
+        body: formData,
       });
 
-      if (error) throw error;
-
-      console.log('Received thumbnail URL:', data.url);
+      if (uploadError) throw uploadError;
 
       const { error: updateError } = await supabase
         .from("video_bytes")
@@ -84,12 +76,6 @@ export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProp
       });
     } finally {
       setIsGeneratingThumbnail(false);
-    }
-  };
-
-  const handleTimeUpdate = () => {
-    if (videoRef.current) {
-      setThumbnailTime(videoRef.current.currentTime);
     }
   };
 
@@ -230,22 +216,27 @@ export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProp
                   src={editingVideo.video_url}
                   controls
                   className="w-full h-full"
-                  onTimeUpdate={handleTimeUpdate}
                   preload="auto"
                 />
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">
-                  Current time: {thumbnailTime.toFixed(2)}s
-                </span>
-                <Button
-                  type="button"
-                  onClick={handleGenerateThumbnail}
-                  size="sm"
+              <div className="space-y-2">
+                <Label htmlFor="thumbnail">Upload Screenshot</Label>
+                <Input
+                  id="thumbnail"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      handleThumbnailUpload(file);
+                    }
+                  }}
                   disabled={isGeneratingThumbnail}
-                >
-                  {isGeneratingThumbnail ? "Generating..." : "Set as Thumbnail"}
-                </Button>
+                  className="cursor-pointer"
+                />
+                <p className="text-sm text-muted-foreground">
+                  Take a screenshot of the video at the desired timestamp and upload it here
+                </p>
               </div>
               {editingVideo.thumbnail_url && (
                 <div className="space-y-2">
