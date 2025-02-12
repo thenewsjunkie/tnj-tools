@@ -45,25 +45,15 @@ export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProp
     
     setIsGeneratingThumbnail(true);
     try {
-      // Call the edge function to generate thumbnail
+      // Send the video URL and timestamp to the edge function
       const { data, error } = await supabase.functions.invoke('generate-video-thumbnail', {
         body: {
           videoUrl: editingVideo.video_url,
-          timestamp: videoRef.current.currentTime
+          timestamp: Math.floor(videoRef.current.currentTime)
         }
       });
 
       if (error) throw error;
-
-      // Delete existing thumbnail if it exists
-      if (editingVideo.thumbnail_url) {
-        const oldPath = editingVideo.thumbnail_url.split('/').pop();
-        if (oldPath) {
-          await supabase.storage
-            .from("video_bytes")
-            .remove([`thumbnails/${oldPath}`]);
-        }
-      }
 
       // Update video record with new thumbnail
       const { error: updateError } = await supabase
@@ -78,14 +68,13 @@ export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProp
         description: "Thumbnail updated successfully",
       });
 
-      // Invalidate and refetch immediately
       await queryClient.invalidateQueries({ queryKey: ["video-bytes"] });
       setIsThumbnailMode(false);
     } catch (error) {
       console.error("Thumbnail update error:", error);
       toast({
         title: "Error",
-        description: "Failed to update thumbnail",
+        description: "Failed to update thumbnail. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -139,30 +128,23 @@ export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProp
     }
 
     setIsUploading(true);
-    setUploadProgress(0);
     try {
-      // Upload video to storage
       const fileExt = videoFile.name.split(".").pop();
       const filePath = `${crypto.randomUUID()}.${fileExt}`;
 
-      const options = {
-        cacheControl: '3600',
-        upsert: false
-      };
-
-      // Set up upload with progress tracking
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from("video_bytes")
-        .upload(filePath, videoFile, options);
+        .upload(filePath, videoFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from("video_bytes")
         .getPublicUrl(filePath);
 
-      // Save video metadata to database
       const { error: dbError } = await supabase
         .from("video_bytes")
         .insert({
@@ -177,17 +159,10 @@ export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProp
         description: "Video uploaded successfully",
       });
 
-      // Invalidate and refetch the videos query
       queryClient.invalidateQueries({ queryKey: ["video-bytes"] });
-
-      // Reset form
       setTitle("");
       setVideoFile(null);
-      setUploadProgress(0);
-      
-      // Call onSuccess callback if provided
       onSuccess?.();
-      
     } catch (error) {
       console.error("Upload error:", error);
       toast({
@@ -248,7 +223,6 @@ export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProp
                 ref={videoRef}
                 src={editingVideo.video_url}
                 controls
-                crossOrigin="anonymous"
                 className="w-full rounded-lg"
                 onTimeUpdate={handleTimeUpdate}
                 preload="auto"
@@ -268,15 +242,6 @@ export function VideoUploadForm({ onSuccess, editingVideo }: VideoUploadFormProp
               </div>
             </div>
           )}
-        </div>
-      )}
-
-      {isUploading && (
-        <div className="space-y-2">
-          <Progress value={uploadProgress} className="w-full" />
-          <p className="text-sm text-muted-foreground text-center">
-            {Math.round(uploadProgress)}% uploaded
-          </p>
         </div>
       )}
 
