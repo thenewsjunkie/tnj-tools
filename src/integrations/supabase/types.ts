@@ -917,7 +917,16 @@ export type Database = {
         | "domestic_partnership"
       poll_status: "draft" | "active" | "completed"
       review_type: "television" | "movie" | "food" | "product" | "message"
-      social_media_platform: "facebook" | "instagram" | "x"
+      social_media_platform:
+        | "facebook"
+        | "instagram"
+        | "x"
+        | "tiktok"
+        | "youtube"
+        | "website"
+        | "snapchat"
+        | "venmo"
+        | "cashapp"
       voting_platform: "twitch" | "youtube"
     }
     CompositeTypes: {

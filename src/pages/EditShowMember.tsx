@@ -1,16 +1,15 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Facebook, Instagram, Twitter, ArrowLeft } from "lucide-react";
+import { Facebook, Instagram, Twitter, ArrowLeft, Youtube, Globe, SnapchatGhost, CircleDollarSign } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import AddMemberDialog from "@/components/show/AddMemberDialog";
 
 interface SocialLink {
   id: string;
-  platform: 'facebook' | 'instagram' | 'x';
+  platform: 'facebook' | 'instagram' | 'x' | 'tiktok' | 'youtube' | 'website' | 'snapchat' | 'venmo' | 'cashapp';
   url: string;
   member_id: string;
 }
@@ -65,7 +64,7 @@ export default function EditShowMember() {
     }
   };
 
-  const handleAddSocial = (memberId: string, platform: 'facebook' | 'instagram' | 'x') => {
+  const handleAddSocial = (memberId: string, platform: 'facebook' | 'instagram' | 'x' | 'tiktok' | 'youtube' | 'website' | 'snapchat' | 'venmo' | 'cashapp') => {
     setMembers(members.map(member => {
       if (member.id === memberId) {
         return {
@@ -193,6 +192,44 @@ export default function EditShowMember() {
     }
   };
 
+  const getSocialIcon = (platform: SocialLink['platform']) => {
+    switch (platform) {
+      case 'facebook':
+        return <Facebook className="h-4 w-4" />;
+      case 'instagram':
+        return <Instagram className="h-4 w-4" />;
+      case 'x':
+        return <Twitter className="h-4 w-4" />;
+      case 'youtube':
+        return <Youtube className="h-4 w-4" />;
+      case 'website':
+        return <Globe className="h-4 w-4" />;
+      case 'snapchat':
+        return <SnapchatGhost className="h-4 w-4" />;
+      case 'venmo':
+      case 'cashapp':
+        return <CircleDollarSign className="h-4 w-4" />;
+      case 'tiktok':
+        return (
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+          </svg>
+        );
+    }
+  };
+
+  const platformLabels = {
+    facebook: 'Facebook',
+    instagram: 'Instagram',
+    x: 'X',
+    tiktok: 'TikTok',
+    youtube: 'YouTube',
+    website: 'Website',
+    snapchat: 'Snapchat',
+    venmo: 'Venmo',
+    cashapp: 'Cash App'
+  };
+
   return (
     <div className="container mx-auto py-8">
       <Button 
@@ -252,29 +289,27 @@ export default function EditShowMember() {
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-white">Social Media Links</label>
                     <div className="flex flex-wrap gap-2">
-                      {!member.socials.some(s => s.platform === 'facebook') && (
-                        <Button type="button" variant="outline" size="sm" onClick={() => handleAddSocial(member.id, 'facebook')} className="text-white hover:text-white">
-                          <Facebook className="h-4 w-4 mr-2" />
-                          Add Facebook
-                        </Button>
-                      )}
-                      {!member.socials.some(s => s.platform === 'instagram') && (
-                        <Button type="button" variant="outline" size="sm" onClick={() => handleAddSocial(member.id, 'instagram')} className="text-white hover:text-white">
-                          <Instagram className="h-4 w-4 mr-2" />
-                          Add Instagram
-                        </Button>
-                      )}
-                      {!member.socials.some(s => s.platform === 'x') && (
-                        <Button type="button" variant="outline" size="sm" onClick={() => handleAddSocial(member.id, 'x')} className="text-white hover:text-white">
-                          <Twitter className="h-4 w-4 mr-2" />
-                          Add X
-                        </Button>
-                      )}
+                      {(Object.keys(platformLabels) as Array<keyof typeof platformLabels>)
+                        .filter(platform => !member.socials.some(s => s.platform === platform))
+                        .map(platform => (
+                          <Button 
+                            key={platform}
+                            type="button" 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => handleAddSocial(member.id, platform)}
+                            className="text-white hover:text-white"
+                          >
+                            {getSocialIcon(platform)}
+                            <span className="ml-2">Add {platformLabels[platform]}</span>
+                          </Button>
+                        ))
+                      }
                     </div>
                     {member.socials.map((social) => (
                       <div key={social.id} className="flex items-center gap-2">
                         <Input
-                          placeholder={`${social.platform} URL`}
+                          placeholder={`${platformLabels[social.platform]} URL`}
                           value={social.url}
                           onChange={(e) => handleSocialChange(member.id, social.id, e.target.value)}
                         />
