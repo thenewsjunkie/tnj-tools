@@ -1,3 +1,4 @@
+
 import { Json } from './helpers';
 import {
   AlertQueueTable,
@@ -31,6 +32,7 @@ import { InterviewRequestsTable } from './tables/interviews';
 import { FritzContestantsTable } from './tables/fritz';
 import { DatabaseFunctions } from './functions';
 import { DatabaseEnums } from './enums';
+import { ShowMembersTable, ShowMemberSocialsTable } from './tables/show';
 
 export interface Database {
   public: {
@@ -50,6 +52,8 @@ export interface Database {
       profiles: ProfilesTable
       reviews: ReviewsTable
       system_settings: SystemSettingsTable
+      show_members: ShowMembersTable
+      show_member_socials: ShowMemberSocialsTable
       tnj_links: {
         Row: {
           created_at: string | null

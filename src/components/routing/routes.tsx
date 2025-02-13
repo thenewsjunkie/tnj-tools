@@ -20,6 +20,7 @@ import LeaderboardOBS from "@/pages/LeaderboardOBS";
 import GiftStats from "@/pages/Admin/GiftStats";
 import StreamReview from "@/pages/StreamReview";
 import TNJAiOBSPage from "@/pages/TNJAiOBSPage";
+import ShareTheShow from "@/pages/ShareTheShow";
 
 export const router = createBrowserRouter([
   {
@@ -114,4 +115,9 @@ export const router = createBrowserRouter([
     path: "/tnj-ai-obs",
     element: <TNJAiOBSPage />,
   },
+  {
+    path: "/sharetheshow",
+    element: <ShareTheShow />,
+  },
 ]);
+

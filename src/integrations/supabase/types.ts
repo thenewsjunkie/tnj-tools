@@ -660,6 +660,68 @@ export type Database = {
         }
         Relationships: []
       }
+      show_member_socials: {
+        Row: {
+          created_at: string | null
+          id: string
+          member_id: string | null
+          platform: Database["public"]["Enums"]["social_media_platform"]
+          updated_at: string | null
+          url: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          member_id?: string | null
+          platform: Database["public"]["Enums"]["social_media_platform"]
+          updated_at?: string | null
+          url: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          member_id?: string | null
+          platform?: Database["public"]["Enums"]["social_media_platform"]
+          updated_at?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "show_member_socials_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "show_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      show_members: {
+        Row: {
+          created_at: string | null
+          display_order: number
+          id: string
+          image_url: string | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_order: number
+          id?: string
+          image_url?: string | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
           key: string
@@ -855,6 +917,7 @@ export type Database = {
         | "domestic_partnership"
       poll_status: "draft" | "active" | "completed"
       review_type: "television" | "movie" | "food" | "product" | "message"
+      social_media_platform: "facebook" | "instagram" | "x"
       voting_platform: "twitch" | "youtube"
     }
     CompositeTypes: {
