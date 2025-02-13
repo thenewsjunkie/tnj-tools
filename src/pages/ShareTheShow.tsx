@@ -73,6 +73,7 @@ export default function ShareTheShow() {
         {members.map((member) => (
           <MemberCard
             key={member.id}
+            id={member.id}
             name={member.name}
             imageUrl={member.image_url}
             socials={member.socials}

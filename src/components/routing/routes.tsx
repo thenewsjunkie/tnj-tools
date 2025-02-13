@@ -1,4 +1,3 @@
-
 import { createBrowserRouter } from "react-router-dom";
 import Index from "@/pages/Index";
 import Login from "@/pages/Login";
@@ -21,6 +20,7 @@ import GiftStats from "@/pages/Admin/GiftStats";
 import StreamReview from "@/pages/StreamReview";
 import TNJAiOBSPage from "@/pages/TNJAiOBSPage";
 import ShareTheShow from "@/pages/ShareTheShow";
+import EditShowMember from "@/pages/EditShowMember";
 
 export const router = createBrowserRouter([
   {
@@ -119,5 +119,8 @@ export const router = createBrowserRouter([
     path: "/sharetheshow",
     element: <ShareTheShow />,
   },
+  {
+    path: "/sharetheshow/edit/:memberId",
+    element: <EditShowMember />,
+  },
 ]);
-
