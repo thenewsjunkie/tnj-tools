@@ -25,22 +25,40 @@ export default function ShareTheShow() {
 
     // Send height to parent window
     const sendHeight = () => {
-      const height = document.body.scrollHeight;
+      const height = document.documentElement.scrollHeight;
       window.parent.postMessage({ type: 'resize', height }, '*');
     };
+
+    // Handle image loading
+    const handleImagesLoad = () => {
+      // Wait a bit after images load to get final height
+      setTimeout(sendHeight, 100);
+    };
+
+    // Wait for images to load
+    window.addEventListener('load', handleImagesLoad);
 
     // Send initial height
     sendHeight();
 
     // Set up a MutationObserver to watch for DOM changes
-    const observer = new MutationObserver(sendHeight);
+    const observer = new MutationObserver(() => {
+      // Add a small delay to allow for DOM updates
+      setTimeout(sendHeight, 100);
+    });
+    
     observer.observe(document.body, { 
       childList: true, 
-      subtree: true 
+      subtree: true,
+      attributes: true,
+      characterData: true 
     });
 
     // Clean up
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('load', handleImagesLoad);
+    };
   }, []);
 
   const fetchMembers = async () => {
