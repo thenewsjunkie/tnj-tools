@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Facebook, Instagram, Twitter, ArrowLeft, Youtube, Globe, Ghost, CircleDollarSign } from "lucide-react";
+import { Facebook, Instagram, Twitter, ArrowLeft, Youtube, Globe, Ghost, CircleDollarSign, Copy } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import AddMemberDialog from "@/components/show/AddMemberDialog";
 
@@ -27,6 +27,30 @@ export default function EditShowMember() {
   const [members, setMembers] = useState<Member[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  const embedCode = `<iframe 
+  src="https://tnjtools.com/sharetheshow"
+  width="100%"
+  style="border: none; min-height: 400px; height: 100vh;"
+  title="Show Members"
+></iframe>`;
+
+  const copyEmbedCode = () => {
+    navigator.clipboard.writeText(embedCode)
+      .then(() => {
+        toast({
+          title: "Copied!",
+          description: "Embed code has been copied to your clipboard",
+        });
+      })
+      .catch(() => {
+        toast({
+          title: "Error",
+          description: "Failed to copy embed code",
+          variant: "destructive",
+        });
+      });
+  };
 
   useEffect(() => {
     fetchMembers();
@@ -232,14 +256,22 @@ export default function EditShowMember() {
 
   return (
     <div className="container mx-auto py-8">
-      <Button 
-        variant="ghost" 
-        onClick={() => navigate('/sharetheshow')} 
-        className="mb-6"
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to Members
-      </Button>
+      <div className="flex gap-4 mb-6">
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate('/sharetheshow')}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Members
+        </Button>
+        <Button
+          variant="outline"
+          onClick={copyEmbedCode}
+        >
+          <Copy className="h-4 w-4 mr-2" />
+          Copy Embed Code
+        </Button>
+      </div>
 
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
