@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -252,19 +253,19 @@ export default function EditShowMember() {
                     <label className="text-sm font-medium text-white">Social Media Links</label>
                     <div className="flex flex-wrap gap-2">
                       {!member.socials.some(s => s.platform === 'facebook') && (
-                        <Button type="button" variant="outline" size="sm" onClick={() => handleAddSocial(member.id, 'facebook')}>
+                        <Button type="button" variant="outline" size="sm" onClick={() => handleAddSocial(member.id, 'facebook')} className="text-white hover:text-white">
                           <Facebook className="h-4 w-4 mr-2" />
                           Add Facebook
                         </Button>
                       )}
                       {!member.socials.some(s => s.platform === 'instagram') && (
-                        <Button type="button" variant="outline" size="sm" onClick={() => handleAddSocial(member.id, 'instagram')}>
+                        <Button type="button" variant="outline" size="sm" onClick={() => handleAddSocial(member.id, 'instagram')} className="text-white hover:text-white">
                           <Instagram className="h-4 w-4 mr-2" />
                           Add Instagram
                         </Button>
                       )}
                       {!member.socials.some(s => s.platform === 'x') && (
-                        <Button type="button" variant="outline" size="sm" onClick={() => handleAddSocial(member.id, 'x')}>
+                        <Button type="button" variant="outline" size="sm" onClick={() => handleAddSocial(member.id, 'x')} className="text-white hover:text-white">
                           <Twitter className="h-4 w-4 mr-2" />
                           Add X
                         </Button>
