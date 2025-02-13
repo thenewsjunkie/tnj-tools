@@ -143,7 +143,7 @@ export default function AddMemberDialog({ onMemberAdded }: { onMemberAdded: () =
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Name</label>
+            <label className="text-sm font-medium text-white">Name</label>
             <Input
               placeholder="Enter name"
               value={name}
@@ -152,7 +152,7 @@ export default function AddMemberDialog({ onMemberAdded }: { onMemberAdded: () =
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Profile Photo</label>
+            <label className="text-sm font-medium text-white">Profile Photo</label>
             <Input
               type="file"
               accept="image/*"
@@ -162,7 +162,7 @@ export default function AddMemberDialog({ onMemberAdded }: { onMemberAdded: () =
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Social Media Links</label>
+            <label className="text-sm font-medium text-white">Social Media Links</label>
             <div className="flex flex-wrap gap-2">
               {!socials.some(s => s.platform === 'facebook') && (
                 <Button type="button" variant="outline" size="sm" onClick={() => handleAddSocial('facebook')}>
