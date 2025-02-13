@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import MemberCard from "@/components/show/MemberCard";
@@ -101,7 +102,7 @@ export default function ShareTheShow() {
 
   return (
     <div className="w-full px-2 py-6">
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
         {members.map((member) => (
           <MemberCard
             key={member.id}
