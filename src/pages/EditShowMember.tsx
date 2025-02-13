@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Facebook, Instagram, Twitter, ArrowLeft } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import AddMemberDialog from "@/components/show/AddMemberDialog";
 
 interface SocialLink {
   id: string;
@@ -204,7 +204,10 @@ export default function EditShowMember() {
       </Button>
 
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">Edit Show Members</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">Edit Show Members</h1>
+          <AddMemberDialog onMemberAdded={fetchMembers} />
+        </div>
         
         <div className="space-y-8">
           {members.map((member) => (
