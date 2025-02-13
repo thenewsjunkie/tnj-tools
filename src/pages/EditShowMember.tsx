@@ -3,9 +3,25 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Facebook, Instagram, Twitter, ArrowLeft, Youtube, Globe, Ghost, CircleDollarSign, Copy, Trash2 } from "lucide-react";
+import { Facebook, Instagram, Twitter, ArrowLeft, Youtube, Globe, Ghost, CircleDollarSign, Copy } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import AddMemberDialog from "@/components/show/AddMemberDialog";
+import SortableSocialLink from "@/components/show/SortableSocialLink";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import type { DragEndEvent } from '@dnd-kit/core';
 
 interface SocialLink {
   id: string;
@@ -27,6 +43,13 @@ export default function EditShowMember() {
   const [members, setMembers] = useState<Member[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const embedCode = `<iframe 
   src="https://tnjtools.com/sharetheshow"
@@ -96,6 +119,27 @@ window.addEventListener('message', function(e) {
         variant: "destructive",
       });
     }
+  };
+
+  const handleDragEnd = (event: DragEndEvent, memberId: string) => {
+    const { active, over } = event;
+    
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    setMembers(members.map(member => {
+      if (member.id === memberId) {
+        const oldIndex = member.socials.findIndex(s => s.id === active.id);
+        const newIndex = member.socials.findIndex(s => s.id === over.id);
+        
+        return {
+          ...member,
+          socials: arrayMove(member.socials, oldIndex, newIndex),
+        };
+      }
+      return member;
+    }));
   };
 
   const handleAddSocial = (memberId: string, platform: 'facebook' | 'instagram' | 'x' | 'tiktok' | 'youtube' | 'website' | 'snapchat' | 'venmo' | 'cashapp') => {
@@ -361,24 +405,30 @@ window.addEventListener('message', function(e) {
                         ))
                       }
                     </div>
-                    {member.socials.map((social) => (
-                      <div key={social.id} className="flex items-center gap-2">
-                        <Input
-                          placeholder={`${platformLabels[social.platform]} URL`}
-                          value={social.url}
-                          onChange={(e) => handleSocialChange(member.id, social.id, e.target.value)}
-                          className="flex-1"
-                        />
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          onClick={() => removeSocial(member.id, social.id)}
-                          title={`Remove ${platformLabels[social.platform]}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={(event) => handleDragEnd(event, member.id)}
+                    >
+                      <SortableContext
+                        items={member.socials.map(s => s.id)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        <div className="space-y-2">
+                          {member.socials.map((social) => (
+                            <SortableSocialLink
+                              key={social.id}
+                              id={social.id}
+                              url={social.url}
+                              platform={social.platform}
+                              platformLabel={platformLabels[social.platform]}
+                              onUrlChange={(url) => handleSocialChange(member.id, social.id, url)}
+                              onRemove={() => removeSocial(member.id, social.id)}
+                            />
+                          ))}
+                        </div>
+                      </SortableContext>
+                    </DndContext>
                   </div>
 
                   <Button 
