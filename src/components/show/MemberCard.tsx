@@ -18,23 +18,23 @@ export default function MemberCard({ name, imageUrl, socials }: MemberCardProps)
   const getSocialIcon = (platform: Social['platform']) => {
     switch (platform) {
       case 'facebook':
-        return <Facebook className="h-4 w-4" />;
+        return <Facebook className="h-3 w-3" />;
       case 'instagram':
-        return <Instagram className="h-4 w-4" />;
+        return <Instagram className="h-3 w-3" />;
       case 'x':
-        return <Twitter className="h-4 w-4" />;
+        return <Twitter className="h-3 w-3" />;
       case 'youtube':
-        return <Youtube className="h-4 w-4" />;
+        return <Youtube className="h-3 w-3" />;
       case 'website':
-        return <Globe className="h-4 w-4" />;
+        return <Globe className="h-3 w-3" />;
       case 'snapchat':
-        return <Ghost className="h-4 w-4" />;
+        return <Ghost className="h-3 w-3" />;
       case 'venmo':
       case 'cashapp':
-        return <CircleDollarSign className="h-4 w-4" />;
+        return <CircleDollarSign className="h-3 w-3" />;
       case 'tiktok':
         return (
-          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+          <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
             <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
           </svg>
         );
@@ -42,8 +42,8 @@ export default function MemberCard({ name, imageUrl, socials }: MemberCardProps)
   };
 
   return (
-    <div className="flex flex-col items-center p-4 space-y-3">
-      <div className="relative w-24 h-24 rounded-full overflow-hidden bg-gray-200">
+    <div className="flex flex-col items-center p-2 space-y-2">
+      <div className="relative w-16 h-16 rounded-full overflow-hidden bg-gray-200">
         {imageUrl ? (
           <img
             src={imageUrl}
@@ -56,14 +56,14 @@ export default function MemberCard({ name, imageUrl, socials }: MemberCardProps)
           </div>
         )}
       </div>
-      <h3 className="text-lg font-semibold">{name}</h3>
-      <div className="flex gap-1 flex-wrap justify-center">
+      <h3 className="text-base font-semibold">{name}</h3>
+      <div className="flex gap-0.5 flex-wrap justify-center">
         {socials.map((social, index) => (
           <Button
             key={index}
             variant="ghost"
             size="icon"
-            className="h-8 w-8 hover:text-primary"
+            className="h-6 w-6 p-0.5 hover:text-primary"
             asChild
           >
             <a href={social.url} target="_blank" rel="noopener noreferrer">
