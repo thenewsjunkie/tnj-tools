@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -256,7 +257,7 @@ export default function EditShowMember() {
 
   return (
     <div className="container mx-auto py-8">
-      <div className="flex gap-4 mb-6">
+      <div className="flex justify-between items-center mb-8">
         <Button 
           variant="ghost" 
           onClick={() => navigate('/sharetheshow')}
@@ -264,19 +265,20 @@ export default function EditShowMember() {
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Members
         </Button>
-        <Button
-          variant="outline"
-          onClick={copyEmbedCode}
-        >
-          <Copy className="h-4 w-4 mr-2" />
-          Copy Embed Code
-        </Button>
+        <div className="flex gap-4">
+          <Button
+            onClick={copyEmbedCode}
+          >
+            <Copy className="h-4 w-4 mr-2" />
+            Copy Embed Code
+          </Button>
+          <AddMemberDialog onMemberAdded={fetchMembers} />
+        </div>
       </div>
 
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Edit Show Members</h1>
-          <AddMemberDialog onMemberAdded={fetchMembers} />
         </div>
         
         <div className="space-y-8">
