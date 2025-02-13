@@ -1,7 +1,6 @@
 
-import { Facebook, Instagram, Twitter, Edit2 } from "lucide-react";
+import { Facebook, Instagram, Twitter } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
 
 interface Social {
   platform: 'facebook' | 'instagram' | 'x';
@@ -15,9 +14,7 @@ interface MemberCardProps {
   socials: Social[];
 }
 
-export default function MemberCard({ id, name, imageUrl, socials }: MemberCardProps) {
-  const navigate = useNavigate();
-  
+export default function MemberCard({ name, imageUrl, socials }: MemberCardProps) {
   const getSocialIcon = (platform: Social['platform']) => {
     switch (platform) {
       case 'facebook':
@@ -60,14 +57,6 @@ export default function MemberCard({ id, name, imageUrl, socials }: MemberCardPr
           </Button>
         ))}
       </div>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => navigate(`/sharetheshow/edit/${id}`)}
-      >
-        <Edit2 className="h-4 w-4 mr-2" />
-        Edit
-      </Button>
     </div>
   );
 }
