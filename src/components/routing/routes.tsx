@@ -120,7 +120,7 @@ export const router = createBrowserRouter([
     element: <ShareTheShow />,
   },
   {
-    path: "/sharetheshow/edit/:memberId",
+    path: "/sharetheshow/edit",
     element: <EditShowMember />,
   },
 ]);
