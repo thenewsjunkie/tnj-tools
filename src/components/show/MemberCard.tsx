@@ -42,8 +42,8 @@ export default function MemberCard({ name, imageUrl, socials }: MemberCardProps)
   };
 
   return (
-    <div className="flex flex-col items-center p-6 space-y-4">
-      <div className="relative w-32 h-32 rounded-full overflow-hidden bg-gray-200">
+    <div className="flex flex-col items-center p-4 space-y-3">
+      <div className="relative w-24 h-24 rounded-full overflow-hidden bg-gray-200">
         {imageUrl ? (
           <img
             src={imageUrl}
@@ -56,14 +56,14 @@ export default function MemberCard({ name, imageUrl, socials }: MemberCardProps)
           </div>
         )}
       </div>
-      <h3 className="text-xl font-semibold">{name}</h3>
-      <div className="flex gap-2">
+      <h3 className="text-lg font-semibold">{name}</h3>
+      <div className="flex gap-1 flex-wrap justify-center">
         {socials.map((social, index) => (
           <Button
             key={index}
             variant="ghost"
             size="icon"
-            className="hover:text-primary"
+            className="h-8 w-8 hover:text-primary"
             asChild
           >
             <a href={social.url} target="_blank" rel="noopener noreferrer">

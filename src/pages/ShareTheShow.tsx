@@ -104,7 +104,7 @@ export default function ShareTheShow() {
     <div className="w-full px-2 py-6">
       <h1 className="text-3xl font-bold mb-6">Show Members</h1>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
         {members.map((member) => (
           <MemberCard
             key={member.id}
