@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Facebook, Instagram, Twitter, ArrowLeft, Youtube, Globe, SnapchatGhost, CircleDollarSign } from "lucide-react";
+import { Facebook, Instagram, Twitter, ArrowLeft, Youtube, Globe, Ghost, CircleDollarSign } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import AddMemberDialog from "@/components/show/AddMemberDialog";
 
@@ -205,7 +205,7 @@ export default function EditShowMember() {
       case 'website':
         return <Globe className="h-4 w-4" />;
       case 'snapchat':
-        return <SnapchatGhost className="h-4 w-4" />;
+        return <Ghost className="h-4 w-4" />;
       case 'venmo':
       case 'cashapp':
         return <CircleDollarSign className="h-4 w-4" />;

@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Facebook, Instagram, Twitter, Youtube, Globe, SnapchatGhost, CircleDollarSign } from "lucide-react";
+import { Plus, Facebook, Instagram, Twitter, Youtube, Globe, Ghost, CircleDollarSign } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,7 +32,7 @@ export default function AddMemberDialog({ onMemberAdded }: { onMemberAdded: () =
       case 'website':
         return <Globe className="h-4 w-4" />;
       case 'snapchat':
-        return <SnapchatGhost className="h-4 w-4" />;
+        return <Ghost className="h-4 w-4" />;
       case 'venmo':
       case 'cashapp':
         return <CircleDollarSign className="h-4 w-4" />;

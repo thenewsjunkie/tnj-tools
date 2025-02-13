@@ -4,14 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import MemberCard from "@/components/show/MemberCard";
 import { useToast } from "@/components/ui/use-toast";
 
+interface SocialLink {
+  platform: 'facebook' | 'instagram' | 'x' | 'tiktok' | 'youtube' | 'website' | 'snapchat' | 'venmo' | 'cashapp';
+  url: string;
+}
+
 interface Member {
   id: string;
   name: string;
   image_url: string | null;
-  socials: {
-    platform: 'facebook' | 'instagram' | 'x';
-    url: string;
-  }[];
+  socials: SocialLink[];
 }
 
 export default function ShareTheShow() {
