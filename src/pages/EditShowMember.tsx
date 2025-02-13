@@ -1,10 +1,9 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Facebook, Instagram, Twitter, ArrowLeft, Youtube, Globe, Ghost, CircleDollarSign, Copy } from "lucide-react";
+import { Facebook, Instagram, Twitter, ArrowLeft, Youtube, Globe, Ghost, CircleDollarSign, Copy, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import AddMemberDialog from "@/components/show/AddMemberDialog";
 
@@ -253,6 +252,18 @@ window.addEventListener('message', function(e) {
     }
   };
 
+  const removeSocial = (memberId: string, socialId: string) => {
+    setMembers(members.map(member => {
+      if (member.id === memberId) {
+        return {
+          ...member,
+          socials: member.socials.filter(social => social.id !== socialId)
+        };
+      }
+      return member;
+    }));
+  };
+
   const platformLabels = {
     facebook: 'Facebook',
     instagram: 'Instagram',
@@ -356,7 +367,16 @@ window.addEventListener('message', function(e) {
                           placeholder={`${platformLabels[social.platform]} URL`}
                           value={social.url}
                           onChange={(e) => handleSocialChange(member.id, social.id, e.target.value)}
+                          className="flex-1"
                         />
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          onClick={() => removeSocial(member.id, social.id)}
+                          title={`Remove ${platformLabels[social.platform]}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     ))}
                   </div>
