@@ -32,10 +32,19 @@ export default function EditShowMember() {
   const embedCode = `<iframe 
   src="https://tnjtools.com/sharetheshow"
   width="100%"
-  style="border: none;"
-  onload="this.style.height=this.contentDocument.body.scrollHeight+'px';"
+  style="border: none; min-height: 200px;"
   title="Show Members"
-></iframe>`;
+></iframe>
+<script>
+window.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'resize') {
+    const iframe = document.querySelector('iframe[src="https://tnjtools.com/sharetheshow"]');
+    if (iframe) {
+      iframe.style.height = e.data.height + 'px';
+    }
+  }
+});
+</script>`;
 
   const copyEmbedCode = () => {
     navigator.clipboard.writeText(embedCode)

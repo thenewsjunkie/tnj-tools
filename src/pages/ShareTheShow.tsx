@@ -20,6 +20,29 @@ export default function ShareTheShow() {
   const [members, setMembers] = useState<Member[]>([]);
   const { toast } = useToast();
 
+  useEffect(() => {
+    fetchMembers();
+
+    // Send height to parent window
+    const sendHeight = () => {
+      const height = document.body.scrollHeight;
+      window.parent.postMessage({ type: 'resize', height }, '*');
+    };
+
+    // Send initial height
+    sendHeight();
+
+    // Set up a MutationObserver to watch for DOM changes
+    const observer = new MutationObserver(sendHeight);
+    observer.observe(document.body, { 
+      childList: true, 
+      subtree: true 
+    });
+
+    // Clean up
+    return () => observer.disconnect();
+  }, []);
+
   const fetchMembers = async () => {
     try {
       // Fetch members
@@ -58,10 +81,6 @@ export default function ShareTheShow() {
       });
     }
   };
-
-  useEffect(() => {
-    fetchMembers();
-  }, []);
 
   return (
     <div className="container mx-auto py-8">
