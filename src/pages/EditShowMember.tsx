@@ -54,7 +54,7 @@ export default function EditShowMember() {
   const embedCode = `<iframe 
   src="https://tnjtools.com/sharetheshow"
   width="100%"
-  style="border: none; height: 1200px; @media (min-width: 640px) { height: 800px; }"
+  style="border: none; height: 1200px; @media (min-width: 640px) { height: 500px; }"
   title="Show Members"
 ></iframe>`;
 
