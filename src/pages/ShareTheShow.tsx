@@ -1,5 +1,5 @@
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useLayoutEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import MemberCard from "@/components/show/MemberCard";
 import { useToast } from "@/components/ui/use-toast";
@@ -21,82 +21,51 @@ export default function ShareTheShow() {
   const { toast } = useToast();
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    fetchMembers();
-
-    // Send height to parent window
-    const sendHeight = () => {
-      if (containerRef.current) {
-        const height = containerRef.current.offsetHeight;
-        console.log('Sending height:', height);
-        window.parent.postMessage({ type: 'resize', height }, '*');
-      }
-    };
-
-    // Create ResizeObserver to watch for container size changes
-    const resizeObserver = new ResizeObserver(() => {
-      sendHeight();
-    });
-
-    // Create MutationObserver to watch for DOM changes
-    const mutationObserver = new MutationObserver(() => {
-      sendHeight();
-    });
-
-    if (containerRef.current) {
-      // Observe container size changes
-      resizeObserver.observe(containerRef.current);
+  // Calculate and update iframe height
+  const updateIframeHeight = () => {
+    if (!containerRef.current) return;
+    
+    const calculateTotalHeight = () => {
+      const totalMembers = members.length;
+      const cardHeight = 300; // Estimated height of each card including margins
+      const containerPadding = 48; // 24px top + 24px bottom
       
-      // Observe DOM changes within container
-      mutationObserver.observe(containerRef.current, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        characterData: true
-      });
-    }
-
-    // Handle image loading
-    const handleImagesLoad = () => {
-      const images = document.querySelectorAll('img');
-      let loadedImages = 0;
-      const totalImages = images.length;
-
-      const checkAllImagesLoaded = () => {
-        loadedImages++;
-        if (loadedImages === totalImages) {
-          console.log('All images loaded, updating height');
-          sendHeight();
-        }
-      };
-
-      images.forEach(img => {
-        if (img.complete) {
-          checkAllImagesLoaded();
-        } else {
-          img.addEventListener('load', checkAllImagesLoaded);
-          img.addEventListener('error', checkAllImagesLoaded); // Handle failed loads too
-        }
-      });
-
-      // If no images, still send height
-      if (totalImages === 0) {
-        sendHeight();
+      // Get current window width to determine number of columns
+      const windowWidth = window.innerWidth;
+      let columns = 3; // Default for desktop
+      
+      if (windowWidth < 640) { // sm breakpoint
+        columns = 1;
+      } else if (windowWidth < 768) { // md breakpoint
+        columns = 2;
       }
+      
+      // Calculate rows needed
+      const rows = Math.ceil(totalMembers / columns);
+      const totalHeight = (rows * cardHeight) + containerPadding;
+      
+      return totalHeight;
     };
 
-    // Initial height calculation after component mounts
-    setTimeout(() => {
-      handleImagesLoad();
-      sendHeight();
-    }, 100);
+    const height = calculateTotalHeight();
+    console.log('Calculated height:', height, 'Members:', members.length);
+    window.parent.postMessage({ type: 'resize', height }, '*');
+  };
 
-    // Clean up
-    return () => {
-      resizeObserver.disconnect();
-      mutationObserver.disconnect();
+  // Listen for window resize
+  useEffect(() => {
+    const handleResize = () => {
+      updateIframeHeight();
     };
-  }, [members]); // Re-run when members change
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [members]);
+
+  // Update height when members change
+  useLayoutEffect(() => {
+    updateIframeHeight();
+  }, [members]);
 
   const fetchMembers = async () => {
     try {
@@ -136,6 +105,10 @@ export default function ShareTheShow() {
       });
     }
   };
+
+  useEffect(() => {
+    fetchMembers();
+  }, []);
 
   return (
     <div ref={containerRef} className="w-full px-2 py-6">
