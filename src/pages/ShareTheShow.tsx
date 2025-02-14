@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import MemberCard from "@/components/show/MemberCard";
 import { useToast } from "@/components/ui/use-toast";
@@ -19,47 +19,84 @@ interface Member {
 export default function ShareTheShow() {
   const [members, setMembers] = useState<Member[]>([]);
   const { toast } = useToast();
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchMembers();
 
     // Send height to parent window
     const sendHeight = () => {
-      const height = document.documentElement.scrollHeight;
-      window.parent.postMessage({ type: 'resize', height }, '*');
+      if (containerRef.current) {
+        const height = containerRef.current.offsetHeight;
+        console.log('Sending height:', height);
+        window.parent.postMessage({ type: 'resize', height }, '*');
+      }
     };
+
+    // Create ResizeObserver to watch for container size changes
+    const resizeObserver = new ResizeObserver(() => {
+      sendHeight();
+    });
+
+    // Create MutationObserver to watch for DOM changes
+    const mutationObserver = new MutationObserver(() => {
+      sendHeight();
+    });
+
+    if (containerRef.current) {
+      // Observe container size changes
+      resizeObserver.observe(containerRef.current);
+      
+      // Observe DOM changes within container
+      mutationObserver.observe(containerRef.current, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        characterData: true
+      });
+    }
 
     // Handle image loading
     const handleImagesLoad = () => {
-      // Wait a bit after images load to get final height
-      setTimeout(sendHeight, 100);
+      const images = document.querySelectorAll('img');
+      let loadedImages = 0;
+      const totalImages = images.length;
+
+      const checkAllImagesLoaded = () => {
+        loadedImages++;
+        if (loadedImages === totalImages) {
+          console.log('All images loaded, updating height');
+          sendHeight();
+        }
+      };
+
+      images.forEach(img => {
+        if (img.complete) {
+          checkAllImagesLoaded();
+        } else {
+          img.addEventListener('load', checkAllImagesLoaded);
+          img.addEventListener('error', checkAllImagesLoaded); // Handle failed loads too
+        }
+      });
+
+      // If no images, still send height
+      if (totalImages === 0) {
+        sendHeight();
+      }
     };
 
-    // Wait for images to load
-    window.addEventListener('load', handleImagesLoad);
-
-    // Send initial height
-    sendHeight();
-
-    // Set up a MutationObserver to watch for DOM changes
-    const observer = new MutationObserver(() => {
-      // Add a small delay to allow for DOM updates
-      setTimeout(sendHeight, 100);
-    });
-    
-    observer.observe(document.body, { 
-      childList: true, 
-      subtree: true,
-      attributes: true,
-      characterData: true 
-    });
+    // Initial height calculation after component mounts
+    setTimeout(() => {
+      handleImagesLoad();
+      sendHeight();
+    }, 100);
 
     // Clean up
     return () => {
-      observer.disconnect();
-      window.removeEventListener('load', handleImagesLoad);
+      resizeObserver.disconnect();
+      mutationObserver.disconnect();
     };
-  }, []);
+  }, [members]); // Re-run when members change
 
   const fetchMembers = async () => {
     try {
@@ -101,7 +138,7 @@ export default function ShareTheShow() {
   };
 
   return (
-    <div className="w-full px-2 py-6">
+    <div ref={containerRef} className="w-full px-2 py-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
         {members.map((member) => (
           <MemberCard
