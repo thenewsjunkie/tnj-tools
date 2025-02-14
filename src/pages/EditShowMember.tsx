@@ -54,19 +54,10 @@ export default function EditShowMember() {
   const embedCode = `<iframe 
   src="https://tnjtools.com/sharetheshow"
   width="100%"
+  height="800"
   style="border: none;"
   title="Show Members"
-></iframe>
-<script>
-window.addEventListener('message', function(e) {
-  if (e.data && e.data.type === 'resize') {
-    const iframe = document.querySelector('iframe[src="https://tnjtools.com/sharetheshow"]');
-    if (iframe) {
-      iframe.style.height = e.data.height + 'px';
-    }
-  }
-});
-</script>`;
+></iframe>`;
 
   const copyEmbedCode = () => {
     navigator.clipboard.writeText(embedCode)

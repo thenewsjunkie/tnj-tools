@@ -1,5 +1,5 @@
 
-import { useEffect, useState, useLayoutEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import MemberCard from "@/components/show/MemberCard";
 import { useToast } from "@/components/ui/use-toast";
@@ -19,53 +19,6 @@ interface Member {
 export default function ShareTheShow() {
   const [members, setMembers] = useState<Member[]>([]);
   const { toast } = useToast();
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Calculate and update iframe height
-  const updateIframeHeight = () => {
-    if (!containerRef.current) return;
-    
-    const calculateTotalHeight = () => {
-      const totalMembers = members.length;
-      const cardHeight = 300; // Estimated height of each card including margins
-      const containerPadding = 48; // 24px top + 24px bottom
-      
-      // Get current window width to determine number of columns
-      const windowWidth = window.innerWidth;
-      let columns = 3; // Default for desktop
-      
-      if (windowWidth < 640) { // sm breakpoint
-        columns = 1;
-      } else if (windowWidth < 768) { // md breakpoint
-        columns = 2;
-      }
-      
-      // Calculate rows needed
-      const rows = Math.ceil(totalMembers / columns);
-      const totalHeight = (rows * cardHeight) + containerPadding;
-      
-      return totalHeight;
-    };
-
-    const height = calculateTotalHeight();
-    console.log('Calculated height:', height, 'Members:', members.length);
-    window.parent.postMessage({ type: 'resize', height }, '*');
-  };
-
-  // Listen for window resize
-  useEffect(() => {
-    const handleResize = () => {
-      updateIframeHeight();
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [members]);
-
-  // Update height when members change
-  useLayoutEffect(() => {
-    updateIframeHeight();
-  }, [members]);
 
   const fetchMembers = async () => {
     try {
@@ -111,7 +64,7 @@ export default function ShareTheShow() {
   }, []);
 
   return (
-    <div ref={containerRef} className="w-full px-2 py-6">
+    <div className="w-full px-2 py-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
         {members.map((member) => (
           <MemberCard
