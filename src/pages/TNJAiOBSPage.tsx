@@ -10,6 +10,16 @@ type AudioConversation = {
   conversation_state: string;
 }
 
+// Type guard to check if the payload is an AudioConversation
+const isAudioConversation = (payload: unknown): payload is AudioConversation => {
+  return (
+    typeof payload === 'object' &&
+    payload !== null &&
+    'conversation_state' in payload &&
+    typeof (payload as AudioConversation).conversation_state === 'string'
+  )
+}
+
 const TNJAiOBSPage = () => {
   const [currentConversation, setCurrentConversation] = useState<{
     question_text?: string;
@@ -31,13 +41,15 @@ const TNJAiOBSPage = () => {
         (payload: RealtimePostgresChangesPayload<AudioConversation>) => {
           console.log('Realtime change detected:', payload)
           
-          if (payload.new?.conversation_state === 'displaying') {
-            setCurrentConversation({
-              question_text: payload.new.question_text,
-              answer_text: payload.new.answer_text
-            })
-          } else if (payload.new?.conversation_state === 'hidden') {
-            setCurrentConversation(null)
+          if (payload.new && isAudioConversation(payload.new)) {
+            if (payload.new.conversation_state === 'displaying') {
+              setCurrentConversation({
+                question_text: payload.new.question_text,
+                answer_text: payload.new.answer_text
+              })
+            } else if (payload.new.conversation_state === 'hidden') {
+              setCurrentConversation(null)
+            }
           }
         }
       )
