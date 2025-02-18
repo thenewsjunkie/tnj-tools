@@ -90,6 +90,19 @@ const TNJAiOBSPage = () => {
         console.log('Subscription status:', status)
       })
 
+    // Enable realtime for the table
+    const enableRealtime = async () => {
+      await supabase
+        .from('audio_conversations')
+        .select()
+        .limit(1)
+        .then(result => {
+          console.log('Realtime query enabled:', result)
+        })
+    }
+
+    enableRealtime()
+
     return () => {
       console.log('Cleaning up subscription')
       channel.unsubscribe()
