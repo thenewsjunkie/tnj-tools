@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react'
 import { Button } from './ui/button'
 import { Mic, Square, ExternalLink, ToggleLeft, ToggleRight } from 'lucide-react'
@@ -53,7 +54,9 @@ const TNJAi = () => {
           question_text: data.conversation.question_text,
           answer_text: data.conversation.answer_text,
           status: 'completed',
-          conversation_state: 'pending'
+          conversation_state: 'pending',
+          display_count: 0,
+          has_been_displayed: false
         })
         .select()
         .single()
@@ -112,17 +115,23 @@ const TNJAi = () => {
       return
     }
 
-    const newState = !isDisplayingInOBS
-    
-    await supabase
-      .from('audio_conversations')
-      .update({ conversation_state: 'pending' })
-      .eq('conversation_state', 'displaying')
+    try {
+      const newState = !isDisplayingInOBS
+      
+      // First, ensure no other conversations are displaying
+      if (newState) {
+        await supabase
+          .from('audio_conversations')
+          .update({ conversation_state: 'completed' })
+          .eq('conversation_state', 'displaying')
+      }
 
-    if (newState) {
+      // Then update the current conversation
       const { error } = await supabase
         .from('audio_conversations')
-        .update({ conversation_state: 'displaying' })
+        .update({ 
+          conversation_state: newState ? 'displaying' : 'completed'
+        })
         .eq('id', currentConversationId)
 
       if (error) {
@@ -134,13 +143,20 @@ const TNJAi = () => {
         })
         return
       }
-    }
 
-    setIsDisplayingInOBS(newState)
-    toast({
-      title: newState ? 'Showing in OBS' : 'Hidden from OBS',
-      description: newState ? 'Conversation is now visible in OBS' : 'Conversation is now hidden from OBS',
-    })
+      setIsDisplayingInOBS(newState)
+      toast({
+        title: newState ? 'Showing in OBS' : 'Hidden from OBS',
+        description: newState ? 'Conversation is now visible in OBS' : 'Conversation is now hidden from OBS',
+      })
+    } catch (error) {
+      console.error('Error in toggleOBSDisplay:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to toggle OBS display',
+        variant: 'destructive',
+      })
+    }
   }
 
   const bgColor = theme === 'light' ? 'bg-white' : 'bg-black/50'
