@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react'
 import { Button } from './ui/button'
 import { Mic, Square, ExternalLink, ToggleLeft, ToggleRight } from 'lucide-react'
@@ -45,9 +44,10 @@ const TNJAi = () => {
     stopRecording
   } = useAudioRecording({
     onProcessingComplete: async (data) => {
-      console.log('Processing complete, saving conversation:', data.conversation)
+      console.log('[AudioChat] Processing complete, received conversation data:', data.conversation)
       setCurrentConversation(data.conversation)
       
+      console.log('[AudioChat] Inserting new conversation into database...')
       const { data: insertedData, error } = await supabase
         .from('audio_conversations')
         .insert({
@@ -62,7 +62,7 @@ const TNJAi = () => {
         .single()
 
       if (error) {
-        console.error('Error saving conversation:', error)
+        console.error('[AudioChat] Error saving conversation:', error)
         toast({
           title: 'Error',
           description: 'Failed to save conversation',
@@ -71,10 +71,11 @@ const TNJAi = () => {
         return
       }
 
-      console.log('Successfully saved conversation:', insertedData)
+      console.log('[AudioChat] Successfully saved conversation:', insertedData)
       setCurrentConversationId(insertedData.id)
 
       if (audioPlayer.current) {
+        console.log('[AudioChat] Setting up audio playback...')
         audioPlayer.current.src = URL.createObjectURL(
           new Blob([data.audioResponse], { type: 'audio/mpeg' })
         )
