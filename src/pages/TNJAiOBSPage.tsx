@@ -7,8 +7,8 @@ import { toast } from '@/components/ui/use-toast'
 
 type AudioConversation = {
   id: string;
-  question_text?: string;
-  answer_text?: string;
+  question_text: string;
+  answer_text: string;
   conversation_state: string;
   created_at: string;
 }
@@ -199,3 +199,4 @@ const TNJAiOBSPage = () => {
 }
 
 export default TNJAiOBSPage
+
