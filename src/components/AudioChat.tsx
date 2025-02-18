@@ -29,14 +29,16 @@ const TNJAi = () => {
       setCurrentConversation(data.conversation)
       
       // Insert conversation into database using 'pending' as the initial state
-      const { error } = await supabase
+      const { data: insertedData, error } = await supabase
         .from('audio_conversations')
         .insert({
           question_text: data.conversation.question_text,
           answer_text: data.conversation.answer_text,
           status: 'completed',
-          conversation_state: 'pending' // Changed from 'hidden' to 'pending'
+          conversation_state: 'pending'
         })
+        .select()
+        .single()
 
       if (error) {
         console.error('Error saving conversation:', error)
@@ -84,14 +86,33 @@ const TNJAi = () => {
 
     console.log('Toggling OBS display:', newState ? 'displaying' : 'pending')
 
+    // First fetch the latest conversation
+    const { data: latestConversation, error: fetchError } = await supabase
+      .from('audio_conversations')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+
+    if (fetchError) {
+      console.error('Error fetching latest conversation:', fetchError)
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch latest conversation',
+        variant: 'destructive',
+      })
+      setIsDisplayingInOBS(!newState)
+      return
+    }
+
+    // Then update its state
     const { data, error } = await supabase
       .from('audio_conversations')
       .update({
         conversation_state: newState ? 'displaying' : 'pending'
       })
-      .eq('status', 'completed')
-      .order('created_at', { ascending: false })
-      .limit(1)
+      .eq('id', latestConversation.id)
+      .select()
 
     if (error) {
       console.error('Error updating conversation state:', error)
@@ -100,7 +121,7 @@ const TNJAi = () => {
         description: 'Failed to update conversation state',
         variant: 'destructive',
       })
-      setIsDisplayingInOBS(!newState) // Revert state on error
+      setIsDisplayingInOBS(!newState)
       return
     }
 
