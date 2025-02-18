@@ -1,7 +1,7 @@
 
 import { useState, useRef } from 'react'
 import { Button } from './ui/button'
-import { Mic, Square, ExternalLink } from 'lucide-react'
+import { Mic, Square, ExternalLink, ToggleLeft, ToggleRight } from 'lucide-react'
 import { useToast } from './ui/use-toast'
 import { supabase } from '@/integrations/supabase/client'
 import { AudioControls } from './audio/AudioControls'
@@ -17,6 +17,7 @@ const TNJAi = () => {
     question_text?: string;
     answer_text?: string;
   } | null>(null)
+  const [isDisplayingInOBS, setIsDisplayingInOBS] = useState(false)
   
   const {
     isRecording,
@@ -27,14 +28,14 @@ const TNJAi = () => {
     onProcessingComplete: async (data) => {
       setCurrentConversation(data.conversation)
       
-      // Insert conversation into database and mark it for OBS display
+      // Insert conversation into database without marking it for OBS display
       const { error } = await supabase
         .from('audio_conversations')
         .insert({
           question_text: data.conversation.question_text,
           answer_text: data.conversation.answer_text,
           status: 'completed',
-          is_shown_in_obs: true
+          conversation_state: 'hidden'
         })
 
       if (error) {
@@ -77,6 +78,36 @@ const TNJAi = () => {
     togglePlayPause
   } = useAudioPlayback()
 
+  const toggleOBSDisplay = async () => {
+    const newState = !isDisplayingInOBS
+    setIsDisplayingInOBS(newState)
+
+    const { error } = await supabase
+      .from('audio_conversations')
+      .update({
+        conversation_state: newState ? 'displaying' : 'hidden'
+      })
+      .eq('status', 'completed')
+      .order('created_at', { ascending: false })
+      .limit(1)
+
+    if (error) {
+      console.error('Error updating conversation state:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to update conversation state',
+        variant: 'destructive',
+      })
+      setIsDisplayingInOBS(!newState) // Revert state on error
+      return
+    }
+
+    toast({
+      title: newState ? 'Showing in OBS' : 'Hidden from OBS',
+      description: newState ? 'Conversation is now visible in OBS' : 'Conversation is now hidden from OBS',
+    })
+  }
+
   const bgColor = theme === 'light' ? 'bg-white' : 'bg-black/50'
 
   return (
@@ -84,14 +115,28 @@ const TNJAi = () => {
       <div className="p-4">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold tnj-ai-title">TNJ AI</h2>
-          <a 
-            href="/tnj-ai-obs" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-neon-red hover:text-tnj-light transition-colors"
-          >
-            <ExternalLink className="h-4 w-4" />
-          </a>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={toggleOBSDisplay}
+              className={`transition-colors ${
+                isDisplayingInOBS 
+                  ? 'text-neon-red hover:text-tnj-light' 
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {isDisplayingInOBS ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
+            </Button>
+            <a 
+              href="/tnj-ai-obs" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-neon-red hover:text-tnj-light transition-colors"
+            >
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          </div>
         </div>
         <div className="flex flex-col gap-4">
           <div className="flex gap-4 items-center">
