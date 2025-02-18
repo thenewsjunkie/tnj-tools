@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Button } from './ui/button'
 import { Mic, Square, ExternalLink, ToggleLeft, ToggleRight } from 'lucide-react'
 import { useToast } from './ui/use-toast'
@@ -18,6 +18,21 @@ const TNJAi = () => {
   } | null>(null)
   const [isDisplayingInOBS, setIsDisplayingInOBS] = useState(false)
   
+  useEffect(() => {
+    const checkCurrentState = async () => {
+      const { data, error } = await supabase
+        .from('audio_conversations')
+        .select('conversation_state')
+        .eq('conversation_state', 'displaying')
+        .maybeSingle()
+      
+      console.log('Initial OBS state check:', { data, error })
+      setIsDisplayingInOBS(data?.conversation_state === 'displaying')
+    }
+    
+    checkCurrentState()
+  }, [])
+
   const {
     isRecording,
     isProcessing,
@@ -25,6 +40,7 @@ const TNJAi = () => {
     stopRecording
   } = useAudioRecording({
     onProcessingComplete: async (data) => {
+      console.log('Processing complete, saving conversation:', data.conversation)
       setCurrentConversation(data.conversation)
       
       // Insert conversation into database using 'pending' as the initial state
@@ -46,7 +62,10 @@ const TNJAi = () => {
           description: 'Failed to save conversation',
           variant: 'destructive',
         })
+        return
       }
+
+      console.log('Successfully saved conversation:', insertedData)
 
       if (audioPlayer.current) {
         audioPlayer.current.src = URL.createObjectURL(
@@ -100,7 +119,7 @@ const TNJAi = () => {
       return
     }
 
-    console.log('Toggling OBS display for conversation:', latestConversation.id)
+    console.log('Found conversation to toggle:', latestConversation)
 
     // Update the conversation state
     const { data, error } = await supabase
@@ -122,8 +141,8 @@ const TNJAi = () => {
       return
     }
 
-    setIsDisplayingInOBS(newState)
     console.log('Successfully updated conversation state:', data)
+    setIsDisplayingInOBS(newState)
 
     toast({
       title: newState ? 'Showing in OBS' : 'Hidden from OBS',

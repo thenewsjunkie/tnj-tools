@@ -5,12 +5,13 @@ import { supabase } from '@/integrations/supabase/client'
 import { RealtimePostgresChangesPayload } from '@supabase/supabase-js'
 
 type AudioConversation = {
+  id: string;
   question_text?: string;
   answer_text?: string;
   conversation_state: string;
+  created_at: string;
 }
 
-// Type guard to check if the payload is an AudioConversation
 const isAudioConversation = (payload: unknown): payload is AudioConversation => {
   return (
     typeof payload === 'object' &&
@@ -30,9 +31,11 @@ const TNJAiOBSPage = () => {
   // Fetch current displaying conversation
   useEffect(() => {
     const fetchCurrentConversation = async () => {
+      console.log('Fetching current conversation...')
+      
       const { data, error } = await supabase
         .from('audio_conversations')
-        .select('question_text, answer_text, conversation_state')
+        .select('*')
         .eq('conversation_state', 'displaying')
         .order('created_at', { ascending: false })
         .limit(1)
@@ -46,12 +49,13 @@ const TNJAiOBSPage = () => {
       }
 
       if (data && data.conversation_state === 'displaying') {
-        console.log('Setting initial conversation:', data)
+        console.log('Found displaying conversation:', data)
         setCurrentConversation({
           question_text: data.question_text,
           answer_text: data.answer_text
         })
       } else {
+        console.log('No displaying conversation found')
         setCurrentConversation(null)
       }
     }
@@ -75,7 +79,11 @@ const TNJAiOBSPage = () => {
           console.log('Realtime change detected:', payload)
           
           if (payload.new && isAudioConversation(payload.new)) {
-            console.log('New conversation state:', payload.new.conversation_state)
+            console.log('Processing conversation update:', {
+              id: payload.new.id,
+              state: payload.new.conversation_state,
+              created_at: payload.new.created_at
+            })
             
             if (payload.new.conversation_state === 'displaying') {
               console.log('Setting new conversation:', {
