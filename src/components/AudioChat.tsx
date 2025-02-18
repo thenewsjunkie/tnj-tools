@@ -28,14 +28,14 @@ const TNJAi = () => {
     onProcessingComplete: async (data) => {
       setCurrentConversation(data.conversation)
       
-      // Insert conversation into database without marking it for OBS display
+      // Insert conversation into database using 'pending' as the initial state
       const { error } = await supabase
         .from('audio_conversations')
         .insert({
           question_text: data.conversation.question_text,
           answer_text: data.conversation.answer_text,
           status: 'completed',
-          conversation_state: 'hidden'
+          conversation_state: 'pending' // Changed from 'hidden' to 'pending'
         })
 
       if (error) {
@@ -85,7 +85,7 @@ const TNJAi = () => {
     const { error } = await supabase
       .from('audio_conversations')
       .update({
-        conversation_state: newState ? 'displaying' : 'hidden'
+        conversation_state: newState ? 'displaying' : 'pending' // Changed from 'hidden' to 'pending'
       })
       .eq('status', 'completed')
       .order('created_at', { ascending: false })
