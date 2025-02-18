@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react'
 import { Button } from './ui/button'
 import { Mic, Square, ExternalLink, ToggleLeft, ToggleRight } from 'lucide-react'
@@ -20,7 +19,6 @@ const TNJAi = () => {
   } | null>(null)
   const [isDisplayingInOBS, setIsDisplayingInOBS] = useState(false)
   
-  // Check initial state on mount
   useEffect(() => {
     const checkCurrentState = async () => {
       const { data, error } = await supabase
@@ -49,7 +47,6 @@ const TNJAi = () => {
       console.log('Processing complete, saving conversation:', data.conversation)
       setCurrentConversation(data.conversation)
       
-      // Insert conversation into database
       const { data: insertedData, error } = await supabase
         .from('audio_conversations')
         .insert({
@@ -63,18 +60,6 @@ const TNJAi = () => {
 
       if (error) {
         console.error('Error saving conversation:', error)
-        
-        // Check if this is a duplicate question error
-        if (error.code === '23505' && error.message?.includes('unique_question')) {
-          toast({
-            title: 'Duplicate Question',
-            description: 'This question has already been asked. Please try asking something different.',
-            variant: 'destructive',
-          })
-          return
-        }
-        
-        // Handle other errors
         toast({
           title: 'Error',
           description: 'Failed to save conversation',
@@ -129,13 +114,11 @@ const TNJAi = () => {
 
     const newState = !isDisplayingInOBS
     
-    // First, set all conversations to pending
     await supabase
       .from('audio_conversations')
       .update({ conversation_state: 'pending' })
       .eq('conversation_state', 'displaying')
 
-    // Then update the current conversation if we're turning display on
     if (newState) {
       const { error } = await supabase
         .from('audio_conversations')
@@ -227,4 +210,3 @@ const TNJAi = () => {
 }
 
 export default TNJAi
-
