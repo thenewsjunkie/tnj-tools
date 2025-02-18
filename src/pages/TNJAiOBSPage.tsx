@@ -28,19 +28,7 @@ const TNJAiOBSPage = () => {
       console.log('Setting up realtime subscription...')
       
       try {
-        // First test the connection
-        const { error: pingError } = await supabase.rpc('notify_ping')
-        if (pingError) {
-          console.error('Failed to ping database:', pingError)
-          toast({
-            title: 'Connection Error',
-            description: 'Failed to establish realtime connection',
-            variant: 'destructive',
-          })
-          return
-        }
-
-        // Then set up the channel
+        // Set up the channel
         channel = supabase
           .channel('schema-db-changes')
           .on(
