@@ -32,7 +32,7 @@ const TNJAiOBSPage = () => {
     const fetchCurrentConversation = async () => {
       const { data, error } = await supabase
         .from('audio_conversations')
-        .select('question_text, answer_text')
+        .select('question_text, answer_text, conversation_state')
         .eq('conversation_state', 'displaying')
         .order('created_at', { ascending: false })
         .limit(1)
@@ -45,12 +45,14 @@ const TNJAiOBSPage = () => {
         return
       }
 
-      if (data) {
+      if (data && data.conversation_state === 'displaying') {
         console.log('Setting initial conversation:', data)
         setCurrentConversation({
           question_text: data.question_text,
           answer_text: data.answer_text
         })
+      } else {
+        setCurrentConversation(null)
       }
     }
 
@@ -65,10 +67,9 @@ const TNJAiOBSPage = () => {
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*',
           schema: 'public',
-          table: 'audio_conversations',
-          filter: 'conversation_state=eq.displaying'
+          table: 'audio_conversations'
         },
         (payload: RealtimePostgresChangesPayload<AudioConversation>) => {
           console.log('Realtime change detected:', payload)
@@ -86,21 +87,11 @@ const TNJAiOBSPage = () => {
                 question_text: payload.new.question_text,
                 answer_text: payload.new.answer_text
               })
+            } else {
+              console.log('Clearing conversation display')
+              setCurrentConversation(null)
             }
           }
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'audio_conversations',
-          filter: 'conversation_state=eq.pending'
-        },
-        () => {
-          console.log('Conversation set to pending, clearing display')
-          setCurrentConversation(null)
         }
       )
       .subscribe((status) => {

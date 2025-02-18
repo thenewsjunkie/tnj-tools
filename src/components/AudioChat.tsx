@@ -1,4 +1,3 @@
-
 import { useState, useRef } from 'react'
 import { Button } from './ui/button'
 import { Mic, Square, ExternalLink, ToggleLeft, ToggleRight } from 'lucide-react'
@@ -82,14 +81,11 @@ const TNJAi = () => {
 
   const toggleOBSDisplay = async () => {
     const newState = !isDisplayingInOBS
-    setIsDisplayingInOBS(newState)
-
-    console.log('Toggling OBS display:', newState ? 'displaying' : 'pending')
-
-    // First fetch the latest conversation
+    
+    // First get the latest conversation
     const { data: latestConversation, error: fetchError } = await supabase
       .from('audio_conversations')
-      .select('*')
+      .select('id, conversation_state')
       .order('created_at', { ascending: false })
       .limit(1)
       .single()
@@ -98,14 +94,15 @@ const TNJAi = () => {
       console.error('Error fetching latest conversation:', fetchError)
       toast({
         title: 'Error',
-        description: 'Failed to fetch latest conversation',
+        description: 'No conversation found to display',
         variant: 'destructive',
       })
-      setIsDisplayingInOBS(!newState)
       return
     }
 
-    // Then update its state
+    console.log('Toggling OBS display for conversation:', latestConversation.id)
+
+    // Update the conversation state
     const { data, error } = await supabase
       .from('audio_conversations')
       .update({
@@ -113,6 +110,7 @@ const TNJAi = () => {
       })
       .eq('id', latestConversation.id)
       .select()
+      .single()
 
     if (error) {
       console.error('Error updating conversation state:', error)
@@ -121,10 +119,10 @@ const TNJAi = () => {
         description: 'Failed to update conversation state',
         variant: 'destructive',
       })
-      setIsDisplayingInOBS(!newState)
       return
     }
 
+    setIsDisplayingInOBS(newState)
     console.log('Successfully updated conversation state:', data)
 
     toast({
