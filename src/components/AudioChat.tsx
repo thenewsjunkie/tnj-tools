@@ -63,6 +63,18 @@ const TNJAi = () => {
 
       if (error) {
         console.error('Error saving conversation:', error)
+        
+        // Check if this is a duplicate question error
+        if (error.code === '23505' && error.message?.includes('unique_question')) {
+          toast({
+            title: 'Duplicate Question',
+            description: 'This question has already been asked. Please try asking something different.',
+            variant: 'destructive',
+          })
+          return
+        }
+        
+        // Handle other errors
         toast({
           title: 'Error',
           description: 'Failed to save conversation',
@@ -215,3 +227,4 @@ const TNJAi = () => {
 }
 
 export default TNJAi
+
