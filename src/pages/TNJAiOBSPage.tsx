@@ -36,7 +36,7 @@ const TNJAiOBSPage = () => {
         .eq('conversation_state', 'displaying')
         .order('created_at', { ascending: false })
         .limit(1)
-        .single()
+        .maybeSingle()
 
       console.log('Initial fetch result:', { data, error })
 
