@@ -23,12 +23,15 @@ const TNJAiOBSPage = () => {
 
   useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | null = null
+    let retryCount = 0
+    const maxRetries = 3
+    const retryDelay = 2000 // 2 seconds
     
     const setupRealtimeSubscription = async () => {
       console.log('Setting up realtime subscription...')
       
       try {
-        // Set up the channel
+        // Set up the channel with broader event monitoring
         channel = supabase
           .channel('schema-db-changes')
           .on(
@@ -36,30 +39,30 @@ const TNJAiOBSPage = () => {
             {
               event: '*',
               schema: 'public',
-              table: 'audio_conversations',
-              filter: 'conversation_state=eq.displaying'
+              table: 'audio_conversations'
             },
             (payload: RealtimePostgresChangesPayload<AudioConversation>) => {
               console.log('Received realtime update:', payload)
               
-              if (payload.eventType === 'UPDATE') {
-                const newState = payload.new.conversation_state
-                console.log('Conversation state changed to:', newState)
-                
-                if (newState === 'displaying') {
-                  console.log('Setting new displaying conversation')
-                  setCurrentConversation({
-                    question_text: payload.new.question_text,
-                    answer_text: payload.new.answer_text
-                  })
-                  toast({
-                    title: 'New Conversation',
-                    description: 'Received new conversation to display',
-                  })
-                } else if (newState === 'pending') {
-                  console.log('Clearing displayed conversation')
-                  setCurrentConversation(null)
-                }
+              // Handle any conversation that's now displaying
+              if (payload.new.conversation_state === 'displaying') {
+                console.log('Found displaying conversation:', payload.new)
+                setCurrentConversation({
+                  question_text: payload.new.question_text,
+                  answer_text: payload.new.answer_text
+                })
+                toast({
+                  title: 'New Conversation',
+                  description: 'Received new conversation to display',
+                })
+              } 
+              // If the current conversation was changed to pending/completed
+              else if (
+                payload.old?.conversation_state === 'displaying' &&
+                payload.new.conversation_state !== 'displaying'
+              ) {
+                console.log('Conversation no longer displaying:', payload.new)
+                setCurrentConversation(null)
               }
             }
           )
@@ -69,6 +72,7 @@ const TNJAiOBSPage = () => {
             
             if (status === 'SUBSCRIBED') {
               console.log('Successfully subscribed to realtime updates')
+              retryCount = 0 // Reset retry count on successful subscription
               // Fetch initial state after subscription is confirmed
               await fetchCurrentConversation()
             } else if (status === 'CHANNEL_ERROR') {
@@ -78,6 +82,18 @@ const TNJAiOBSPage = () => {
                 description: 'Lost connection to realtime updates',
                 variant: 'destructive',
               })
+              
+              // Attempt to reconnect
+              if (retryCount < maxRetries) {
+                retryCount++
+                console.log(`Retrying connection (attempt ${retryCount})...`)
+                setTimeout(() => {
+                  if (channel) {
+                    channel.unsubscribe()
+                  }
+                  setupRealtimeSubscription()
+                }, retryDelay)
+              }
             }
           })
       } catch (error) {
