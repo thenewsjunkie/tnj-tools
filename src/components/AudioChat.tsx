@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react'
 import { Button } from './ui/button'
 import { Mic, Square, ExternalLink, ToggleLeft, ToggleRight } from 'lucide-react'
@@ -12,27 +13,32 @@ import { useTheme } from '@/components/theme/ThemeProvider'
 const TNJAi = () => {
   const { toast } = useToast()
   const { theme } = useTheme()
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null)
   const [currentConversation, setCurrentConversation] = useState<{
     question_text?: string;
     answer_text?: string;
   } | null>(null)
   const [isDisplayingInOBS, setIsDisplayingInOBS] = useState(false)
   
+  // Check initial state on mount
   useEffect(() => {
     const checkCurrentState = async () => {
       const { data, error } = await supabase
         .from('audio_conversations')
-        .select('conversation_state')
+        .select('id, conversation_state')
         .eq('conversation_state', 'displaying')
         .maybeSingle()
       
       console.log('Initial OBS state check:', { data, error })
-      setIsDisplayingInOBS(data?.conversation_state === 'displaying')
+      if (data) {
+        setCurrentConversationId(data.id)
+        setIsDisplayingInOBS(true)
+      }
     }
     
     checkCurrentState()
   }, [])
-
+  
   const {
     isRecording,
     isProcessing,
@@ -43,7 +49,7 @@ const TNJAi = () => {
       console.log('Processing complete, saving conversation:', data.conversation)
       setCurrentConversation(data.conversation)
       
-      // Insert conversation into database using 'pending' as the initial state
+      // Insert conversation into database
       const { data: insertedData, error } = await supabase
         .from('audio_conversations')
         .insert({
@@ -66,6 +72,7 @@ const TNJAi = () => {
       }
 
       console.log('Successfully saved conversation:', insertedData)
+      setCurrentConversationId(insertedData.id)
 
       if (audioPlayer.current) {
         audioPlayer.current.src = URL.createObjectURL(
@@ -99,51 +106,42 @@ const TNJAi = () => {
   } = useAudioPlayback()
 
   const toggleOBSDisplay = async () => {
+    if (!currentConversationId) {
+      toast({
+        title: 'Error',
+        description: 'No conversation available to display',
+        variant: 'destructive',
+      })
+      return
+    }
+
     const newState = !isDisplayingInOBS
     
-    // First get the latest conversation
-    const { data: latestConversation, error: fetchError } = await supabase
+    // First, set all conversations to pending
+    await supabase
       .from('audio_conversations')
-      .select('id, conversation_state')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single()
+      .update({ conversation_state: 'pending' })
+      .eq('conversation_state', 'displaying')
 
-    if (fetchError) {
-      console.error('Error fetching latest conversation:', fetchError)
-      toast({
-        title: 'Error',
-        description: 'No conversation found to display',
-        variant: 'destructive',
-      })
-      return
+    // Then update the current conversation if we're turning display on
+    if (newState) {
+      const { error } = await supabase
+        .from('audio_conversations')
+        .update({ conversation_state: 'displaying' })
+        .eq('id', currentConversationId)
+
+      if (error) {
+        console.error('Error updating conversation state:', error)
+        toast({
+          title: 'Error',
+          description: 'Failed to update conversation state',
+          variant: 'destructive',
+        })
+        return
+      }
     }
 
-    console.log('Found conversation to toggle:', latestConversation)
-
-    // Update the conversation state
-    const { data, error } = await supabase
-      .from('audio_conversations')
-      .update({
-        conversation_state: newState ? 'displaying' : 'pending'
-      })
-      .eq('id', latestConversation.id)
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Error updating conversation state:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to update conversation state',
-        variant: 'destructive',
-      })
-      return
-    }
-
-    console.log('Successfully updated conversation state:', data)
     setIsDisplayingInOBS(newState)
-
     toast({
       title: newState ? 'Showing in OBS' : 'Hidden from OBS',
       description: newState ? 'Conversation is now visible in OBS' : 'Conversation is now hidden from OBS',
@@ -162,6 +160,7 @@ const TNJAi = () => {
               variant="outline"
               size="icon"
               onClick={toggleOBSDisplay}
+              disabled={!currentConversationId}
               className={`transition-colors ${
                 isDisplayingInOBS 
                   ? 'text-neon-red hover:text-tnj-light' 
