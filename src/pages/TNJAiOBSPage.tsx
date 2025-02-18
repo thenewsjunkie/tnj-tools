@@ -11,6 +11,15 @@ type AudioConversation = {
   display_end_time: string;
 }
 
+// Type guard to check if payload is a valid AudioConversation
+const isValidConversation = (payload: any): payload is AudioConversation => {
+  return (
+    payload &&
+    typeof payload.conversation_state === 'string' &&
+    typeof payload.display_end_time === 'string'
+  )
+}
+
 const TNJAiOBSPage = () => {
   const [currentConversation, setCurrentConversation] = useState<{
     question_text?: string;
@@ -18,7 +27,7 @@ const TNJAiOBSPage = () => {
   } | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
 
-  const handleNewConversation = useCallback(async (conversation: AudioConversation) => {
+  const handleNewConversation = useCallback((conversation: AudioConversation) => {
     console.log('New conversation detected:', conversation)
     
     if (conversation.conversation_state === 'displaying') {
@@ -52,7 +61,7 @@ const TNJAiOBSPage = () => {
         return
       }
 
-      if (conversation) {
+      if (isValidConversation(conversation)) {
         handleNewConversation(conversation)
       }
     }
@@ -69,10 +78,10 @@ const TNJAiOBSPage = () => {
           table: 'audio_conversations',
           filter: 'conversation_state=eq.displaying'
         },
-        async (payload: RealtimePostgresChangesPayload<AudioConversation>) => {
+        (payload: RealtimePostgresChangesPayload<AudioConversation>) => {
           console.log('Realtime change detected:', payload)
           
-          if (payload.new && payload.new.conversation_state === 'displaying') {
+          if (payload.new && isValidConversation(payload.new)) {
             handleNewConversation(payload.new)
           }
         }
