@@ -31,7 +31,7 @@ const TNJAiOBSPage = () => {
       console.log('Setting up realtime subscription...')
       
       try {
-        // Set up the channel with specific event monitoring
+        // Set up the channel without filtering conversation_state
         channel = supabase
           .channel('schema-db-changes')
           .on(
@@ -39,24 +39,10 @@ const TNJAiOBSPage = () => {
             {
               event: 'UPDATE',
               schema: 'public',
-              table: 'audio_conversations',
-              filter: 'conversation_state=displaying'
+              table: 'audio_conversations'
             },
             (payload: RealtimePostgresChangesPayload<AudioConversation>) => {
               console.log('Received UPDATE event:', payload)
-              handleConversationUpdate(payload)
-            }
-          )
-          .on(
-            'postgres_changes',
-            {
-              event: 'INSERT',
-              schema: 'public',
-              table: 'audio_conversations',
-              filter: 'conversation_state=displaying'
-            },
-            (payload: RealtimePostgresChangesPayload<AudioConversation>) => {
-              console.log('Received INSERT event:', payload)
               handleConversationUpdate(payload)
             }
           )
@@ -128,7 +114,7 @@ const TNJAiOBSPage = () => {
           description: 'Received new conversation to display',
         })
       } 
-      // If the current conversation was changed to pending/completed
+      // If the conversation was changed from displaying to something else
       else if (
         oldConversation?.conversation_state === 'displaying' &&
         newConversation.conversation_state !== 'displaying'
