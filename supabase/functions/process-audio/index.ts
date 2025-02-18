@@ -1,146 +1,175 @@
 
-import "https://deno.land/x/xhr@0.1.0/mod.ts"
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { Configuration, OpenAIApi } from 'https://esm.sh/openai@4.11.1'
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Credentials': 'true',
-  'Access-Control-Max-Age': '86400'
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-serve(async (req: Request) => {
-  // Always handle CORS preflight requests first
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const chunks: string[] = [];
+  const chunk_size = 8192;
+  const uint8Array = new Uint8Array(buffer);
+  
+  for (let i = 0; i < uint8Array.length; i += chunk_size) {
+    const chunk = uint8Array.slice(i, i + chunk_size);
+    chunks.push(String.fromCharCode.apply(null, chunk));
+  }
+  
+  return btoa(chunks.join(''));
+}
+
+serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders
-    })
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    console.log('[process-audio] Starting audio processing request...')
-    const { type, audioData } = await req.json()
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
 
-    if (type !== 'transcribe') {
-      throw new Error(`Unsupported type: ${type}`)
-    }
+    const { type, audioData } = await req.json()
 
     if (!audioData) {
       throw new Error('No audio data provided')
     }
 
-    console.log('[process-audio] Audio data received, preparing for transcription...')
-
-    // Initialize OpenAI
-    const configuration = new Configuration({
-      apiKey: Deno.env.get('OPENAI_API_KEY'),
-    })
-    const openai = new OpenAIApi(configuration)
-
-    // Convert base64 to binary
+    // Convert base64 to blob
     const base64Data = audioData.split(',')[1]
     const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0))
+    const audioBlob = new Blob([binaryData], { type: 'audio/mp4' })
 
-    console.log('[process-audio] Sending audio to OpenAI for transcription...')
-    
-    // Get transcription from OpenAI
-    const transcriptionFormData = new FormData()
-    transcriptionFormData.append('file', new Blob([binaryData], { type: 'audio/webm' }), 'audio.webm')
-    transcriptionFormData.append('model', 'whisper-1')
-    
-    const transcriptionResponse = await openai.createTranscription(
-      transcriptionFormData as any,
-      'whisper-1'
-    )
+    console.log('[process-audio] Transcribing audio...')
+    // Transcribe audio using Whisper
+    const formData = new FormData()
+    formData.append('file', audioBlob, 'audio.mp4')
+    formData.append('model', 'whisper-1')
 
-    if (!transcriptionResponse.data.text) {
-      throw new Error('No transcription received')
-    }
-
-    console.log('[process-audio] Transcription received, generating response...')
-    
-    // Get chat completion from OpenAI
-    const completion = await openai.createChatCompletion({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are an AI talk show co-host. Keep responses concise and engaging.',
-        },
-        {
-          role: 'user',
-          content: transcriptionResponse.data.text,
-        },
-      ],
+    const transcriptionResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+      },
+      body: formData,
     })
 
-    if (!completion.data.choices[0].message?.content) {
-      throw new Error('No response received')
+    if (!transcriptionResponse.ok) {
+      throw new Error(`Whisper API error: ${await transcriptionResponse.text()}`)
     }
 
-    console.log('[process-audio] Chat completion received, generating audio response...')
-    
-    // Convert response to speech
-    const speechResponse = await fetch('https://api.openai.com/v1/audio/speech', {
+    const transcriptionData = await transcriptionResponse.json()
+    const transcribedText = transcriptionData.text
+    console.log('[process-audio] Transcribed text:', transcribedText)
+
+    // Get GPT response
+    console.log('[process-audio] Getting GPT response...')
+    const gptResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
       headers: {
         'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
         'Content-Type': 'application/json',
       },
-      method: 'POST',
       body: JSON.stringify({
-        model: 'tts-1',
-        input: completion.data.choices[0].message.content,
-        voice: 'alloy',
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a helpful assistant. Keep your responses concise and friendly.',
+          },
+          {
+            role: 'user',
+            content: transcribedText,
+          },
+        ],
       }),
     })
 
-    if (!speechResponse.ok) {
-      throw new Error('Failed to generate speech')
+    if (!gptResponse.ok) {
+      throw new Error(`GPT API error: ${await gptResponse.text()}`)
     }
 
-    const audioBuffer = await speechResponse.arrayBuffer()
-    const audioBase64 = btoa(
-      String.fromCharCode(...new Uint8Array(audioBuffer))
-    )
+    const gptData = await gptResponse.json()
+    const gptResponseText = gptData.choices[0]?.message?.content
+    if (!gptResponseText) {
+      throw new Error('No response from GPT')
+    }
+    console.log('[process-audio] GPT response:', gptResponseText)
 
-    console.log('[process-audio] Audio response generated, sending response...')
-
-    // Return both the conversation and audio response
-    const response = {
-      conversation: {
-        question_text: transcriptionResponse.data.text,
-        answer_text: completion.data.choices[0].message.content,
+    // Convert GPT response to speech
+    console.log('[process-audio] Converting to speech...')
+    const ttsResponse = await fetch('https://api.openai.com/v1/audio/speech', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+        'Content-Type': 'application/json',
       },
-      audioResponse: audioBase64,
+      body: JSON.stringify({
+        model: 'tts-1',
+        voice: 'alloy',
+        input: gptResponseText,
+        response_format: 'mp3',
+      }),
+    })
+
+    if (!ttsResponse.ok) {
+      throw new Error(`Text-to-speech API error: ${await ttsResponse.text()}`)
     }
 
-    console.log('[process-audio] Response prepared, sending to client.')
+    const audioResponse = await ttsResponse.arrayBuffer()
+    console.log('[process-audio] Audio response generated')
+
+    // Save conversation to database and set it to display
+    console.log('[process-audio] Saving conversation...')
+    const { error: dbError } = await supabaseClient
+      .from('audio_conversations')
+      .insert({
+        question_text: transcribedText,
+        answer_text: gptResponseText,
+        status: 'completed',
+        conversation_state: 'displaying',
+        is_shown_in_obs: true,
+        display_start_time: new Date().toISOString(),
+        display_end_time: new Date(Date.now() + 30000).toISOString() // 30 seconds from now
+      })
+
+    if (dbError) {
+      console.error('[process-audio] Supabase error:', dbError)
+      throw new Error(`Database error: ${dbError.message}`)
+    }
+
+    // Convert ArrayBuffer to Base64 using chunked conversion
+    const base64Audio = arrayBufferToBase64(audioResponse);
 
     return new Response(
-      JSON.stringify(response),
-      { 
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json'
+      JSON.stringify({
+        conversation: {
+          question_text: transcribedText,
+          answer_text: gptResponseText,
         },
-        status: 200
+        audioResponse: base64Audio,
+      }),
+      {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+        },
       }
     )
-
   } catch (error) {
     console.error('[process-audio] Error:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
+      JSON.stringify({
+        error: error instanceof Error ? error.message : 'An unknown error occurred',
+      }),
+      {
         status: 500,
-        headers: { 
+        headers: {
           ...corsHeaders,
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       }
     )
   }

@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react'
 import { Button } from './ui/button'
 import { Mic, Square, ExternalLink, ToggleLeft, ToggleRight } from 'lucide-react'
@@ -19,6 +20,7 @@ const TNJAi = () => {
   } | null>(null)
   const [isDisplayingInOBS, setIsDisplayingInOBS] = useState(false)
   
+  // Check initial state on mount
   useEffect(() => {
     const checkCurrentState = async () => {
       const { data, error } = await supabase
@@ -44,25 +46,23 @@ const TNJAi = () => {
     stopRecording
   } = useAudioRecording({
     onProcessingComplete: async (data) => {
-      console.log('[AudioChat] Processing complete, received conversation data:', data.conversation)
+      console.log('Processing complete, saving conversation:', data.conversation)
       setCurrentConversation(data.conversation)
       
-      console.log('[AudioChat] Inserting new conversation into database...')
+      // Insert conversation into database
       const { data: insertedData, error } = await supabase
         .from('audio_conversations')
         .insert({
           question_text: data.conversation.question_text,
           answer_text: data.conversation.answer_text,
           status: 'completed',
-          conversation_state: 'pending',
-          display_count: 0,
-          has_been_displayed: false
+          conversation_state: 'pending'
         })
         .select()
         .single()
 
       if (error) {
-        console.error('[AudioChat] Error saving conversation:', error)
+        console.error('Error saving conversation:', error)
         toast({
           title: 'Error',
           description: 'Failed to save conversation',
@@ -71,11 +71,10 @@ const TNJAi = () => {
         return
       }
 
-      console.log('[AudioChat] Successfully saved conversation:', insertedData)
+      console.log('Successfully saved conversation:', insertedData)
       setCurrentConversationId(insertedData.id)
 
       if (audioPlayer.current) {
-        console.log('[AudioChat] Setting up audio playback...')
         audioPlayer.current.src = URL.createObjectURL(
           new Blob([data.audioResponse], { type: 'audio/mpeg' })
         )
@@ -116,23 +115,19 @@ const TNJAi = () => {
       return
     }
 
-    try {
-      const newState = !isDisplayingInOBS
-      
-      // First, ensure no other conversations are displaying
-      if (newState) {
-        await supabase
-          .from('audio_conversations')
-          .update({ conversation_state: 'completed' })
-          .eq('conversation_state', 'displaying')
-      }
+    const newState = !isDisplayingInOBS
+    
+    // First, set all conversations to pending
+    await supabase
+      .from('audio_conversations')
+      .update({ conversation_state: 'pending' })
+      .eq('conversation_state', 'displaying')
 
-      // Then update the current conversation
+    // Then update the current conversation if we're turning display on
+    if (newState) {
       const { error } = await supabase
         .from('audio_conversations')
-        .update({ 
-          conversation_state: newState ? 'displaying' : 'completed'
-        })
+        .update({ conversation_state: 'displaying' })
         .eq('id', currentConversationId)
 
       if (error) {
@@ -144,20 +139,13 @@ const TNJAi = () => {
         })
         return
       }
-
-      setIsDisplayingInOBS(newState)
-      toast({
-        title: newState ? 'Showing in OBS' : 'Hidden from OBS',
-        description: newState ? 'Conversation is now visible in OBS' : 'Conversation is now hidden from OBS',
-      })
-    } catch (error) {
-      console.error('Error in toggleOBSDisplay:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to toggle OBS display',
-        variant: 'destructive',
-      })
     }
+
+    setIsDisplayingInOBS(newState)
+    toast({
+      title: newState ? 'Showing in OBS' : 'Hidden from OBS',
+      description: newState ? 'Conversation is now visible in OBS' : 'Conversation is now hidden from OBS',
+    })
   }
 
   const bgColor = theme === 'light' ? 'bg-white' : 'bg-black/50'

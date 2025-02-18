@@ -12,11 +12,10 @@ export const useAudioRecording = ({ onProcessingComplete, onError }: UseAudioRec
   const [isProcessing, setIsProcessing] = useState(false)
   const mediaRecorder = useRef<MediaRecorder | null>(null)
   const audioChunks = useRef<Blob[]>([])
-  const isProcessingRef = useRef(false)
 
   const startRecording = async () => {
     try {
-      setIsProcessing(true)
+      setIsProcessing(true) // Set processing state immediately when starting
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
@@ -25,6 +24,7 @@ export const useAudioRecording = ({ onProcessingComplete, onError }: UseAudioRec
         }
       })
 
+      // Try different MIME types in order of preference
       const mimeTypes = [
         'audio/mp4',
         'audio/aac',
@@ -59,84 +59,59 @@ export const useAudioRecording = ({ onProcessingComplete, onError }: UseAudioRec
       }
 
       mediaRecorder.current.onstop = async () => {
-        console.log('[AudioRecording] Recording stopped, checking processing state...')
-        if (isProcessingRef.current) {
-          console.log('[AudioRecording] Already processing audio, skipping...')
-          return
-        }
+        const audioBlob = new Blob(audioChunks.current, { type: selectedMimeType })
+        const reader = new FileReader()
         
-        isProcessingRef.current = true
-        console.log('[AudioRecording] Starting audio processing...')
-        
-        try {
-          const audioBlob = new Blob(audioChunks.current, { type: selectedMimeType })
-          const reader = new FileReader()
-          
-          reader.onload = async () => {
-            try {
-              console.log('[AudioRecording] Sending audio to process-audio function...')
-              const { data, error } = await supabase.functions.invoke('process-audio', {
-                body: {
-                  type: 'transcribe',
-                  audioData: reader.result,
-                },
-              })
+        reader.onload = async () => {
+          try {
+            const { data, error } = await supabase.functions.invoke('process-audio', {
+              body: {
+                type: 'transcribe',
+                audioData: reader.result,
+              },
+            })
 
-              if (error) throw error
+            if (error) throw error
 
-              if (!data.audioResponse || !data.conversation) {
-                throw new Error('Invalid response from server')
-              }
-
-              console.log('[AudioRecording] Successfully processed audio, converting response...')
-              const binaryString = atob(data.audioResponse)
-              const bytes = new Uint8Array(binaryString.length)
-              for (let i = 0; i < binaryString.length; i++) {
-                bytes[i] = binaryString.charCodeAt(i)
-              }
-
-              console.log('[AudioRecording] Calling onProcessingComplete...')
-              onProcessingComplete({
-                conversation: data.conversation,
-                audioResponse: bytes.buffer
-              })
-            } catch (error) {
-              console.error('[AudioRecording] Error in audio processing:', error)
-              onError(error instanceof Error ? error : new Error('Failed to process audio'))
-            } finally {
-              console.log('[AudioRecording] Resetting processing states...')
-              setIsProcessing(false)
-              isProcessingRef.current = false
+            if (!data.audioResponse || !data.conversation) {
+              throw new Error('Invalid response from server')
             }
-          }
 
-          reader.readAsDataURL(audioBlob)
-        } catch (error) {
-          console.error('[AudioRecording] Error processing audio blob:', error)
-          onError(error instanceof Error ? error : new Error('Failed to process audio blob'))
-          setIsProcessing(false)
-          isProcessingRef.current = false
+            // Convert base64 to ArrayBuffer
+            const binaryString = atob(data.audioResponse)
+            const bytes = new Uint8Array(binaryString.length)
+            for (let i = 0; i < binaryString.length; i++) {
+              bytes[i] = binaryString.charCodeAt(i)
+            }
+
+            onProcessingComplete({
+              conversation: data.conversation,
+              audioResponse: bytes.buffer
+            })
+          } catch (error) {
+            onError(error instanceof Error ? error : new Error('Failed to process audio'))
+          } finally {
+            setIsProcessing(false)
+          }
         }
+
+        reader.readAsDataURL(audioBlob)
       }
 
-      console.log('[AudioRecording] Starting new recording...')
       mediaRecorder.current.start(100)
       setIsRecording(true)
-      setIsProcessing(false)
+      setIsProcessing(false) // Reset processing state after setup is complete
     } catch (error) {
-      console.error('[AudioRecording] Error starting recording:', error)
       setIsProcessing(false)
-      isProcessingRef.current = false
       onError(error instanceof Error ? error : new Error('Failed to access microphone'))
     }
   }
 
   const stopRecording = () => {
     if (mediaRecorder.current && isRecording) {
-      console.log('[AudioRecording] Stopping recording...')
       mediaRecorder.current.stop()
       setIsRecording(false)
-      setIsProcessing(true)
+      setIsProcessing(true) // Set processing to true when stopping recording
       mediaRecorder.current.stream.getTracks().forEach(track => track.stop())
     }
   }
