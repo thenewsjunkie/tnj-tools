@@ -27,26 +27,66 @@ const TNJAiOBSPage = () => {
   } | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
 
+  // Fetch current displaying conversation
   useEffect(() => {
-    // Set up realtime subscription
+    const fetchCurrentConversation = async () => {
+      const { data, error } = await supabase
+        .from('audio_conversations')
+        .select('question_text, answer_text')
+        .eq('conversation_state', 'displaying')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      console.log('Initial fetch result:', { data, error })
+
+      if (error) {
+        console.error('Error fetching current conversation:', error)
+        return
+      }
+
+      if (data) {
+        setCurrentConversation({
+          question_text: data.question_text,
+          answer_text: data.answer_text
+        })
+      }
+    }
+
+    fetchCurrentConversation()
+  }, [])
+
+  // Set up realtime subscription
+  useEffect(() => {
+    console.log('Setting up realtime subscription...')
+    
     const channel = supabase.channel('audio_conversations_changes')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'audio_conversations',
+          table: 'audio_conversations'
         },
         (payload: RealtimePostgresChangesPayload<AudioConversation>) => {
           console.log('Realtime change detected:', payload)
+          console.log('Current conversation state:', currentConversation)
           
           if (payload.new && isAudioConversation(payload.new)) {
+            console.log('New conversation state:', payload.new.conversation_state)
+            
             if (payload.new.conversation_state === 'displaying') {
+              console.log('Setting new conversation:', {
+                question_text: payload.new.question_text,
+                answer_text: payload.new.answer_text
+              })
+              
               setCurrentConversation({
                 question_text: payload.new.question_text,
                 answer_text: payload.new.answer_text
               })
             } else if (payload.new.conversation_state === 'pending') {
+              console.log('Clearing current conversation')
               setCurrentConversation(null)
             }
           }
@@ -57,9 +97,12 @@ const TNJAiOBSPage = () => {
       })
 
     return () => {
+      console.log('Cleaning up subscription')
       channel.unsubscribe()
     }
   }, [])
+
+  console.log('Rendering with conversation:', currentConversation)
 
   return (
     <div>
