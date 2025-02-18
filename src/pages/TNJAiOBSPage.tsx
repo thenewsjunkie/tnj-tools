@@ -19,55 +19,45 @@ const TNJAiOBSPage = () => {
   } | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
 
-  // Fetch current displaying conversation
-  const fetchCurrentConversation = async () => {
-    console.log('Fetching current conversation...')
-    
-    const { data, error } = await supabase
-      .from('audio_conversations')
-      .select('*')
-      .eq('conversation_state', 'displaying')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-
-    console.log('Fetch result:', { data, error })
-
-    if (error) {
-      console.error('Error fetching current conversation:', error)
-      return
-    }
-
-    if (data && data.conversation_state === 'displaying') {
-      console.log('Found displaying conversation:', data)
-      setCurrentConversation({
-        question_text: data.question_text,
-        answer_text: data.answer_text
-      })
-    } else {
-      console.log('No displaying conversation found')
-      setCurrentConversation(null)
-    }
-  }
-
-  // Initial fetch
+  // Set up realtime subscription and fetch initial state
   useEffect(() => {
+    console.log('TNJAiOBSPage mounted, setting up realtime...')
+
+    // Initial fetch
+    const fetchCurrentConversation = async () => {
+      console.log('Fetching current conversation...')
+      
+      const { data, error } = await supabase
+        .from('audio_conversations')
+        .select('*')
+        .eq('conversation_state', 'displaying')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      console.log('Fetch result:', { data, error })
+
+      if (error) {
+        console.error('Error fetching current conversation:', error)
+        return
+      }
+
+      if (data && data.conversation_state === 'displaying') {
+        console.log('Found displaying conversation:', data)
+        setCurrentConversation({
+          question_text: data.question_text,
+          answer_text: data.answer_text
+        })
+      } else {
+        console.log('No displaying conversation found')
+        setCurrentConversation(null)
+      }
+    }
+
+    // Fetch initial state
     fetchCurrentConversation()
-  }, [])
 
-  // Set up realtime subscription
-  useEffect(() => {
-    console.log('Setting up realtime subscription...')
-    
-    // First, enable realtime for the table
-    supabase
-      .from('audio_conversations')
-      .select()
-      .limit(1)
-      .then(() => {
-        console.log('Enabled realtime for audio_conversations table')
-      })
-
+    // Set up realtime subscription
     const channel = supabase
       .channel('schema-db-changes')
       .on(
@@ -97,17 +87,21 @@ const TNJAiOBSPage = () => {
           }
         }
       )
-      .subscribe((status) => {
+      .subscribe(async (status) => {
         console.log('Subscription status:', status)
+        if (status === 'SUBSCRIBED') {
+          // Re-fetch after subscription is confirmed
+          await fetchCurrentConversation()
+        }
       })
 
     return () => {
-      console.log('Cleaning up subscription')
+      console.log('TNJAiOBSPage unmounting, cleaning up subscription')
       channel.unsubscribe()
     }
   }, [])
 
-  console.log('Rendering with conversation:', currentConversation)
+  console.log('TNJAiOBSPage rendering with conversation:', currentConversation)
 
   return (
     <div>
