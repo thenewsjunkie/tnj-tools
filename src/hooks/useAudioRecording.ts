@@ -12,6 +12,7 @@ export const useAudioRecording = ({ onProcessingComplete, onError }: UseAudioRec
   const [isProcessing, setIsProcessing] = useState(false)
   const mediaRecorder = useRef<MediaRecorder | null>(null)
   const audioChunks = useRef<Blob[]>([])
+  const isProcessingRef = useRef(false)  // Add this to track processing state
 
   const startRecording = async () => {
     try {
@@ -59,43 +60,58 @@ export const useAudioRecording = ({ onProcessingComplete, onError }: UseAudioRec
       }
 
       mediaRecorder.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunks.current, { type: selectedMimeType })
-        const reader = new FileReader()
-        
-        reader.onload = async () => {
-          try {
-            const { data, error } = await supabase.functions.invoke('process-audio', {
-              body: {
-                type: 'transcribe',
-                audioData: reader.result,
-              },
-            })
-
-            if (error) throw error
-
-            if (!data.audioResponse || !data.conversation) {
-              throw new Error('Invalid response from server')
-            }
-
-            // Convert base64 to ArrayBuffer
-            const binaryString = atob(data.audioResponse)
-            const bytes = new Uint8Array(binaryString.length)
-            for (let i = 0; i < binaryString.length; i++) {
-              bytes[i] = binaryString.charCodeAt(i)
-            }
-
-            onProcessingComplete({
-              conversation: data.conversation,
-              audioResponse: bytes.buffer
-            })
-          } catch (error) {
-            onError(error instanceof Error ? error : new Error('Failed to process audio'))
-          } finally {
-            setIsProcessing(false)
-          }
+        // Prevent multiple simultaneous processing attempts
+        if (isProcessingRef.current) {
+          console.log('Already processing audio, skipping...')
+          return
         }
+        
+        isProcessingRef.current = true
+        
+        try {
+          const audioBlob = new Blob(audioChunks.current, { type: selectedMimeType })
+          const reader = new FileReader()
+          
+          reader.onload = async () => {
+            try {
+              const { data, error } = await supabase.functions.invoke('process-audio', {
+                body: {
+                  type: 'transcribe',
+                  audioData: reader.result,
+                },
+              })
 
-        reader.readAsDataURL(audioBlob)
+              if (error) throw error
+
+              if (!data.audioResponse || !data.conversation) {
+                throw new Error('Invalid response from server')
+              }
+
+              // Convert base64 to ArrayBuffer
+              const binaryString = atob(data.audioResponse)
+              const bytes = new Uint8Array(binaryString.length)
+              for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i)
+              }
+
+              onProcessingComplete({
+                conversation: data.conversation,
+                audioResponse: bytes.buffer
+              })
+            } catch (error) {
+              onError(error instanceof Error ? error : new Error('Failed to process audio'))
+            } finally {
+              setIsProcessing(false)
+              isProcessingRef.current = false  // Reset processing state
+            }
+          }
+
+          reader.readAsDataURL(audioBlob)
+        } catch (error) {
+          onError(error instanceof Error ? error : new Error('Failed to process audio blob'))
+          setIsProcessing(false)
+          isProcessingRef.current = false  // Reset processing state
+        }
       }
 
       mediaRecorder.current.start(100)
@@ -103,6 +119,7 @@ export const useAudioRecording = ({ onProcessingComplete, onError }: UseAudioRec
       setIsProcessing(false) // Reset processing state after setup is complete
     } catch (error) {
       setIsProcessing(false)
+      isProcessingRef.current = false  // Reset processing state
       onError(error instanceof Error ? error : new Error('Failed to access microphone'))
     }
   }
