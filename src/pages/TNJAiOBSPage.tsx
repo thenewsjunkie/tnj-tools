@@ -44,12 +44,21 @@ const TNJAiOBSPage = () => {
             (payload: RealtimePostgresChangesPayload<AudioConversation>) => {
               console.log('Received realtime update:', payload)
               
+              // Type guard to ensure payload.new exists and has expected shape
+              if (!payload.new || typeof payload.new !== 'object') {
+                console.error('Invalid payload received:', payload)
+                return
+              }
+
+              const newConversation = payload.new as AudioConversation
+              const oldConversation = payload.old as Partial<AudioConversation>
+              
               // Handle any conversation that's now displaying
-              if (payload.new.conversation_state === 'displaying') {
-                console.log('Found displaying conversation:', payload.new)
+              if (newConversation.conversation_state === 'displaying') {
+                console.log('Found displaying conversation:', newConversation)
                 setCurrentConversation({
-                  question_text: payload.new.question_text,
-                  answer_text: payload.new.answer_text
+                  question_text: newConversation.question_text,
+                  answer_text: newConversation.answer_text
                 })
                 toast({
                   title: 'New Conversation',
@@ -58,10 +67,10 @@ const TNJAiOBSPage = () => {
               } 
               // If the current conversation was changed to pending/completed
               else if (
-                payload.old?.conversation_state === 'displaying' &&
-                payload.new.conversation_state !== 'displaying'
+                oldConversation?.conversation_state === 'displaying' &&
+                newConversation.conversation_state !== 'displaying'
               ) {
-                console.log('Conversation no longer displaying:', payload.new)
+                console.log('Conversation no longer displaying:', newConversation)
                 setCurrentConversation(null)
               }
             }
