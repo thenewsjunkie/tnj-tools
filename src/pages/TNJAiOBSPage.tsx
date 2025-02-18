@@ -36,7 +36,6 @@ const TNJAiOBSPage = () => {
           event: '*',
           schema: 'public',
           table: 'audio_conversations',
-          filter: 'conversation_state=eq.displaying'
         },
         (payload: RealtimePostgresChangesPayload<AudioConversation>) => {
           console.log('Realtime change detected:', payload)
@@ -47,7 +46,7 @@ const TNJAiOBSPage = () => {
                 question_text: payload.new.question_text,
                 answer_text: payload.new.answer_text
               })
-            } else if (payload.new.conversation_state === 'hidden') {
+            } else if (payload.new.conversation_state === 'pending') {
               setCurrentConversation(null)
             }
           }
