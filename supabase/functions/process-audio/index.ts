@@ -1,21 +1,23 @@
 
+import "https://deno.land/x/xhr@0.1.0/mod.ts"
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { Configuration, OpenAIApi } from 'https://esm.sh/openai@4.11.1'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Max-Age': '86400',
+  'Access-Control-Allow-Credentials': 'true',
+  'Access-Control-Max-Age': '86400'
 }
 
-serve(async (req) => {
-  // Handle CORS preflight requests
+serve(async (req: Request) => {
+  // Always handle CORS preflight requests first
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { 
-      headers: corsHeaders,
-      status: 200 // Explicitly set 200 status for OPTIONS
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders
     })
   }
 
@@ -122,11 +124,11 @@ serve(async (req) => {
       JSON.stringify(response),
       { 
         headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
+          ...corsHeaders,
+          'Content-Type': 'application/json'
         },
         status: 200
-      },
+      }
     )
 
   } catch (error) {
@@ -136,8 +138,8 @@ serve(async (req) => {
       { 
         status: 500,
         headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
+          ...corsHeaders,
+          'Content-Type': 'application/json'
         }
       }
     )
