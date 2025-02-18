@@ -59,55 +59,55 @@ const TNJAiOBSPage = () => {
   useEffect(() => {
     console.log('Setting up realtime subscription...')
     
-    const channel = supabase.channel('audio_conversations_changes')
+    // First, enable realtime for the table
+    supabase
+      .from('audio_conversations')
+      .select()
+      .limit(1)
+      .then(() => {
+        console.log('Enabled realtime for audio_conversations table')
+      })
+
+    const channel = supabase
+      .channel('schema-db-changes')
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*',
           schema: 'public',
-          table: 'audio_conversations',
-          filter: 'conversation_state=displaying'
+          table: 'audio_conversations'
         },
-        (payload) => {
-          console.log('Display update detected:', payload)
-          fetchCurrentConversation()
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'audio_conversations',
-          filter: 'conversation_state=pending'
-        },
-        () => {
-          console.log('Conversation hidden, clearing display')
-          setCurrentConversation(null)
+        (payload: RealtimePostgresChangesPayload<AudioConversation>) => {
+          console.log('Database change detected:', payload)
+          
+          if (payload.eventType === 'UPDATE') {
+            const newState = payload.new.conversation_state
+            console.log('Conversation state changed to:', newState)
+            
+            if (newState === 'displaying') {
+              console.log('Setting new displaying conversation')
+              setCurrentConversation({
+                question_text: payload.new.question_text,
+                answer_text: payload.new.answer_text
+              })
+            } else if (newState === 'pending') {
+              console.log('Clearing displayed conversation')
+              setCurrentConversation(null)
+            }
+          }
         }
       )
       .subscribe((status) => {
         console.log('Subscription status:', status)
       })
 
-    // Enable realtime for the table
-    const enableRealtime = async () => {
-      await supabase
-        .from('audio_conversations')
-        .select()
-        .limit(1)
-        .then(result => {
-          console.log('Realtime query enabled:', result)
-        })
-    }
-
-    enableRealtime()
-
     return () => {
       console.log('Cleaning up subscription')
       channel.unsubscribe()
     }
   }, [])
+
+  console.log('Rendering with conversation:', currentConversation)
 
   return (
     <div>
