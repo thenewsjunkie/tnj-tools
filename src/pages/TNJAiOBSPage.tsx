@@ -46,6 +46,7 @@ const TNJAiOBSPage = () => {
       }
 
       if (data) {
+        console.log('Setting initial conversation:', data)
         setCurrentConversation({
           question_text: data.question_text,
           answer_text: data.answer_text
@@ -64,13 +65,13 @@ const TNJAiOBSPage = () => {
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'UPDATE',
           schema: 'public',
-          table: 'audio_conversations'
+          table: 'audio_conversations',
+          filter: 'conversation_state=eq.displaying'
         },
         (payload: RealtimePostgresChangesPayload<AudioConversation>) => {
           console.log('Realtime change detected:', payload)
-          console.log('Current conversation state:', currentConversation)
           
           if (payload.new && isAudioConversation(payload.new)) {
             console.log('New conversation state:', payload.new.conversation_state)
@@ -85,11 +86,21 @@ const TNJAiOBSPage = () => {
                 question_text: payload.new.question_text,
                 answer_text: payload.new.answer_text
               })
-            } else if (payload.new.conversation_state === 'pending') {
-              console.log('Clearing current conversation')
-              setCurrentConversation(null)
             }
           }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'audio_conversations',
+          filter: 'conversation_state=eq.pending'
+        },
+        () => {
+          console.log('Conversation set to pending, clearing display')
+          setCurrentConversation(null)
         }
       )
       .subscribe((status) => {

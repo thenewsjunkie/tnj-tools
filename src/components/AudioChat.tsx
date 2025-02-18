@@ -82,10 +82,12 @@ const TNJAi = () => {
     const newState = !isDisplayingInOBS
     setIsDisplayingInOBS(newState)
 
-    const { error } = await supabase
+    console.log('Toggling OBS display:', newState ? 'displaying' : 'pending')
+
+    const { data, error } = await supabase
       .from('audio_conversations')
       .update({
-        conversation_state: newState ? 'displaying' : 'pending' // Changed from 'hidden' to 'pending'
+        conversation_state: newState ? 'displaying' : 'pending'
       })
       .eq('status', 'completed')
       .order('created_at', { ascending: false })
@@ -101,6 +103,8 @@ const TNJAi = () => {
       setIsDisplayingInOBS(!newState) // Revert state on error
       return
     }
+
+    console.log('Successfully updated conversation state:', data)
 
     toast({
       title: newState ? 'Showing in OBS' : 'Hidden from OBS',
