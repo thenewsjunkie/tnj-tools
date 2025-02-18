@@ -12,11 +12,11 @@ export const useAudioRecording = ({ onProcessingComplete, onError }: UseAudioRec
   const [isProcessing, setIsProcessing] = useState(false)
   const mediaRecorder = useRef<MediaRecorder | null>(null)
   const audioChunks = useRef<Blob[]>([])
-  const isProcessingRef = useRef(false)  // Add this to track processing state
+  const isProcessingRef = useRef(false)
 
   const startRecording = async () => {
     try {
-      setIsProcessing(true) // Set processing state immediately when starting
+      setIsProcessing(true)
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
@@ -25,7 +25,6 @@ export const useAudioRecording = ({ onProcessingComplete, onError }: UseAudioRec
         }
       })
 
-      // Try different MIME types in order of preference
       const mimeTypes = [
         'audio/mp4',
         'audio/aac',
@@ -60,13 +59,14 @@ export const useAudioRecording = ({ onProcessingComplete, onError }: UseAudioRec
       }
 
       mediaRecorder.current.onstop = async () => {
-        // Prevent multiple simultaneous processing attempts
+        console.log('[AudioRecording] Recording stopped, checking processing state...')
         if (isProcessingRef.current) {
-          console.log('Already processing audio, skipping...')
+          console.log('[AudioRecording] Already processing audio, skipping...')
           return
         }
         
         isProcessingRef.current = true
+        console.log('[AudioRecording] Starting audio processing...')
         
         try {
           const audioBlob = new Blob(audioChunks.current, { type: selectedMimeType })
@@ -74,6 +74,7 @@ export const useAudioRecording = ({ onProcessingComplete, onError }: UseAudioRec
           
           reader.onload = async () => {
             try {
+              console.log('[AudioRecording] Sending audio to process-audio function...')
               const { data, error } = await supabase.functions.invoke('process-audio', {
                 body: {
                   type: 'transcribe',
@@ -87,48 +88,55 @@ export const useAudioRecording = ({ onProcessingComplete, onError }: UseAudioRec
                 throw new Error('Invalid response from server')
               }
 
-              // Convert base64 to ArrayBuffer
+              console.log('[AudioRecording] Successfully processed audio, converting response...')
               const binaryString = atob(data.audioResponse)
               const bytes = new Uint8Array(binaryString.length)
               for (let i = 0; i < binaryString.length; i++) {
                 bytes[i] = binaryString.charCodeAt(i)
               }
 
+              console.log('[AudioRecording] Calling onProcessingComplete...')
               onProcessingComplete({
                 conversation: data.conversation,
                 audioResponse: bytes.buffer
               })
             } catch (error) {
+              console.error('[AudioRecording] Error in audio processing:', error)
               onError(error instanceof Error ? error : new Error('Failed to process audio'))
             } finally {
+              console.log('[AudioRecording] Resetting processing states...')
               setIsProcessing(false)
-              isProcessingRef.current = false  // Reset processing state
+              isProcessingRef.current = false
             }
           }
 
           reader.readAsDataURL(audioBlob)
         } catch (error) {
+          console.error('[AudioRecording] Error processing audio blob:', error)
           onError(error instanceof Error ? error : new Error('Failed to process audio blob'))
           setIsProcessing(false)
-          isProcessingRef.current = false  // Reset processing state
+          isProcessingRef.current = false
         }
       }
 
+      console.log('[AudioRecording] Starting new recording...')
       mediaRecorder.current.start(100)
       setIsRecording(true)
-      setIsProcessing(false) // Reset processing state after setup is complete
-    } catch (error) {
       setIsProcessing(false)
-      isProcessingRef.current = false  // Reset processing state
+    } catch (error) {
+      console.error('[AudioRecording] Error starting recording:', error)
+      setIsProcessing(false)
+      isProcessingRef.current = false
       onError(error instanceof Error ? error : new Error('Failed to access microphone'))
     }
   }
 
   const stopRecording = () => {
     if (mediaRecorder.current && isRecording) {
+      console.log('[AudioRecording] Stopping recording...')
       mediaRecorder.current.stop()
       setIsRecording(false)
-      setIsProcessing(true) // Set processing to true when stopping recording
+      setIsProcessing(true)
       mediaRecorder.current.stream.getTracks().forEach(track => track.stop())
     }
   }
