@@ -83,8 +83,8 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
   }
 
   return (
-    <div className="fixed top-0 left-0">
-      <div className="text-white">
+    <div className="fixed inset-0 flex items-center justify-center p-8 pointer-events-none">
+      <div className="w-full max-w-4xl text-white">
         {isProcessing ? (
           <div className="flex items-center">
             <Computer className="h-6 w-6" />
@@ -104,7 +104,7 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
                     : 'opacity-0 translate-y-4'
                 }`}
               >
-                <div className="p-4 bg-gray-600 rounded-2xl max-w-[80%] transition-transform duration-300 origin-bottom-right">
+                <div className="p-4 bg-gray-600/80 backdrop-blur rounded-2xl max-w-[80%] transition-transform duration-300 origin-bottom-right">
                   {conversation.question_text}
                 </div>
               </div>
@@ -116,7 +116,7 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
                   : 'opacity-0 translate-y-4'
               }`}
             >
-              <div className="p-4 bg-[#33C3F0] rounded-2xl max-w-[80%] transition-transform duration-300 origin-bottom-left">
+              <div className="p-4 bg-[#33C3F0]/80 backdrop-blur rounded-2xl max-w-[80%] transition-transform duration-300 origin-bottom-left">
                 {conversation.answer_text}
               </div>
             </div>
