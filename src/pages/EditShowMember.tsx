@@ -341,7 +341,7 @@ export default function EditShowMember() {
             <div key={member.id} className="bg-slate-800 rounded-lg p-6 space-y-4">
               <div className="flex items-start gap-6">
                 <div className="space-y-2">
-                  <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-200">
+                  <div className="w-32 aspect-[4/5] rounded-md overflow-hidden bg-gray-200">
                     {member.image_url ? (
                       <img
                         src={member.image_url}

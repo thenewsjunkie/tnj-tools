@@ -43,7 +43,7 @@ export default function MemberCard({ name, imageUrl, socials }: MemberCardProps)
 
   return (
     <div className="flex flex-col items-center p-4 space-y-3">
-      <div className="relative w-24 h-24 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-gray-200">
+      <div className="relative w-32 aspect-[4/5] rounded-md overflow-hidden bg-gray-200">
         {imageUrl ? (
           <img
             src={imageUrl}
