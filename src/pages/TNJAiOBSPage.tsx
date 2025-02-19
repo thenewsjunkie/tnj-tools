@@ -31,19 +31,19 @@ const TNJAiOBSPage = () => {
       console.log('Setting up realtime subscription...')
       
       try {
-        // Set up the channel without filtering conversation_state
+        // Set up the channel to listen for both INSERT and UPDATE events
         channel = supabase
           .channel('schema-db-changes')
           .on(
             'postgres_changes',
             {
-              event: 'UPDATE',
+              event: '*', // Listen for all events
               schema: 'public',
               table: 'audio_conversations'
             },
             (payload: RealtimePostgresChangesPayload<AudioConversation>) => {
-              console.log('Received UPDATE event:', payload)
-              handleConversationUpdate(payload)
+              console.log('Received realtime event:', payload)
+              handleConversationEvent(payload)
             }
           )
           .subscribe(async (status) => {
@@ -86,7 +86,7 @@ const TNJAiOBSPage = () => {
       }
     }
 
-    const handleConversationUpdate = (payload: RealtimePostgresChangesPayload<AudioConversation>) => {
+    const handleConversationEvent = (payload: RealtimePostgresChangesPayload<AudioConversation>) => {
       // Type guard to ensure payload.new exists and has expected shape
       if (!payload.new || typeof payload.new !== 'object') {
         console.error('Invalid payload received:', payload)
@@ -96,7 +96,8 @@ const TNJAiOBSPage = () => {
       const newConversation = payload.new as AudioConversation
       const oldConversation = payload.old as Partial<AudioConversation>
       
-      console.log('Processing conversation update:', {
+      console.log('Processing conversation event:', {
+        eventType: payload.eventType,
         new: newConversation,
         old: oldConversation,
         currentState: newConversation.conversation_state
@@ -199,4 +200,3 @@ const TNJAiOBSPage = () => {
 }
 
 export default TNJAiOBSPage
-
