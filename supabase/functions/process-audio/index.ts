@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1"
 
@@ -20,30 +19,38 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
   return btoa(chunks.join(''));
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders
+    })
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
-
+    console.log('[process-audio] Starting audio processing request...')
     const { type, audioData } = await req.json()
+
+    if (type !== 'transcribe') {
+      throw new Error(`Unsupported type: ${type}`)
+    }
 
     if (!audioData) {
       throw new Error('No audio data provided')
     }
 
-    // Convert base64 to blob
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+
+    console.log('[process-audio] Audio data received, preparing for transcription...')
+
     const base64Data = audioData.split(',')[1]
     const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0))
     const audioBlob = new Blob([binaryData], { type: 'audio/mp4' })
 
     console.log('[process-audio] Transcribing audio...')
-    // Transcribe audio using Whisper
     const formData = new FormData()
     formData.append('file', audioBlob, 'audio.mp4')
     formData.append('model', 'whisper-1')
@@ -64,7 +71,6 @@ serve(async (req) => {
     const transcribedText = transcriptionData.text
     console.log('[process-audio] Transcribed text:', transcribedText)
 
-    // Get GPT response
     console.log('[process-audio] Getting GPT response...')
     const gptResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -98,7 +104,6 @@ serve(async (req) => {
     }
     console.log('[process-audio] GPT response:', gptResponseText)
 
-    // Convert GPT response to speech
     console.log('[process-audio] Converting to speech...')
     const ttsResponse = await fetch('https://api.openai.com/v1/audio/speech', {
       method: 'POST',
@@ -121,26 +126,28 @@ serve(async (req) => {
     const audioResponse = await ttsResponse.arrayBuffer()
     console.log('[process-audio] Audio response generated')
 
-    // Save conversation to database and set it to display
-    console.log('[process-audio] Saving conversation...')
-    const { error: dbError } = await supabaseClient
-      .from('audio_conversations')
-      .insert({
-        question_text: transcribedText,
-        answer_text: gptResponseText,
-        status: 'completed',
-        conversation_state: 'displaying',
-        is_shown_in_obs: true,
-        display_start_time: new Date().toISOString(),
-        display_end_time: new Date(Date.now() + 30000).toISOString() // 30 seconds from now
-      })
-
-    if (dbError) {
-      console.error('[process-audio] Supabase error:', dbError)
-      throw new Error(`Database error: ${dbError.message}`)
+    const conversation = {
+      question_text: transcribedText,
+      answer_text: gptResponseText,
+      status: 'completed',
+      conversation_state: 'displaying',
+      is_shown_in_obs: true,
+      display_start_time: new Date().toISOString(),
+      display_end_time: new Date(Date.now() + 30000).toISOString() // 30 seconds from now
     }
 
-    // Convert ArrayBuffer to Base64 using chunked conversion
+    console.log('[process-audio] About to save conversation to database...')
+    const { error: dbError } = await supabaseAdmin
+      .from('audio_conversations')
+      .insert(conversation)
+
+    if (dbError) {
+      console.error('[process-audio] Database error:', dbError)
+      throw new Error('Failed to save conversation')
+    }
+
+    console.log('[process-audio] Successfully saved conversation')
+
     const base64Audio = arrayBufferToBase64(audioResponse);
 
     return new Response(
@@ -161,15 +168,13 @@ serve(async (req) => {
   } catch (error) {
     console.error('[process-audio] Error:', error)
     return new Response(
-      JSON.stringify({
-        error: error instanceof Error ? error.message : 'An unknown error occurred',
-      }),
-      {
+      JSON.stringify({ error: error.message }),
+      { 
         status: 500,
-        headers: {
+        headers: { 
           ...corsHeaders,
-          'Content-Type': 'application/json',
-        },
+          'Content-Type': 'application/json'
+        }
       }
     )
   }

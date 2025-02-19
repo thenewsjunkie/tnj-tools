@@ -64,6 +64,8 @@ export const useAudioRecording = ({ onProcessingComplete, onError }: UseAudioRec
         
         reader.onload = async () => {
           try {
+            console.log('[useAudioRecording] Sending audio to edge function for processing...')
+            
             const { data, error } = await supabase.functions.invoke('process-audio', {
               body: {
                 type: 'transcribe',
@@ -77,6 +79,8 @@ export const useAudioRecording = ({ onProcessingComplete, onError }: UseAudioRec
               throw new Error('Invalid response from server')
             }
 
+            console.log('[useAudioRecording] Received response from edge function:', data.conversation)
+
             // Convert base64 to ArrayBuffer
             const binaryString = atob(data.audioResponse)
             const bytes = new Uint8Array(binaryString.length)
@@ -84,11 +88,29 @@ export const useAudioRecording = ({ onProcessingComplete, onError }: UseAudioRec
               bytes[i] = binaryString.charCodeAt(i)
             }
 
+            console.log('[useAudioRecording] About to save conversation to database...')
+            const { error: dbError } = await supabase
+              .from('audio_conversations')
+              .insert({
+                question_text: data.conversation.question_text,
+                answer_text: data.conversation.answer_text,
+                status: 'completed',
+                conversation_state: 'pending'
+              })
+
+            if (dbError) {
+              console.error('[useAudioRecording] Error saving conversation:', dbError)
+              throw dbError
+            }
+
+            console.log('[useAudioRecording] Successfully saved conversation')
+
             onProcessingComplete({
               conversation: data.conversation,
               audioResponse: bytes.buffer
             })
           } catch (error) {
+            console.error('[useAudioRecording] Error in processing:', error)
             onError(error instanceof Error ? error : new Error('Failed to process audio'))
           } finally {
             setIsProcessing(false)
