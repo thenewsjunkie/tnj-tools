@@ -863,6 +863,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      run_queue_management: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       update_contestant_score:
         | {
             Args: {
