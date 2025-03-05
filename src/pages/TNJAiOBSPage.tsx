@@ -114,8 +114,11 @@ const TNJAiOBSPage = () => {
         })
       } 
       // If the conversation was changed from displaying to something else
+      // Use type assertion to safely check the old conversation state
       else if (
-        payload.old?.conversation_state === 'displaying' &&
+        payload.old && 
+        'conversation_state' in payload.old && 
+        payload.old.conversation_state === 'displaying' &&
         newConversation.conversation_state !== 'displaying'
       ) {
         console.log('Conversation no longer displaying:', newConversation)

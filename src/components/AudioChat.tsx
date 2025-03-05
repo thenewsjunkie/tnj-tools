@@ -127,22 +127,52 @@ const TNJAi = () => {
     }
 
     // Then update the current conversation state
-    const { error } = await supabase
-      .from('audio_conversations')
-      .update({ 
-        conversation_state: newState ? 'displaying' : 'completed',
-        display_count: supabase.rpc('increment', { x: 1 })  // Increment display count when showing
-      })
-      .eq('id', currentConversationId)
-
-    if (error) {
-      console.error('Error updating conversation state:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to update conversation state',
-        variant: 'destructive',
-      })
-      return
+    // Instead of trying to use RPC for incrementing, we'll get the current value
+    // and increment it in our update
+    if (newState) {
+      // First, get the current display_count
+      const { data: currentData } = await supabase
+        .from('audio_conversations')
+        .select('display_count')
+        .eq('id', currentConversationId)
+        .single();
+      
+      const currentCount = currentData?.display_count || 0;
+      
+      // Then update with the incremented value
+      const { error } = await supabase
+        .from('audio_conversations')
+        .update({ 
+          conversation_state: 'displaying',
+          display_count: currentCount + 1
+        })
+        .eq('id', currentConversationId)
+        
+      if (error) {
+        console.error('Error updating conversation state:', error)
+        toast({
+          title: 'Error',
+          description: 'Failed to update conversation state',
+          variant: 'destructive',
+        })
+        return
+      }
+    } else {
+      // Just update the state to completed without changing the display_count
+      const { error } = await supabase
+        .from('audio_conversations')
+        .update({ conversation_state: 'completed' })
+        .eq('id', currentConversationId)
+        
+      if (error) {
+        console.error('Error updating conversation state:', error)
+        toast({
+          title: 'Error',
+          description: 'Failed to update conversation state',
+          variant: 'destructive',
+        })
+        return
+      }
     }
 
     setIsDisplayingInOBS(newState)
