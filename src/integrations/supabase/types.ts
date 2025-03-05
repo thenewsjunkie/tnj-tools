@@ -263,6 +263,42 @@ export type Database = {
         }
         Relationships: []
       }
+      digital_client_profiles: {
+        Row: {
+          company_name: string | null
+          contact_name: string | null
+          created_at: string | null
+          email: string
+          id: string
+          phone: string | null
+          role: Database["public"]["Enums"]["user_role"] | null
+          status: Database["public"]["Enums"]["digital_client_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          company_name?: string | null
+          contact_name?: string | null
+          created_at?: string | null
+          email: string
+          id: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          status?: Database["public"]["Enums"]["digital_client_status"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          company_name?: string | null
+          contact_name?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          status?: Database["public"]["Enums"]["digital_client_status"] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       fritz_contestants: {
         Row: {
           auth_token: string | null
@@ -897,6 +933,7 @@ export type Database = {
     Enums: {
       alert_type: "standard" | "message" | "gift"
       call_status: "waiting" | "connected" | "ended"
+      digital_client_status: "active" | "inactive" | "pending"
       employment_status:
         | "full_time"
         | "part_time"
@@ -931,6 +968,7 @@ export type Database = {
         | "snapchat"
         | "venmo"
         | "cashapp"
+      user_role: "admin" | "client"
       voting_platform: "twitch" | "youtube"
     }
     CompositeTypes: {
