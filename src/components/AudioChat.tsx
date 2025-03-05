@@ -74,6 +74,9 @@ const TNJAi = () => {
       console.log('Successfully saved conversation:', insertedData)
       setCurrentConversationId(insertedData.id)
 
+      // Automatically display the new conversation in OBS
+      await displayInOBS(insertedData.id)
+
       if (audioPlayer.current) {
         audioPlayer.current.src = URL.createObjectURL(
           new Blob([data.audioResponse], { type: 'audio/mpeg' })
@@ -93,17 +96,35 @@ const TNJAi = () => {
     }
   })
 
-  const {
-    isPlaying,
-    isPaused,
-    volume,
-    audioPlayer,
-    setIsPlaying,
-    setIsPaused,
-    handlePlaybackEnded,
-    handleVolumeChange,
-    togglePlayPause
-  } = useAudioPlayback()
+  // Function to display conversation in OBS
+  const displayInOBS = async (conversationId: string) => {
+    // First, update all displaying conversations to completed state
+    await supabase
+      .from('audio_conversations')
+      .update({ conversation_state: 'completed' })
+      .eq('conversation_state', 'displaying')
+    
+    // Use our mark_as_displayed function to set this conversation as displaying
+    const { error } = await supabase.rpc('mark_as_displayed', {
+      conversation_id: conversationId
+    })
+      
+    if (error) {
+      console.error('Error updating conversation state:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to update conversation state',
+        variant: 'destructive',
+      })
+      return
+    }
+    
+    setIsDisplayingInOBS(true)
+    toast({
+      title: 'Showing in OBS',
+      description: 'Conversation is now visible in OBS',
+    })
+  }
 
   const toggleOBSDisplay = async () => {
     if (!currentConversationId) {
@@ -117,27 +138,8 @@ const TNJAi = () => {
 
     const newState = !isDisplayingInOBS
     
-    // First, update all displaying conversations to completed state
     if (newState) {
-      await supabase
-        .from('audio_conversations')
-        .update({ conversation_state: 'completed' })
-        .eq('conversation_state', 'displaying')
-      
-      // Use our mark_as_displayed function to set this conversation as displaying
-      const { error } = await supabase.rpc('mark_as_displayed', {
-        conversation_id: currentConversationId
-      })
-        
-      if (error) {
-        console.error('Error updating conversation state:', error)
-        toast({
-          title: 'Error',
-          description: 'Failed to update conversation state',
-          variant: 'destructive',
-        })
-        return
-      }
+      await displayInOBS(currentConversationId)
     } else {
       // Just update the state to completed
       const { error } = await supabase
@@ -154,14 +156,26 @@ const TNJAi = () => {
         })
         return
       }
+      
+      setIsDisplayingInOBS(false)
+      toast({
+        title: 'Hidden from OBS',
+        description: 'Conversation is now hidden from OBS',
+      })
     }
-
-    setIsDisplayingInOBS(newState)
-    toast({
-      title: newState ? 'Showing in OBS' : 'Hidden from OBS',
-      description: newState ? 'Conversation is now visible in OBS' : 'Conversation is now hidden from OBS',
-    })
   }
+
+  const {
+    isPlaying,
+    isPaused,
+    volume,
+    audioPlayer,
+    setIsPlaying,
+    setIsPaused,
+    handlePlaybackEnded,
+    handleVolumeChange,
+    togglePlayPause
+  } = useAudioPlayback()
 
   const bgColor = theme === 'light' ? 'bg-white' : 'bg-black/50'
 
