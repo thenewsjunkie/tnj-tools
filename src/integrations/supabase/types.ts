@@ -191,13 +191,8 @@ export type Database = {
           conversation_state: string
           created_at: string | null
           display_count: number | null
-          display_end_time: string | null
-          display_start_time: string | null
-          has_been_displayed: boolean | null
           id: string
-          is_shown_in_obs: boolean | null
           question_text: string
-          shown_in_obs_at: string | null
           status: string
           updated_at: string | null
         }
@@ -206,13 +201,8 @@ export type Database = {
           conversation_state?: string
           created_at?: string | null
           display_count?: number | null
-          display_end_time?: string | null
-          display_start_time?: string | null
-          has_been_displayed?: boolean | null
           id?: string
-          is_shown_in_obs?: boolean | null
           question_text: string
-          shown_in_obs_at?: string | null
           status?: string
           updated_at?: string | null
         }
@@ -221,13 +211,8 @@ export type Database = {
           conversation_state?: string
           created_at?: string | null
           display_count?: number | null
-          display_end_time?: string | null
-          display_start_time?: string | null
-          has_been_displayed?: boolean | null
           id?: string
-          is_shown_in_obs?: boolean | null
           question_text?: string
-          shown_in_obs_at?: string | null
           status?: string
           updated_at?: string | null
         }

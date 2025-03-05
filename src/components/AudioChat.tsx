@@ -127,8 +127,6 @@ const TNJAi = () => {
     }
 
     // Then update the current conversation state
-    // Instead of trying to use RPC for incrementing, we'll get the current value
-    // and increment it in our update
     if (newState) {
       // First, get the current display_count
       const { data: currentData } = await supabase
