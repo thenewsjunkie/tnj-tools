@@ -56,7 +56,8 @@ const TNJAi = () => {
           question_text: data.conversation.question_text,
           answer_text: data.conversation.answer_text,
           status: 'completed',
-          conversation_state: 'pending'
+          conversation_state: 'pending',
+          display_count: 0, // Initialize display count
         })
         .select()
         .single()
@@ -117,28 +118,31 @@ const TNJAi = () => {
 
     const newState = !isDisplayingInOBS
     
-    // First, set all conversations to pending
-    await supabase
-      .from('audio_conversations')
-      .update({ conversation_state: 'pending' })
-      .eq('conversation_state', 'displaying')
-
-    // Then update the current conversation if we're turning display on
+    // First, update all displaying conversations to completed state
     if (newState) {
-      const { error } = await supabase
+      await supabase
         .from('audio_conversations')
-        .update({ conversation_state: 'displaying' })
-        .eq('id', currentConversationId)
+        .update({ conversation_state: 'completed' })
+        .eq('conversation_state', 'displaying')
+    }
 
-      if (error) {
-        console.error('Error updating conversation state:', error)
-        toast({
-          title: 'Error',
-          description: 'Failed to update conversation state',
-          variant: 'destructive',
-        })
-        return
-      }
+    // Then update the current conversation state
+    const { error } = await supabase
+      .from('audio_conversations')
+      .update({ 
+        conversation_state: newState ? 'displaying' : 'completed',
+        display_count: supabase.rpc('increment', { x: 1 })  // Increment display count when showing
+      })
+      .eq('id', currentConversationId)
+
+    if (error) {
+      console.error('Error updating conversation state:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to update conversation state',
+        variant: 'destructive',
+      })
+      return
     }
 
     setIsDisplayingInOBS(newState)

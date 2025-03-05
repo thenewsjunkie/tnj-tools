@@ -94,12 +94,10 @@ const TNJAiOBSPage = () => {
       }
 
       const newConversation = payload.new as AudioConversation
-      const oldConversation = payload.old as Partial<AudioConversation>
       
       console.log('Processing conversation event:', {
         eventType: payload.eventType,
         new: newConversation,
-        old: oldConversation,
         currentState: newConversation.conversation_state
       })
       
@@ -117,7 +115,7 @@ const TNJAiOBSPage = () => {
       } 
       // If the conversation was changed from displaying to something else
       else if (
-        oldConversation?.conversation_state === 'displaying' &&
+        payload.old?.conversation_state === 'displaying' &&
         newConversation.conversation_state !== 'displaying'
       ) {
         console.log('Conversation no longer displaying:', newConversation)
@@ -174,14 +172,7 @@ const TNJAiOBSPage = () => {
         channel.unsubscribe()
       }
     }
-  }, []) // Empty dependency array to run only on mount/unmount
-
-  // Debug render
-  console.log('Rendering TNJAiOBSPage:', {
-    currentConversation,
-    subscriptionStatus,
-    isProcessing
-  })
+  }, [])
 
   return (
     <div>
