@@ -884,6 +884,12 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      mark_as_displayed: {
+        Args: {
+          conversation_id: string
+        }
+        Returns: undefined
+      }
       run_queue_management: {
         Args: Record<PropertyKey, never>
         Returns: undefined

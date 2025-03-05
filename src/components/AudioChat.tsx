@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react'
 import { Button } from './ui/button'
 import { Mic, Square, ExternalLink, ToggleLeft, ToggleRight } from 'lucide-react'
@@ -57,7 +56,7 @@ const TNJAi = () => {
           answer_text: data.conversation.answer_text,
           status: 'completed',
           conversation_state: 'pending',
-          display_count: 0, // Initialize display count
+          display_count: 0, // Initialize display count as 0 (not displayed yet)
         })
         .select()
         .single()
@@ -124,27 +123,11 @@ const TNJAi = () => {
         .from('audio_conversations')
         .update({ conversation_state: 'completed' })
         .eq('conversation_state', 'displaying')
-    }
-
-    // Then update the current conversation state
-    if (newState) {
-      // First, get the current display_count
-      const { data: currentData } = await supabase
-        .from('audio_conversations')
-        .select('display_count')
-        .eq('id', currentConversationId)
-        .single();
       
-      const currentCount = currentData?.display_count || 0;
-      
-      // Then update with the incremented value
-      const { error } = await supabase
-        .from('audio_conversations')
-        .update({ 
-          conversation_state: 'displaying',
-          display_count: currentCount + 1
-        })
-        .eq('id', currentConversationId)
+      // Use our new mark_as_displayed function to set this conversation as displaying
+      const { error } = await supabase.rpc('mark_as_displayed', {
+        conversation_id: currentConversationId
+      })
         
       if (error) {
         console.error('Error updating conversation state:', error)
