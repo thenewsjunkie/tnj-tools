@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1"
 
@@ -130,23 +131,8 @@ serve(async (req: Request) => {
       question_text: transcribedText,
       answer_text: gptResponseText,
       status: 'completed',
-      conversation_state: 'displaying',
-      is_shown_in_obs: true,
-      display_start_time: new Date().toISOString(),
-      display_end_time: new Date(Date.now() + 30000).toISOString() // 30 seconds from now
+      conversation_state: 'pending'
     }
-
-    console.log('[process-audio] About to save conversation to database...')
-    const { error: dbError } = await supabaseAdmin
-      .from('audio_conversations')
-      .insert(conversation)
-
-    if (dbError) {
-      console.error('[process-audio] Database error:', dbError)
-      throw new Error('Failed to save conversation')
-    }
-
-    console.log('[process-audio] Successfully saved conversation')
 
     const base64Audio = arrayBufferToBase64(audioResponse);
 

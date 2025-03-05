@@ -6,8 +6,7 @@ SECURITY DEFINER
 AS $$
 BEGIN
   UPDATE audio_conversations
-  SET conversation_state = 'displaying',
-      display_count = 1  -- We'll repurpose display_count as a boolean (1 = displayed)
+  SET conversation_state = 'displaying'
   WHERE id = conversation_id;
 END;
 $$;

@@ -88,23 +88,6 @@ export const useAudioRecording = ({ onProcessingComplete, onError }: UseAudioRec
               bytes[i] = binaryString.charCodeAt(i)
             }
 
-            console.log('[useAudioRecording] About to save conversation to database...')
-            const { error: dbError } = await supabase
-              .from('audio_conversations')
-              .insert({
-                question_text: data.conversation.question_text,
-                answer_text: data.conversation.answer_text,
-                status: 'completed',
-                conversation_state: 'pending'
-              })
-
-            if (dbError) {
-              console.error('[useAudioRecording] Error saving conversation:', dbError)
-              throw dbError
-            }
-
-            console.log('[useAudioRecording] Successfully saved conversation')
-
             onProcessingComplete({
               conversation: data.conversation,
               audioResponse: bytes.buffer
