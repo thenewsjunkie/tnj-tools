@@ -1,3 +1,4 @@
+
 export interface DatabaseFunctions {
   claim_screen_share_role: {
     Args: {
@@ -35,5 +36,11 @@ export interface DatabaseFunctions {
       viewer_connected: boolean | null
       viewer_device_id: string | null
     }
+  }
+  mark_as_displayed: {
+    Args: {
+      conversation_id: string
+    }
+    Returns: undefined
   }
 }

@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react'
 import { Button } from './ui/button'
 import { Mic, Square, ExternalLink, ToggleLeft, ToggleRight } from 'lucide-react'
@@ -56,7 +57,6 @@ const TNJAi = () => {
           answer_text: data.conversation.answer_text,
           status: 'completed',
           conversation_state: 'pending',
-          display_count: 0, // Initialize display count as 0 (not displayed yet)
         })
         .select()
         .single()
@@ -124,7 +124,7 @@ const TNJAi = () => {
         .update({ conversation_state: 'completed' })
         .eq('conversation_state', 'displaying')
       
-      // Use our new mark_as_displayed function to set this conversation as displaying
+      // Use our mark_as_displayed function to set this conversation as displaying
       const { error } = await supabase.rpc('mark_as_displayed', {
         conversation_id: currentConversationId
       })
@@ -139,7 +139,7 @@ const TNJAi = () => {
         return
       }
     } else {
-      // Just update the state to completed without changing the display_count
+      // Just update the state to completed
       const { error } = await supabase
         .from('audio_conversations')
         .update({ conversation_state: 'completed' })

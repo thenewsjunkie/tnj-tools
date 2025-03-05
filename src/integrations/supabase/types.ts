@@ -190,7 +190,6 @@ export type Database = {
           answer_text: string
           conversation_state: string
           created_at: string | null
-          display_count: number | null
           id: string
           question_text: string
           status: string
@@ -200,7 +199,6 @@ export type Database = {
           answer_text: string
           conversation_state?: string
           created_at?: string | null
-          display_count?: number | null
           id?: string
           question_text: string
           status?: string
@@ -210,7 +208,6 @@ export type Database = {
           answer_text?: string
           conversation_state?: string
           created_at?: string | null
-          display_count?: number | null
           id?: string
           question_text?: string
           status?: string
