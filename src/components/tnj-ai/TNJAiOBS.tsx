@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { Computer } from 'lucide-react'
 
@@ -135,9 +136,12 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
         ) : activeConversation?.answer_text ? (
           <div className="flex flex-col gap-4">
             <div className="inline-block">
-              <div className="inline-flex items-center gap-3 mb-4 bg-black/60 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-[#33C3F0]/30">
-                <Computer className="h-7 w-7 text-[#33C3F0] drop-shadow-[0_0_5px_rgba(51,195,240,0.5)]" />
-                <span className="text-[#33C3F0] font-semibold text-2xl leading-none drop-shadow-[0_0_5px_rgba(51,195,240,0.5)]">TNJ AI</span>
+              {/* Apply fit-content to ensure the background only applies to the content */}
+              <div className="inline-flex items-center gap-3 mb-4 w-fit border border-[#33C3F0]/30 rounded-xl shadow-lg overflow-hidden">
+                <div className="bg-black/60 backdrop-blur-sm px-4 py-2 flex items-center gap-3">
+                  <Computer className="h-7 w-7 text-[#33C3F0] drop-shadow-[0_0_5px_rgba(51,195,240,0.5)]" />
+                  <span className="text-[#33C3F0] font-semibold text-2xl leading-none drop-shadow-[0_0_5px_rgba(51,195,240,0.5)]">TNJ AI</span>
+                </div>
               </div>
             </div>
             {activeConversation.question_text && (
