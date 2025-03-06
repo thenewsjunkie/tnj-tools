@@ -66,7 +66,8 @@ const TNJAiOBSPage = () => {
     },
     (payload: RealtimePostgresChangesPayload<SystemSettings>) => {
       console.log('Received settings update:', payload)
-      if (payload.new && payload.new.key === 'tnj_ai_obs_mode') {
+      // Make sure payload.new exists and has the expected shape
+      if (payload.new && 'key' in payload.new && payload.new.key === 'tnj_ai_obs_mode' && 'value' in payload.new) {
         const settingsValue = payload.new.value;
         if (isOBSModeSettings(settingsValue)) {
           console.log('Updated OBS mode settings:', settingsValue)
