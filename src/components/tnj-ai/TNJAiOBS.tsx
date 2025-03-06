@@ -148,9 +148,11 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
           </div>
         ) : activeConversation?.answer_text ? (
           <div className="flex flex-col gap-4">
-            <div className="bg-black/60 backdrop-blur-sm px-4 py-2 rounded-xl inline-flex items-center gap-3 mb-4 shadow-lg border border-[#33C3F0]/30">
-              <Computer className="h-7 w-7 text-[#33C3F0] drop-shadow-[0_0_5px_rgba(51,195,240,0.5)]" />
-              <span className="text-[#33C3F0] font-semibold text-2xl leading-none drop-shadow-[0_0_5px_rgba(51,195,240,0.5)]">TNJ AI</span>
+            <div className="inline-block">
+              <div className="bg-black/60 backdrop-blur-sm px-4 py-2 rounded-xl inline-flex items-center gap-3 mb-4 shadow-lg border border-[#33C3F0]/30">
+                <Computer className="h-7 w-7 text-[#33C3F0] drop-shadow-[0_0_5px_rgba(51,195,240,0.5)]" />
+                <span className="text-[#33C3F0] font-semibold text-2xl leading-none drop-shadow-[0_0_5px_rgba(51,195,240,0.5)]">TNJ AI</span>
+              </div>
             </div>
             {activeConversation.question_text && (
               <div 
