@@ -20,7 +20,6 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
     answer_text?: string;
   } | null>(null)
 
-  // Handle dots animation
   useEffect(() => {
     if (!isProcessing) {
       setLoadingDots('.')
@@ -34,10 +33,8 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
     return () => clearInterval(interval)
   }, [isProcessing])
 
-  // Handle conversation changes with proper transition timing
   useEffect(() => {
     if (!conversation) {
-      // Handle case when conversation becomes null
       if (shouldShow) {
         setShowAnswer(false)
         setTimeout(() => {
@@ -56,16 +53,13 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
       return
     }
 
-    // When a new conversation arrives while another one is showing
     if (shouldShow && activeConversation && 
         (activeConversation.question_text !== conversation.question_text ||
          activeConversation.answer_text !== conversation.answer_text)) {
-      // First hide the current conversation
       setShowAnswer(false)
       setTimeout(() => {
         setShowQuestion(false)
         setTimeout(() => {
-          // Then update to the new conversation and show it
           setActiveConversation(conversation)
           setShowQuestion(true)
           if (conversation.answer_text) {
@@ -77,7 +71,6 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
         }, 300)
       }, 300)
     } 
-    // Initial display or after a full hide
     else if (!shouldShow) {
       setShouldShow(true)
       setActiveConversation(conversation)
@@ -91,8 +84,6 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
       }
     }
     
-    // If this is the first time we're seeing this conversation
-    // and it has a new answer that previous conversation didn't
     else if (conversation.answer_text && 
              (!activeConversation?.answer_text || 
               activeConversation.answer_text !== conversation.answer_text)) {
@@ -103,7 +94,6 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
       }, 1000)
     }
 
-    // Cleanup
     return () => {
       if (dismissTimer) {
         clearTimeout(dismissTimer)
@@ -111,14 +101,11 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
     }
   }, [conversation])
 
-  // Setup dismiss timer function
   const setupDismissTimer = () => {
-    // Clear any existing timer
     if (dismissTimer) {
       clearTimeout(dismissTimer)
     }
     
-    // Start the dismiss timer after the answer appears
     const timer = setTimeout(() => {
       console.log('Starting dismiss animation')
       setShowAnswer(false)
@@ -148,12 +135,9 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
         ) : activeConversation?.answer_text ? (
           <div className="flex flex-col gap-4">
             <div className="inline-block">
-              {/* Fixed the background overflow by ensuring proper containment */}
-              <div className="inline-flex items-center gap-3 mb-4">
-                <div className="bg-black/60 backdrop-blur-sm px-4 py-2 rounded-xl flex items-center gap-3 shadow-lg border border-[#33C3F0]/30">
-                  <Computer className="h-7 w-7 text-[#33C3F0] drop-shadow-[0_0_5px_rgba(51,195,240,0.5)]" />
-                  <span className="text-[#33C3F0] font-semibold text-2xl leading-none drop-shadow-[0_0_5px_rgba(51,195,240,0.5)]">TNJ AI</span>
-                </div>
+              <div className="inline-flex items-center gap-3 mb-4 bg-black/60 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-[#33C3F0]/30">
+                <Computer className="h-7 w-7 text-[#33C3F0] drop-shadow-[0_0_5px_rgba(51,195,240,0.5)]" />
+                <span className="text-[#33C3F0] font-semibold text-2xl leading-none drop-shadow-[0_0_5px_rgba(51,195,240,0.5)]">TNJ AI</span>
               </div>
             </div>
             {activeConversation.question_text && (
