@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { RealtimePostgresChangesPayload } from '@supabase/supabase-js'
 import { toast } from '@/components/ui/use-toast'
 import { useRealtimeConnection } from '@/hooks/useRealtimeConnection'
+import { Json } from '@/integrations/supabase/types/helpers'
 
 type AudioConversation = {
   id: string;
@@ -16,10 +17,17 @@ type AudioConversation = {
 
 type SystemSettings = {
   key: string;
-  value: {
-    isActive: boolean;
-    isContinuous: boolean;
-  };
+  value: Json;
+}
+
+// Type guard to check if a value is a valid OBSMode settings object
+const isOBSModeSettings = (value: any): value is { isActive: boolean, isContinuous: boolean } => {
+  return value && 
+    typeof value === 'object' && 
+    'isActive' in value && 
+    'isContinuous' in value &&
+    typeof value.isActive === 'boolean' &&
+    typeof value.isContinuous === 'boolean';
 }
 
 const TNJAiOBSPage = () => {
@@ -59,13 +67,15 @@ const TNJAiOBSPage = () => {
     (payload: RealtimePostgresChangesPayload<SystemSettings>) => {
       console.log('Received settings update:', payload)
       if (payload.new && payload.new.key === 'tnj_ai_obs_mode') {
-        const settings = payload.new.value as { isActive: boolean, isContinuous: boolean }
-        console.log('Updated OBS mode settings:', settings)
-        setDisplaySettings(settings)
-        
-        // If display is turned off, clear current conversation
-        if (!settings.isActive) {
-          setCurrentConversation(null)
+        const settingsValue = payload.new.value;
+        if (isOBSModeSettings(settingsValue)) {
+          console.log('Updated OBS mode settings:', settingsValue)
+          setDisplaySettings(settingsValue)
+          
+          // If display is turned off, clear current conversation
+          if (!settingsValue.isActive) {
+            setCurrentConversation(null)
+          }
         }
       }
     }
@@ -82,17 +92,19 @@ const TNJAiOBSPage = () => {
         .eq('key', 'tnj_ai_obs_mode')
         .maybeSingle()
       
-      if (settingsData?.value && typeof settingsData.value === 'object') {
-        const settings = settingsData.value as { isActive: boolean, isContinuous: boolean }
-        console.log('Initial OBS mode settings:', settings)
-        if (mounted) {
-          setDisplaySettings(settings)
+      if (settingsData?.value) {
+        const settingsValue = settingsData.value;
+        if (isOBSModeSettings(settingsValue)) {
+          console.log('Initial OBS mode settings:', settingsValue)
+          if (mounted) {
+            setDisplaySettings(settingsValue)
+          }
+          
+          // Only fetch conversation if display is active
+          if (settingsValue.isActive) {
+            await fetchCurrentConversation()
+          }
         }
-      }
-      
-      // Only fetch conversation if display is active
-      if (settingsData?.value?.isActive) {
-        await fetchCurrentConversation()
       }
     }
 
