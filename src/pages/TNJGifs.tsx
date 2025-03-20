@@ -42,14 +42,14 @@ const TNJGifs = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        <h1 className="text-3xl font-bold mb-8 text-center text-foreground">
+        <h1 className="text-3xl font-bold mb-8 text-center text-gray-900">
           TNJ GIFs
         </h1>
         
-        <div className="mb-12 bg-card rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4 text-card-foreground">Upload a GIF</h2>
+        <div className="mb-12 bg-white rounded-lg shadow-md p-6 border border-gray-200">
+          <h2 className="text-xl font-semibold mb-4 text-gray-800">Upload a GIF</h2>
           <GifUploadForm 
             onUploadStart={() => setIsUploading(true)}
             onUploadComplete={() => {
@@ -66,14 +66,14 @@ const TNJGifs = () => {
             }}
           />
           {isUploading && (
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="text-sm text-gray-500 mt-2">
               Uploading GIF... Please wait.
             </p>
           )}
         </div>
         
         <div>
-          <h2 className="text-2xl font-semibold mb-6 text-foreground">GIF Gallery</h2>
+          <h2 className="text-2xl font-semibold mb-6 text-gray-900">GIF Gallery</h2>
           <GifGallery gifs={gifs} />
         </div>
       </div>

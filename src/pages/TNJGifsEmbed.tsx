@@ -22,7 +22,7 @@ const TNJGifsEmbed = () => {
   });
 
   return (
-    <div className="p-4 bg-transparent">
+    <div className="p-4 bg-white">
       <GifGallery gifs={gifs} />
     </div>
   );
