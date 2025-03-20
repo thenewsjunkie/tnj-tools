@@ -14,11 +14,19 @@ import Reviews from "@/components/reviews/Reviews";
 import { VideoBytes } from "@/components/VideoBytes";
 import Stopwatch from "@/components/Stopwatch";
 import TNJLinks from "@/components/TNJLinks";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
 
 const Admin = () => {
   const { theme } = useTheme();
   const [selectedLowerThird, setSelectedLowerThird] = useState<Tables<"lower_thirds"> | null>(null);
   const [isQuickEditOpen, setIsQuickEditOpen] = useState(false);
+  
+  // Collapsible states for each module
+  const [isLowerThirdsOpen, setIsLowerThirdsOpen] = useState(true);
+  const [isVideoBytesOpen, setIsVideoBytesOpen] = useState(true);
+  const [isReviewsOpen, setIsReviewsOpen] = useState(true);
+  const [isTriggersOpen, setIsTriggersOpen] = useState(true);
   
   console.log("[Admin] Rendering Admin page, theme:", theme);
 
@@ -47,7 +55,7 @@ const Admin = () => {
           <Alerts />
         </div>
         
-        {/* Content Management Module - Updated to match dark theme style of other modules */}
+        {/* Content Management Module */}
         <div className="grid grid-cols-1 gap-4">
           <div className="bg-black rounded-lg shadow p-4 border border-white/10">
             <h3 className="text-lg font-medium mb-4">Content Management</h3>
@@ -61,23 +69,98 @@ const Admin = () => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
-          <LowerThirdsCard
-            lowerThirds={lowerThirds}
-            isLoading={isLoading}
-            onQuickEdit={(lt) => {
-              setSelectedLowerThird(lt);
-              setIsQuickEditOpen(true);
-            }}
-          />
-          <VideoBytes />
+          {/* Collapsible Lower Thirds Module */}
+          <Collapsible open={isLowerThirdsOpen} onOpenChange={setIsLowerThirdsOpen} className="w-full">
+            <div className="bg-black rounded-lg shadow border border-white/10">
+              <div className="p-4 pb-0 flex justify-between items-center">
+                <h3 className="text-lg font-medium">Lower Thirds</h3>
+                <CollapsibleTrigger asChild>
+                  <button className="p-1 hover:bg-accent rounded-md transition-colors">
+                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isLowerThirdsOpen ? '' : 'rotate-180'}`} />
+                    <span className="sr-only">Toggle Lower Thirds</span>
+                  </button>
+                </CollapsibleTrigger>
+              </div>
+              <CollapsibleContent>
+                <div className="p-4 pt-2">
+                  <LowerThirdsCard
+                    lowerThirds={lowerThirds}
+                    isLoading={isLoading}
+                    onQuickEdit={(lt) => {
+                      setSelectedLowerThird(lt);
+                      setIsQuickEditOpen(true);
+                    }}
+                  />
+                </div>
+              </CollapsibleContent>
+            </div>
+          </Collapsible>
+          
+          {/* Collapsible Video Bytes Module */}
+          <Collapsible open={isVideoBytesOpen} onOpenChange={setIsVideoBytesOpen} className="w-full">
+            <div className="bg-black rounded-lg shadow border border-white/10">
+              <div className="p-4 pb-0 flex justify-between items-center">
+                <h3 className="text-lg font-medium">Video Bytes</h3>
+                <CollapsibleTrigger asChild>
+                  <button className="p-1 hover:bg-accent rounded-md transition-colors">
+                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isVideoBytesOpen ? '' : 'rotate-180'}`} />
+                    <span className="sr-only">Toggle Video Bytes</span>
+                  </button>
+                </CollapsibleTrigger>
+              </div>
+              <CollapsibleContent>
+                <div className="p-4 pt-2">
+                  <VideoBytes />
+                </div>
+              </CollapsibleContent>
+            </div>
+          </Collapsible>
         </div>
+        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
-          <Reviews 
-            showViewAllLink={true} 
-            simpleView={true} 
-            limit={10} 
-          />
-          <Companion />
+          {/* Collapsible Reviews Module */}
+          <Collapsible open={isReviewsOpen} onOpenChange={setIsReviewsOpen} className="w-full">
+            <div className="bg-black rounded-lg shadow border border-white/10">
+              <div className="p-4 pb-0 flex justify-between items-center">
+                <h3 className="text-lg font-medium">Reviews</h3>
+                <CollapsibleTrigger asChild>
+                  <button className="p-1 hover:bg-accent rounded-md transition-colors">
+                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isReviewsOpen ? '' : 'rotate-180'}`} />
+                    <span className="sr-only">Toggle Reviews</span>
+                  </button>
+                </CollapsibleTrigger>
+              </div>
+              <CollapsibleContent>
+                <div className="p-4 pt-2">
+                  <Reviews 
+                    showViewAllLink={true} 
+                    simpleView={true} 
+                    limit={10} 
+                  />
+                </div>
+              </CollapsibleContent>
+            </div>
+          </Collapsible>
+          
+          {/* Collapsible Triggers Module */}
+          <Collapsible open={isTriggersOpen} onOpenChange={setIsTriggersOpen} className="w-full">
+            <div className="bg-black rounded-lg shadow border border-white/10">
+              <div className="p-4 pb-0 flex justify-between items-center">
+                <h3 className="text-lg font-medium">Triggers</h3>
+                <CollapsibleTrigger asChild>
+                  <button className="p-1 hover:bg-accent rounded-md transition-colors">
+                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isTriggersOpen ? '' : 'rotate-180'}`} />
+                    <span className="sr-only">Toggle Triggers</span>
+                  </button>
+                </CollapsibleTrigger>
+              </div>
+              <CollapsibleContent>
+                <div className="p-4 pt-2">
+                  <Companion />
+                </div>
+              </CollapsibleContent>
+            </div>
+          </Collapsible>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Stopwatch />
