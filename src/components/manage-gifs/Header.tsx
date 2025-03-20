@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -11,14 +12,24 @@ const Header = () => {
     // Generate the embed code with an iframe pointing to the TNJGifsEmbed page
     // Using tnjtools.com as the base domain
     const baseUrl = "https://tnjtools.com";
-    const embedCode = `<iframe 
+    const embedCode = `<!-- TNJ GIFs Embed Code -->
+<iframe 
+  id="tnjgifs-frame"
   src="${baseUrl}/tnjgifs-embed" 
   width="100%" 
-  height="600px" 
-  style="border: none; max-width: 100%;" 
+  style="border: none; max-width: 100%; transition: height 0.3s ease;" 
   title="TNJ GIFs Gallery"
   allow="clipboard-write"
-></iframe>`;
+></iframe>
+<script>
+  // Auto-resize handler for TNJ GIFs iframe
+  window.addEventListener('message', function(event) {
+    const tnjFrame = document.getElementById('tnjgifs-frame');
+    if (tnjFrame && event.data && event.data.type === 'resize') {
+      tnjFrame.style.height = (event.data.height + 20) + 'px'; // Add a little extra padding
+    }
+  });
+</script>`;
 
     // Copy to clipboard
     navigator.clipboard.writeText(embedCode)
