@@ -14,6 +14,9 @@ import Reviews from "@/components/reviews/Reviews";
 import { VideoBytes } from "@/components/VideoBytes";
 import Stopwatch from "@/components/Stopwatch";
 import TNJLinks from "@/components/TNJLinks";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { ImagePlus } from "lucide-react";
 
 const Admin = () => {
   const { theme } = useTheme();
@@ -34,6 +37,20 @@ const Admin = () => {
 
       if (error) throw error;
       return data as Tables<"lower_thirds">[];
+    },
+  });
+
+  // Fetch pending gifs count
+  const { data: pendingGifsCount = 0 } = useQuery({
+    queryKey: ["pending-gifs-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("tnj_gifs")
+        .select("*", { count: 'exact', head: true })
+        .eq("status", "pending");
+
+      if (error) throw error;
+      return count || 0;
     },
   });
 
@@ -63,7 +80,30 @@ const Admin = () => {
             simpleView={true} 
             limit={10} 
           />
-          <Companion />
+          <div className="space-y-4">
+            <Companion />
+            <div className="rounded-lg border bg-card text-card-foreground shadow">
+              <div className="p-6 flex justify-between items-center">
+                <div>
+                  <h3 className="text-lg font-semibold">Manage GIFs</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Review and manage user-submitted GIFs
+                  </p>
+                </div>
+                <Link to="/admin/manage-gifs">
+                  <Button variant="outline" className="flex items-center gap-2">
+                    <ImagePlus className="h-4 w-4" />
+                    Manage GIFs
+                    {pendingGifsCount > 0 && (
+                      <span className="ml-1 rounded-full bg-red-500 text-white px-2 py-0.5 text-xs">
+                        {pendingGifsCount}
+                      </span>
+                    )}
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Stopwatch />
@@ -78,6 +118,6 @@ const Admin = () => {
       />
     </div>
   );
-};
+}
 
 export default Admin;
