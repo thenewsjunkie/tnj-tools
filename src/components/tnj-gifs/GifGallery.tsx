@@ -28,15 +28,27 @@ const GifGallery: React.FC<GifGalleryProps> = ({ gifs }) => {
           onMouseLeave={() => setHoveredGifId(null)}
         >
           <div className="aspect-square relative overflow-hidden">
-            <img
-              src={gif.gif_url}
-              alt={gif.title}
-              className="object-cover w-full h-full"
-              // Only animate when hovered
-              style={{
-                animationPlayState: hoveredGifId === gif.id ? "running" : "paused",
-              }}
-            />
+            {hoveredGifId === gif.id ? (
+              // Show animated GIF when hovered
+              <img
+                src={gif.gif_url}
+                alt={gif.title}
+                className="object-cover w-full h-full"
+              />
+            ) : (
+              // Show first frame when not hovered by setting specific Firefox/Chrome styling
+              <img
+                src={gif.gif_url}
+                alt={gif.title}
+                className="object-cover w-full h-full"
+                style={{
+                  WebkitAnimationPlayState: "paused",
+                  animationPlayState: "paused",
+                  WebkitAnimationDelay: "-999s",
+                  animationDelay: "-999s"
+                }}
+              />
+            )}
           </div>
           <div className="p-3">
             <h3 className="font-medium text-sm truncate">{gif.title}</h3>
