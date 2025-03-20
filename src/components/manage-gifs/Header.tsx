@@ -10,8 +10,10 @@ const Header = () => {
 
   const copyEmbedCode = () => {
     // Generate the embed code with an iframe pointing to the TNJGifsEmbed page
+    // Using tnjtools.com as the base domain
+    const baseUrl = "https://tnjtools.com";
     const embedCode = `<iframe 
-  src="${window.location.origin}/tnjgifs-embed" 
+  src="${baseUrl}/tnjgifs-embed" 
   width="100%" 
   height="600px" 
   style="border: none; max-width: 100%;" 

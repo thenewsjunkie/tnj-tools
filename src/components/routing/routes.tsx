@@ -96,7 +96,7 @@ export const router = createBrowserRouter([
     element: <TNJGifs />,
   },
   {
-    path: "/tnjgifs/embed",
+    path: "/tnjgifs-embed",
     element: <TNJGifsEmbed />,
   },
   {
