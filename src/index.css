@@ -185,4 +185,15 @@
       transform: translateX(-100%);
     }
   }
+
+  /* Add GIF animation control classes */
+  .gif-paused {
+    animation-play-state: paused !important;
+    -webkit-animation-play-state: paused !important;
+  }
+  
+  .gif-playing {
+    animation-play-state: running !important;
+    -webkit-animation-play-state: running !important;
+  }
 }

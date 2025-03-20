@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -137,24 +136,13 @@ const TNJGifsEmbed = () => {
               onMouseLeave={() => setHoveredGifId(null)}
             >
               <div className="aspect-square relative overflow-hidden">
-                {/* Always load the GIF, but overlay a static image when not hovered */}
-                <img
-                  src={gif.gif_url}
-                  alt={gif.title}
-                  className="object-cover w-full h-full"
-                />
-                
-                {/* Overlay static image when not hovered */}
-                {hoveredGifId !== gif.id && (
-                  <div 
-                    className="absolute inset-0 bg-cover bg-center"
-                    style={{ 
-                      backgroundImage: `url(${gif.gif_url})`,
-                      backgroundPosition: '0 0',
-                      backgroundSize: 'cover'
-                    }}
+                <div className="w-full h-full relative">
+                  <img
+                    src={gif.gif_url + "#paused"}
+                    alt={gif.title}
+                    className={`object-cover w-full h-full ${hoveredGifId === gif.id ? "gif-playing" : "gif-paused"}`}
                   />
-                )}
+                </div>
               </div>
               <div className="p-3 flex items-center justify-between">
                 <h3 className="font-medium text-sm truncate mr-2">{gif.title}</h3>
