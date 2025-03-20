@@ -47,9 +47,9 @@ const Admin = () => {
           <Alerts />
         </div>
         
-        {/* Content Management Module - Moved above Lower Thirds and Video Bytes */}
+        {/* Content Management Module - Updated background to match other modules */}
         <div className="grid grid-cols-1 gap-4">
-          <div className="bg-card rounded-lg shadow p-4">
+          <div className="rounded-lg shadow p-4 bg-card border">
             <h3 className="text-lg font-medium mb-4">Content Management</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <a href="/admin/manage-gifs" className="block p-4 border rounded-lg hover:bg-accent transition-colors">
