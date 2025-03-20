@@ -1,4 +1,3 @@
-
 import { createBrowserRouter } from "react-router-dom";
 import Index from "@/pages/Index";
 import Login from "@/pages/Login";
@@ -22,9 +21,6 @@ import StreamReview from "@/pages/StreamReview";
 import TNJAiOBSPage from "@/pages/TNJAiOBSPage";
 import ShareTheShow from "@/pages/ShareTheShow";
 import EditShowMember from "@/pages/EditShowMember";
-import TNJGifs from "@/pages/TNJGifs";
-import TNJGifsEmbed from "@/pages/TNJGifsEmbed";
-import ManageGifs from "@/pages/Admin/ManageGifs";
 
 export const router = createBrowserRouter([
   {
@@ -116,10 +112,6 @@ export const router = createBrowserRouter([
     element: <AdminRoute><GiftStats /></AdminRoute>,
   },
   {
-    path: "/admin/manage-gifs",
-    element: <AdminRoute><ManageGifs /></AdminRoute>,
-  },
-  {
     path: "/tnj-ai-obs",
     element: <TNJAiOBSPage />,
   },
@@ -130,13 +122,5 @@ export const router = createBrowserRouter([
   {
     path: "/sharetheshow/edit",
     element: <EditShowMember />,
-  },
-  {
-    path: "/tnjgifs",
-    element: <TNJGifs />,
-  },
-  {
-    path: "/tnjgifs/embed",
-    element: <TNJGifsEmbed />,
   },
 ]);

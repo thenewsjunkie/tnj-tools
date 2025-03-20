@@ -758,33 +758,6 @@ export type Database = {
         }
         Relationships: []
       }
-      tnj_gifs: {
-        Row: {
-          created_at: string
-          gif_url: string
-          id: string
-          status: string
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          gif_url: string
-          id?: string
-          status?: string
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          gif_url?: string
-          id?: string
-          status?: string
-          title?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       tnj_links: {
         Row: {
           created_at: string | null
