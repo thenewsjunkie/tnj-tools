@@ -2,6 +2,8 @@
 import React, { useState } from "react";
 import { Tables } from "@/integrations/supabase/types";
 import { Card } from "@/components/ui/card";
+import { Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface GifGalleryProps {
   gifs: Tables<"tnj_gifs">[];
@@ -9,6 +11,24 @@ interface GifGalleryProps {
 
 const GifGallery: React.FC<GifGalleryProps> = ({ gifs }) => {
   const [hoveredGifId, setHoveredGifId] = useState<string | null>(null);
+
+  const handleDownload = async (url: string, title: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `${title}.gif`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error('Error downloading GIF:', error);
+    }
+  };
 
   if (gifs.length === 0) {
     return (
@@ -50,8 +70,20 @@ const GifGallery: React.FC<GifGalleryProps> = ({ gifs }) => {
               />
             )}
           </div>
-          <div className="p-3">
-            <h3 className="font-medium text-sm truncate">{gif.title}</h3>
+          <div className="p-3 flex items-center justify-between">
+            <h3 className="font-medium text-sm truncate mr-2">{gif.title}</h3>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="flex-shrink-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDownload(gif.gif_url, gif.title);
+              }}
+            >
+              <Download className="h-4 w-4" />
+              <span className="sr-only">Download GIF</span>
+            </Button>
           </div>
         </Card>
       ))}
