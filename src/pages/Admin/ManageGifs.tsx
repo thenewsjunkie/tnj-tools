@@ -4,12 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
 import { useToast } from "@/components/ui/use-toast";
-import AdminHeader from "@/components/admin/AdminHeader";
+import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { 
-  Trash2, CheckCircle, XCircle, Edit, Eye, ExternalLink
+  Trash2, CheckCircle, XCircle, Edit, Eye, ExternalLink, ArrowLeft, Github
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -164,7 +164,29 @@ const ManageGifs = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <AdminHeader />
+      {/* Custom header with back button to admin page */}
+      <nav className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8 p-4">
+        <Link 
+          to="/admin" 
+          className="text-foreground hover:text-neon-red transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Admin
+          </div>
+        </Link>
+        <div className="flex items-center gap-4">
+          <a
+            href="https://github.com/thenewsjunkie/tnj-tools"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 text-foreground hover:text-primary transition-colors"
+          >
+            <Github className="h-5 w-5" />
+          </a>
+          <h1 className="text-foreground text-xl sm:text-2xl digital">TNJ Tools</h1>
+        </div>
+      </nav>
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <div className="flex justify-between items-center mb-8">
