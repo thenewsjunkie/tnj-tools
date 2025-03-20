@@ -1,16 +1,15 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Tables } from "@/integrations/supabase/types";
-import GifUploadForm from "@/components/tnj-gifs/GifUploadForm";
 import { Card } from "@/components/ui/card";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const TNJGifsEmbed = () => {
   const { toast } = useToast();
-  const [isUploading, setIsUploading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredGifId, setHoveredGifId] = useState<string | null>(null);
 
@@ -23,7 +22,7 @@ const TNJGifsEmbed = () => {
   };
 
   // Fetch approved gifs
-  const { data: gifs = [], refetch } = useQuery({
+  const { data: gifs = [] } = useQuery({
     queryKey: ["tnj-gifs-embed"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -43,14 +42,6 @@ const TNJGifsEmbed = () => {
       return data as Tables<"tnj_gifs">[];
     },
   });
-
-  const handleUploadSuccess = () => {
-    toast({
-      title: "GIF uploaded successfully",
-      description: "Your GIF has been submitted for approval.",
-    });
-    refetch();
-  };
 
   const handleDownload = async (url: string, title: string) => {
     try {
@@ -93,39 +84,15 @@ const TNJGifsEmbed = () => {
       window.removeEventListener('resize', updateHeight);
       observer.disconnect();
     };
-  }, [gifs, isUploading]);
+  }, [gifs]);
 
   return (
     <div className="p-4 bg-white" ref={containerRef}>
-      <div className="mb-8 bg-white rounded-lg shadow-md p-6 border border-gray-200">
-        <h2 className="text-xl font-semibold mb-4 text-gray-800">Upload a GIF</h2>
-        <GifUploadForm 
-          onUploadStart={() => setIsUploading(true)}
-          onUploadComplete={() => {
-            setIsUploading(false);
-            handleUploadSuccess();
-          }}
-          onUploadError={(error) => {
-            setIsUploading(false);
-            toast({
-              title: "Upload failed",
-              description: error,
-              variant: "destructive",
-            });
-          }}
-        />
-        {isUploading && (
-          <p className="text-sm text-gray-500 mt-2">
-            Uploading GIF... Please wait.
-          </p>
-        )}
-      </div>
-      
-      {/* Custom GIF Gallery with hover-based play */}
+      {/* GIF Gallery with hover-based play */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {gifs.length === 0 ? (
           <div className="text-center p-12 border border-dashed rounded-lg col-span-full">
-            <p className="text-muted-foreground">No GIFs available yet. Be the first to upload!</p>
+            <p className="text-muted-foreground">No GIFs available yet.</p>
           </div>
         ) : (
           gifs.map((gif) => (
