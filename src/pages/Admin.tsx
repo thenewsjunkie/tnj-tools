@@ -69,6 +69,17 @@ const Admin = () => {
           <Stopwatch />
           <TNJLinks />
         </div>
+        <div className="grid grid-cols-1 gap-4">
+          <div className="bg-card rounded-lg shadow p-4">
+            <h3 className="text-lg font-medium mb-4">Content Management</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <a href="/admin/manage-gifs" className="block p-4 border rounded-lg hover:bg-accent transition-colors">
+                <h4 className="font-medium">Manage GIFs</h4>
+                <p className="text-sm text-muted-foreground">Review, approve, and manage uploaded GIFs</p>
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
 
       <QuickEditDialog

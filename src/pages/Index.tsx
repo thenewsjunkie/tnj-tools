@@ -48,6 +48,24 @@ const Index = () => {
         TNJ Tools
       </div>
       
+      <div className="flex flex-wrap gap-4 justify-center max-w-4xl">
+        <Link 
+          to="/tnjgifs" 
+          className="px-6 py-3 bg-card rounded-lg shadow hover:shadow-lg transition-all duration-300 hover:scale-105"
+        >
+          <h2 className="text-xl font-bold mb-1">TNJ GIFs</h2>
+          <p className="text-sm text-muted-foreground">Explore and upload animated GIFs</p>
+        </Link>
+        
+        <Link 
+          to="/sharetheshow" 
+          className="px-6 py-3 bg-card rounded-lg shadow hover:shadow-lg transition-all duration-300 hover:scale-105"
+        >
+          <h2 className="text-xl font-bold mb-1">Share the Show</h2>
+          <p className="text-sm text-muted-foreground">Connect with the cast</p>
+        </Link>
+      </div>
+      
       <div className={`absolute bottom-8 ${theme === 'light' ? 'text-black' : 'text-white/50'} text-sm`}>
         tnjtools.com
       </div>
@@ -56,4 +74,3 @@ const Index = () => {
 };
 
 export default Index;
-
