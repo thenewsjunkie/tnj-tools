@@ -8,16 +8,18 @@ import { Copy } from "lucide-react";
 
 interface PollEmbedCodeProps {
   pollId: string;
-  baseUrl?: string;
 }
 
-const PollEmbedCode: React.FC<PollEmbedCodeProps> = ({ 
-  pollId,
-  baseUrl = window.location.origin 
-}) => {
+const PollEmbedCode: React.FC<PollEmbedCodeProps> = ({ pollId }) => {
   const { toast } = useToast();
+  // Hardcode the domain to tnjtools.com
+  const baseUrl = "https://tnjtools.com";
   const embedUrl = `${baseUrl}/poll/${pollId}`;
   
+  // Create a special URL for the "always latest poll" feature
+  const latestPollUrl = `${baseUrl}/poll/latest`;
+  
+  // Standard embed code for specified poll
   const iframeCode = `<iframe 
   src="${embedUrl}" 
   width="100%" 
@@ -27,7 +29,18 @@ const PollEmbedCode: React.FC<PollEmbedCodeProps> = ({
   allowtransparency="true">
 </iframe>`;
 
+  // Latest poll embed code
+  const latestIframeCode = `<iframe 
+  src="${latestPollUrl}" 
+  width="100%" 
+  height="450" 
+  frameborder="0" 
+  style="border: 1px solid #eaeaea; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);" 
+  allowtransparency="true">
+</iframe>`;
+
   const directLinkCode = embedUrl;
+  const latestDirectLinkCode = latestPollUrl;
 
   const copyToClipboard = (text: string, description: string) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -46,10 +59,10 @@ const PollEmbedCode: React.FC<PollEmbedCodeProps> = ({
           Share this poll on your website or directly with your audience.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
         <div>
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium">Iframe Embed Code</span>
+            <span className="text-sm font-medium">This Specific Poll - Iframe Embed</span>
             <Button 
               variant="ghost" 
               size="sm" 
@@ -63,13 +76,33 @@ const PollEmbedCode: React.FC<PollEmbedCodeProps> = ({
             <code className="text-xs break-all">{iframeCode}</code>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Paste this code into your HTML to embed the poll with full voting functionality.
+            Paste this code into your HTML to embed this specific poll with full voting functionality.
           </p>
         </div>
         
         <div>
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium">Direct Link</span>
+            <span className="text-sm font-medium">Always Latest Poll - Iframe Embed</span>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => copyToClipboard(latestIframeCode, "Latest poll iframe code copied to clipboard")}
+            >
+              <Copy className="h-4 w-4 mr-1" />
+              Copy
+            </Button>
+          </div>
+          <div className="bg-muted p-2 rounded-md">
+            <code className="text-xs break-all">{latestIframeCode}</code>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            This embed will always show your most recent active poll, even as you create new ones.
+          </p>
+        </div>
+        
+        <div>
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-medium">Direct Link to Specific Poll</span>
             <Button 
               variant="ghost" 
               size="sm" 
@@ -81,7 +114,25 @@ const PollEmbedCode: React.FC<PollEmbedCodeProps> = ({
           </div>
           <Input value={directLinkCode} readOnly />
           <p className="text-xs text-muted-foreground mt-1">
-            Share this link via email, social media, or anywhere you want users to vote.
+            Share this link via email, social media, or anywhere you want users to vote on this specific poll.
+          </p>
+        </div>
+        
+        <div>
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-medium">Direct Link to Latest Poll</span>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => copyToClipboard(latestDirectLinkCode, "Latest poll link copied to clipboard")}
+            >
+              <Copy className="h-4 w-4 mr-1" />
+              Copy
+            </Button>
+          </div>
+          <Input value={latestDirectLinkCode} readOnly />
+          <p className="text-xs text-muted-foreground mt-1">
+            This link will always redirect to your most recent active poll.
           </p>
         </div>
       </CardContent>

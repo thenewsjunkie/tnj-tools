@@ -74,10 +74,11 @@ const ManagePolls = () => {
       return;
     }
 
-    const baseUrl = window.location.origin;
-    const embedUrl = `${baseUrl}/poll/${latestPoll.id}`;
+    // Hardcode the domain to tnjtools.com
+    const baseUrl = "https://tnjtools.com";
+    const latestPollUrl = `${baseUrl}/poll/latest`;
     const iframeCode = `<iframe 
-  src="${embedUrl}" 
+  src="${latestPollUrl}" 
   width="100%" 
   height="450" 
   frameborder="0" 
@@ -87,8 +88,8 @@ const ManagePolls = () => {
 
     navigator.clipboard.writeText(iframeCode).then(() => {
       toast({
-        title: "Embed code copied!",
-        description: `Embed code for "${latestPoll.question}" copied to clipboard.`,
+        title: "Latest Poll Embed Code Copied!",
+        description: `Embed code for the latest poll copied to clipboard. This will always show your most recent active poll.`,
       });
     });
   };

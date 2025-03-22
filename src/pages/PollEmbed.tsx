@@ -14,6 +14,9 @@ const PollEmbedPage = () => {
     }
   }, [id]);
 
+  // Check if this is the "latest" poll route
+  const isLatestPoll = id === 'latest';
+
   if (!id) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -25,7 +28,11 @@ const PollEmbedPage = () => {
   return (
     <div className="min-h-screen p-4 flex items-center justify-center bg-background">
       <div className="w-full max-w-md">
-        <PollEmbed pollId={id} />
+        {isLatestPoll ? (
+          <PollEmbed showLatest={true} />
+        ) : (
+          <PollEmbed pollId={id} />
+        )}
       </div>
     </div>
   );
