@@ -1,53 +1,14 @@
 
 import React, { useEffect, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-
-interface PollEmbedProps {
-  pollId?: string;
-  showLatest?: boolean;
-  theme?: "light" | "dark";
-}
-
-// Define interface for poll option with display_order
-interface PollOption {
-  id: string;
-  text: string;
-  votes: number;
-  display_order: number;
-}
-
-// Define interface for poll with typed options
-interface Poll {
-  id: string;
-  question: string;
-  status: string;
-  poll_options: PollOption[];
-  [key: string]: any; // For other properties we might not be using
-}
-
-// Define interface for raw poll option coming from the database
-interface RawPollOption {
-  id: string;
-  text: string;
-  votes: number;
-}
-
-// Define interface for raw poll data from Supabase
-interface RawPoll {
-  id: string;
-  question: string;
-  status: string;
-  poll_options: RawPollOption[];
-  [key: string]: any;
-}
+import { usePollData } from "./hooks/usePollData";
+import PollVotingState from "./PollVotingState";
+import PollResultsView from "./PollResultsView";
+import { PollEmbedProps } from "./types";
 
 const PollEmbed: React.FC<PollEmbedProps> = ({ 
   pollId,
@@ -58,36 +19,18 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
   const queryClient = useQueryClient();
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [hasVoted, setHasVoted] = useState<boolean>(false);
-  const [pollIdToFetch, setPollIdToFetch] = useState<string | null>(pollId || null);
+  
+  const {
+    pollIdToFetch,
+    poll,
+    totalVotes,
+    isPollLoading,
+    isLoadingLatest,
+    refetchPoll,
+    refetchTotalVotes
+  } = usePollData(pollId || null, showLatest);
   
   const storageKey = `poll_voted_${pollIdToFetch}`;
-
-  const { data: latestPoll, isLoading: isLoadingLatest } = useQuery({
-    queryKey: ["latest-poll"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("polls")
-        .select("id")
-        .eq("status", "active")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
-
-      if (error) {
-        console.error("Error fetching latest poll:", error);
-        return null;
-      }
-      
-      return data;
-    },
-    enabled: showLatest || !pollId,
-  });
-
-  useEffect(() => {
-    if (showLatest && latestPoll?.id) {
-      setPollIdToFetch(latestPoll.id);
-    }
-  }, [latestPoll, showLatest]);
 
   useEffect(() => {
     if (pollIdToFetch) {
@@ -95,63 +38,6 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
       setHasVoted(voted);
     }
   }, [pollIdToFetch, storageKey]);
-
-  const { data: poll, isLoading: isPollLoading, refetch: refetchPoll } = useQuery({
-    queryKey: ["poll", pollIdToFetch],
-    queryFn: async () => {
-      if (!pollIdToFetch) return null;
-      
-      const { data, error } = await supabase
-        .from("polls")
-        .select("*, poll_options(id, text, votes)")
-        .eq("id", pollIdToFetch)
-        .single();
-
-      if (error) {
-        console.error("Error fetching poll:", error);
-        return null;
-      }
-      
-      // Transform the raw data to include display_order
-      const rawPoll = data as RawPoll;
-      
-      if (rawPoll && rawPoll.poll_options) {
-        // Create a new Poll object with properly structured poll_options that include display_order
-        const transformedPoll: Poll = {
-          ...rawPoll,
-          poll_options: rawPoll.poll_options.map((option, index) => ({
-            ...option,
-            display_order: index
-          }))
-        };
-        
-        return transformedPoll;
-      }
-      
-      return null;
-    },
-    enabled: !!pollIdToFetch,
-  });
-  
-  const { data: totalVotes, isLoading: isTotalVotesLoading, refetch: refetchTotalVotes } = useQuery({
-    queryKey: ["poll-total-votes", pollIdToFetch],
-    queryFn: async () => {
-      if (!pollIdToFetch) return 0;
-      
-      const { data, error } = await supabase
-        .from("poll_options")
-        .select("votes")
-        .eq("poll_id", pollIdToFetch);
-
-      if (error) {
-        console.error("Error fetching poll votes:", error);
-        return 0;
-      }
-      
-      return data.reduce((sum, option) => sum + (option.votes || 0), 0);
-    },
-    enabled: !!pollIdToFetch,
-  });
 
   const handleVote = async () => {
     if (!selectedOption || !pollIdToFetch) return;
@@ -186,6 +72,7 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
     }
   };
 
+  // Define styling based on theme
   const cardClassName = cn(
     "w-full bg-white border border-gray-200 shadow-sm",
     theme === "light" ? "bg-white border-gray-200" : "bg-background",
@@ -197,14 +84,7 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
   const textColor = theme === "light" ? "text-gray-800" : "text-card-foreground";
   const mutedTextColor = theme === "light" ? "text-gray-500" : "text-muted-foreground";
 
-  // Update the radio button styling
-  const radioItemClassNames = cn(
-    "aspect-square h-4 w-4 rounded-full border",
-    theme === "light" 
-      ? "border-gray-300 text-neon-red ring-offset-white focus-visible:ring-neon-red" 
-      : "border-primary text-primary ring-offset-background focus-visible:ring-ring"
-  );
-
+  // Loading state
   if ((isPollLoading && !!pollIdToFetch) || (isLoadingLatest && !pollIdToFetch)) {
     return (
       <Card className={cardClassName}>
@@ -217,6 +97,7 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
     );
   }
 
+  // No poll found state
   if (!poll) {
     return (
       <Card className={cardClassName}>
@@ -229,68 +110,30 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
     );
   }
 
-  // Sort the options based on display_order to maintain original order
-  const sortedOptions = [...poll.poll_options].sort((a, b) => a.display_order - b.display_order);
-
   return (
     <Card className={cardClassName}>
       <CardHeader>
         <CardTitle className={`text-xl ${textColor}`}>{poll.question}</CardTitle>
       </CardHeader>
-      <CardContent>
-        {!hasVoted ? (
-          <RadioGroup value={selectedOption || undefined} onValueChange={setSelectedOption}>
-            {sortedOptions.map((option) => (
-              <div className="flex items-center space-x-2 mb-3" key={option.id}>
-                <RadioGroupItem 
-                  value={option.id} 
-                  id={option.id} 
-                  className={radioItemClassNames}
-                  style={{
-                    '--tw-ring-color': theme === 'light' ? '#f21516' : 'hsl(var(--ring))',
-                  } as React.CSSProperties}
-                />
-                <Label htmlFor={option.id} className={`cursor-pointer ${textColor}`}>{option.text}</Label>
-              </div>
-            ))}
-          </RadioGroup>
-        ) : (
-          <div className="space-y-3">
-            {sortedOptions.map((option) => {
-              const percentage = totalVotes ? Math.round((option.votes / totalVotes) * 100) : 0;
-              
-              return (
-                <div key={option.id} className="space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <span className={textColor}>{option.text}</span>
-                    <span className={`font-medium ${textColor}`}>{percentage}%</span>
-                  </div>
-                  <Progress 
-                    value={percentage} 
-                    className={mutedBgColor}
-                    indicatorClassName={primaryColor}
-                  />
-                  <p className={`text-xs ${mutedTextColor}`}>{option.votes} votes</p>
-                </div>
-              );
-            })}
-            <p className={`text-sm ${mutedTextColor} pt-2`}>
-              Total votes: {totalVotes}
-            </p>
-          </div>
-        )}
-      </CardContent>
-      {!hasVoted && (
-        <CardFooter>
-          <Button 
-            onClick={handleVote} 
-            disabled={!selectedOption}
-            className="w-full"
-            variant={theme === "light" ? "default" : "default"}
-          >
-            Vote
-          </Button>
-        </CardFooter>
+      
+      {!hasVoted ? (
+        <PollVotingState 
+          options={poll.poll_options}
+          selectedOption={selectedOption}
+          setSelectedOption={setSelectedOption}
+          handleVote={handleVote}
+          theme={theme}
+          textColor={textColor}
+        />
+      ) : (
+        <PollResultsView 
+          options={poll.poll_options}
+          totalVotes={totalVotes || 0}
+          primaryColor={primaryColor}
+          mutedBgColor={mutedBgColor}
+          textColor={textColor}
+          mutedTextColor={mutedTextColor}
+        />
       )}
     </Card>
   );
