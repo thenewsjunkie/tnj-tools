@@ -33,6 +33,22 @@ interface Poll {
   [key: string]: any; // For other properties we might not be using
 }
 
+// Define interface for raw poll option coming from the database
+interface RawPollOption {
+  id: string;
+  text: string;
+  votes: number;
+}
+
+// Define interface for raw poll data from Supabase
+interface RawPoll {
+  id: string;
+  question: string;
+  status: string;
+  poll_options: RawPollOption[];
+  [key: string]: any;
+}
+
 const PollEmbed: React.FC<PollEmbedProps> = ({ 
   pollId,
   showLatest = false,
@@ -96,15 +112,23 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
         return null;
       }
       
-      // Ensure we preserve the display order by adding a property based on array index
-      if (data && data.poll_options) {
-        data.poll_options = data.poll_options.map((option, index) => ({
-          ...option,
-          display_order: index
-        }));
+      // Transform the raw data to include display_order
+      const rawPoll = data as RawPoll;
+      
+      if (rawPoll && rawPoll.poll_options) {
+        // Create a new Poll object with properly structured poll_options that include display_order
+        const transformedPoll: Poll = {
+          ...rawPoll,
+          poll_options: rawPoll.poll_options.map((option, index) => ({
+            ...option,
+            display_order: index
+          }))
+        };
+        
+        return transformedPoll;
       }
       
-      return data as Poll;
+      return null;
     },
     enabled: !!pollIdToFetch,
   });
