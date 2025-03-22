@@ -147,6 +147,7 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
   const textColor = theme === "light" ? "text-gray-800" : "text-card-foreground";
   const mutedTextColor = theme === "light" ? "text-gray-500" : "text-muted-foreground";
 
+  // Update the radio button styling
   const radioItemClassNames = cn(
     "aspect-square h-4 w-4 rounded-full border",
     theme === "light" 
@@ -195,9 +196,7 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
                   style={{
                     '--tw-ring-color': theme === 'light' ? '#f21516' : 'hsl(var(--ring))',
                   } as React.CSSProperties}
-                >
-                  <div className="flex items-center justify-center relative w-full h-full after:absolute after:inset-0 after:m-auto after:block after:h-1.5 after:w-1.5 after:rounded-full after:content-[''] data-[state=checked]:after:bg-current" />
-                </RadioGroupItem>
+                />
                 <Label htmlFor={option.id} className={`cursor-pointer ${textColor}`}>{option.text}</Label>
               </div>
             ))}
