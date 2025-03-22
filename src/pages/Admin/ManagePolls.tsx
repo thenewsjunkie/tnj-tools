@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,15 +73,14 @@ const ManagePolls = () => {
       return;
     }
 
-    // Hardcode the domain to tnjtools.com
     const baseUrl = "https://tnjtools.com";
-    const latestPollUrl = `${baseUrl}/poll/latest`;
+    const latestPollUrl = `${baseUrl}/poll/latest?theme=light`;
     const iframeCode = `<iframe 
   src="${latestPollUrl}" 
   width="100%" 
   height="450" 
   frameborder="0" 
-  style="border: 1px solid #eaeaea; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);" 
+  style="border: 1px solid #eaeaea; border-radius: 8px;" 
   allowtransparency="true">
 </iframe>`;
 

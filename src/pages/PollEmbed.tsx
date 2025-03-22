@@ -1,10 +1,12 @@
 
-import React, { useEffect } from "react";
-import { useParams } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useParams, useSearchParams } from "react-router-dom";
 import PollEmbed from "@/components/polls/PollEmbed";
 
 const PollEmbedPage = () => {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  const theme = searchParams.get("theme") === "dark" ? "dark" : "light";
 
   // Enable CORS for embedding via iframe
   useEffect(() => {
@@ -26,12 +28,12 @@ const PollEmbedPage = () => {
   }
 
   return (
-    <div className="min-h-screen p-4 flex items-center justify-center bg-background">
+    <div className={`min-h-screen p-4 flex items-center justify-center ${theme === 'light' ? 'bg-white' : 'bg-background'}`}>
       <div className="w-full max-w-md">
         {isLatestPoll ? (
-          <PollEmbed showLatest={true} />
+          <PollEmbed showLatest={true} theme={theme} />
         ) : (
-          <PollEmbed pollId={id} />
+          <PollEmbed pollId={id} theme={theme} />
         )}
       </div>
     </div>

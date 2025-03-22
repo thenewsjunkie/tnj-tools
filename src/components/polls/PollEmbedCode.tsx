@@ -1,10 +1,11 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { Copy } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface PollEmbedCodeProps {
   pollId: string;
@@ -12,12 +13,14 @@ interface PollEmbedCodeProps {
 
 const PollEmbedCode: React.FC<PollEmbedCodeProps> = ({ pollId }) => {
   const { toast } = useToast();
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+  
   // Hardcode the domain to tnjtools.com
   const baseUrl = "https://tnjtools.com";
-  const embedUrl = `${baseUrl}/poll/${pollId}`;
+  const embedUrl = `${baseUrl}/poll/${pollId}?theme=${theme}`;
   
   // Create a special URL for the "always latest poll" feature
-  const latestPollUrl = `${baseUrl}/poll/latest`;
+  const latestPollUrl = `${baseUrl}/poll/latest?theme=${theme}`;
   
   // Standard embed code for specified poll
   const iframeCode = `<iframe 
@@ -25,7 +28,7 @@ const PollEmbedCode: React.FC<PollEmbedCodeProps> = ({ pollId }) => {
   width="100%" 
   height="450" 
   frameborder="0" 
-  style="border: 1px solid #eaeaea; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);" 
+  style="border: 1px solid #eaeaea; border-radius: 8px;" 
   allowtransparency="true">
 </iframe>`;
 
@@ -35,7 +38,7 @@ const PollEmbedCode: React.FC<PollEmbedCodeProps> = ({ pollId }) => {
   width="100%" 
   height="450" 
   frameborder="0" 
-  style="border: 1px solid #eaeaea; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);" 
+  style="border: 1px solid #eaeaea; border-radius: 8px;" 
   allowtransparency="true">
 </iframe>`;
 
@@ -60,6 +63,16 @@ const PollEmbedCode: React.FC<PollEmbedCodeProps> = ({ pollId }) => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        <Tabs defaultValue="light" className="w-full mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium">Theme:</span>
+            <TabsList>
+              <TabsTrigger value="light" onClick={() => setTheme("light")}>Light</TabsTrigger>
+              <TabsTrigger value="dark" onClick={() => setTheme("dark")}>Dark</TabsTrigger>
+            </TabsList>
+          </div>
+        </Tabs>
+        
         <div>
           <div className="flex justify-between items-center mb-2">
             <span className="text-sm font-medium">This Specific Poll - Iframe Embed</span>

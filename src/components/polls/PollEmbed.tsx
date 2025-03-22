@@ -7,15 +7,18 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
+import { Progress } from "@/components/ui/progress";
 
 interface PollEmbedProps {
   pollId?: string;
   showLatest?: boolean;
+  theme?: "light" | "dark";
 }
 
 const PollEmbed: React.FC<PollEmbedProps> = ({ 
   pollId,
-  showLatest = false
+  showLatest = false,
+  theme = "light" // Default to light theme
 }) => {
   const { toast } = useToast();
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
@@ -132,13 +135,23 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
     }
   };
 
+  // Determine theme-based styles
+  const cardClassName = theme === "light" 
+    ? "w-full max-w-md mx-auto bg-white border border-gray-200 shadow-sm" 
+    : "w-full max-w-md mx-auto";
+  
+  const primaryColor = theme === "light" ? "bg-neon-red" : "bg-primary";
+  const mutedBgColor = theme === "light" ? "bg-gray-100" : "bg-muted";
+  const textColor = theme === "light" ? "text-gray-800" : "text-card-foreground";
+  const mutedTextColor = theme === "light" ? "text-gray-500" : "text-muted-foreground";
+
   // Show loading state
   if ((isPollLoading && !!pollIdToFetch) || (isLoadingLatest && !pollIdToFetch)) {
     return (
-      <Card className="w-full max-w-md mx-auto">
+      <Card className={cardClassName}>
         <CardContent className="pt-6">
           <div className="flex justify-center p-4">
-            <p className="text-muted-foreground">Loading poll...</p>
+            <p className={mutedTextColor}>Loading poll...</p>
           </div>
         </CardContent>
       </Card>
@@ -148,10 +161,10 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
   // No poll found
   if (!poll) {
     return (
-      <Card className="w-full max-w-md mx-auto">
+      <Card className={cardClassName}>
         <CardContent className="pt-6">
           <div className="text-center p-4">
-            <p className="text-muted-foreground">No active poll found.</p>
+            <p className={mutedTextColor}>No active poll found.</p>
           </div>
         </CardContent>
       </Card>
@@ -159,9 +172,9 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className={cardClassName}>
       <CardHeader>
-        <CardTitle className="text-xl">{poll.question}</CardTitle>
+        <CardTitle className={`text-xl ${textColor}`}>{poll.question}</CardTitle>
       </CardHeader>
       <CardContent>
         {!hasVoted ? (
@@ -169,7 +182,7 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
             {poll.poll_options.map((option: any) => (
               <div className="flex items-center space-x-2 mb-3" key={option.id}>
                 <RadioGroupItem value={option.id} id={option.id} />
-                <Label htmlFor={option.id} className="cursor-pointer">{option.text}</Label>
+                <Label htmlFor={option.id} className={`cursor-pointer ${textColor}`}>{option.text}</Label>
               </div>
             ))}
           </RadioGroup>
@@ -181,20 +194,19 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
               return (
                 <div key={option.id} className="space-y-1">
                   <div className="flex justify-between text-sm">
-                    <span>{option.text}</span>
-                    <span className="font-medium">{percentage}%</span>
+                    <span className={textColor}>{option.text}</span>
+                    <span className={`font-medium ${textColor}`}>{percentage}%</span>
                   </div>
-                  <div className="w-full bg-muted rounded-full h-2">
-                    <div 
-                      className="bg-primary rounded-full h-2" 
-                      style={{ width: `${percentage}%` }}
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground">{option.votes} votes</p>
+                  <Progress 
+                    value={percentage} 
+                    className={mutedBgColor}
+                    indicatorClassName={primaryColor}
+                  />
+                  <p className={`text-xs ${mutedTextColor}`}>{option.votes} votes</p>
                 </div>
               );
             })}
-            <p className="text-sm text-muted-foreground pt-2">
+            <p className={`text-sm ${mutedTextColor} pt-2`}>
               Total votes: {totalVotes}
             </p>
           </div>
@@ -206,6 +218,7 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
             onClick={handleVote} 
             disabled={!selectedOption}
             className="w-full"
+            variant={theme === "light" ? "default" : "default"}
           >
             Vote
           </Button>
