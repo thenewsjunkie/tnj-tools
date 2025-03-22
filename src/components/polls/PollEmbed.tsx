@@ -16,6 +16,23 @@ interface PollEmbedProps {
   theme?: "light" | "dark";
 }
 
+// Define interface for poll option with display_order
+interface PollOption {
+  id: string;
+  text: string;
+  votes: number;
+  display_order: number;
+}
+
+// Define interface for poll with typed options
+interface Poll {
+  id: string;
+  question: string;
+  status: string;
+  poll_options: PollOption[];
+  [key: string]: any; // For other properties we might not be using
+}
+
 const PollEmbed: React.FC<PollEmbedProps> = ({ 
   pollId,
   showLatest = false,
@@ -87,7 +104,7 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
         }));
       }
       
-      return data;
+      return data as Poll;
     },
     enabled: !!pollIdToFetch,
   });
@@ -199,7 +216,7 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
       <CardContent>
         {!hasVoted ? (
           <RadioGroup value={selectedOption || undefined} onValueChange={setSelectedOption}>
-            {sortedOptions.map((option: any) => (
+            {sortedOptions.map((option) => (
               <div className="flex items-center space-x-2 mb-3" key={option.id}>
                 <RadioGroupItem 
                   value={option.id} 
@@ -215,7 +232,7 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
           </RadioGroup>
         ) : (
           <div className="space-y-3">
-            {sortedOptions.map((option: any) => {
+            {sortedOptions.map((option) => {
               const percentage = totalVotes ? Math.round((option.votes / totalVotes) * 100) : 0;
               
               return (
