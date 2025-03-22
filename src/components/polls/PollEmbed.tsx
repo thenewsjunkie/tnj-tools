@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,7 +53,7 @@ const PollEmbed: React.FC<PollEmbedProps> = ({ pollId }) => {
             poll_id: pollId,
             option_id: optionId,
             username: username.trim(),
-            platform: "web"
+            platform: "web" as "twitch" | "youtube" | "web"
           });
 
         if (voteError) throw voteError;

@@ -1,3 +1,4 @@
+
 export interface DatabaseEnums {
   call_status: "waiting" | "connected" | "ended"
   review_type: "television" | "movie" | "food" | "product"
@@ -23,4 +24,6 @@ export interface DatabaseEnums {
     | "widowed"
     | "separated"
     | "domestic_partnership"
+  poll_status: "active" | "draft" | "completed"
+  vote_platform: "twitch" | "youtube" | "web"
 }

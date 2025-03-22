@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,7 +53,7 @@ const PollList: React.FC<PollListProps> = ({ polls, onEdit }) => {
   });
 
   const updatePollStatusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+    mutationFn: async ({ id, status }: { id: string; status: "active" | "draft" | "completed" }) => {
       const { error } = await supabase
         .from("polls")
         .update({ status })
@@ -82,10 +81,10 @@ const PollList: React.FC<PollListProps> = ({ polls, onEdit }) => {
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case "active": return "success";
-      case "draft": return "secondary";
-      case "completed": return "default";
-      default: return "secondary";
+      case "active": return "default" as const;
+      case "draft": return "secondary" as const;
+      case "completed": return "outline" as const;
+      default: return "secondary" as const;
     }
   };
 
