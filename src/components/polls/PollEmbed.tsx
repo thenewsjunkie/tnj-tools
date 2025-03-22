@@ -154,11 +154,6 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
       : "border-primary text-primary ring-offset-background focus-visible:ring-ring"
   );
 
-  const radioIndicatorClassNames = cn(
-    "flex items-center justify-center",
-    theme === "light" ? "after:bg-neon-red" : "after:bg-primary"
-  );
-
   if ((isPollLoading && !!pollIdToFetch) || (isLoadingLatest && !pollIdToFetch)) {
     return (
       <Card className={cardClassName}>
@@ -201,21 +196,7 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
                     '--tw-ring-color': theme === 'light' ? '#f21516' : 'hsl(var(--ring))',
                   } as React.CSSProperties}
                 >
-                  <div className={radioIndicatorClassNames} 
-                    style={{
-                      position: 'relative',
-                      width: '100%',
-                      height: '100%',
-                      '::after': {
-                        content: '""',
-                        display: 'block',
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        backgroundColor: theme === 'light' ? '#f21516' : 'hsl(var(--primary))',
-                      },
-                    } as React.CSSProperties}
-                  />
+                  <div className="flex items-center justify-center relative w-full h-full after:absolute after:inset-0 after:m-auto after:block after:h-1.5 after:w-1.5 after:rounded-full after:content-[''] data-[state=checked]:after:bg-current" />
                 </RadioGroupItem>
                 <Label htmlFor={option.id} className={`cursor-pointer ${textColor}`}>{option.text}</Label>
               </div>
