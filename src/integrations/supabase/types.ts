@@ -984,7 +984,7 @@ export type Database = {
         | "venmo"
         | "cashapp"
       user_role: "admin" | "client"
-      voting_platform: "twitch" | "youtube"
+      voting_platform: "twitch" | "youtube" | "web"
     }
     CompositeTypes: {
       [_ in never]: never
