@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
   theme = "light" // Default to light theme
 }) => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [hasVoted, setHasVoted] = useState<boolean>(false);
   const [pollIdToFetch, setPollIdToFetch] = useState<string | null>(pollId || null);
@@ -66,7 +67,7 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
   }, [pollIdToFetch, storageKey]);
 
   // Fetch the poll data
-  const { data: poll, isLoading: isPollLoading } = useQuery({
+  const { data: poll, isLoading: isPollLoading, refetch: refetchPoll } = useQuery({
     queryKey: ["poll", pollIdToFetch],
     queryFn: async () => {
       if (!pollIdToFetch) return null;
@@ -87,7 +88,7 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
     enabled: !!pollIdToFetch,
   });
   
-  const { data: totalVotes, isLoading: isTotalVotesLoading } = useQuery({
+  const { data: totalVotes, isLoading: isTotalVotesLoading, refetch: refetchTotalVotes } = useQuery({
     queryKey: ["poll-total-votes", pollIdToFetch],
     queryFn: async () => {
       if (!pollIdToFetch) return 0;
@@ -104,7 +105,7 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
       
       return data.reduce((sum, option) => sum + (option.votes || 0), 0);
     },
-    enabled: !!pollIdToFetch && hasVoted,
+    enabled: !!pollIdToFetch,
   });
 
   const handleVote = async () => {
@@ -120,6 +121,14 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
       // Mark as voted in localStorage
       localStorage.setItem(storageKey, 'true');
       setHasVoted(true);
+      
+      // Refetch poll data to update the UI with the new vote
+      await refetchPoll();
+      await refetchTotalVotes();
+      
+      // Also invalidate the queries to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: ["poll", pollIdToFetch] });
+      queryClient.invalidateQueries({ queryKey: ["poll-total-votes", pollIdToFetch] });
       
       toast({
         title: "Thanks for voting!",
