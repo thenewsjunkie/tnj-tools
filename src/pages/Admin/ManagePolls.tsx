@@ -113,12 +113,12 @@ const ManagePolls = () => {
           <h1 className="text-2xl font-bold">Manage Polls</h1>
           <div className="flex items-center gap-2">
             <Button 
-              variant="outline" 
+              variant="secondary" 
               onClick={handleCopyLatestPollEmbed}
-              className="flex items-center gap-2 mr-2"
+              className="flex items-center gap-2 mr-2 border border-input"
             >
               <Copy className="h-4 w-4" />
-              <span>Copy Latest Poll Embed</span>
+              <span className="whitespace-nowrap">Copy Latest Poll Embed</span>
             </Button>
             <Button onClick={handleCreatePoll} className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
