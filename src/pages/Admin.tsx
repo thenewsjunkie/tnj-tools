@@ -64,6 +64,10 @@ const Admin = () => {
                 <h4 className="font-medium">Manage GIFs</h4>
                 <p className="text-sm text-muted-foreground">Review, approve, and manage uploaded GIFs</p>
               </a>
+              <a href="/admin/manage-polls" className="block p-4 border border-white/10 rounded-lg hover:bg-accent transition-colors">
+                <h4 className="font-medium">Manage Polls</h4>
+                <p className="text-sm text-muted-foreground">Create, edit, and manage interactive polls</p>
+              </a>
             </div>
           </div>
         </div>

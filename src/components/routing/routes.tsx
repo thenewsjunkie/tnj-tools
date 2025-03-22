@@ -25,6 +25,8 @@ import EditShowMember from "@/pages/EditShowMember";
 import TNJGifs from "@/pages/TNJGifs";
 import TNJGifsEmbed from "@/pages/TNJGifsEmbed";
 import ManageGifs from "@/pages/Admin/ManageGifs";
+import ManagePolls from "@/pages/Admin/ManagePolls";
+import PollEmbed from "@/pages/PollEmbed";
 
 export const router = createBrowserRouter([
   {
@@ -100,6 +102,10 @@ export const router = createBrowserRouter([
     element: <TNJGifsEmbed />,
   },
   {
+    path: "/poll/:id",
+    element: <PollEmbed />,
+  },
+  {
     path: "/admin",
     element: <AdminRoute><Admin /></AdminRoute>,
   },
@@ -126,6 +132,10 @@ export const router = createBrowserRouter([
   {
     path: "/admin/manage-gifs",
     element: <AdminRoute><ManageGifs /></AdminRoute>,
+  },
+  {
+    path: "/admin/manage-polls",
+    element: <AdminRoute><ManagePolls /></AdminRoute>,
   },
   {
     path: "/tnj-ai-obs",
