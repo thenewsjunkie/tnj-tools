@@ -188,30 +188,41 @@ const PollDialog: React.FC<PollDialogProps> = ({ open, onOpenChange, poll }) => 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-background dark:bg-black/70 backdrop-blur-sm border border-border/50">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Edit Poll" : "Create New Poll"}</DialogTitle>
+          <DialogTitle className="text-foreground dark:text-white/90">
+            {isEditing ? "Edit Poll" : "Create New Poll"}
+          </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4 py-2">
           <div className="space-y-2">
-            <Label htmlFor="question">Question</Label>
+            <Label 
+              htmlFor="question" 
+              className="text-foreground dark:text-white/80"
+            >
+              Question
+            </Label>
             <Input
               id="question"
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               placeholder="Enter your question"
+              className="bg-white/10 text-foreground dark:text-white/90 border-border/50 placeholder:text-muted-foreground/70"
             />
           </div>
           
           <div className="space-y-2">
-            <Label>Options</Label>
+            <Label className="text-foreground dark:text-white/80">
+              Options
+            </Label>
             {options.map((option, index) => (
               <div key={index} className="flex items-center space-x-2">
                 <Input
                   value={option}
                   onChange={(e) => handleOptionChange(index, e.target.value)}
                   placeholder={`Option ${index + 1}`}
+                  className="bg-white/10 text-foreground dark:text-white/90 border-border/50 placeholder:text-muted-foreground/70"
                 />
                 <Button
                   type="button"
@@ -219,6 +230,7 @@ const PollDialog: React.FC<PollDialogProps> = ({ open, onOpenChange, poll }) => 
                   size="icon"
                   onClick={() => handleRemoveOption(index)}
                   disabled={options.length <= 1}
+                  className="text-destructive/70 hover:text-destructive"
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -229,7 +241,7 @@ const PollDialog: React.FC<PollDialogProps> = ({ open, onOpenChange, poll }) => 
               type="button"
               variant="outline"
               size="sm"
-              className="mt-2"
+              className="mt-2 border-primary/50 text-primary hover:bg-primary/10"
               onClick={handleAddOption}
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -239,10 +251,18 @@ const PollDialog: React.FC<PollDialogProps> = ({ open, onOpenChange, poll }) => 
         </div>
         
         <DialogFooter>
-          <Button onClick={() => onOpenChange(false)} variant="outline">
+          <Button 
+            onClick={() => onOpenChange(false)} 
+            variant="outline"
+            className="mr-2"
+          >
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={createPollMutation.isPending || updatePollMutation.isPending}>
+          <Button 
+            onClick={handleSave} 
+            disabled={createPollMutation.isPending || updatePollMutation.isPending}
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+          >
             {isEditing ? "Update" : "Create"}
           </Button>
         </DialogFooter>
