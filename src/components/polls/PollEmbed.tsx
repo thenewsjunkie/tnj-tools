@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -69,13 +70,21 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
       
       const { data, error } = await supabase
         .from("polls")
-        .select("*, poll_options(*)")
+        .select("*, poll_options(id, text, votes)")
         .eq("id", pollIdToFetch)
         .single();
 
       if (error) {
         console.error("Error fetching poll:", error);
         return null;
+      }
+      
+      // Ensure we preserve the display order by adding a property based on array index
+      if (data && data.poll_options) {
+        data.poll_options = data.poll_options.map((option, index) => ({
+          ...option,
+          display_order: index
+        }));
       }
       
       return data;
@@ -179,6 +188,9 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
     );
   }
 
+  // Sort the options based on display_order to maintain original order
+  const sortedOptions = [...poll.poll_options].sort((a, b) => a.display_order - b.display_order);
+
   return (
     <Card className={cardClassName}>
       <CardHeader>
@@ -187,7 +199,7 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
       <CardContent>
         {!hasVoted ? (
           <RadioGroup value={selectedOption || undefined} onValueChange={setSelectedOption}>
-            {poll.poll_options.map((option: any) => (
+            {sortedOptions.map((option: any) => (
               <div className="flex items-center space-x-2 mb-3" key={option.id}>
                 <RadioGroupItem 
                   value={option.id} 
@@ -203,7 +215,7 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
           </RadioGroup>
         ) : (
           <div className="space-y-3">
-            {poll.poll_options.map((option: any) => {
+            {sortedOptions.map((option: any) => {
               const percentage = totalVotes ? Math.round((option.votes / totalVotes) * 100) : 0;
               
               return (
