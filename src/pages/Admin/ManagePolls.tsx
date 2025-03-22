@@ -7,12 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import PollList from "@/components/polls/PollList";
 import PollDialog from "@/components/polls/PollDialog";
+import PollEmbedCode from "@/components/polls/PollEmbedCode";
 
 const ManagePolls = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [activePoll, setActivePoll] = useState<any>(null);
+  const [selectedPollForEmbed, setSelectedPollForEmbed] = useState<string | null>(null);
 
   const { data: polls = [], isLoading } = useQuery({
     queryKey: ["polls"],
@@ -44,6 +46,10 @@ const ManagePolls = () => {
     setIsDialogOpen(true);
   };
 
+  const handleShowEmbedCode = (pollId: string) => {
+    setSelectedPollForEmbed(selectedPollForEmbed === pollId ? null : pollId);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
@@ -60,10 +66,20 @@ const ManagePolls = () => {
             <p className="text-muted-foreground">Loading polls...</p>
           </div>
         ) : (
-          <PollList 
-            polls={polls} 
-            onEdit={handleEditPoll} 
-          />
+          <>
+            <PollList 
+              polls={polls} 
+              onEdit={handleEditPoll}
+              onShowEmbed={handleShowEmbedCode}
+              selectedForEmbed={selectedPollForEmbed}
+            />
+            
+            {selectedPollForEmbed && (
+              <div className="mt-6">
+                <PollEmbedCode pollId={selectedPollForEmbed} />
+              </div>
+            )}
+          </>
         )}
 
         <PollDialog

@@ -1,10 +1,18 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import PollEmbed from "@/components/polls/PollEmbed";
 
 const PollEmbedPage = () => {
   const { id } = useParams<{ id: string }>();
+
+  // Enable CORS for embedding via iframe
+  useEffect(() => {
+    // Send message to parent window when poll loads
+    if (window.parent !== window) {
+      window.parent.postMessage({ type: 'POLL_LOADED', pollId: id }, '*');
+    }
+  }, [id]);
 
   if (!id) {
     return (

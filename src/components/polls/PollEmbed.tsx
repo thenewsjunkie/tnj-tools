@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
 
 interface PollEmbedProps {
   pollId: string;
@@ -18,9 +19,17 @@ const PollEmbed: React.FC<PollEmbedProps> = ({ pollId }) => {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [hasVoted, setHasVoted] = useState(false);
   const [username, setUsername] = useState("");
+  
+  // Check for existing vote in localStorage
+  useEffect(() => {
+    const storedVote = localStorage.getItem(`poll_vote_${pollId}`);
+    if (storedVote) {
+      setHasVoted(true);
+    }
+  }, [pollId]);
 
   // Get poll and options
-  const { data: poll, isLoading } = useQuery({
+  const { data: poll, isLoading, refetch } = useQuery({
     queryKey: ["poll", pollId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -62,12 +71,18 @@ const PollEmbed: React.FC<PollEmbedProps> = ({ pollId }) => {
 
       return optionId;
     },
-    onSuccess: () => {
+    onSuccess: (optionId) => {
+      // Store vote in localStorage to prevent multiple votes
+      localStorage.setItem(`poll_vote_${pollId}`, optionId);
+      
       toast({
         title: "Vote recorded",
         description: "Thank you for your vote!",
       });
       setHasVoted(true);
+      
+      // Refetch poll data to update results
+      refetch();
     },
     onError: (error) => {
       toast({
@@ -80,9 +95,11 @@ const PollEmbed: React.FC<PollEmbedProps> = ({ pollId }) => {
 
   if (isLoading) {
     return (
-      <Card className="w-full">
+      <Card className="w-full shadow-md">
         <CardContent className="pt-6">
-          <p className="text-center text-muted-foreground">Loading poll...</p>
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
         </CardContent>
       </Card>
     );
@@ -90,7 +107,7 @@ const PollEmbed: React.FC<PollEmbedProps> = ({ pollId }) => {
 
   if (!poll) {
     return (
-      <Card className="w-full">
+      <Card className="w-full shadow-md">
         <CardContent className="pt-6">
           <p className="text-center text-muted-foreground">Poll not found</p>
         </CardContent>
@@ -101,7 +118,7 @@ const PollEmbed: React.FC<PollEmbedProps> = ({ pollId }) => {
   // If poll is not active
   if (poll.status !== "active") {
     return (
-      <Card className="w-full">
+      <Card className="w-full shadow-md">
         <CardHeader>
           <CardTitle>{poll.question}</CardTitle>
         </CardHeader>
@@ -136,62 +153,69 @@ const PollEmbed: React.FC<PollEmbedProps> = ({ pollId }) => {
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
+    <Card className="w-full shadow-md border-t-4 border-t-primary">
+      <CardHeader className="pb-2">
         <CardTitle>{poll.question}</CardTitle>
       </CardHeader>
       <CardContent>
         {!hasVoted ? (
           <>
-            <RadioGroup onValueChange={setSelectedOption} value={selectedOption || ""}>
+            <RadioGroup onValueChange={setSelectedOption} value={selectedOption || ""} className="space-y-3 mt-2">
               {poll.poll_options.map((option: any) => (
-                <div key={option.id} className="flex items-center space-x-2 py-2">
+                <div key={option.id} className="flex items-center space-x-2 py-2 px-3 rounded-md hover:bg-accent">
                   <RadioGroupItem value={option.id} id={option.id} />
-                  <Label htmlFor={option.id}>{option.text}</Label>
+                  <Label htmlFor={option.id} className="flex-grow cursor-pointer">{option.text}</Label>
                 </div>
               ))}
             </RadioGroup>
-            <div className="mt-4">
-              <Label htmlFor="username">Your Name (Optional)</Label>
-              <input
+            <div className="mt-6">
+              <Label htmlFor="username" className="text-sm font-medium">Your Name (Optional)</Label>
+              <Input
                 id="username"
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Enter your name"
-                className="w-full mt-1 p-2 border rounded"
+                className="mt-1"
               />
             </div>
           </>
         ) : (
-          <div className="space-y-3">
-            {poll.poll_options.map((option: any) => (
-              <div key={option.id} className="space-y-1">
-                <div className="flex justify-between">
-                  <span>{option.text}</span>
-                  <span>{getPercentage(option.votes)}%</span>
+          <div className="space-y-4 mt-2">
+            {poll.poll_options.map((option: any) => {
+              const percentage = getPercentage(option.votes);
+              return (
+                <div key={option.id} className="space-y-1">
+                  <div className="flex justify-between">
+                    <span className="font-medium">{option.text}</span>
+                    <span className="font-bold">{percentage}%</span>
+                  </div>
+                  <div className="relative pt-1">
+                    <Progress value={percentage} className="h-3" />
+                  </div>
+                  <p className="text-xs text-muted-foreground">{option.votes} vote(s)</p>
                 </div>
-                <Progress value={getPercentage(option.votes)} />
-                <p className="text-xs text-muted-foreground">{option.votes} vote(s)</p>
-              </div>
-            ))}
-            <p className="text-sm text-center mt-4">
+              );
+            })}
+            <div className="text-center pt-2 text-sm text-muted-foreground border-t mt-4">
               Total votes: {totalVotes}
-            </p>
+            </div>
           </div>
         )}
       </CardContent>
-      <CardFooter>
+      <CardFooter className="pt-2">
         {!hasVoted ? (
           <Button 
             className="w-full" 
             onClick={handleVote}
-            disabled={voteMutation.isPending}
+            disabled={voteMutation.isPending || !selectedOption}
           >
             {voteMutation.isPending ? "Submitting..." : "Submit Vote"}
           </Button>
         ) : (
-          <p className="text-center w-full text-sm">Thanks for voting!</p>
+          <div className="w-full text-center">
+            <p className="text-sm text-muted-foreground">Thanks for voting!</p>
+          </div>
         )}
       </CardFooter>
     </Card>

@@ -6,14 +6,21 @@ import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, Play, Pause } from "lucide-react";
+import { Edit, Trash2, Play, Pause, Code } from "lucide-react";
 
 interface PollListProps {
   polls: any[];
   onEdit: (poll: any) => void;
+  onShowEmbed?: (pollId: string) => void;
+  selectedForEmbed?: string | null;
 }
 
-const PollList: React.FC<PollListProps> = ({ polls, onEdit }) => {
+const PollList: React.FC<PollListProps> = ({ 
+  polls, 
+  onEdit, 
+  onShowEmbed,
+  selectedForEmbed 
+}) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -100,7 +107,10 @@ const PollList: React.FC<PollListProps> = ({ polls, onEdit }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {polls.map((poll) => (
-        <Card key={poll.id} className="overflow-hidden">
+        <Card 
+          key={poll.id} 
+          className={`overflow-hidden ${selectedForEmbed === poll.id ? 'ring-2 ring-primary' : ''}`}
+        >
           <CardHeader className="pb-2">
             <div className="flex justify-between items-start">
               <CardTitle className="text-lg">{poll.question}</CardTitle>
@@ -150,7 +160,19 @@ const PollList: React.FC<PollListProps> = ({ polls, onEdit }) => {
                   Start
                 </Button>
               ) : null}
+              
+              {onShowEmbed && (
+                <Button
+                  variant={selectedForEmbed === poll.id ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => onShowEmbed(poll.id)}
+                >
+                  <Code className="h-4 w-4 mr-1" />
+                  Embed
+                </Button>
+              )}
             </div>
+            
             <Button
               variant="destructive"
               size="sm"
