@@ -4,10 +4,18 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, ArrowLeft, Copy } from "lucide-react";
 import PollList from "@/components/polls/PollList";
 import PollDialog from "@/components/polls/PollDialog";
 import PollEmbedCode from "@/components/polls/PollEmbedCode";
+import { Link } from "react-router-dom";
+import { 
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator
+} from "@/components/ui/breadcrumb";
 
 const ManagePolls = () => {
   const { toast } = useToast();
@@ -50,15 +58,73 @@ const ManagePolls = () => {
     setSelectedPollForEmbed(selectedPollForEmbed === pollId ? null : pollId);
   };
 
+  const getLatestActivePoll = () => {
+    if (!polls || polls.length === 0) return null;
+    return polls.find(poll => poll.status === "active") || null;
+  };
+
+  const handleCopyLatestPollEmbed = () => {
+    const latestPoll = getLatestActivePoll();
+    if (!latestPoll) {
+      toast({
+        title: "No active poll",
+        description: "There are no active polls to embed. Please activate a poll first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const baseUrl = window.location.origin;
+    const embedUrl = `${baseUrl}/poll/${latestPoll.id}`;
+    const iframeCode = `<iframe 
+  src="${embedUrl}" 
+  width="100%" 
+  height="450" 
+  frameborder="0" 
+  style="border: 1px solid #eaeaea; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);" 
+  allowtransparency="true">
+</iframe>`;
+
+    navigator.clipboard.writeText(iframeCode).then(() => {
+      toast({
+        title: "Embed code copied!",
+        description: `Embed code for "${latestPoll.question}" copied to clipboard.`,
+      });
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        <Breadcrumb className="mb-6">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to="/admin" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to Admin
+                </Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+        
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Manage Polls</h1>
-          <Button onClick={handleCreatePoll} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            <span>Create Poll</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              onClick={handleCopyLatestPollEmbed}
+              className="flex items-center gap-2 mr-2"
+            >
+              <Copy className="h-4 w-4" />
+              <span>Copy Latest Poll Embed</span>
+            </Button>
+            <Button onClick={handleCreatePoll} className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              <span>Create Poll</span>
+            </Button>
+          </div>
         </div>
 
         {isLoading ? (

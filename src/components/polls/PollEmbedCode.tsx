@@ -1,6 +1,6 @@
 
-import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
@@ -42,6 +42,9 @@ const PollEmbedCode: React.FC<PollEmbedCodeProps> = ({
     <Card className="mt-4">
       <CardHeader>
         <CardTitle className="text-lg">Embed this Poll</CardTitle>
+        <CardDescription>
+          Share this poll on your website or directly with your audience.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
@@ -59,6 +62,9 @@ const PollEmbedCode: React.FC<PollEmbedCodeProps> = ({
           <div className="bg-muted p-2 rounded-md">
             <code className="text-xs break-all">{iframeCode}</code>
           </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Paste this code into your HTML to embed the poll with full voting functionality.
+          </p>
         </div>
         
         <div>
@@ -74,10 +80,9 @@ const PollEmbedCode: React.FC<PollEmbedCodeProps> = ({
             </Button>
           </div>
           <Input value={directLinkCode} readOnly />
-        </div>
-        
-        <div className="pt-2 text-sm text-muted-foreground">
-          <p>Share this poll on your website or send the direct link to your audience.</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Share this link via email, social media, or anywhere you want users to vote.
+          </p>
         </div>
       </CardContent>
     </Card>
