@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +7,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
 
 interface PollEmbedProps {
   pollId?: string;
@@ -26,10 +26,8 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
   const [hasVoted, setHasVoted] = useState<boolean>(false);
   const [pollIdToFetch, setPollIdToFetch] = useState<string | null>(pollId || null);
   
-  // Store vote in localStorage to prevent multiple votes
   const storageKey = `poll_voted_${pollIdToFetch}`;
 
-  // Fetch latest poll if no pollId provided or showLatest is true
   const { data: latestPoll, isLoading: isLoadingLatest } = useQuery({
     queryKey: ["latest-poll"],
     queryFn: async () => {
@@ -51,14 +49,12 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
     enabled: showLatest || !pollId,
   });
 
-  // Update pollIdToFetch when latestPoll is loaded
   useEffect(() => {
     if (showLatest && latestPoll?.id) {
       setPollIdToFetch(latestPoll.id);
     }
   }, [latestPoll, showLatest]);
 
-  // Check if user has already voted
   useEffect(() => {
     if (pollIdToFetch) {
       const voted = localStorage.getItem(storageKey) === 'true';
@@ -66,7 +62,6 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
     }
   }, [pollIdToFetch, storageKey]);
 
-  // Fetch the poll data
   const { data: poll, isLoading: isPollLoading, refetch: refetchPoll } = useQuery({
     queryKey: ["poll", pollIdToFetch],
     queryFn: async () => {
@@ -118,15 +113,12 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
 
       if (error) throw error;
 
-      // Mark as voted in localStorage
       localStorage.setItem(storageKey, 'true');
       setHasVoted(true);
       
-      // Refetch poll data to update the UI with the new vote
       await refetchPoll();
       await refetchTotalVotes();
       
-      // Also invalidate the queries to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ["poll", pollIdToFetch] });
       queryClient.invalidateQueries({ queryKey: ["poll-total-votes", pollIdToFetch] });
       
@@ -144,7 +136,6 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
     }
   };
 
-  // Determine theme-based styles
   const cardClassName = theme === "light" 
     ? "w-full max-w-md mx-auto bg-white border border-gray-200 shadow-sm" 
     : "w-full max-w-md mx-auto";
@@ -154,7 +145,18 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
   const textColor = theme === "light" ? "text-gray-800" : "text-card-foreground";
   const mutedTextColor = theme === "light" ? "text-gray-500" : "text-muted-foreground";
 
-  // Show loading state
+  const radioItemClassNames = cn(
+    "aspect-square h-4 w-4 rounded-full border",
+    theme === "light" 
+      ? "border-gray-300 text-neon-red ring-offset-white focus-visible:ring-neon-red" 
+      : "border-primary text-primary ring-offset-background focus-visible:ring-ring"
+  );
+
+  const radioIndicatorClassNames = cn(
+    "flex items-center justify-center",
+    theme === "light" ? "after:bg-neon-red" : "after:bg-primary"
+  );
+
   if ((isPollLoading && !!pollIdToFetch) || (isLoadingLatest && !pollIdToFetch)) {
     return (
       <Card className={cardClassName}>
@@ -167,7 +169,6 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
     );
   }
 
-  // No poll found
   if (!poll) {
     return (
       <Card className={cardClassName}>
@@ -190,7 +191,30 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
           <RadioGroup value={selectedOption || undefined} onValueChange={setSelectedOption}>
             {poll.poll_options.map((option: any) => (
               <div className="flex items-center space-x-2 mb-3" key={option.id}>
-                <RadioGroupItem value={option.id} id={option.id} />
+                <RadioGroupItem 
+                  value={option.id} 
+                  id={option.id} 
+                  className={radioItemClassNames}
+                  style={{
+                    '--tw-ring-color': theme === 'light' ? '#f21516' : 'hsl(var(--ring))',
+                  } as React.CSSProperties}
+                >
+                  <div className={radioIndicatorClassNames} 
+                    style={{
+                      position: 'relative',
+                      width: '100%',
+                      height: '100%',
+                      '::after': {
+                        content: '""',
+                        display: 'block',
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        backgroundColor: theme === 'light' ? '#f21516' : 'hsl(var(--primary))',
+                      },
+                    } as React.CSSProperties}
+                  />
+                </RadioGroupItem>
                 <Label htmlFor={option.id} className={`cursor-pointer ${textColor}`}>{option.text}</Label>
               </div>
             ))}
