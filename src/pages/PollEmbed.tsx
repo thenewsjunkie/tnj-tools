@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import PollEmbed from "@/components/polls/PollEmbed";
 
@@ -28,8 +28,8 @@ const PollEmbedPage = () => {
   }
 
   return (
-    <div className={`min-h-screen p-4 flex items-center justify-center ${theme === 'light' ? 'bg-white' : 'bg-background'}`}>
-      <div className="w-full max-w-md">
+    <div className={`min-h-screen p-2 flex items-center justify-center ${theme === 'light' ? 'bg-white' : 'bg-background'}`}>
+      <div className="w-full">
         {isLatestPoll ? (
           <PollEmbed showLatest={true} theme={theme} />
         ) : (

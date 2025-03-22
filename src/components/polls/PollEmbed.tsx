@@ -136,9 +136,11 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
     }
   };
 
-  const cardClassName = theme === "light" 
-    ? "w-full max-w-md mx-auto bg-white border border-gray-200 shadow-sm" 
-    : "w-full max-w-md mx-auto";
+  const cardClassName = cn(
+    "w-full bg-white border border-gray-200 shadow-sm",
+    theme === "light" ? "bg-white border-gray-200" : "bg-background",
+    "px-4 md:px-8"
+  );
   
   const primaryColor = theme === "light" ? "bg-neon-red" : "bg-primary";
   const mutedBgColor = theme === "light" ? "bg-gray-100" : "bg-muted";
