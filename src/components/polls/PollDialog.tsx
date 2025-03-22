@@ -253,8 +253,8 @@ const PollDialog: React.FC<PollDialogProps> = ({ open, onOpenChange, poll }) => 
         <DialogFooter>
           <Button 
             onClick={() => onOpenChange(false)} 
-            variant="outline"
-            className="mr-2"
+            variant="secondary"
+            className="mr-2 border border-gray-300 dark:border-gray-600 font-medium dark:text-white/90 text-gray-700 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600"
           >
             Cancel
           </Button>
