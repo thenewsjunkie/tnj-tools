@@ -66,34 +66,32 @@ const Admin = () => {
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
-          {/* Collapsible Lower Thirds Module */}
-          <Collapsible open={isLowerThirdsOpen} onOpenChange={setIsLowerThirdsOpen} className="w-full">
-            <div className="bg-black rounded-lg shadow border border-white/10">
-              <div className="p-4 pb-0 flex justify-between items-center">
-                <h3 className="text-lg font-medium">Lower Thirds</h3>
-                <CollapsibleTrigger asChild>
-                  <button className="p-1 hover:bg-accent rounded-md transition-colors">
-                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isLowerThirdsOpen ? '' : 'rotate-180'}`} />
-                    <span className="sr-only">Toggle Lower Thirds</span>
-                  </button>
-                </CollapsibleTrigger>
-              </div>
-              <CollapsibleContent>
-                <div className="p-4 pt-2">
-                  <LowerThirdsCard
-                    lowerThirds={lowerThirds}
-                    isLoading={isLoading}
-                    onQuickEdit={(lt) => {
-                      setSelectedLowerThird(lt);
-                      setIsQuickEditOpen(true);
-                    }}
-                  />
-                </div>
-              </CollapsibleContent>
+        {/* Full-width Lower Thirds Module */}
+        <Collapsible open={isLowerThirdsOpen} onOpenChange={setIsLowerThirdsOpen} className="w-full">
+          <div className="bg-black rounded-lg shadow border border-white/10">
+            <div className="p-4 pb-0 flex justify-between items-center">
+              <h3 className="text-lg font-medium">Lower Thirds</h3>
+              <CollapsibleTrigger asChild>
+                <button className="p-1 hover:bg-accent rounded-md transition-colors">
+                  <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isLowerThirdsOpen ? '' : 'rotate-180'}`} />
+                  <span className="sr-only">Toggle Lower Thirds</span>
+                </button>
+              </CollapsibleTrigger>
             </div>
-          </Collapsible>
-        </div>
+            <CollapsibleContent>
+              <div className="p-4 pt-2">
+                <LowerThirdsCard
+                  lowerThirds={lowerThirds}
+                  isLoading={isLoading}
+                  onQuickEdit={(lt) => {
+                    setSelectedLowerThird(lt);
+                    setIsQuickEditOpen(true);
+                  }}
+                />
+              </div>
+            </CollapsibleContent>
+          </div>
+        </Collapsible>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Stopwatch />
