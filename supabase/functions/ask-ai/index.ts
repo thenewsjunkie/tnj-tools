@@ -16,7 +16,7 @@ serve(async (req) => {
   }
 
   try {
-    const { model, prompt } = await req.json();
+    const { model, prompt, eli5Mode } = await req.json();
     
     if (!prompt) {
       return new Response(
@@ -28,6 +28,13 @@ serve(async (req) => {
     const validModels = ["gpt-4o-mini", "gpt-4o", "gpt-4.5-preview"];
     const selectedModel = validModels.includes(model) ? model : "gpt-4o-mini";
 
+    // Set system prompt based on eli5Mode
+    let systemPrompt = 'You are a helpful assistant.';
+    
+    if (eli5Mode) {
+      systemPrompt = 'You are a helpful assistant. Explain concepts in very simple terms that a 5-year-old child could understand. Use simple words, short sentences, and relatable examples. Avoid technical jargon and complex explanations.';
+    }
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -37,7 +44,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: selectedModel,
         messages: [
-          { role: 'system', content: 'You are a helpful assistant.' },
+          { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }
         ],
       }),

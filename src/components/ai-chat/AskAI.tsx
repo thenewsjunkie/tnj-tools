@@ -11,6 +11,7 @@ import { toast } from "@/components/ui/use-toast";
 import { Volume2, Play, Loader2 } from "lucide-react";
 import { AudioControls } from "@/components/audio/AudioControls";
 import { useAudioPlayback } from "@/hooks/useAudioPlayback";
+import { Switch } from "@/components/ui/switch";
 
 type AIModel = "gpt-4o-mini" | "gpt-4o" | "gpt-4.5-preview";
 
@@ -25,6 +26,7 @@ export const AskAI = () => {
   const [selectedModel, setSelectedModel] = useState<AIModel>("gpt-4o-mini");
   const [aiResponse, setAIResponse] = useState<string | null>(null);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
+  const [eli5Mode, setEli5Mode] = useState(false);
   
   const {
     isPlaying,
@@ -43,7 +45,7 @@ export const AskAI = () => {
   };
   
   const { refetch, isLoading } = useQuery({
-    queryKey: ["ai-response", question, selectedModel],
+    queryKey: ["ai-response", question, selectedModel, eli5Mode],
     queryFn: async () => {
       if (!question.trim()) return null;
       
@@ -51,7 +53,8 @@ export const AskAI = () => {
         const { data, error } = await supabase.functions.invoke('ask-ai', {
           body: {
             model: selectedModel,
-            prompt: question
+            prompt: question,
+            eli5Mode: eli5Mode
           }
         });
         
@@ -181,23 +184,38 @@ export const AskAI = () => {
       <Card className="bg-transparent border-0 shadow-none">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-lg font-medium">Ask AI</CardTitle>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Model:</span>
-            <Select
-              value={selectedModel}
-              onValueChange={(value) => handleModelChange(value as AIModel)}
-            >
-              <SelectTrigger className="w-[180px] h-8 text-xs bg-black/50">
-                <SelectValue placeholder="Select model" />
-              </SelectTrigger>
-              <SelectContent>
-                {modelOptions.map(option => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">ELI5</span>
+              <Switch
+                checked={eli5Mode}
+                onCheckedChange={setEli5Mode}
+                aria-label="Explain Like I'm 5 mode"
+              />
+              {eli5Mode && (
+                <span className="text-[10px] bg-yellow-500/20 text-yellow-500 px-1.5 py-0.5 rounded-full">
+                  Simple mode
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Model:</span>
+              <Select
+                value={selectedModel}
+                onValueChange={(value) => handleModelChange(value as AIModel)}
+              >
+                <SelectTrigger className="w-[180px] h-8 text-xs bg-black/50">
+                  <SelectValue placeholder="Select model" />
+                </SelectTrigger>
+                <SelectContent>
+                  {modelOptions.map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -222,7 +240,14 @@ export const AskAI = () => {
               <div className="mt-4">
                 <div className="p-4 rounded-md bg-black/60 border border-white/10">
                   <div className="flex justify-between items-start mb-2">
-                    <h4 className="text-sm font-medium text-muted-foreground">Response:</h4>
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-sm font-medium text-muted-foreground">Response:</h4>
+                      {eli5Mode && (
+                        <span className="text-[10px] bg-yellow-500/20 text-yellow-500 px-1.5 py-0.5 rounded-full">
+                          Simple explanation
+                        </span>
+                      )}
+                    </div>
                     <Button 
                       variant="ghost" 
                       size="sm"
