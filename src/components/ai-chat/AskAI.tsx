@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/use-toast";
 
 type AIModel = "gpt-4o-mini" | "gpt-4o" | "gpt-4.5-preview";
 
@@ -39,6 +40,11 @@ export const AskAI = () => {
         });
         
         if (error) {
+          toast({
+            title: "Error",
+            description: `Failed to get AI response: ${error.message}`,
+            variant: "destructive"
+          });
           throw new Error(`API Error: ${error.message}`);
         }
         
@@ -48,6 +54,11 @@ export const AskAI = () => {
       } catch (error) {
         console.error("Error fetching from AI service:", error);
         setAIResponse(`Error: ${error instanceof Error ? error.message : "Unknown error occurred"}`);
+        toast({
+          title: "Error",
+          description: `Error fetching from AI service: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
+          variant: "destructive"
+        });
         return null;
       }
     },
@@ -58,7 +69,11 @@ export const AskAI = () => {
     e.preventDefault();
     if (!question.trim()) return;
     
-    await refetch();
+    try {
+      await refetch();
+    } catch (error) {
+      console.error("Submit error:", error);
+    }
   };
   
   return (
