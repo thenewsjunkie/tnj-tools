@@ -38,20 +38,32 @@ serve(async (req: Request) => {
     })
 
     if (!ttsResponse.ok) {
-      throw new Error(`Text-to-speech API error: ${await ttsResponse.text()}`)
+      const errorText = await ttsResponse.text();
+      console.error(`[text-to-speech] OpenAI API error: ${errorText}`);
+      throw new Error(`Text-to-speech API error: ${errorText}`)
     }
 
-    const audioResponse = await ttsResponse.arrayBuffer()
-    console.log('[text-to-speech] Audio response generated')
+    // Get the audio as an array buffer
+    const audioBuffer = await ttsResponse.arrayBuffer()
+    console.log('[text-to-speech] Audio response generated, size:', audioBuffer.byteLength)
 
-    // Convert to base64 for transmission
-    const base64Audio = btoa(
-      String.fromCharCode.apply(null, new Uint8Array(audioResponse))
-    );
+    // For larger responses, we need to use a more efficient way to encode to base64
+    // that doesn't hit the call stack size limit
+    const uint8Array = new Uint8Array(audioBuffer);
+    const chunks = [];
+    const chunkSize = 8192; // Process in smaller chunks to avoid call stack issues
+    
+    for (let i = 0; i < uint8Array.length; i += chunkSize) {
+      const chunk = uint8Array.slice(i, i + chunkSize);
+      chunks.push(String.fromCharCode.apply(null, chunk));
+    }
+    
+    const base64Audio = btoa(chunks.join(''));
+    console.log('[text-to-speech] Base64 encoding complete, length:', base64Audio.length)
 
     return new Response(
       JSON.stringify({
-        audioResponse: base64Audio,
+        audioData: base64Audio,
       }),
       {
         headers: {
