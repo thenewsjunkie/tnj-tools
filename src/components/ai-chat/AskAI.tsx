@@ -8,6 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
+import { Volume2, Play } from "lucide-react";
+import { AudioControls } from "@/components/audio/AudioControls";
+import { useAudioPlayback } from "@/hooks/useAudioPlayback";
 
 type AIModel = "gpt-4o-mini" | "gpt-4o" | "gpt-4.5-preview";
 
@@ -21,6 +24,19 @@ export const AskAI = () => {
   const [question, setQuestion] = useState("");
   const [selectedModel, setSelectedModel] = useState<AIModel>("gpt-4o-mini");
   const [aiResponse, setAIResponse] = useState<string | null>(null);
+  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
+  
+  const {
+    isPlaying,
+    isPaused,
+    volume,
+    audioPlayer,
+    setIsPlaying,
+    setIsPaused,
+    handlePlaybackEnded,
+    handleVolumeChange,
+    togglePlayPause
+  } = useAudioPlayback();
   
   const handleModelChange = (value: AIModel) => {
     setSelectedModel(value);
@@ -76,6 +92,53 @@ export const AskAI = () => {
     }
   };
   
+  const handlePlayAudio = async () => {
+    if (!aiResponse) return;
+    
+    setIsGeneratingAudio(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('text-to-speech', {
+        body: {
+          text: aiResponse
+        }
+      });
+      
+      if (error) {
+        throw new Error(`Error generating audio: ${error.message}`);
+      }
+      
+      const audioData = data.audioResponse;
+      
+      if (audioPlayer.current) {
+        // Convert base64 to blob and create an object URL
+        const byteCharacters = atob(audioData);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const audioBlob = new Blob([byteArray], { type: 'audio/mp3' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        
+        audioPlayer.current.src = audioUrl;
+        audioPlayer.current.volume = volume[0];
+        audioPlayer.current.play();
+        setIsPlaying(true);
+        setIsPaused(false);
+      }
+    } catch (error) {
+      console.error("Error generating audio:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to generate audio",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingAudio(false);
+    }
+  };
+  
   return (
     <div className="bg-black rounded-lg shadow border border-white/10">
       <Card className="bg-transparent border-0 shadow-none">
@@ -119,14 +182,46 @@ export const AskAI = () => {
             </div>
             
             {aiResponse && (
-              <div className="mt-4 p-4 rounded-md bg-black/60 border border-white/10">
-                <Textarea 
-                  value={aiResponse}
-                  readOnly
-                  className="min-h-[200px] w-full border-0 bg-transparent focus-visible:ring-0 resize-none"
-                />
+              <div className="mt-4">
+                <div className="p-4 rounded-md bg-black/60 border border-white/10">
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="text-sm font-medium text-muted-foreground">Response:</h4>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={handlePlayAudio}
+                      disabled={isGeneratingAudio || isPlaying || isPaused}
+                      className="h-8 w-8 p-0 text-foreground hover:text-primary transition-colors"
+                    >
+                      {isGeneratingAudio ? 
+                        <span className="loading loading-spinner loading-xs"></span> : 
+                        <Play className="h-4 w-4" />
+                      }
+                      <span className="sr-only">Play response</span>
+                    </Button>
+                  </div>
+                  <Textarea 
+                    value={aiResponse}
+                    readOnly
+                    className="min-h-[200px] w-full border-0 bg-transparent focus-visible:ring-0 resize-none"
+                  />
+                  <div className="mt-2">
+                    <AudioControls
+                      isPaused={isPaused}
+                      isPlaying={isPlaying}
+                      volume={volume}
+                      onPlayPause={togglePlayPause}
+                      onVolumeChange={handleVolumeChange}
+                    />
+                  </div>
+                </div>
               </div>
             )}
+            <audio
+              ref={audioPlayer}
+              onEnded={handlePlaybackEnded}
+              className="hidden"
+            />
           </form>
         </CardContent>
       </Card>
