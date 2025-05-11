@@ -1,3 +1,4 @@
+
 project_id = "gpmandlkcdompmdvethh"
 [functions.process-audio]
 verify_jwt = false
