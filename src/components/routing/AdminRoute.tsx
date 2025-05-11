@@ -1,7 +1,7 @@
+
 import { useLocation, Navigate } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import GlobalQueueManager from "@/components/alerts/GlobalQueueManager";
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
@@ -73,12 +73,7 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  return (
-    <>
-      <GlobalQueueManager />
-      {children}
-    </>
-  );
+  return <>{children}</>;
 };
 
 export default AdminRoute;
