@@ -11,10 +11,18 @@ import { toast } from "@/components/ui/use-toast";
 interface AIResponseDisplayProps {
   aiResponse: string | null;
   eli5Mode: boolean;
+  conversationId: string | null;
+  onDisplayInOBS: () => Promise<boolean>;
 }
 
-export const AIResponseDisplay = ({ aiResponse, eli5Mode }: AIResponseDisplayProps) => {
+export const AIResponseDisplay = ({ 
+  aiResponse, 
+  eli5Mode, 
+  conversationId,
+  onDisplayInOBS 
+}: AIResponseDisplayProps) => {
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
+  const [displayedInOBS, setDisplayedInOBS] = useState(false);
   
   const {
     isPlaying,
@@ -29,9 +37,10 @@ export const AIResponseDisplay = ({ aiResponse, eli5Mode }: AIResponseDisplayPro
     resetPlayer
   } = useAudioPlayback();
   
-  // Reset player when aiResponse changes
+  // Reset player and OBS display state when aiResponse changes
   useEffect(() => {
     resetPlayer();
+    setDisplayedInOBS(false);
   }, [aiResponse]);
   
   const handlePlayAudio = async () => {
@@ -41,6 +50,14 @@ export const AIResponseDisplay = ({ aiResponse, eli5Mode }: AIResponseDisplayPro
     
     try {
       console.log("Generating audio for text:", aiResponse.slice(0, 50) + "...");
+      
+      // First, display the conversation in OBS
+      if (!displayedInOBS && conversationId) {
+        const success = await onDisplayInOBS();
+        if (success) {
+          setDisplayedInOBS(true);
+        }
+      }
       
       // If the response is too long, trim it to a reasonable length for TTS
       const trimmedText = aiResponse.length > 4000 ? aiResponse.slice(0, 4000) + "..." : aiResponse;
@@ -129,6 +146,11 @@ export const AIResponseDisplay = ({ aiResponse, eli5Mode }: AIResponseDisplayPro
             {eli5Mode && (
               <span className="text-[10px] bg-yellow-500/20 text-yellow-500 px-1.5 py-0.5 rounded-full">
                 Simple explanation
+              </span>
+            )}
+            {displayedInOBS && (
+              <span className="text-[10px] bg-neon-red/20 text-neon-red px-1.5 py-0.5 rounded-full">
+                Showing in OBS
               </span>
             )}
           </div>

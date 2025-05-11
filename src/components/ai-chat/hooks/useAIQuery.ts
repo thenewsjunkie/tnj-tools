@@ -11,6 +11,7 @@ export const useAIQuery = () => {
   const [selectedModel, setSelectedModel] = useState<AIModel>("gpt-4o-mini");
   const [aiResponse, setAIResponse] = useState<string | null>(null);
   const [eli5Mode, setEli5Mode] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
 
   const handleQuestionChange = (value: string) => {
     setQuestion(value);
@@ -49,6 +50,26 @@ export const useAIQuery = () => {
         
         const responseText = data.response;
         setAIResponse(responseText);
+        
+        // Save the conversation to the database
+        const { data: conversationData, error: conversationError } = await supabase
+          .from('audio_conversations')
+          .insert({
+            question_text: question.trim(),
+            answer_text: responseText,
+            status: 'completed',
+            conversation_state: 'pending'
+          })
+          .select()
+          .single();
+        
+        if (conversationError) {
+          console.error("Error saving conversation:", conversationError);
+        } else if (conversationData) {
+          setConversationId(conversationData.id);
+          console.log("Conversation saved with ID:", conversationData.id);
+        }
+        
         return responseText;
       } catch (error) {
         console.error("Error fetching from AI service:", error);
@@ -69,11 +90,56 @@ export const useAIQuery = () => {
     if (!question.trim()) return;
     
     try {
-      // Reset the AI response before fetching a new one
+      // Reset the AI response and conversation ID before fetching a new one
       setAIResponse(null);
+      setConversationId(null);
       await refetch();
     } catch (error) {
       console.error("Submit error:", error);
+    }
+  };
+
+  // This function will be used to display the conversation in OBS
+  const displayInOBS = async () => {
+    if (!conversationId) {
+      console.error("No conversation ID to display");
+      toast({
+        title: "Error",
+        description: "Failed to display in OBS - missing conversation ID",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    try {
+      // Use the mark_as_displayed function to set this conversation as displaying
+      const { error } = await supabase.rpc('mark_as_displayed', {
+        conversation_id: conversationId
+      });
+        
+      if (error) {
+        console.error('Error updating conversation state:', error);
+        toast({
+          title: "Error",
+          description: "Failed to display in OBS",
+          variant: "destructive"
+        });
+        return false;
+      }
+      
+      toast({
+        title: "Success",
+        description: "Conversation is now showing in OBS",
+      });
+      return true;
+    } catch (error) {
+      console.error("Error displaying in OBS:", error);
+      toast({
+        title: "Error",
+        description: "Failed to display in OBS",
+        variant: "destructive"
+      });
+      return false;
     }
   };
 
@@ -83,9 +149,11 @@ export const useAIQuery = () => {
     aiResponse,
     eli5Mode,
     isLoading,
+    conversationId,
     handleQuestionChange,
     handleModelChange,
     handleEli5Change,
-    handleSubmit
+    handleSubmit,
+    displayInOBS
   };
 };

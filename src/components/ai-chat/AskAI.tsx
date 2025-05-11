@@ -11,10 +11,12 @@ export const AskAI = () => {
     aiResponse,
     eli5Mode,
     isLoading,
+    conversationId,
     handleQuestionChange,
     handleModelChange,
     handleEli5Change,
-    handleSubmit
+    handleSubmit,
+    displayInOBS
   } = useAIQuery();
 
   return (
@@ -37,6 +39,8 @@ export const AskAI = () => {
             <AIResponseDisplay 
               aiResponse={aiResponse} 
               eli5Mode={eli5Mode}
+              conversationId={conversationId}
+              onDisplayInOBS={displayInOBS}
             />
           )}
         </CardContent>
