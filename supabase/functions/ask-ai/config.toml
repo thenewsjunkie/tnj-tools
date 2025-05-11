@@ -1,0 +1,4 @@
+
+project_id = "gpmandlkcdompmdvethh"
+[secrets]
+OPENAI_API_KEY = "OPENAI_API_KEY"

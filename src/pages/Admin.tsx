@@ -13,6 +13,7 @@ import Stopwatch from "@/components/Stopwatch";
 import TNJLinks from "@/components/TNJLinks";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
+import { AskAI } from "@/components/ai-chat/AskAI";
 
 const Admin = () => {
   const { theme } = useTheme();
@@ -47,6 +48,11 @@ const Admin = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
           <TNJAi />
           <Alerts />
+        </div>
+        
+        {/* Full-width Ask AI Module */}
+        <div className="w-full">
+          <AskAI />
         </div>
         
         {/* Full-width Lower Thirds Module */}
