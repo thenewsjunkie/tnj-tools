@@ -138,21 +138,20 @@ const CurrentScore = () => {
                   : "w-[400px] h-[400px] mx-1 mb-2"
               )}
             >
-              {/* Background Image with Overlay - only shown if not hiding images */}
-              {!hideImages && (
+              {/* Background Image - only shown if not hiding images */}
+              {!hideImages && contestant.image_url && (
                 <div className="absolute inset-0">
-                  {contestant.image_url ? (
-                    <img
-                      src={contestant.image_url}
-                      alt={contestant.name || ''}
-                      className="w-full h-full object-cover opacity-60"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-900" />
-                  )}
-                  {/* Enhanced gradient overlay for better text visibility */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/75 to-black/40" />
+                  <img
+                    src={contestant.image_url}
+                    alt={contestant.name || ''}
+                    className="w-full h-full object-cover opacity-60"
+                  />
                 </div>
+              )}
+              
+              {/* Gradient overlay - only applied when images are shown */}
+              {!hideImages && (
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/75 to-black/40" />
               )}
               
               {/* Score Display - centered for regular mode, side-by-side in compact */}
@@ -180,9 +179,12 @@ const CurrentScore = () => {
                 </div>
               </div>
               
-              {/* Name Display - bottom for regular, side for compact */}
+              {/* Name Display - with transparent background when hideImages is true */}
               <div className={cn(
-                "absolute bg-gradient-to-t from-black via-black/90 to-transparent",
+                "absolute",
+                hideImages 
+                  ? "bg-transparent" 
+                  : "bg-gradient-to-t from-black via-black/90 to-transparent",
                 compact
                   ? layout === 'horizontal'
                     ? "bottom-0 left-0 right-0 h-8"
