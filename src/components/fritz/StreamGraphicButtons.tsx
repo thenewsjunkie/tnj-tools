@@ -19,7 +19,12 @@ const StreamGraphicButtons = () => {
     compactCorner: `${baseUrl}?compact=true`,
     compactCornerNoImages: `${baseUrl}?compact=true&hideImages=true`,
     compactCornerWithControls: `${baseUrl}?compact=true&showControls=true`,
+    horizontalCompact: `${baseUrl}?compact=true&layout=horizontal`,
+    horizontalCompactNoImages: `${baseUrl}?compact=true&layout=horizontal&hideImages=true`,
+    horizontalCompactLarge: `${baseUrl}?compact=true&layout=horizontal&fontSize=large&hideImages=true`,
     largeFont: `${baseUrl}?fontSize=large`,
+    extraLargeFont: `${baseUrl}?fontSize=xl&hideImages=true`,
+    extraExtraLargeFont: `${baseUrl}?fontSize=xxl&hideImages=true`,
     smallFont: `${baseUrl}?fontSize=small&compact=true`,
     topLeft: `${baseUrl}?compact=true&position=top-left`,
     topRight: `${baseUrl}?compact=true&position=top-right`,
@@ -64,6 +69,22 @@ const StreamGraphicButtons = () => {
                     Large Font Display
                   </Button>
                 </Link>
+                <Link to={displayModes.extraLargeFont}>
+                  <Button
+                    variant="ghost"
+                    className="w-full bg-black/40 text-white hover:text-neon-red border border-white/10"
+                  >
+                    XL Score (No Images)
+                  </Button>
+                </Link>
+                <Link to={displayModes.extraExtraLargeFont}>
+                  <Button
+                    variant="ghost"
+                    className="w-full bg-black/40 text-white hover:text-neon-red border border-white/10"
+                  >
+                    XXL Score (No Images)
+                  </Button>
+                </Link>
               </div>
             </div>
             
@@ -100,6 +121,36 @@ const StreamGraphicButtons = () => {
                     className="w-full bg-black/40 text-white hover:text-neon-red border border-white/10"
                   >
                     Small Font Compact
+                  </Button>
+                </Link>
+              </div>
+            </div>
+            
+            <div className="bg-black/80 border border-white/20 rounded-lg p-4">
+              <h3 className="text-white font-bold mb-3">Horizontal Layout Options</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <Link to={displayModes.horizontalCompact}>
+                  <Button
+                    variant="ghost"
+                    className="w-full bg-black/40 text-white hover:text-neon-red border border-white/10"
+                  >
+                    Horizontal Compact
+                  </Button>
+                </Link>
+                <Link to={displayModes.horizontalCompactNoImages}>
+                  <Button
+                    variant="ghost"
+                    className="w-full bg-black/40 text-white hover:text-neon-red border border-white/10"
+                  >
+                    Horizontal (No Images)
+                  </Button>
+                </Link>
+                <Link to={displayModes.horizontalCompactLarge}>
+                  <Button
+                    variant="ghost"
+                    className="w-full bg-black/40 text-white hover:text-neon-red border border-white/10"
+                  >
+                    Horizontal Large Score
                   </Button>
                 </Link>
               </div>

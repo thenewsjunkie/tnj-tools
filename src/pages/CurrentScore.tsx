@@ -16,6 +16,7 @@ const CurrentScore = () => {
   const hideImages = searchParams.get('hideImages') === 'true';
   const showControls = searchParams.get('showControls') === 'true';
   const fontSize = searchParams.get('fontSize') || 'medium'; // small, medium, large
+  const layout = searchParams.get('layout') || 'vertical'; // vertical, horizontal
 
   useEffect(() => {
     fetchContestants();
@@ -92,12 +93,16 @@ const CurrentScore = () => {
     'small': 'text-[80px]',
     'medium': 'text-[120px]',
     'large': 'text-[160px]',
+    'xl': 'text-[200px]',
+    'xxl': 'text-[240px]',
   }[fontSize] || 'text-[120px]';
 
   const nameFontSizeClasses = {
     'small': 'text-xl',
     'medium': 'text-2xl',
     'large': 'text-3xl',
+    'xl': 'text-4xl',
+    'xxl': 'text-5xl',
   }[fontSize] || 'text-2xl';
 
   const filteredContestants = contestants.filter(c => c.name);
@@ -112,17 +117,25 @@ const CurrentScore = () => {
           compact ? "w-auto" : "w-full"
         )}
       >
-        {/* Responsive layout that changes based on compact mode */}
+        {/* Responsive layout that changes based on compact mode and layout */}
         <div className={cn(
           "flex",
-          compact ? "flex-col" : "flex-row"
+          compact 
+            ? layout === 'horizontal' 
+              ? "flex-row space-x-2" 
+              : "flex-col space-y-2"
+            : "flex-row flex-wrap justify-center"
         )}>
           {filteredContestants.map((contestant) => (
             <div 
               key={contestant.id} 
               className={cn(
                 "relative group bg-black/80 border border-white/10 rounded-lg overflow-hidden",
-                compact ? "mb-2 w-[220px] h-[120px]" : "w-[400px] h-[400px] mx-1"
+                compact 
+                  ? layout === 'horizontal'
+                    ? "mb-0 h-[120px] w-[180px]"
+                    : "mb-0 w-[220px] h-[120px]" 
+                  : "w-[400px] h-[400px] mx-1 mb-2"
               )}
             >
               {/* Background Image with Overlay - only shown if not hiding images */}
@@ -145,14 +158,22 @@ const CurrentScore = () => {
               {/* Score Display - centered for regular mode, side-by-side in compact */}
               <div className={cn(
                 "absolute flex items-center justify-center",
-                compact ? "inset-y-0 left-0 right-1/2" : "inset-0"
+                compact 
+                  ? layout === 'horizontal'
+                    ? "inset-y-0 inset-x-0 pt-1" 
+                    : "inset-y-0 left-0 right-1/2" 
+                  : "inset-0"
               )}>
                 <div className="relative">
                   {/* Score glow effect */}
                   <div className="absolute inset-0 blur-lg bg-neon-red/30 animate-pulse" />
                   <span className={cn(
                     "relative font-['Digital-7'] text-neon-red animate-led-flicker drop-shadow-[0_0_10px_rgba(255,0,0,0.7)]",
-                    compact ? "text-[80px]" : scoreFontSizeClasses
+                    compact 
+                      ? layout === 'horizontal'
+                        ? "text-[60px]" 
+                        : "text-[80px]"
+                      : scoreFontSizeClasses
                   )}>
                     {contestant.score || 0}
                   </span>
@@ -162,11 +183,19 @@ const CurrentScore = () => {
               {/* Name Display - bottom for regular, side for compact */}
               <div className={cn(
                 "absolute bg-gradient-to-t from-black via-black/90 to-transparent",
-                compact ? "inset-y-0 left-1/2 right-0 flex items-center justify-center" : "bottom-0 left-0 right-0 h-16"
+                compact
+                  ? layout === 'horizontal'
+                    ? "bottom-0 left-0 right-0 h-8"
+                    : "inset-y-0 left-1/2 right-0 flex items-center justify-center" 
+                  : "bottom-0 left-0 right-0 h-16"
               )}>
                 <h2 className={cn(
                   "font-bold text-white text-center tracking-wider uppercase px-2",
-                  compact ? nameFontSizeClasses : "text-4xl px-6 py-2"
+                  compact
+                    ? layout === 'horizontal'
+                      ? "text-sm" 
+                      : nameFontSizeClasses
+                    : "text-4xl px-6 py-2"
                 )}>
                   {contestant.name}
                 </h2>
