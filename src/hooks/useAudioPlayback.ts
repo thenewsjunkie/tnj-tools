@@ -1,3 +1,4 @@
+
 import { useState, useRef } from 'react'
 
 export const useAudioPlayback = () => {
@@ -30,6 +31,16 @@ export const useAudioPlayback = () => {
     }
   }
 
+  const resetPlayer = () => {
+    setIsPlaying(false)
+    setIsPaused(false)
+    if (audioPlayer.current) {
+      audioPlayer.current.pause()
+      audioPlayer.current.currentTime = 0
+      audioPlayer.current.src = ''
+    }
+  }
+
   return {
     isPlaying,
     isPaused,
@@ -39,6 +50,7 @@ export const useAudioPlayback = () => {
     setIsPaused,
     handlePlaybackEnded,
     handleVolumeChange,
-    togglePlayPause
+    togglePlayPause,
+    resetPlayer
   }
 }

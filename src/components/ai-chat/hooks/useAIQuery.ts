@@ -69,6 +69,8 @@ export const useAIQuery = () => {
     if (!question.trim()) return;
     
     try {
+      // Reset the AI response before fetching a new one
+      setAIResponse(null);
       await refetch();
     } catch (error) {
       console.error("Submit error:", error);

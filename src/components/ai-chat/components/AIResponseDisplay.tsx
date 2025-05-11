@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Loader2, Play } from "lucide-react";
@@ -25,8 +25,14 @@ export const AIResponseDisplay = ({ aiResponse, eli5Mode }: AIResponseDisplayPro
     setIsPaused,
     handlePlaybackEnded,
     handleVolumeChange,
-    togglePlayPause
+    togglePlayPause,
+    resetPlayer
   } = useAudioPlayback();
+  
+  // Reset player when aiResponse changes
+  useEffect(() => {
+    resetPlayer();
+  }, [aiResponse]);
   
   const handlePlayAudio = async () => {
     if (!aiResponse) return;
