@@ -1,11 +1,13 @@
 
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1"
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
   const chunks: string[] = [];
@@ -84,7 +86,7 @@ serve(async (req: Request) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful assistant for a radio show. Keep your responses concise and radio-friendly, designed to be spoken aloud in 10-15 seconds (approximately 25-40 words). Be conversational, engaging, and get to the point quickly. Avoid complex explanations or lengthy details. Your audience is listening live and needs clear, immediate responses.',
+            content: 'You are a helpful assistant for a radio show. Keep your responses concise and radio-friendly, designed to be spoken aloud in 10-15 seconds (approximately 25-40 words). Be conversational, engaging, and get to the point quickly. Avoid complex explanations or lengthy details. Your audience is listening live and needs clear, immediate responses. Do not mention your knowledge cutoff date or recommend checking other sources for more current information.',
           },
           {
             role: 'user',

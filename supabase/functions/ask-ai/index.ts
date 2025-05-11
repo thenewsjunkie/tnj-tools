@@ -29,10 +29,10 @@ serve(async (req) => {
     const selectedModel = validModels.includes(model) ? model : "gpt-4o-mini";
 
     // Set system prompt based on eli5Mode
-    let systemPrompt = 'You are a helpful assistant.';
+    let systemPrompt = 'You are a helpful assistant for a radio show. Keep your responses concise and radio-friendly, designed to be spoken aloud in 10-15 seconds (approximately 25-40 words). Be conversational, engaging, and get to the point quickly. Avoid complex explanations or lengthy details. Your audience is listening live and needs clear, immediate responses. Do not mention your knowledge cutoff date or recommend checking other sources for more current information.';
     
     if (eli5Mode) {
-      systemPrompt = 'You are a helpful assistant. Explain concepts in very simple terms that a 5-year-old child could understand. Use simple words, short sentences, and relatable examples. Avoid technical jargon and complex explanations.';
+      systemPrompt = 'You are a helpful assistant. Explain concepts in very simple terms that a 5-year-old child could understand. Use simple words, short sentences, and relatable examples. Avoid technical jargon and complex explanations. Do not mention your knowledge cutoff date or recommend checking other sources for more current information.';
     }
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -71,7 +71,10 @@ serve(async (req) => {
       JSON.stringify({ error: error.message }),
       {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { 
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
       }
     );
   }
