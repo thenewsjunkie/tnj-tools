@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -82,6 +83,15 @@ export default {
           "0%": { opacity: "1" },
           "100%": { opacity: "0" },
         },
+        "led-flicker": {
+          "0%, 100%": { opacity: "1.0" },
+          "25%": { opacity: "0.9" },
+          "50%": { opacity: "1.0" },
+          "60%": { opacity: "0.95" },
+          "75%": { opacity: "1.0" }, 
+          "80%": { opacity: "0.92" },
+          "90%": { opacity: "1.0" },
+        },
       },
       animation: {
         "marquee": "marquee 60s linear infinite",
@@ -89,6 +99,7 @@ export default {
         "slide-out-bottom": "slide-out-bottom 0.6s ease-out",
         "fade-in": "fade-in 0.4s ease-out",
         "fade-out": "fade-out 0.4s ease-out",
+        "led-flicker": "led-flicker 3s infinite",
       },
     },
   },
