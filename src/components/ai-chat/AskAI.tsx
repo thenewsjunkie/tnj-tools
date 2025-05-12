@@ -10,11 +10,13 @@ export const AskAI = () => {
     selectedModel,
     aiResponse,
     eli5Mode,
+    detailedMode,
     isLoading,
     conversationId,
     handleQuestionChange,
     handleModelChange,
     handleEli5Change,
+    handleDetailedChange,
     handleSubmit,
     displayInOBS
   } = useAIQuery();
@@ -27,10 +29,12 @@ export const AskAI = () => {
             question={question}
             selectedModel={selectedModel}
             eli5Mode={eli5Mode}
+            detailedMode={detailedMode}
             isLoading={isLoading}
             onQuestionChange={handleQuestionChange}
             onModelChange={handleModelChange}
             onEli5Change={handleEli5Change}
+            onDetailedChange={handleDetailedChange}
             onSubmit={handleSubmit}
           />
         </CardHeader>
@@ -39,6 +43,7 @@ export const AskAI = () => {
             <AIResponseDisplay 
               aiResponse={aiResponse} 
               eli5Mode={eli5Mode}
+              detailedMode={detailedMode}
               conversationId={conversationId}
               onDisplayInOBS={displayInOBS}
             />

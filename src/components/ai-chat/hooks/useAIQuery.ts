@@ -11,6 +11,7 @@ export const useAIQuery = () => {
   const [selectedModel, setSelectedModel] = useState<AIModel>("gpt-4o-mini");
   const [aiResponse, setAIResponse] = useState<string | null>(null);
   const [eli5Mode, setEli5Mode] = useState(false);
+  const [detailedMode, setDetailedMode] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
 
   const handleQuestionChange = (value: string) => {
@@ -23,10 +24,20 @@ export const useAIQuery = () => {
   
   const handleEli5Change = (value: boolean) => {
     setEli5Mode(value);
+    if (value && detailedMode) {
+      setDetailedMode(false);
+    }
+  };
+
+  const handleDetailedChange = (value: boolean) => {
+    setDetailedMode(value);
+    if (value && eli5Mode) {
+      setEli5Mode(false);
+    }
   };
 
   const { refetch, isLoading } = useQuery({
-    queryKey: ["ai-response", question, selectedModel, eli5Mode],
+    queryKey: ["ai-response", question, selectedModel, eli5Mode, detailedMode],
     queryFn: async () => {
       if (!question.trim()) return null;
       
@@ -35,7 +46,8 @@ export const useAIQuery = () => {
           body: {
             model: selectedModel,
             prompt: question,
-            eli5Mode: eli5Mode
+            eli5Mode: eli5Mode,
+            detailedMode: detailedMode
           }
         });
         
@@ -58,7 +70,9 @@ export const useAIQuery = () => {
             question_text: question.trim(),
             answer_text: responseText,
             status: 'completed',
-            conversation_state: 'pending'
+            conversation_state: 'pending',
+            is_detailed: detailedMode,
+            is_simple: eli5Mode
           })
           .select()
           .single();
@@ -148,11 +162,13 @@ export const useAIQuery = () => {
     selectedModel,
     aiResponse,
     eli5Mode,
+    detailedMode,
     isLoading,
     conversationId,
     handleQuestionChange,
     handleModelChange,
     handleEli5Change,
+    handleDetailedChange,
     handleSubmit,
     displayInOBS
   };

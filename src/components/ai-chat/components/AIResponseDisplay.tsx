@@ -7,17 +7,20 @@ import { AudioControls } from "@/components/audio/AudioControls";
 import { useAudioPlayback } from "@/hooks/useAudioPlayback";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 interface AIResponseDisplayProps {
   aiResponse: string | null;
   eli5Mode: boolean;
+  detailedMode: boolean;
   conversationId: string | null;
   onDisplayInOBS: () => Promise<boolean>;
 }
 
 export const AIResponseDisplay = ({ 
   aiResponse, 
-  eli5Mode, 
+  eli5Mode,
+  detailedMode, 
   conversationId,
   onDisplayInOBS 
 }: AIResponseDisplayProps) => {
@@ -144,14 +147,19 @@ export const AIResponseDisplay = ({
           <div className="flex items-center gap-2">
             <h4 className="text-sm font-medium text-muted-foreground">Response:</h4>
             {eli5Mode && (
-              <span className="text-[10px] bg-yellow-500/20 text-yellow-500 px-1.5 py-0.5 rounded-full">
+              <Badge variant="outline" className="text-[10px] bg-yellow-500/20 text-yellow-500 border-yellow-500/30">
                 Simple explanation
-              </span>
+              </Badge>
+            )}
+            {detailedMode && (
+              <Badge variant="outline" className="text-[10px] bg-blue-500/20 text-blue-500 border-blue-500/30">
+                Detailed answer
+              </Badge>
             )}
             {displayedInOBS && (
-              <span className="text-[10px] bg-neon-red/20 text-neon-red px-1.5 py-0.5 rounded-full">
+              <Badge variant="outline" className="text-[10px] bg-neon-red/20 text-neon-red border-neon-red/30">
                 Showing in OBS
-              </span>
+              </Badge>
             )}
           </div>
           <Button 
@@ -171,7 +179,9 @@ export const AIResponseDisplay = ({
         <Textarea 
           value={aiResponse}
           readOnly
-          className="min-h-[200px] w-full border-0 bg-transparent focus-visible:ring-0 resize-none"
+          className={`min-h-[200px] w-full border-0 bg-transparent focus-visible:ring-0 resize-none ${
+            detailedMode ? 'min-h-[300px]' : 'min-h-[200px]'
+          }`}
         />
         {(isPlaying || isPaused) && (
           <div className="mt-2">

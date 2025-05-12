@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 
 type AIModel = "gpt-4o-mini" | "gpt-4o" | "gpt-4.5-preview";
 
@@ -17,10 +18,12 @@ interface AIQueryFormProps {
   question: string;
   selectedModel: AIModel;
   eli5Mode: boolean;
+  detailedMode: boolean;
   isLoading: boolean;
   onQuestionChange: (value: string) => void;
   onModelChange: (value: AIModel) => void;
   onEli5Change: (value: boolean) => void;
+  onDetailedChange: (value: boolean) => void;
   onSubmit: (e: React.FormEvent) => Promise<void>;
 }
 
@@ -28,10 +31,12 @@ export const AIQueryForm = ({
   question,
   selectedModel,
   eli5Mode,
+  detailedMode,
   isLoading,
   onQuestionChange,
   onModelChange,
   onEli5Change,
+  onDetailedChange,
   onSubmit
 }: AIQueryFormProps) => {
   return (
@@ -43,15 +48,40 @@ export const AIQueryForm = ({
             <span className="text-xs text-muted-foreground">ELI5</span>
             <Switch
               checked={eli5Mode}
-              onCheckedChange={onEli5Change}
+              onCheckedChange={(checked) => {
+                onEli5Change(checked);
+                if (checked && detailedMode) {
+                  onDetailedChange(false);
+                }
+              }}
               aria-label="Explain Like I'm 5 mode"
             />
             {eli5Mode && (
-              <span className="text-[10px] bg-yellow-500/20 text-yellow-500 px-1.5 py-0.5 rounded-full">
+              <Badge variant="outline" className="text-[10px] bg-yellow-500/20 text-yellow-500 border-yellow-500/30">
                 Simple mode
-              </span>
+              </Badge>
             )}
           </div>
+          
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">Detailed</span>
+            <Switch
+              checked={detailedMode}
+              onCheckedChange={(checked) => {
+                onDetailedChange(checked);
+                if (checked && eli5Mode) {
+                  onEli5Change(false);
+                }
+              }}
+              aria-label="Detailed mode"
+            />
+            {detailedMode && (
+              <Badge variant="outline" className="text-[10px] bg-blue-500/20 text-blue-500 border-blue-500/30">
+                In-depth
+              </Badge>
+            )}
+          </div>
+          
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">Model:</span>
             <Select

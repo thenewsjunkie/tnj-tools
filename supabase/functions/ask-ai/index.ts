@@ -16,7 +16,7 @@ serve(async (req) => {
   }
 
   try {
-    const { model, prompt, eli5Mode } = await req.json();
+    const { model, prompt, eli5Mode, detailedMode } = await req.json();
     
     if (!prompt) {
       return new Response(
@@ -28,11 +28,13 @@ serve(async (req) => {
     const validModels = ["gpt-4o-mini", "gpt-4o", "gpt-4.5-preview"];
     const selectedModel = validModels.includes(model) ? model : "gpt-4o-mini";
 
-    // Set system prompt based on eli5Mode
+    // Set system prompt based on mode
     let systemPrompt = 'Your name is TNJ AI. You are a helpful assistant for a radio show. Keep your responses concise and radio-friendly, designed to be spoken aloud in 10-15 seconds (approximately 25-40 words). Be conversational, engaging, and get to the point quickly. Avoid complex explanations or lengthy details. Your audience is listening live and needs clear, immediate responses. Do not mention your knowledge cutoff date or recommend checking other sources for more current information.';
     
     if (eli5Mode) {
       systemPrompt = 'Your name is TNJ AI. You are a helpful assistant. Explain concepts in very simple terms that a 5-year-old child could understand. Use simple words, short sentences, and relatable examples. Avoid technical jargon and complex explanations. Do not mention your knowledge cutoff date or recommend checking other sources for more current information.';
+    } else if (detailedMode) {
+      systemPrompt = 'Your name is TNJ AI. You are a helpful assistant for a radio show called The News Junkie. I want detailed answers with Who, What, When and Where with all of the pertinent information about the request. I also want a full picture from all sides of the topic. Do not mention your knowledge cutoff date or recommend checking other sources for more current information.';
     }
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
