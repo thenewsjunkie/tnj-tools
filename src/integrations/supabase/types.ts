@@ -190,7 +190,13 @@ export type Database = {
           answer_text: string
           conversation_state: string
           created_at: string | null
+          display_count: number | null
+          display_end_time: string | null
+          display_start_time: string | null
+          has_been_displayed: boolean | null
           id: string
+          is_detailed: boolean | null
+          is_simple: boolean | null
           question_text: string
           status: string
           updated_at: string | null
@@ -199,7 +205,13 @@ export type Database = {
           answer_text: string
           conversation_state?: string
           created_at?: string | null
+          display_count?: number | null
+          display_end_time?: string | null
+          display_start_time?: string | null
+          has_been_displayed?: boolean | null
           id?: string
+          is_detailed?: boolean | null
+          is_simple?: boolean | null
           question_text: string
           status?: string
           updated_at?: string | null
@@ -208,7 +220,13 @@ export type Database = {
           answer_text?: string
           conversation_state?: string
           created_at?: string | null
+          display_count?: number | null
+          display_end_time?: string | null
+          display_start_time?: string | null
+          has_been_displayed?: boolean | null
           id?: string
+          is_detailed?: boolean | null
+          is_simple?: boolean | null
           question_text?: string
           status?: string
           updated_at?: string | null
