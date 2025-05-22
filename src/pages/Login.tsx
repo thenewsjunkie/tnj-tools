@@ -1,20 +1,62 @@
+
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/components/ui/use-toast";
 
 const Login = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Check if user is already logged in
-    supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
+    const checkSession = async () => {
+      try {
+        setIsLoading(true);
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+          console.log('[Login] User already logged in, redirecting to admin');
+          navigate("/admin");
+        }
+      } catch (error) {
+        console.error('[Login] Error checking session:', error);
+        toast({
+          variant: "destructive",
+          title: "Authentication Error",
+          description: "There was a problem checking your login status.",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkSession();
+
+    // Set up auth listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('[Login] Auth state changed:', event);
+      
+      if (event === 'SIGNED_IN' && session) {
         navigate("/admin");
       }
     });
-  }, [navigate]);
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate, toast]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
+        <div className="text-white">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
@@ -39,6 +81,14 @@ const Login = () => {
             }}
             theme="dark"
             providers={[]}
+            onError={(error) => {
+              console.error('[Login] Auth error:', error);
+              toast({
+                variant: "destructive",
+                title: "Authentication Failed",
+                description: error.message || "There was a problem signing in.",
+              });
+            }}
           />
         </div>
       </div>
