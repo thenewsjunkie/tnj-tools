@@ -42,6 +42,14 @@ const TNJAiOBSPage = () => {
     isContinuous: boolean;
   }>({ isActive: false, isContinuous: false })
 
+  // Get autoLoad parameter from URL
+  const getAutoLoadParam = (): boolean => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const autoLoad = urlParams.get('autoLoad')
+    // If autoLoad is explicitly set to 'false', return false; otherwise, default to true
+    return autoLoad !== 'false'
+  }
+
   // Subscribe to conversation changes
   useRealtimeConnection(
     'tnj-ai-conversations',
@@ -101,9 +109,11 @@ const TNJAiOBSPage = () => {
             setDisplaySettings(settingsValue)
           }
           
-          // Only fetch conversation if display is active
-          if (settingsValue.isActive) {
+          // Only fetch conversation if display is active AND autoLoad is true
+          if (settingsValue.isActive && getAutoLoadParam()) {
             await fetchCurrentConversation()
+          } else {
+            console.log('Skipping initial conversation load due to autoLoad=false or inactive display')
           }
         }
       }

@@ -1,11 +1,13 @@
+
 interface ConversationDisplayProps {
   conversation: {
     question_text?: string;
     answer_text?: string;
-  } | null
+  } | null;
+  autoFade?: boolean;
 }
 
-export const ConversationDisplay = ({ conversation }: ConversationDisplayProps) => {
+export const ConversationDisplay = ({ conversation, autoFade = true }: ConversationDisplayProps) => {
   if (!conversation) return null
 
   return (
