@@ -2,7 +2,7 @@
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -10,6 +10,7 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
+  const authSubscription = useRef(null);
 
   useEffect(() => {
     // Check if user is already logged in
@@ -36,17 +37,25 @@ const Login = () => {
 
     checkSession();
 
-    // Set up auth listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('[Login] Auth state changed:', event);
-      
-      if (event === 'SIGNED_IN' && session) {
-        navigate("/admin");
-      }
-    });
+    // Set up auth listener only if not already set up
+    if (!authSubscription.current) {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        console.log('[Login] Auth state changed:', event);
+        
+        if (event === 'SIGNED_IN' && session) {
+          navigate("/admin");
+        }
+      });
+
+      authSubscription.current = subscription;
+    }
 
     return () => {
-      subscription.unsubscribe();
+      // Clean up subscription when component unmounts
+      if (authSubscription.current) {
+        authSubscription.current.unsubscribe();
+        authSubscription.current = null;
+      }
     };
   }, [navigate, toast]);
 

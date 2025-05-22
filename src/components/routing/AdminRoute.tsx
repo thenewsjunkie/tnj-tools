@@ -1,6 +1,6 @@
 
 import { useLocation, Navigate } from "react-router-dom";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -9,6 +9,7 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const authSubscription = useRef(null);
   
   const checkAuth = useCallback(async (session: any) => {
     if (!session) {
@@ -74,17 +75,27 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 
     initialCheck();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      console.log('[AdminRoute] Auth state changed:', _event);
-      
-      if (mounted) {
-        checkAuth(session);
-      }
-    });
+    // Set up auth listener only if not already set up
+    if (!authSubscription.current) {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        console.log('[AdminRoute] Auth state changed:', _event);
+        
+        if (mounted) {
+          checkAuth(session);
+        }
+      });
+
+      authSubscription.current = subscription;
+    }
 
     return () => {
       mounted = false;
-      subscription?.unsubscribe();
+      
+      // Clean up subscription when component unmounts
+      if (authSubscription.current) {
+        authSubscription.current.unsubscribe();
+        authSubscription.current = null;
+      }
     };
   }, [checkAuth]);
 
