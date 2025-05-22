@@ -7,7 +7,6 @@ import { RouterProvider } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { router } from "@/components/routing/routes";
 import GlobalQueueManager from "@/components/alerts/GlobalQueueManager";
-import { StrictMode } from "react";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,18 +20,16 @@ const queryClient = new QueryClient({
 });
 
 const App = () => (
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="dark">
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <GlobalQueueManager />
-          <RouterProvider router={router} />
-        </TooltipProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
-  </StrictMode>
+  <QueryClientProvider client={queryClient}>
+    <ThemeProvider defaultTheme="dark">
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <GlobalQueueManager />
+        <RouterProvider router={router} />
+      </TooltipProvider>
+    </ThemeProvider>
+  </QueryClientProvider>
 );
 
 export default App;

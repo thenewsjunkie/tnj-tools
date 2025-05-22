@@ -1,76 +1,44 @@
-
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session } from '@supabase/supabase-js';
 
-// Create a module-level variable to track if auth is initialized globally
-let globalAuthInitialized = false;
-
 export const useAuth = () => {
   const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  // Use a ref to track subscription at the component level
-  const subscription = useRef<{ unsubscribe: () => void } | null>(null);
 
   useEffect(() => {
-    // Get current pathname for logging
+    // Get current pathname
     const currentPath = window.location.pathname;
-    console.log('[useAuth] Initializing auth for route:', currentPath);
     
-    let mounted = true;
-    
-    const initializeAuth = async () => {
-      try {
-        setIsLoading(true);
-        
-        // First get the initial session
-        const { data: { session: initialSession } } = await supabase.auth.getSession();
-        
-        if (mounted) {
-          console.log('[useAuth] Initial session loaded:', !!initialSession);
-          setSession(initialSession);
-        }
-        
-        // Only set up the listener if we don't already have one
-        if (!subscription.current) {
-          console.log('[useAuth] Setting up new auth subscription');
-          
-          const { data } = supabase.auth.onAuthStateChange((_event, newSession) => {
-            if (mounted) {
-              console.log('[useAuth] Auth state changed:', _event);
-              setSession(newSession);
-            }
-          });
-          
-          subscription.current = data.subscription;
-        }
-      } catch (error) {
-        console.error('[useAuth] Error during auth initialization:', error);
-      } finally {
-        if (mounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    // Only initialize auth once globally
-    if (!globalAuthInitialized) {
-      globalAuthInitialized = true;
-      initializeAuth();
-    } else {
-      // If already initialized, just update loading state
-      setIsLoading(false);
+    // Only initialize auth if we're on an admin route
+    if (!currentPath.startsWith('/admin')) {
+      console.log('[useAuth] Skipping auth initialization for non-admin route:', currentPath);
+      return;
     }
 
-    // Cleanup function
-    return () => {
-      console.log('[useAuth] Component unmounting on route:', currentPath);
-      mounted = false;
-      
-      // We don't unsubscribe here anymore - auth subscription is kept alive
-      // for the lifetime of the application
+    console.log('[useAuth] Initializing auth for admin route:', currentPath);
+    
+    // Get initial session
+    const getInitialSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('[useAuth] Initial session:', !!session);
+      setSession(session);
     };
-  }, []); // Empty dependency array to run only once
 
-  return { session, isLoading };
+    getInitialSession();
+
+    // Listen for auth changes only on admin routes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('[useAuth] Auth state changed:', _event);
+      setSession(session);
+    });
+
+    return () => {
+      console.log('[useAuth] Cleaning up auth subscription');
+      subscription.unsubscribe();
+    };
+  }, [window.location.pathname]); // Re-run when pathname changes
+
+  return { session };
 };

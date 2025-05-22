@@ -2,17 +2,13 @@
 import { useLocation, Navigate } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
-import { useAuth } from "@/hooks/useAuth";
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
-  const { session } = useAuth(); // Use our centralized auth hook
   
-  const checkAuth = useCallback(async () => {
+  const checkAuth = useCallback(async (session: any) => {
     if (!session) {
       console.log('[AdminRoute] No session found');
       setIsAuthenticated(false);
@@ -21,23 +17,11 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
     }
 
     try {
-      const { data: profile, error } = await supabase
+      const { data: profile } = await supabase
         .from('profiles')
         .select('status')
         .eq('id', session.user.id)
         .single();
-      
-      if (error) {
-        console.error('[AdminRoute] Error fetching profile:', error);
-        toast({
-          variant: "destructive",
-          title: "Authentication Error",
-          description: "There was a problem verifying your account status.",
-        });
-        setIsAuthenticated(false);
-        setIsLoading(false);
-        return;
-      }
       
       const isApproved = profile?.status === 'approved';
       console.log('[AdminRoute] User authentication status:', isApproved);
@@ -49,12 +33,32 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
       setIsAuthenticated(false);
       setIsLoading(false);
     }
-  }, [session, toast]);
+  }, []);
   
   useEffect(() => {
-    console.log('[AdminRoute] Component mounted, checking authentication');
-    checkAuth();
-    // No need for auth subscription here since we're using useAuth
+    let mounted = true;
+
+    const initialCheck = async () => {
+      console.log('[AdminRoute] Checking authentication...');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (mounted) {
+        checkAuth(session);
+      }
+    };
+
+    initialCheck();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      console.log('[AdminRoute] Auth state changed:', _event);
+      if (mounted) {
+        checkAuth(session);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription?.unsubscribe();
+    };
   }, [checkAuth]);
 
   if (isLoading) {

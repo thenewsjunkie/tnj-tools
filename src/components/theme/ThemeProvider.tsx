@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -25,10 +24,10 @@ const ThemeProviderContext = createContext<ThemeProviderState>(initialState)
 
 export function ThemeProvider({
   children,
-  defaultTheme = "dark",
+  defaultTheme = "dark", // Changed default here
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(() => {
-    // Only access localStorage on client side
+    // Check localStorage first
     if (typeof window !== 'undefined') {
       const stored = window.localStorage.getItem("theme") as Theme
       if (stored) return stored
@@ -37,8 +36,6 @@ export function ThemeProvider({
   })
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    
     const root = window.document.documentElement
     
     // Remove both classes first
