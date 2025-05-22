@@ -47,7 +47,7 @@ export const useRealtimeConnection = (
       
       // Re-subscribe
       channel.on(
-        'postgres_changes',
+        'postgres_changes' as any,
         {
           event: eventConfig.event,
           schema: eventConfig.schema,
@@ -68,7 +68,7 @@ export const useRealtimeConnection = (
       console.log(`[RealtimeConnection] Setting up new shared channel ${channelName}`);
       channel = supabase.channel(channelName)
         .on(
-          'postgres_changes',
+          'postgres_changes' as any,
           {
             event: eventConfig.event,
             schema: eventConfig.schema,
