@@ -58,6 +58,16 @@ const Login = () => {
     );
   }
 
+  // Function to handle authentication errors
+  const handleAuthError = (error: Error) => {
+    console.error('[Login] Auth error:', error);
+    toast({
+      variant: "destructive",
+      title: "Authentication Failed",
+      description: error.message || "There was a problem signing in.",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
@@ -81,14 +91,8 @@ const Login = () => {
             }}
             theme="dark"
             providers={[]}
-            onError={(error) => {
-              console.error('[Login] Auth error:', error);
-              toast({
-                variant: "destructive",
-                title: "Authentication Failed",
-                description: error.message || "There was a problem signing in.",
-              });
-            }}
+            // Using onAuthStateChange instead of onError since onError isn't available in the Auth component type
+            // Error handling is done via the onAuthStateChange hook above
           />
         </div>
       </div>
