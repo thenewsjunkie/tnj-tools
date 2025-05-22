@@ -1,17 +1,18 @@
 
 import { useLocation, Navigate } from "react-router-dom";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const authSubscription = useRef(null);
+  const { session } = useAuth(); // Use our centralized auth hook
   
-  const checkAuth = useCallback(async (session: any) => {
+  const checkAuth = useCallback(async () => {
     if (!session) {
       console.log('[AdminRoute] No session found');
       setIsAuthenticated(false);
@@ -48,55 +49,12 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
       setIsAuthenticated(false);
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [session, toast]);
   
   useEffect(() => {
-    let mounted = true;
-
-    const initialCheck = async () => {
-      console.log('[AdminRoute] Checking authentication...');
-      setIsLoading(true);
-      
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (mounted) {
-          checkAuth(session);
-        }
-      } catch (error) {
-        console.error('[AdminRoute] Error getting session:', error);
-        
-        if (mounted) {
-          setIsAuthenticated(false);
-          setIsLoading(false);
-        }
-      }
-    };
-
-    initialCheck();
-
-    // Set up auth listener only if not already set up
-    if (!authSubscription.current) {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-        console.log('[AdminRoute] Auth state changed:', _event);
-        
-        if (mounted) {
-          checkAuth(session);
-        }
-      });
-
-      authSubscription.current = subscription;
-    }
-
-    return () => {
-      mounted = false;
-      
-      // Clean up subscription when component unmounts
-      if (authSubscription.current) {
-        authSubscription.current.unsubscribe();
-        authSubscription.current = null;
-      }
-    };
+    console.log('[AdminRoute] Component mounted, checking authentication');
+    checkAuth();
+    // No need for auth subscription here since we're using useAuth
   }, [checkAuth]);
 
   if (isLoading) {

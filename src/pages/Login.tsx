@@ -2,62 +2,30 @@
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
-  const authSubscription = useRef(null);
+  const { session } = useAuth(); // Use our centralized auth hook
 
   useEffect(() => {
-    // Check if user is already logged in
-    const checkSession = async () => {
-      try {
-        setIsLoading(true);
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session) {
-          console.log('[Login] User already logged in, redirecting to admin');
-          navigate("/admin");
-        }
-      } catch (error) {
-        console.error('[Login] Error checking session:', error);
-        toast({
-          variant: "destructive",
-          title: "Authentication Error",
-          description: "There was a problem checking your login status.",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkSession();
-
-    // Set up auth listener only if not already set up
-    if (!authSubscription.current) {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-        console.log('[Login] Auth state changed:', event);
-        
-        if (event === 'SIGNED_IN' && session) {
-          navigate("/admin");
-        }
-      });
-
-      authSubscription.current = subscription;
+    console.log('[Login] Component mounted, checking session');
+    
+    // If we already have a session from our hook, redirect to admin
+    if (session) {
+      console.log('[Login] User already logged in, redirecting to admin');
+      navigate("/admin");
+    } else {
+      setIsLoading(false);
     }
-
-    return () => {
-      // Clean up subscription when component unmounts
-      if (authSubscription.current) {
-        authSubscription.current.unsubscribe();
-        authSubscription.current = null;
-      }
-    };
-  }, [navigate, toast]);
+    
+    // We don't need a separate auth subscription here since we're using useAuth
+  }, [session, navigate]);
 
   if (isLoading) {
     return (
@@ -100,8 +68,7 @@ const Login = () => {
             }}
             theme="dark"
             providers={[]}
-            // Using onAuthStateChange instead of onError since onError isn't available in the Auth component type
-            // Error handling is done via the onAuthStateChange hook above
+            // We removed the onError prop as it's not in the component type
           />
         </div>
       </div>
