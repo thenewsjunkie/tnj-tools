@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { Computer } from 'lucide-react'
 
@@ -20,6 +21,7 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
     answer_text?: string;
   } | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
+  const [hasError, setHasError] = useState(false)
 
   useEffect(() => {
     if (!isProcessing) {
@@ -34,6 +36,7 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
     return () => clearInterval(interval)
   }, [isProcessing])
 
+  // Initialize component
   useEffect(() => {
     const initTimer = setTimeout(() => {
       setIsInitialized(true)
@@ -51,9 +54,11 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
     }
   }, [])
 
+  // Handle conversation data changes
   useEffect(() => {
     if (!isInitialized) return
 
+    // Handle case when conversation becomes null (hide UI)
     if (!conversation) {
       if (shouldShow) {
         setShowAnswer(false)
@@ -73,55 +78,74 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
       return
     }
 
-    if (shouldShow && activeConversation && 
-        (activeConversation.question_text !== conversation.question_text ||
-         activeConversation.answer_text !== conversation.answer_text)) {
-      setShowAnswer(false)
-      setTimeout(() => {
-        setShowQuestion(false)
+    // Handle empty or invalid conversation data
+    if (!conversation.question_text && !conversation.answer_text) {
+      console.error('[TNJAiOBS] Received empty conversation data');
+      setHasError(true);
+      return;
+    }
+    
+    try {
+      // Handle case when conversation changes while already displayed
+      if (shouldShow && activeConversation && 
+          (activeConversation.question_text !== conversation.question_text ||
+           activeConversation.answer_text !== conversation.answer_text)) {
+        // Transition to the new conversation with animation
+        setShowAnswer(false)
         setTimeout(() => {
-          setActiveConversation(conversation)
-          setShowQuestion(true)
-          if (conversation.answer_text) {
-            setTimeout(() => {
-              setShowAnswer(true)
-              setupDismissTimer()
-            }, 1000)
-          }
+          setShowQuestion(false)
+          setTimeout(() => {
+            setActiveConversation(conversation)
+            setShowQuestion(true)
+            if (conversation.answer_text) {
+              setTimeout(() => {
+                setShowAnswer(true)
+                setupDismissTimer()
+              }, 1000)
+            }
+          }, 300)
         }, 300)
-      }, 300)
-    } 
-    else if (!shouldShow) {
-      setShouldShow(true)
-      setActiveConversation(conversation)
-      setShowQuestion(true)
-      
-      if (conversation.answer_text) {
+      } 
+      // Handle case when conversation is first displayed
+      else if (!shouldShow) {
+        setShouldShow(true)
+        setActiveConversation(conversation)
+        setShowQuestion(true)
+        
+        if (conversation.answer_text) {
+          setTimeout(() => {
+            setShowAnswer(true)
+            setupDismissTimer()
+          }, 1000)
+        }
+      }
+      // Handle case when answer becomes available for current conversation
+      else if (conversation.answer_text && 
+               (!activeConversation?.answer_text || 
+                activeConversation.answer_text !== conversation.answer_text)) {
+        setActiveConversation(conversation)
         setTimeout(() => {
           setShowAnswer(true)
           setupDismissTimer()
         }, 1000)
       }
-    }
-    
-    else if (conversation.answer_text && 
-             (!activeConversation?.answer_text || 
-              activeConversation.answer_text !== conversation.answer_text)) {
-      setActiveConversation(conversation)
-      setTimeout(() => {
-        setShowAnswer(true)
-        setupDismissTimer()
-      }, 1000)
+      
+      // Reset error state if we successfully process the conversation
+      setHasError(false);
+    } catch (error) {
+      console.error('[TNJAiOBS] Error processing conversation:', error);
+      setHasError(true);
     }
   }, [conversation, isInitialized])
 
+  // Set up automatic dismiss timer for displayed conversations
   const setupDismissTimer = () => {
     if (dismissTimer) {
       clearTimeout(dismissTimer)
     }
     
     const timer = setTimeout(() => {
-      console.log('Starting dismiss animation')
+      console.log('[TNJAiOBS] Starting dismiss animation')
       setShowAnswer(false)
       setTimeout(() => {
         setShowQuestion(false)
@@ -136,6 +160,16 @@ export const TNJAiOBS = ({ conversation, isProcessing }: TNJAiOBSProps) => {
 
   if (!isInitialized) {
     return null
+  }
+
+  if (hasError) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center p-8 pointer-events-none">
+        <div className="bg-red-900/80 text-white p-4 rounded-lg">
+          <p>Error displaying conversation</p>
+        </div>
+      </div>
+    );
   }
 
   if (!shouldShow) {
