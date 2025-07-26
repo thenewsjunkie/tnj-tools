@@ -27,15 +27,19 @@ const VideoAlert = ({
 
   const handleComplete = () => {
     if (!completedRef.current && !unmountedRef.current) {
-      console.log('[VideoAlert] Video ended, play count:', playCount, 'of', repeatCount);
+      // Increment play count immediately
+      const nextPlayCount = playCount + 1;
+      setPlayCount(nextPlayCount);
       
-      // Check if we've played enough times (subtract 1 since playCount starts at 0)
-      if (playCount >= repeatCount - 1) {
+      console.log('[VideoAlert] Video ended, play count:', nextPlayCount, 'of', repeatCount);
+      
+      // Check if we've played enough times
+      if (nextPlayCount >= repeatCount) {
         console.log('[VideoAlert] All repeats completed, triggering completion callback');
         completedRef.current = true;
         onComplete();
       } else {
-        console.log('[VideoAlert] Scheduling repeat play', playCount + 1, 'of', repeatCount, 'with delay:', repeatDelay);
+        console.log('[VideoAlert] Scheduling repeat play', nextPlayCount + 1, 'of', repeatCount, 'with delay:', repeatDelay);
         
         // Clear any existing timeout
         if (delayTimeoutRef.current) {
@@ -56,7 +60,6 @@ const VideoAlert = ({
                 }
               });
             }
-            setPlayCount(prev => prev + 1);
           }
         }, repeatDelay);
       }
