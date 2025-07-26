@@ -1,4 +1,4 @@
-import React, { useState, useCallback, memo, useEffect } from "react";
+import React, { useState, useCallback, memo, useEffect, useMemo } from "react";
 import VideoAlert from "../media/VideoAlert";
 import ImageAlert from "../media/ImageAlert";
 import AlertMessage from "../AlertMessage";
@@ -70,6 +70,18 @@ export const AlertContent: React.FC<AlertContentProps> = memo(({
     ? currentAlert.messageText
     : '';
 
+  // Memoize stable props to prevent unnecessary re-renders
+  const stableVideoProps = useMemo(() => ({
+    mediaUrl: currentAlert.mediaUrl,
+    repeatCount: currentAlert.repeatCount,
+    repeatDelay: currentAlert.repeatDelay
+  }), [currentAlert.mediaUrl, currentAlert.repeatCount, currentAlert.repeatDelay]);
+
+  const stableImageProps = useMemo(() => ({
+    mediaUrl: currentAlert.mediaUrl,
+    repeatCount: currentAlert.repeatCount
+  }), [currentAlert.mediaUrl, currentAlert.repeatCount]);
+
   useEffect(() => {
     console.log('[AlertContent] State updated:', {
       isMediaComplete,
@@ -84,22 +96,22 @@ export const AlertContent: React.FC<AlertContentProps> = memo(({
         <div className="w-full flex justify-center mb-4">
           {currentAlert.mediaType.startsWith('video') ? (
             <VideoAlert 
-              key={`video-${currentAlert.mediaUrl}-${currentAlert.repeatCount}-${currentAlert.repeatDelay}`}
-              mediaUrl={currentAlert.mediaUrl}
+              key={`video-${stableVideoProps.mediaUrl}`}
+              mediaUrl={stableVideoProps.mediaUrl}
               onComplete={handleComplete}
               onError={onError}
               onMediaLoaded={onMediaLoaded}
-              repeatCount={currentAlert.repeatCount}
-              repeatDelay={currentAlert.repeatDelay}
+              repeatCount={stableVideoProps.repeatCount}
+              repeatDelay={stableVideoProps.repeatDelay}
             />
           ) : (
             <ImageAlert 
-              key={`image-${currentAlert.mediaUrl}-${currentAlert.repeatCount}`}
-              mediaUrl={currentAlert.mediaUrl}
+              key={`image-${stableImageProps.mediaUrl}`}
+              mediaUrl={stableImageProps.mediaUrl}
               onComplete={handleComplete}
               onError={onError}
               onMediaLoaded={onMediaLoaded}
-              repeatCount={currentAlert.repeatCount}
+              repeatCount={stableImageProps.repeatCount}
             />
           )}
         </div>
