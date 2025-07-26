@@ -71,15 +71,22 @@ const GlobalQueueManager = () => {
 
   // Set up alert timer when a new alert starts
   useEffect(() => {
+    console.log('[GlobalQueueManager] Alert effect triggered:', { 
+      currentAlertId: currentAlert?.id, 
+      isProcessing: isProcessingRef.current 
+    });
+    
     if (!currentAlert?.id) {
       // Reset processing state when there's no current alert
       isProcessingRef.current = false;
+      console.log('[GlobalQueueManager] No current alert, resetting processing state');
       return;
     }
 
     if (isProcessingRef.current) {
       // If we're already processing an alert, clean up the existing timer
       if (timerRef.current) {
+        console.log('[GlobalQueueManager] Clearing existing timer for alert processing');
         clearTimeout(timerRef.current);
         timerRef.current = null;
       }
