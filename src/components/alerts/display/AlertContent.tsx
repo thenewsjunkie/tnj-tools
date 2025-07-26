@@ -1,4 +1,4 @@
-import React, { useState, useCallback, memo, useEffect, useMemo } from "react";
+import React, { useState, useCallback, memo, useEffect } from "react";
 import VideoAlert from "../media/VideoAlert";
 import ImageAlert from "../media/ImageAlert";
 import AlertMessage from "../AlertMessage";
@@ -66,11 +66,6 @@ export const AlertContent: React.FC<AlertContentProps> = memo(({
     }
   }, [isMediaComplete, onComplete]);
 
-  // Memoize props to prevent unnecessary re-renders
-  const stableRepeatCount = useMemo(() => currentAlert.repeatCount, [currentAlert.repeatCount]);
-  const stableRepeatDelay = useMemo(() => currentAlert.repeatDelay, [currentAlert.repeatDelay]);
-  const stableMediaUrl = useMemo(() => currentAlert.mediaUrl, [currentAlert.mediaUrl]);
-
   const displayMessage = currentAlert.messageEnabled && currentAlert.messageText 
     ? currentAlert.messageText
     : '';
@@ -89,22 +84,22 @@ export const AlertContent: React.FC<AlertContentProps> = memo(({
         <div className="w-full flex justify-center mb-4">
           {currentAlert.mediaType.startsWith('video') ? (
             <VideoAlert 
-              key={`video-${stableMediaUrl}`}
-              mediaUrl={stableMediaUrl}
+              key={`video-${currentAlert.mediaUrl}-${currentAlert.repeatCount}-${currentAlert.repeatDelay}`}
+              mediaUrl={currentAlert.mediaUrl}
               onComplete={handleComplete}
               onError={onError}
               onMediaLoaded={onMediaLoaded}
-              repeatCount={stableRepeatCount}
-              repeatDelay={stableRepeatDelay}
+              repeatCount={currentAlert.repeatCount}
+              repeatDelay={currentAlert.repeatDelay}
             />
           ) : (
             <ImageAlert 
-              key={`image-${stableMediaUrl}`}
-              mediaUrl={stableMediaUrl}
+              key={`image-${currentAlert.mediaUrl}-${currentAlert.repeatCount}`}
+              mediaUrl={currentAlert.mediaUrl}
               onComplete={handleComplete}
               onError={onError}
               onMediaLoaded={onMediaLoaded}
-              repeatCount={stableRepeatCount}
+              repeatCount={currentAlert.repeatCount}
             />
           )}
         </div>

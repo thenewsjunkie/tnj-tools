@@ -47,18 +47,13 @@ export const useQueueData = () => {
       return data || [];
     },
     refetchInterval: (query) => {
-      // Dramatically reduce polling when an alert is playing to prevent flickers
+      // Reduce polling when an alert is playing to prevent unnecessary re-renders
       const data = query.state.data;
       const hasPlayingAlert = data && Array.isArray(data) ? data.some(item => item.status === 'playing') : false;
-      return hasPlayingAlert ? 30000 : 2000;
+      return hasPlayingAlert ? 5000 : 2000;
     },
     refetchIntervalInBackground: true,
-    staleTime: (query) => {
-      // Increase staleTime during playback to prevent unnecessary refetches
-      const data = query.state.data;
-      const hasPlayingAlert = data && Array.isArray(data) ? data.some(item => item.status === 'playing') : false;
-      return hasPlayingAlert ? 30000 : 1000;
-    },
+    staleTime: 1000,
     gcTime: 60000,
   });
 
