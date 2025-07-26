@@ -1,5 +1,6 @@
 
 import { createBrowserRouter } from "react-router-dom";
+import AppLayout from "@/components/layout/AppLayout";
 import Index from "@/pages/Index";
 import Login from "@/pages/Login";
 import Admin from "@/pages/Admin";
@@ -31,122 +32,128 @@ import PollEmbed from "@/pages/PollEmbed";
 export const router = createBrowserRouter([
   {
     path: "/",
-    element: <Index />,
-  },
-  {
-    path: "/login",
-    element: <Login />,
-  },
-  {
-    path: "/reviews",
-    element: <Reviews />,
-  },
-  {
-    path: "/reviews/stream",
-    element: <StreamReview />,
-  },
-  {
-    path: "/alerts",
-    element: <Alerts />,
-  },
-  {
-    path: "/alerts/queue/:action",
-    element: <Alerts />,
-  },
-  {
-    path: "/alerts/:alertSlug",
-    element: <Alerts />,
-  },
-  {
-    path: "/alerts/:alertSlug/:username",
-    element: <Alerts />,
-  },
-  {
-    path: "/alerts/:alertSlug/:username/:giftCount",
-    element: <Alerts />,
-  },
-  {
-    path: "/fritz",
-    element: <Fritz />,
-  },
-  {
-    path: "/fritz/current-score",
-    element: <CurrentScore />,
-  },
-  {
-    path: "/fritz/total-score",
-    element: <TotalScore />,
-  },
-  {
-    path: "/fritz/:contestant/:action",
-    element: <FritzScoreHandler />,
-  },
-  {
-    path: "/lower-third",
-    element: <LowerThird />,
-  },
-  {
-    path: "/leaderboard",
-    element: <Leaderboard />,
-  },
-  {
-    path: "/leaderboard/obs",
-    element: <LeaderboardOBS />,
-  },
-  {
-    path: "/tnjgifs",
-    element: <TNJGifs />,
-  },
-  {
-    path: "/tnjgifs-embed",
-    element: <TNJGifsEmbed />,
-  },
-  {
-    path: "/poll/:id",
-    element: <PollEmbed />,
-  },
-  {
-    path: "/admin",
-    element: <AdminRoute><Admin /></AdminRoute>,
-  },
-  {
-    path: "/admin/settings",
-    element: <AdminRoute><Settings /></AdminRoute>,
-  },
-  {
-    path: "/admin/instructions",
-    element: <AdminRoute><Instructions /></AdminRoute>,
-  },
-  {
-    path: "/admin/queue-history",
-    element: <AdminRoute><QueueHistory /></AdminRoute>,
-  },
-  {
-    path: "/admin/lower-thirds",
-    element: <AdminRoute><LowerThirds /></AdminRoute>,
-  },
-  {
-    path: "/admin/gift-stats",
-    element: <AdminRoute><GiftStats /></AdminRoute>,
-  },
-  {
-    path: "/admin/manage-gifs",
-    element: <AdminRoute><ManageGifs /></AdminRoute>,
-  },
-  {
-    path: "/admin/manage-polls",
-    element: <AdminRoute><ManagePolls /></AdminRoute>,
-  },
-  {
-    path: "/tnj-ai-obs",
-    element: <TNJAiOBSPage />,
-  },
-  {
-    path: "/sharetheshow",
-    element: <ShareTheShow />,
-  },
-  {
-    path: "/sharetheshow/edit",
-    element: <EditShowMember />,
-  },
+    element: <AppLayout />,
+    children: [
+      {
+        index: true,
+        element: <Index />,
+      },
+      {
+        path: "login",
+        element: <Login />,
+      },
+      {
+        path: "reviews",
+        element: <Reviews />,
+      },
+      {
+        path: "reviews/stream",
+        element: <StreamReview />,
+      },
+      {
+        path: "alerts",
+        element: <Alerts />,
+      },
+      {
+        path: "alerts/queue/:action",
+        element: <Alerts />,
+      },
+      {
+        path: "alerts/:alertSlug",
+        element: <Alerts />,
+      },
+      {
+        path: "alerts/:alertSlug/:username",
+        element: <Alerts />,
+      },
+      {
+        path: "alerts/:alertSlug/:username/:giftCount",
+        element: <Alerts />,
+      },
+      {
+        path: "fritz",
+        element: <Fritz />,
+      },
+      {
+        path: "fritz/current-score",
+        element: <CurrentScore />,
+      },
+      {
+        path: "fritz/total-score",
+        element: <TotalScore />,
+      },
+      {
+        path: "fritz/:contestant/:action",
+        element: <FritzScoreHandler />,
+      },
+      {
+        path: "lower-third",
+        element: <LowerThird />,
+      },
+      {
+        path: "leaderboard",
+        element: <Leaderboard />,
+      },
+      {
+        path: "leaderboard/obs",
+        element: <LeaderboardOBS />,
+      },
+      {
+        path: "tnjgifs",
+        element: <TNJGifs />,
+      },
+      {
+        path: "tnjgifs-embed",
+        element: <TNJGifsEmbed />,
+      },
+      {
+        path: "poll/:id",
+        element: <PollEmbed />,
+      },
+      {
+        path: "admin",
+        element: <AdminRoute><Admin /></AdminRoute>,
+      },
+      {
+        path: "admin/settings",
+        element: <AdminRoute><Settings /></AdminRoute>,
+      },
+      {
+        path: "admin/instructions",
+        element: <AdminRoute><Instructions /></AdminRoute>,
+      },
+      {
+        path: "admin/queue-history",
+        element: <AdminRoute><QueueHistory /></AdminRoute>,
+      },
+      {
+        path: "admin/lower-thirds",
+        element: <AdminRoute><LowerThirds /></AdminRoute>,
+      },
+      {
+        path: "admin/gift-stats",
+        element: <AdminRoute><GiftStats /></AdminRoute>,
+      },
+      {
+        path: "admin/manage-gifs",
+        element: <AdminRoute><ManageGifs /></AdminRoute>,
+      },
+      {
+        path: "admin/manage-polls",
+        element: <AdminRoute><ManagePolls /></AdminRoute>,
+      },
+      {
+        path: "tnj-ai-obs",
+        element: <TNJAiOBSPage />,
+      },
+      {
+        path: "sharetheshow",
+        element: <ShareTheShow />,
+      },
+      {
+        path: "sharetheshow/edit",
+        element: <EditShowMember />,
+      },
+    ]
+  }
 ]);
