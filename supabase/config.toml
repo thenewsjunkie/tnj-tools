@@ -1,3 +1,5 @@
 project_id = "gpmandlkcdompmdvethh"
 [functions.send-interview-request]
 verify_jwt = false
+[functions.trigger-alert]
+verify_jwt = false
