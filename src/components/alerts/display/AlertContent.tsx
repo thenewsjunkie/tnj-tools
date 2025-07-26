@@ -84,6 +84,7 @@ export const AlertContent: React.FC<AlertContentProps> = memo(({
         <div className="w-full flex justify-center mb-4">
           {currentAlert.mediaType.startsWith('video') ? (
             <VideoAlert 
+              key={`video-${currentAlert.mediaUrl}-${currentAlert.repeatCount}-${currentAlert.repeatDelay}`}
               mediaUrl={currentAlert.mediaUrl}
               onComplete={handleComplete}
               onError={onError}
@@ -93,6 +94,7 @@ export const AlertContent: React.FC<AlertContentProps> = memo(({
             />
           ) : (
             <ImageAlert 
+              key={`image-${currentAlert.mediaUrl}-${currentAlert.repeatCount}`}
               mediaUrl={currentAlert.mediaUrl}
               onComplete={handleComplete}
               onError={onError}

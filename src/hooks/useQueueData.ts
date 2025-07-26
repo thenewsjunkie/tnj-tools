@@ -46,7 +46,12 @@ export const useQueueData = () => {
       console.log('[useQueueData] Queue data fetched:', data);
       return data || [];
     },
-    refetchInterval: 2000,
+    refetchInterval: (query) => {
+      // Reduce polling when an alert is playing to prevent unnecessary re-renders
+      const data = query.state.data;
+      const hasPlayingAlert = data && Array.isArray(data) ? data.some(item => item.status === 'playing') : false;
+      return hasPlayingAlert ? 5000 : 2000;
+    },
     refetchIntervalInBackground: true,
     staleTime: 1000,
     gcTime: 60000,

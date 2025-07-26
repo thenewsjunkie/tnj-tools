@@ -22,14 +22,14 @@ const VideoAlert = ({
   const unmountedRef = useRef(false);
   const mountCountRef = useRef(0);
   const playAttemptedRef = useRef(false);
-  const [playCount, setPlayCount] = useState(0);
+  const playCountRef = useRef(0);
   const delayTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleComplete = () => {
     if (!completedRef.current && !unmountedRef.current) {
       // Increment play count immediately
-      const nextPlayCount = playCount + 1;
-      setPlayCount(nextPlayCount);
+      playCountRef.current += 1;
+      const nextPlayCount = playCountRef.current;
       
       console.log('[VideoAlert] Video ended, play count:', nextPlayCount, 'of', repeatCount);
       
@@ -72,7 +72,7 @@ const VideoAlert = ({
     completedRef.current = false;
     unmountedRef.current = false;
     playAttemptedRef.current = false;
-    setPlayCount(0);
+    playCountRef.current = 0;
     
     if (videoRef.current) {
       const videoElement = videoRef.current;
