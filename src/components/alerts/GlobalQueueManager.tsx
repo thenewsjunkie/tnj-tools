@@ -13,7 +13,7 @@ const GlobalQueueManager = () => {
   const completingAlertIdRef = useRef<string | null>(null);
   const mediaDurationRef = useRef<number>(0);
 
-  // Listen for alert status changes
+  // Listen for alert status changes to process next alert
   useRealtimeConnection(
     'alert-queue',
     {
@@ -24,47 +24,37 @@ const GlobalQueueManager = () => {
     async (payload) => {
       console.log('[GlobalQueueManager] Received alert status update:', payload);
       
-      // Get current queue state
-      const { data: settings } = await supabase
-        .from('system_settings')
-        .select('value')
-        .eq('key', 'queue_state')
-        .single();
-      
-      const queueState = settings?.value as { isPaused: boolean } | null;
-      const currentlyPaused = queueState?.isPaused ?? false;
-
-      // Only handle actual status changes and prevent duplicate completions
+      // Only handle completion events to process next alert
       if (payload.old && 
           payload.old.status !== payload.new.status && 
-          payload.new.status === 'completed' &&
-          completingAlertIdRef.current !== payload.new.id) {
-        console.log('[GlobalQueueManager] Status changed from', payload.old.status, 'to', payload.new.status);
+          payload.new.status === 'completed') {
+        console.log('[GlobalQueueManager] Alert completed, checking if next alert should be processed');
         
-        completingAlertIdRef.current = payload.new.id;
-        
-        // Clean up any existing timers
+        // Clean up timers when alert completes
         if (timerRef.current) {
           clearTimeout(timerRef.current);
           timerRef.current = null;
         }
         
-        // Reset processing flag when alert completes
+        // Reset processing flag
         isProcessingRef.current = false;
         
+        // Get current queue state
+        const { data: settings } = await supabase
+          .from('system_settings')
+          .select('value')
+          .eq('key', 'queue_state')
+          .single();
+        
+        const queueState = settings?.value as { isPaused: boolean } | null;
+        const currentlyPaused = queueState?.isPaused ?? false;
+        
         if (!currentlyPaused) {
-          // Add a small delay before processing the next alert
+          // Process next alert after a small delay
           setTimeout(() => {
             processNextAlert(false);
           }, 1000);
         }
-
-        // Reset completing alert id after a delay
-        setTimeout(() => {
-          if (completingAlertIdRef.current === payload.new.id) {
-            completingAlertIdRef.current = null;
-          }
-        }, 2000);
       }
     }
   );
@@ -114,33 +104,34 @@ const GlobalQueueManager = () => {
 
     updatePlayedAt();
 
-    // Calculate total duration based on repeat count, display duration, and repeat delay
+    // Use base display duration for fallback timer (VideoAlert handles repeats internally)
     const displayDuration = Math.max(
       (currentAlert.alert.display_duration || 5) * 1000,
-      mediaDurationRef.current * 1000 // Convert media duration to milliseconds
+      mediaDurationRef.current * 1000
     );
+    
+    // Calculate fallback duration with repeat logic for absolute safety only
     const repeatCount = currentAlert.alert.repeat_count || 1;
     const repeatDelay = currentAlert.alert.repeat_delay || 1000;
+    const fallbackDuration = (displayDuration * repeatCount) + (repeatDelay * (repeatCount - 1)) + 5000; // Extra safety buffer
     
-    // Add repeat delay time for each repeat after the first one
-    const totalDuration = (displayDuration * repeatCount) + (repeatDelay * (repeatCount - 1));
-    
-    console.log('[GlobalQueueManager] Alert duration:', {
+    console.log('[GlobalQueueManager] Setting fallback timer:', {
       displayDuration,
       mediaDuration: mediaDurationRef.current,
       repeatCount,
       repeatDelay,
-      totalDuration
+      fallbackDuration
     });
 
-    // Set up cleanup timer based on total duration
+    // Set up fallback cleanup timer (should not normally trigger if VideoAlert completes properly)
     timerRef.current = setTimeout(async () => {
-      console.log('[GlobalQueueManager] Alert duration reached, completing alert:', {
+      console.log('[GlobalQueueManager] Fallback timer triggered - alert may be stuck:', {
         alertId: currentAlert.id,
-        totalDuration,
+        fallbackDuration,
         currentTime: new Date().toISOString()
       });
       
+      // Only complete if this alert is still the current one and not already being completed
       if (completingAlertIdRef.current !== currentAlert.id) {
         completingAlertIdRef.current = currentAlert.id;
         
@@ -150,22 +141,16 @@ const GlobalQueueManager = () => {
             status: 'completed',
             completed_at: new Date().toISOString()
           })
-          .eq('id', currentAlert.id);
+          .eq('id', currentAlert.id)
+          .eq('status', 'playing'); // Only update if still playing
           
         if (error) {
-          console.error('[GlobalQueueManager] Error completing alert:', error);
+          console.error('[GlobalQueueManager] Error completing stuck alert:', error);
         } else {
-          console.log('[GlobalQueueManager] Alert successfully marked as completed');
+          console.log('[GlobalQueueManager] Stuck alert successfully marked as completed');
         }
-          
-        // Reset completing alert id after a delay
-        setTimeout(() => {
-          if (completingAlertIdRef.current === currentAlert.id) {
-            completingAlertIdRef.current = null;
-          }
-        }, 2000);
       }
-    }, totalDuration + 1000); // Add 1 second buffer
+    }, fallbackDuration);
 
     return () => {
       if (timerRef.current) {

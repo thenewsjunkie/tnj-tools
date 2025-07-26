@@ -27,7 +27,7 @@ const VideoAlert = ({
 
   const handleComplete = () => {
     if (!completedRef.current && !unmountedRef.current) {
-      console.log('[VideoAlert] Video ended, play count:', playCount);
+      console.log('[VideoAlert] Video ended, play count:', playCount, 'of', repeatCount);
       
       // Check if we've played enough times (subtract 1 since playCount starts at 0)
       if (playCount >= repeatCount - 1) {
@@ -44,7 +44,7 @@ const VideoAlert = ({
         
         // Set up new timeout for delay
         delayTimeoutRef.current = setTimeout(() => {
-          if (!unmountedRef.current && videoRef.current) {
+          if (!unmountedRef.current && videoRef.current && !completedRef.current) {
             console.log('[VideoAlert] Starting next repeat after delay');
             videoRef.current.currentTime = 0;
             const playPromise = videoRef.current.play();
