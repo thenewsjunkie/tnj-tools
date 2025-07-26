@@ -47,10 +47,10 @@ export const useQueueData = () => {
       return data || [];
     },
     refetchInterval: (query) => {
-      // Dramatically reduce polling when an alert is playing to prevent video flashes
+      // Completely disable refetch when an alert is playing to prevent object reference changes
       const data = query.state.data;
       const hasPlayingAlert = data && Array.isArray(data) ? data.some(item => item.status === 'playing') : false;
-      return hasPlayingAlert ? 30000 : 2000;
+      return hasPlayingAlert ? false : 2000;
     },
     refetchIntervalInBackground: true,
     staleTime: (query) => {

@@ -110,10 +110,10 @@ const GlobalQueueManager = () => {
       mediaDurationRef.current * 1000
     );
     
-    // Calculate fallback duration with repeat logic for absolute safety only
+    // Calculate fallback duration with actual repeat logic
     const repeatCount = currentAlert.alert.repeat_count || 1;
-    const repeatDelay = currentAlert.alert.repeat_delay || 1000;
-    const fallbackDuration = (displayDuration * repeatCount) + (repeatDelay * (repeatCount - 1)) + 5000; // Extra safety buffer
+    const repeatDelay = currentAlert.alert.repeat_delay || 0; // Use actual delay from alert data
+    const fallbackDuration = (displayDuration * repeatCount) + (repeatDelay * Math.max(0, repeatCount - 1)) + 5000; // Extra safety buffer
     
     console.log('[GlobalQueueManager] Setting fallback timer:', {
       displayDuration,
@@ -131,23 +131,32 @@ const GlobalQueueManager = () => {
         currentTime: new Date().toISOString()
       });
       
-      // Only complete if this alert is still the current one and not already being completed
+      // Guard against multiple completion attempts
       if (completingAlertIdRef.current !== currentAlert.id) {
         completingAlertIdRef.current = currentAlert.id;
         
-        const { error } = await supabase
+        // Check if alert is still playing before completing
+        const { data: alertCheck } = await supabase
           .from('alert_queue')
-          .update({ 
-            status: 'completed',
-            completed_at: new Date().toISOString()
-          })
+          .select('status')
           .eq('id', currentAlert.id)
-          .eq('status', 'playing'); // Only update if still playing
+          .single();
           
-        if (error) {
-          console.error('[GlobalQueueManager] Error completing stuck alert:', error);
-        } else {
-          console.log('[GlobalQueueManager] Stuck alert successfully marked as completed');
+        if (alertCheck?.status === 'playing') {
+          const { error } = await supabase
+            .from('alert_queue')
+            .update({ 
+              status: 'completed',
+              completed_at: new Date().toISOString()
+            })
+            .eq('id', currentAlert.id)
+            .eq('status', 'playing'); // Only update if still playing
+            
+          if (error) {
+            console.error('[GlobalQueueManager] Error completing stuck alert:', error);
+          } else {
+            console.log('[GlobalQueueManager] Stuck alert successfully marked as completed');
+          }
         }
       }
     }, fallbackDuration);

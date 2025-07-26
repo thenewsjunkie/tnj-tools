@@ -51,11 +51,12 @@ export const AlertContent: React.FC<AlertContentProps> = memo(({
   const handleComplete = useCallback(() => {
     console.log('[AlertContent] Media completed');
     setIsMediaComplete(true);
-    if (isCountComplete) {
-      console.log('[AlertContent] Both media and count complete, triggering onComplete');
+    // For non-gift alerts, complete immediately when media finishes
+    if (!currentAlert.isGiftAlert || isCountComplete) {
+      console.log('[AlertContent] Triggering onComplete', { isGiftAlert: currentAlert.isGiftAlert, isCountComplete });
       onComplete();
     }
-  }, [isCountComplete, onComplete]);
+  }, [currentAlert.isGiftAlert, isCountComplete, onComplete]);
 
   const handleCountComplete = useCallback(() => {
     console.log('[AlertContent] Count animation completed');
