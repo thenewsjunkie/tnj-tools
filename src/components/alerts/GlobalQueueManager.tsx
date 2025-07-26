@@ -128,17 +128,28 @@ const GlobalQueueManager = () => {
 
     // Set up cleanup timer based on total duration
     timerRef.current = setTimeout(async () => {
-      console.log('[GlobalQueueManager] Alert duration reached, completing alert');
+      console.log('[GlobalQueueManager] Alert duration reached, completing alert:', {
+        alertId: currentAlert.id,
+        totalDuration,
+        currentTime: new Date().toISOString()
+      });
+      
       if (completingAlertIdRef.current !== currentAlert.id) {
         completingAlertIdRef.current = currentAlert.id;
         
-        await supabase
+        const { error } = await supabase
           .from('alert_queue')
           .update({ 
             status: 'completed',
             completed_at: new Date().toISOString()
           })
           .eq('id', currentAlert.id);
+          
+        if (error) {
+          console.error('[GlobalQueueManager] Error completing alert:', error);
+        } else {
+          console.log('[GlobalQueueManager] Alert successfully marked as completed');
+        }
           
         // Reset completing alert id after a delay
         setTimeout(() => {
