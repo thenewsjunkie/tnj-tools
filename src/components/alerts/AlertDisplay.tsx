@@ -28,7 +28,6 @@ export const AlertDisplay = ({
   const [hasError, setHasError] = useState(false);
   const [isMediaLoaded, setIsMediaLoaded] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
-  const [currentRepeat, setCurrentRepeat] = useState(0);
 
   useEffect(() => {
     console.log('[AlertDisplay] Alert mounted:', {
@@ -39,14 +38,13 @@ export const AlertDisplay = ({
       messageEnabled: currentAlert.message_enabled,
       messageText: currentAlert.message_text,
       repeatCount: currentAlert.repeat_count,
-      repeatDelay: currentAlert.repeat_delay,
-      currentRepeat
+      repeatDelay: currentAlert.repeat_delay
     });
     
     return () => {
       console.log('[AlertDisplay] Alert unmounted');
     };
-  }, [currentAlert, currentRepeat]);
+  }, [currentAlert]);
 
   const handleError = (error: any) => {
     console.error('[AlertDisplay] Error:', error);
@@ -63,20 +61,12 @@ export const AlertDisplay = ({
   };
 
   const handleAlertContentComplete = () => {
-    console.log('[AlertDisplay] Alert content completed, current repeat:', currentRepeat);
+    console.log('[AlertDisplay] Alert content completed');
     
-    const targetRepeatCount = currentAlert.repeat_count ?? 1;
-    
-    if (currentRepeat < targetRepeatCount - 1) {
-      // If we haven't reached the target repeat count, increment and continue
-      setCurrentRepeat(prev => prev + 1);
-    } else {
-      // If we've reached the target repeat count, complete the alert
-      if (!isCompleting) {
-        console.log('[AlertDisplay] All repeats completed, triggering onComplete');
-        setIsCompleting(true);
-        onComplete();
-      }
+    if (!isCompleting) {
+      console.log('[AlertDisplay] Triggering onComplete');
+      setIsCompleting(true);
+      onComplete();
     }
   };
 
@@ -99,8 +89,7 @@ export const AlertDisplay = ({
     giftCountColor: currentAlert.gift_count_color,
     // Only use default values if the properties are actually undefined
     repeatCount: currentAlert.repeat_count ?? 1,
-    repeatDelay: currentAlert.repeat_delay ?? 1000,
-    currentRepeat // Pass the current repeat count to AlertContent
+    repeatDelay: currentAlert.repeat_delay ?? 1000
   };
 
   console.log('[AlertDisplay] Rendering alert content with transformed data:', transformedAlert);
