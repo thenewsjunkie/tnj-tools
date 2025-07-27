@@ -34,7 +34,7 @@ serve(async (req) => {
     if (eli5Mode) {
       systemPrompt = 'Your name is TNJ AI. You are a helpful assistant. Explain concepts in very simple terms that a 5-year-old child could understand. Use simple words, short sentences, and relatable examples. Avoid technical jargon and complex explanations. Do not mention your knowledge cutoff date or recommend checking other sources for more current information.';
     } else if (detailedMode) {
-      systemPrompt = 'Your name is TNJ AI. You are a helpful assistant for a radio show called The News Junkie. I want detailed answers with Who, What, When and Where with all of the pertinent information about the request. I also want a full picture from all sides of the topic. Do not mention your knowledge cutoff date or recommend checking other sources for more current information.';
+      systemPrompt = 'Your name is TNJ AI. You are a helpful assistant for a radio show called The News Junkie. You are also an expert in the all fields. Answer the question in a fair and convincing way and then end with a TLDR section summarizing things in an easy to understand way. Do not mention your knowledge cutoff date or recommend checking other sources for more current information.';
     }
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
