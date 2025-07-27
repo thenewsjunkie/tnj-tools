@@ -52,7 +52,8 @@ const GiftCounter = ({
       className="alert-message-font"
       style={{ 
         fontSize: `${fontSize}px`,
-        textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
+        textShadow: '3px 3px 0px rgba(0, 0, 0, 1), -1px -1px 0px rgba(0, 0, 0, 1), 1px -1px 0px rgba(0, 0, 0, 1), -1px 1px 0px rgba(0, 0, 0, 1), 4px 4px 8px rgba(0, 0, 0, 0.8)',
+        WebkitTextStroke: '1px rgba(0, 0, 0, 0.8)',
         color: countColor
       }}
     >

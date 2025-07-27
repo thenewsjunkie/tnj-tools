@@ -48,7 +48,8 @@ const AlertMessage = ({
           className="alert-message-font text-center"
           style={{ 
             fontSize: `${fontSize}px`,
-            textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
+            textShadow: '3px 3px 0px rgba(0, 0, 0, 1), -1px -1px 0px rgba(0, 0, 0, 1), 1px -1px 0px rgba(0, 0, 0, 1), -1px 1px 0px rgba(0, 0, 0, 1), 4px 4px 8px rgba(0, 0, 0, 0.8)',
+            WebkitTextStroke: '1px rgba(0, 0, 0, 0.8)',
             color: giftTextColor
           }}
         >
@@ -68,7 +69,8 @@ const AlertMessage = ({
           className="alert-message-font text-center"
           style={{ 
             fontSize: `${fontSize * 0.8}px`,
-            textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
+            textShadow: '3px 3px 0px rgba(0, 0, 0, 1), -1px -1px 0px rgba(0, 0, 0, 1), 1px -1px 0px rgba(0, 0, 0, 1), -1px 1px 0px rgba(0, 0, 0, 1), 4px 4px 8px rgba(0, 0, 0, 0.8)',
+            WebkitTextStroke: '1px rgba(0, 0, 0, 0.8)',
             color: giftTextColor
           }}
         >
@@ -90,7 +92,8 @@ const AlertMessage = ({
       <div
         style={{ 
           fontSize: `${fontSize}px`,
-          textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
+          textShadow: '3px 3px 0px rgba(0, 0, 0, 1), -1px -1px 0px rgba(0, 0, 0, 1), 1px -1px 0px rgba(0, 0, 0, 1), -1px 1px 0px rgba(0, 0, 0, 1), 4px 4px 8px rgba(0, 0, 0, 0.8)',
+          WebkitTextStroke: '1px rgba(0, 0, 0, 0.8)',
           lineHeight: '1.2',
           color: '#4CDBC4'
         }}
@@ -100,8 +103,10 @@ const AlertMessage = ({
       <div
         style={{ 
           fontSize: `${fontSize}px`,
-          textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
-          lineHeight: '1.2'
+          textShadow: '3px 3px 0px rgba(0, 0, 0, 1), -1px -1px 0px rgba(0, 0, 0, 1), 1px -1px 0px rgba(0, 0, 0, 1), -1px 1px 0px rgba(0, 0, 0, 1), 4px 4px 8px rgba(0, 0, 0, 0.8)',
+          WebkitTextStroke: '1px rgba(0, 0, 0, 0.8)',
+          lineHeight: '1.2',
+          color: '#FFFFFF'
         }}
       >
         {message}
