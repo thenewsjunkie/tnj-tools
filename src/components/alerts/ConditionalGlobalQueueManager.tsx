@@ -1,18 +1,7 @@
-import { useLocation } from "react-router-dom";
-import { shouldExcludeGlobalQueueManager } from "@/utils/routeUtils";
-import AlertQueueManager from "./AlertQueueManager";
-
+// Server-side alert processing is now handled entirely by Edge Functions
+// No client-side queue manager needed
 const ConditionalGlobalQueueManager = () => {
-  const location = useLocation();
-  
-  // Don't render GlobalQueueManager on OBS/embed pages that don't need alert functionality
-  if (shouldExcludeGlobalQueueManager(location.pathname)) {
-    console.log('[ConditionalGlobalQueueManager] Skipping GlobalQueueManager for route:', location.pathname);
-    return null;
-  }
-  
-  console.log('[ConditionalGlobalQueueManager] Rendering AlertQueueManager for route:', location.pathname);
-  return <AlertQueueManager />;
+  return null;
 };
 
 export default ConditionalGlobalQueueManager;

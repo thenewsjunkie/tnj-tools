@@ -23,7 +23,7 @@ const Alerts = () => {
     <>
       <QueueControlHandler action={action} />
       <AlertTriggerHandler alertSlug={alertSlug} username={username} giftCount={giftCount} />
-      <AlertQueueManager />
+      {/* Server-side processing handles queue management automatically */}
       {currentAlert ? (
         <AlertDisplay currentAlert={currentAlert} />
       ) : (
