@@ -93,23 +93,26 @@ const SimpleGlobalQueueManager = () => {
         table: 'alert_queue',
         filter: 'status=eq.completed'
       }, async (payload) => {
-        console.log('[SimpleQueueManager] Alert completed:', payload.new.id);
-        
-        // Small delay then process next
-        setTimeout(async () => {
-          const { data: settings } = await supabase
-            .from('system_settings')
-            .select('value')
-            .eq('key', 'queue_state')
-            .single();
+        // Only process if this is a fresh completion (has completed_at timestamp)
+        if (payload.new.completed_at && payload.old.status === 'playing') {
+          console.log('[SimpleQueueManager] Fresh alert completion:', payload.new.id);
+          
+          // Small delay then process next
+          setTimeout(async () => {
+            const { data: settings } = await supabase
+              .from('system_settings')
+              .select('value')
+              .eq('key', 'queue_state')
+              .single();
 
-          const queueState = settings?.value as { isPaused: boolean } | null;
-          const isPaused = queueState?.isPaused ?? false;
+            const queueState = settings?.value as { isPaused: boolean } | null;
+            const isPaused = queueState?.isPaused ?? false;
 
-          if (!isPaused) {
-            processNextAlert(false, null, []);
-          }
-        }, 1000);
+            if (!isPaused) {
+              processNextAlert(false, null, []);
+            }
+          }, 1000);
+        }
       })
       .subscribe();
 

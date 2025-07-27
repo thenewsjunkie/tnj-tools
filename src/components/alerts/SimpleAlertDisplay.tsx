@@ -33,33 +33,22 @@ const SimpleAlertDisplay = ({ currentAlert }: SimpleAlertDisplayProps) => {
 
   useEffect(() => {
     console.log('[SimpleAlertDisplay] Alert mounted:', currentAlert.id);
+    setIsVisible(true);
+    setIsCompleting(false);
     
-    // Listen for this specific alert being marked as completed
-    const channel = supabase
-      .channel(`alert-${currentAlert.id}`)
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'alert_queue',
-        filter: `id=eq.${currentAlert.id}`
-      }, (payload) => {
-        if (payload.new.status === 'completed') {
-          console.log('[SimpleAlertDisplay] Alert marked as completed, hiding');
-          setIsVisible(false);
-        }
-      })
-      .subscribe();
-
     return () => {
       console.log('[SimpleAlertDisplay] Alert unmounted:', currentAlert.id);
-      supabase.removeChannel(channel);
     };
   }, [currentAlert.id]);
 
   const handleComplete = async () => {
-    if (isCompleting) return;
+    if (isCompleting) {
+      console.log('[SimpleAlertDisplay] Already completing, ignoring duplicate call');
+      return;
+    }
     
     setIsCompleting(true);
+    setIsVisible(false);
     console.log('[SimpleAlertDisplay] Completing alert:', currentAlert.id);
 
     try {

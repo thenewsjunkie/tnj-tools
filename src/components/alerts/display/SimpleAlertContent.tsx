@@ -1,6 +1,5 @@
 import { memo } from "react";
-import SimpleVideoAlert from "../media/SimpleVideoAlert";
-import SimpleImageAlert from "../media/SimpleImageAlert";
+import MediaDisplay from "../media/MediaDisplay";
 import AlertMessage from "../AlertMessage";
 
 interface SimpleAlertContentProps {
@@ -35,30 +34,18 @@ const SimpleAlertContent = memo(({
   console.log('[SimpleAlertContent] Rendering alert:', currentAlert.id);
 
   const renderMedia = () => {
-    if (currentAlert.mediaType === 'video') {
-      return (
-        <SimpleVideoAlert
-          mediaUrl={currentAlert.mediaUrl}
-          onComplete={onComplete}
-          onError={onError}
-          onMediaLoaded={onMediaLoaded}
-          repeatCount={currentAlert.repeatCount || 1}
-          repeatDelay={currentAlert.repeatDelay || 0}
-        />
-      );
-    } else {
-      return (
-        <SimpleImageAlert
-          mediaUrl={currentAlert.mediaUrl}
-          onComplete={onComplete}
-          onError={onError}
-          onMediaLoaded={onMediaLoaded}
-          displayDuration={currentAlert.displayDuration || 5}
-          repeatCount={currentAlert.repeatCount || 1}
-          repeatDelay={currentAlert.repeatDelay || 0}
-        />
-      );
-    }
+    return (
+      <MediaDisplay
+        mediaUrl={currentAlert.mediaUrl}
+        mediaType={currentAlert.mediaType}
+        displayDuration={currentAlert.displayDuration || 5}
+        repeatCount={currentAlert.repeatCount || 1}
+        repeatDelay={currentAlert.repeatDelay || 0}
+        onComplete={onComplete}
+        onError={onError}
+        onMediaLoaded={onMediaLoaded}
+      />
+    );
   };
 
   return (
