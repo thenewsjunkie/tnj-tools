@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useQueueData } from "@/hooks/useQueueData";
-import AlertDisplay from "@/components/alerts/AlertDisplay";
+import SimpleAlertDisplay from "@/components/alerts/SimpleAlertDisplay";
 import AlertQueueManager from "@/components/alerts/AlertQueueManager";
 import QueueControlHandler from "@/components/alerts/url-handlers/QueueControlHandler";
 import AlertTriggerHandler from "@/components/alerts/url-handlers/AlertTriggerHandler";
@@ -25,7 +25,7 @@ const Alerts = () => {
       <AlertTriggerHandler alertSlug={alertSlug} username={username} giftCount={giftCount} />
       {/* Server-side processing handles queue management automatically */}
       {currentAlert ? (
-        <AlertDisplay currentAlert={currentAlert} />
+        <SimpleAlertDisplay currentAlert={currentAlert} />
       ) : (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-transparent pointer-events-none">
           <div className="text-white/50 text-sm">No active alerts</div>
