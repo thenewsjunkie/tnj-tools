@@ -179,17 +179,23 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
 
   const handleVideoLoadedMetadata = () => {
     const video = mediaRef.current as HTMLVideoElement;
-    if (video && video.duration && !videoDuration) {
+    if (video && video.duration && !videoDuration && !timerSystemSetup) {
       const duration = video.duration * 1000; // Convert to milliseconds
       setVideoDuration(duration);
       console.log('[AlertDisplay] 📹 Video metadata loaded, duration:', duration + 'ms');
       setupTimerBasedAlert(duration);
+      
+      // Stop duration detection since we have the duration
+      if (durationDetectionRef.current) {
+        clearInterval(durationDetectionRef.current);
+        durationDetectionRef.current = undefined;
+      }
     }
   };
 
   const detectVideoDuration = () => {
     const video = mediaRef.current as HTMLVideoElement;
-    if (!video || videoDuration) return;
+    if (!video || videoDuration || timerSystemSetup) return;
     
     // Try to get duration even if metadata isn't fully loaded
     if (video.duration && video.duration > 0) {
