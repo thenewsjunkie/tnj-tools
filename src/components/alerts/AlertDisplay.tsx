@@ -30,10 +30,12 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
   const [isCompleting, setIsCompleting] = useState(false);
   const [currentRepeat, setCurrentRepeat] = useState(0);
   const [videoDuration, setVideoDuration] = useState<number | null>(null);
+  const [isTabVisible, setIsTabVisible] = useState(true);
   const mediaRef = useRef<HTMLVideoElement | HTMLImageElement>(null);
   const completionTimeoutRef = useRef<NodeJS.Timeout>();
   const repeatTimeoutRef = useRef<NodeJS.Timeout>();
   const failsafeTimeoutRef = useRef<NodeJS.Timeout>();
+  const visibilityCheckRef = useRef<NodeJS.Timeout>();
 
   // Determine actual media type from URL
   const getActualMediaType = (url: string): 'video' | 'image' => {
@@ -197,6 +199,68 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
     }
   };
 
+  // Handle tab visibility changes
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      const isVisible = !document.hidden;
+      setIsTabVisible(isVisible);
+      console.log('[AlertDisplay] Tab visibility changed:', isVisible ? 'visible' : 'hidden');
+      
+      if (!isVisible && actualMediaType === 'video') {
+        // Tab became hidden - for inactive tabs, browsers may pause videos
+        // Set up a periodic check to ensure the alert progresses
+        console.log('[AlertDisplay] Tab hidden, setting up visibility check for video');
+        startVisibilityCheck();
+      } else if (isVisible && visibilityCheckRef.current) {
+        // Tab became visible - clear the check
+        console.log('[AlertDisplay] Tab visible, clearing visibility check');
+        clearTimeout(visibilityCheckRef.current);
+        visibilityCheckRef.current = undefined;
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (visibilityCheckRef.current) {
+        clearTimeout(visibilityCheckRef.current);
+        visibilityCheckRef.current = undefined;
+      }
+    };
+  }, [actualMediaType]);
+
+  const startVisibilityCheck = () => {
+    // Clear any existing check
+    if (visibilityCheckRef.current) {
+      clearTimeout(visibilityCheckRef.current);
+    }
+    
+    // Check every 2 seconds if video is progressing when tab is hidden
+    visibilityCheckRef.current = setTimeout(() => {
+      if (!document.hidden) return; // Tab became visible, no need to check
+      
+      const video = mediaRef.current as HTMLVideoElement;
+      if (video && actualMediaType === 'video') {
+        console.log('[AlertDisplay] Visibility check - Video state:', {
+          paused: video.paused,
+          currentTime: video.currentTime,
+          duration: video.duration,
+          repeat: currentRepeat + 1
+        });
+        
+        // If video is paused or stuck, try to restart it or complete the repeat
+        if (video.paused || video.currentTime === 0) {
+          console.log('[AlertDisplay] Video stuck in hidden tab, simulating completion');
+          handleMediaComplete();
+        } else {
+          // Continue checking
+          startVisibilityCheck();
+        }
+      }
+    }, 2000);
+  };
+
   useEffect(() => {
     console.log('[AlertDisplay] 🚀 Alert mounted:', currentAlert.id, 'Type:', actualMediaType, 'Repeats:', repeatCount);
     setIsCompleting(false);
@@ -211,7 +275,7 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
     
     return () => {
       console.log('[AlertDisplay] 🧹 Alert unmounted:', currentAlert.id);
-      [completionTimeoutRef, repeatTimeoutRef, failsafeTimeoutRef].forEach(ref => {
+      [completionTimeoutRef, repeatTimeoutRef, failsafeTimeoutRef, visibilityCheckRef].forEach(ref => {
         if (ref.current) {
           clearTimeout(ref.current);
           ref.current = undefined;
