@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useRealtimeConnection } from "./useRealtimeConnection";
 
 export const useQueueData = () => {
   const { data: queueData, refetch } = useQuery({
@@ -46,16 +47,27 @@ export const useQueueData = () => {
       console.log('[useQueueData] Queue data fetched:', data);
       return data || [];
     },
-    refetchInterval: (query) => {
-      // Disable polling when an alert is playing to prevent flickering
-      const data = query.state.data;
-      const hasPlayingAlert = data && Array.isArray(data) ? data.some(item => item.status === 'playing') : false;
-      return hasPlayingAlert ? false : 2000;
-    },
+    // Always poll every 2 seconds for consistent updates
+    refetchInterval: 2000,
     refetchIntervalInBackground: true,
     staleTime: 1000,
     gcTime: 60000,
   });
+
+  // Subscribe to real-time alert queue changes
+  useRealtimeConnection(
+    'alert-queue-changes',
+    {
+      event: 'UPDATE',
+      schema: 'public',
+      table: 'alert_queue',
+    },
+    (payload) => {
+      console.log('[useQueueData] Alert queue updated:', payload);
+      // Force refetch when alerts are updated (especially when completed)
+      refetch();
+    }
+  );
 
   return { queueData, refetch };
 };
