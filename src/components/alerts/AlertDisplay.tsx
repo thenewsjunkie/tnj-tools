@@ -29,6 +29,7 @@ interface AlertDisplayProps {
 const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
   const [isCompleting, setIsCompleting] = useState(false);
   const [currentRepeat, setCurrentRepeat] = useState(0);
+  const [videoDuration, setVideoDuration] = useState<number | null>(null);
   const mediaRef = useRef<HTMLVideoElement | HTMLImageElement>(null);
   const completionTimeoutRef = useRef<NodeJS.Timeout>();
   const repeatTimeoutRef = useRef<NodeJS.Timeout>();
@@ -84,6 +85,20 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
     }
   };
 
+  const handleVideoLoadedMetadata = () => {
+    const video = mediaRef.current as HTMLVideoElement;
+    if (video && video.duration) {
+      const duration = video.duration * 1000; // Convert to milliseconds
+      setVideoDuration(duration);
+      console.log('[AlertDisplay] Video metadata loaded, duration:', duration + 'ms', 'repeat:', currentRepeat + 1, 'of', repeatCount);
+      
+      // Set failsafe timeout based on actual video duration if not already set
+      if (!failsafeTimeoutRef.current) {
+        setFailsafeTimeout(duration);
+      }
+    }
+  };
+
   const handleMediaLoaded = () => {
     console.log('[AlertDisplay] Media loaded, repeat:', currentRepeat + 1, 'of', repeatCount);
     
@@ -102,6 +117,24 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
         handleMediaComplete();
       }, displayDuration);
     }
+  };
+
+  const setFailsafeTimeout = (mediaDuration: number) => {
+    // Clear existing failsafe
+    if (failsafeTimeoutRef.current) {
+      clearTimeout(failsafeTimeoutRef.current);
+    }
+    
+    // Calculate total expected duration based on media type
+    const singleIterationDuration = actualMediaType === 'video' ? mediaDuration : displayDuration;
+    const totalExpectedDuration = (singleIterationDuration + (repeatDelay * 1000)) * repeatCount + 10000; // 10s buffer
+    
+    console.log('[AlertDisplay] Setting failsafe timeout:', totalExpectedDuration + 'ms', 'for', actualMediaType);
+    
+    failsafeTimeoutRef.current = setTimeout(() => {
+      console.log('[AlertDisplay] ⚠️ FAILSAFE TIMEOUT - Force completing stuck alert');
+      handleComplete();
+    }, totalExpectedDuration);
   };
 
   const handleVideoEnded = () => {
@@ -168,13 +201,13 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
     console.log('[AlertDisplay] 🚀 Alert mounted:', currentAlert.id, 'Type:', actualMediaType, 'Repeats:', repeatCount);
     setIsCompleting(false);
     setCurrentRepeat(0);
+    setVideoDuration(null);
     
-    // Set a failsafe timeout - if nothing completes the alert in reasonable time, force completion
-    const totalExpectedDuration = (displayDuration + repeatDelay) * repeatCount + 5000; // 5s buffer
-    failsafeTimeoutRef.current = setTimeout(() => {
-      console.log('[AlertDisplay] ⚠️ FAILSAFE TIMEOUT - Force completing stuck alert');
-      handleComplete();
-    }, totalExpectedDuration);
+    // For images, set failsafe immediately since we know the duration
+    if (actualMediaType === 'image') {
+      setFailsafeTimeout(displayDuration);
+    }
+    // For videos, we'll set the failsafe after metadata loads
     
     return () => {
       console.log('[AlertDisplay] 🧹 Alert unmounted:', currentAlert.id);
@@ -197,8 +230,20 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
             autoPlay
             muted
             playsInline
+            onLoadedMetadata={handleVideoLoadedMetadata}
             onLoadedData={handleMediaLoaded}
             onEnded={handleVideoEnded}
+            onPlay={() => console.log('[AlertDisplay] Video play event for repeat:', currentRepeat + 1)}
+            onPause={() => console.log('[AlertDisplay] Video pause event for repeat:', currentRepeat + 1)}
+            onTimeUpdate={() => {
+              const video = mediaRef.current as HTMLVideoElement;
+              if (video && video.duration > 0) {
+                const progress = (video.currentTime / video.duration) * 100;
+                if (progress % 25 === 0) { // Log every 25% progress
+                  console.log('[AlertDisplay] Video progress:', Math.round(progress) + '%', 'repeat:', currentRepeat + 1);
+                }
+              }
+            }}
             onError={() => {
               console.error('[AlertDisplay] Video error, completing alert');
               handleComplete();
