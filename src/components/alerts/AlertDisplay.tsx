@@ -12,6 +12,8 @@ interface AlertDisplayProps {
       message_enabled: boolean;
       message_text?: string;
       display_duration?: number;
+      repeat_count?: number;
+      repeat_delay?: number;
       font_size?: number;
       text_color?: string;
       is_gift_alert?: boolean;
@@ -26,8 +28,10 @@ interface AlertDisplayProps {
 
 const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
   const [isCompleting, setIsCompleting] = useState(false);
+  const [currentRepeat, setCurrentRepeat] = useState(0);
   const mediaRef = useRef<HTMLVideoElement | HTMLImageElement>(null);
   const completionTimeoutRef = useRef<NodeJS.Timeout>();
+  const repeatTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Determine actual media type from URL
   const getActualMediaType = (url: string): 'video' | 'image' => {
@@ -38,6 +42,8 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
 
   const actualMediaType = getActualMediaType(currentAlert.alert.media_url);
   const displayDuration = (currentAlert.alert.display_duration || 5) * 1000;
+  const repeatCount = currentAlert.alert.repeat_count || 1;
+  const repeatDelay = currentAlert.alert.repeat_delay || 0;
 
   const handleComplete = async () => {
     if (isCompleting) return;
@@ -66,32 +72,73 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
   };
 
   const handleMediaLoaded = () => {
-    console.log('[AlertDisplay] Media loaded, setting completion timer for:', displayDuration);
+    console.log('[AlertDisplay] Media loaded, repeat:', currentRepeat + 1, 'of', repeatCount);
     
-    // Clear any existing timeout
+    // Clear any existing timeouts
     if (completionTimeoutRef.current) {
       clearTimeout(completionTimeoutRef.current);
     }
+    if (repeatTimeoutRef.current) {
+      clearTimeout(repeatTimeoutRef.current);
+    }
 
-    // Set completion timeout
+    // Set timeout for this iteration
     completionTimeoutRef.current = setTimeout(() => {
-      handleComplete();
+      handleMediaComplete();
     }, displayDuration);
   };
 
   const handleVideoEnded = () => {
-    console.log('[AlertDisplay] Video ended, completing alert');
-    handleComplete();
+    console.log('[AlertDisplay] Video ended, repeat:', currentRepeat + 1, 'of', repeatCount);
+    handleMediaComplete();
+  };
+
+  const handleMediaComplete = () => {
+    const nextRepeat = currentRepeat + 1;
+    
+    if (nextRepeat < repeatCount) {
+      console.log('[AlertDisplay] Starting repeat', nextRepeat + 1, 'after delay:', repeatDelay);
+      setCurrentRepeat(nextRepeat);
+      
+      // If there's a delay, wait before restarting
+      if (repeatDelay > 0) {
+        repeatTimeoutRef.current = setTimeout(() => {
+          restartMedia();
+        }, repeatDelay);
+      } else {
+        restartMedia();
+      }
+    } else {
+      console.log('[AlertDisplay] All repeats complete, finishing alert');
+      handleComplete();
+    }
+  };
+
+  const restartMedia = () => {
+    if (mediaRef.current) {
+      if (actualMediaType === 'video') {
+        const video = mediaRef.current as HTMLVideoElement;
+        video.currentTime = 0;
+        video.play();
+      } else {
+        // For images, just restart the timer
+        handleMediaLoaded();
+      }
+    }
   };
 
   useEffect(() => {
-    console.log('[AlertDisplay] Alert mounted:', currentAlert.id, 'Type:', actualMediaType);
+    console.log('[AlertDisplay] Alert mounted:', currentAlert.id, 'Type:', actualMediaType, 'Repeats:', repeatCount);
     setIsCompleting(false);
+    setCurrentRepeat(0);
     
     return () => {
       console.log('[AlertDisplay] Alert unmounted:', currentAlert.id);
       if (completionTimeoutRef.current) {
         clearTimeout(completionTimeoutRef.current);
+      }
+      if (repeatTimeoutRef.current) {
+        clearTimeout(repeatTimeoutRef.current);
       }
     };
   }, [currentAlert.id]);
@@ -131,6 +178,7 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
                 color: currentAlert.alert.text_color || '#FFFFFF'
               }}
             >
+              {currentAlert.username && `${decodeURIComponent(currentAlert.username)} `}
               {currentAlert.alert.message_text}
               {currentAlert.alert.is_gift_alert && currentAlert.gift_count && (
                 <span 
