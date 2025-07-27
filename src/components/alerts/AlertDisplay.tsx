@@ -1,105 +1,153 @@
-
-import { useState, useEffect } from "react";
-import { AlertContent } from "./display/AlertContent";
+import { useEffect, useState, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AlertDisplayProps {
   currentAlert: {
-    media_type: string;
-    media_url: string;
-    message_enabled?: boolean;
-    message_text?: string;
-    font_size?: number;
-    is_gift_alert?: boolean;
+    id: string;
+    alert: {
+      id: string;
+      title: string;
+      media_url: string;
+      media_type: string;
+      message_enabled: boolean;
+      message_text?: string;
+      display_duration?: number;
+      font_size?: number;
+      text_color?: string;
+      is_gift_alert?: boolean;
+      gift_count_animation_speed?: number;
+      gift_text_color?: string;
+      gift_count_color?: string;
+    };
+    username?: string;
     gift_count?: number;
-    gift_count_animation_speed?: number;
-    gift_text_color?: string;
-    gift_count_color?: string;
-    display_duration?: number;
-    repeat_count?: number;
-    repeat_delay?: number;
   };
-  onComplete: () => void;
 }
 
-export const AlertDisplay = ({
-  currentAlert,
-  onComplete,
-}: AlertDisplayProps) => {
-  const [hasError, setHasError] = useState(false);
-  const [isMediaLoaded, setIsMediaLoaded] = useState(false);
+const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
   const [isCompleting, setIsCompleting] = useState(false);
+  const mediaRef = useRef<HTMLVideoElement | HTMLImageElement>(null);
+  const completionTimeoutRef = useRef<NodeJS.Timeout>();
 
-  useEffect(() => {
-    console.log('[AlertDisplay] Alert mounted:', {
-      mediaType: currentAlert.media_type,
-      mediaUrl: currentAlert.media_url,
-      isGiftAlert: currentAlert.is_gift_alert,
-      displayDuration: currentAlert.display_duration,
-      messageEnabled: currentAlert.message_enabled,
-      messageText: currentAlert.message_text,
-      repeatCount: currentAlert.repeat_count,
-      repeatDelay: currentAlert.repeat_delay
-    });
+  // Determine actual media type from URL
+  const getActualMediaType = (url: string): 'video' | 'image' => {
+    const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi'];
+    const lowerUrl = url.toLowerCase();
+    return videoExtensions.some(ext => lowerUrl.includes(ext)) ? 'video' : 'image';
+  };
+
+  const actualMediaType = getActualMediaType(currentAlert.alert.media_url);
+  const displayDuration = (currentAlert.alert.display_duration || 5) * 1000;
+
+  const handleComplete = async () => {
+    if (isCompleting) return;
     
-    return () => {
-      console.log('[AlertDisplay] Alert unmounted');
-    };
-  }, [currentAlert]);
+    setIsCompleting(true);
+    console.log('[AlertDisplay] Completing alert:', currentAlert.id);
 
-  const handleError = (error: any) => {
-    console.error('[AlertDisplay] Error:', error);
-    setHasError(true);
-    if (!isCompleting) {
-      setIsCompleting(true);
-      onComplete();
+    try {
+      const { error } = await supabase
+        .from('alert_queue')
+        .update({ 
+          status: 'completed',
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', currentAlert.id)
+        .eq('status', 'playing');
+
+      if (error) {
+        console.error('[AlertDisplay] Error completing alert:', error);
+      } else {
+        console.log('[AlertDisplay] Alert completed successfully');
+      }
+    } catch (error) {
+      console.error('[AlertDisplay] Exception completing alert:', error);
     }
   };
 
   const handleMediaLoaded = () => {
-    console.log('[AlertDisplay] Media loaded');
-    setIsMediaLoaded(true);
-  };
-
-  const handleAlertContentComplete = () => {
-    console.log('[AlertDisplay] Alert content completed');
+    console.log('[AlertDisplay] Media loaded, setting completion timer for:', displayDuration);
     
-    if (!isCompleting) {
-      console.log('[AlertDisplay] Triggering onComplete');
-      setIsCompleting(true);
-      onComplete();
+    // Clear any existing timeout
+    if (completionTimeoutRef.current) {
+      clearTimeout(completionTimeoutRef.current);
     }
+
+    // Set completion timeout
+    completionTimeoutRef.current = setTimeout(() => {
+      handleComplete();
+    }, displayDuration);
   };
 
-  if (!currentAlert) {
-    console.log('[AlertDisplay] No alert to render');
-    return null;
-  }
-
-  // Transform the alert data, preserving original values if they exist
-  const transformedAlert = {
-    mediaType: currentAlert.media_type,
-    mediaUrl: currentAlert.media_url,
-    messageEnabled: currentAlert.message_enabled,
-    messageText: currentAlert.message_text,
-    fontSize: currentAlert.font_size,
-    isGiftAlert: currentAlert.is_gift_alert,
-    giftCount: currentAlert.gift_count,
-    giftCountAnimationSpeed: currentAlert.gift_count_animation_speed,
-    giftTextColor: currentAlert.gift_text_color,
-    giftCountColor: currentAlert.gift_count_color,
-    // Only use default values if the properties are actually undefined
-    repeatCount: currentAlert.repeat_count ?? 1,
-    repeatDelay: currentAlert.repeat_delay ?? 1000
+  const handleVideoEnded = () => {
+    console.log('[AlertDisplay] Video ended, completing alert');
+    handleComplete();
   };
 
-  console.log('[AlertDisplay] Rendering alert content with transformed data:', transformedAlert);
+  useEffect(() => {
+    console.log('[AlertDisplay] Alert mounted:', currentAlert.id, 'Type:', actualMediaType);
+    setIsCompleting(false);
+    
+    return () => {
+      console.log('[AlertDisplay] Alert unmounted:', currentAlert.id);
+      if (completionTimeoutRef.current) {
+        clearTimeout(completionTimeoutRef.current);
+      }
+    };
+  }, [currentAlert.id]);
 
   return (
-    <AlertContent
-      currentAlert={transformedAlert}
-      onComplete={handleAlertContentComplete}
-      onError={handleError}
-      onMediaLoaded={handleMediaLoaded}
-    />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-transparent">
+      <div className="relative max-w-2xl max-h-[80vh]">
+        {actualMediaType === 'video' ? (
+          <video
+            ref={mediaRef as React.RefObject<HTMLVideoElement>}
+            src={currentAlert.alert.media_url}
+            autoPlay
+            muted
+            onLoadedData={handleMediaLoaded}
+            onEnded={handleVideoEnded}
+            onError={() => handleComplete()}
+            className="max-w-full max-h-full object-contain"
+            style={{ width: 'auto', height: 'auto' }}
+          />
+        ) : (
+          <img
+            ref={mediaRef as React.RefObject<HTMLImageElement>}
+            src={currentAlert.alert.media_url}
+            onLoad={handleMediaLoaded}
+            onError={() => handleComplete()}
+            alt={currentAlert.alert.title}
+            className="max-w-full max-h-full object-contain"
+            style={{ width: 'auto', height: 'auto' }}
+          />
+        )}
+        
+        {currentAlert.alert.message_enabled && currentAlert.alert.message_text && (
+          <div className="absolute bottom-4 left-4 right-4 bg-black/80 text-white p-4 rounded">
+            <p 
+              style={{ 
+                fontSize: `${currentAlert.alert.font_size || 24}px`,
+                color: currentAlert.alert.text_color || '#FFFFFF'
+              }}
+            >
+              {currentAlert.alert.message_text}
+              {currentAlert.alert.is_gift_alert && currentAlert.gift_count && (
+                <span 
+                  style={{ 
+                    color: currentAlert.alert.gift_count_color || '#4CDBC4',
+                    marginLeft: '8px'
+                  }}
+                >
+                  x{currentAlert.gift_count}
+                </span>
+              )}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
+
+export default AlertDisplay;

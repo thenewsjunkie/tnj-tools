@@ -1,6 +1,6 @@
 import { useLocation } from "react-router-dom";
 import { shouldExcludeGlobalQueueManager } from "@/utils/routeUtils";
-import SimpleGlobalQueueManager from "./SimpleGlobalQueueManager";
+import AlertQueueManager from "./AlertQueueManager";
 
 const ConditionalGlobalQueueManager = () => {
   const location = useLocation();
@@ -11,8 +11,8 @@ const ConditionalGlobalQueueManager = () => {
     return null;
   }
   
-  console.log('[ConditionalGlobalQueueManager] Rendering SimpleGlobalQueueManager for route:', location.pathname);
-  return <SimpleGlobalQueueManager />;
+  console.log('[ConditionalGlobalQueueManager] Rendering AlertQueueManager for route:', location.pathname);
+  return <AlertQueueManager />;
 };
 
 export default ConditionalGlobalQueueManager;

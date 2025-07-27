@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useQueueData } from "@/hooks/useQueueData";
-import SimpleAlertDisplay from "@/components/alerts/SimpleAlertDisplay";
+import AlertDisplay from "@/components/alerts/AlertDisplay";
+import AlertQueueManager from "@/components/alerts/AlertQueueManager";
 import QueueControlHandler from "@/components/alerts/url-handlers/QueueControlHandler";
 import AlertTriggerHandler from "@/components/alerts/url-handlers/AlertTriggerHandler";
 
@@ -11,30 +12,12 @@ const Alerts = () => {
   // Find the currently playing alert
   const currentAlert = queueData?.find(item => item.status === 'playing');
 
-  // Handle URL-based actions
-  if (action) {
-    return (
-      <>
-        <QueueControlHandler action={action} />
-        <AlertTriggerHandler alertSlug={alertSlug} username={username} giftCount={giftCount} />
-      </>
-    );
-  }
-
-  if (!currentAlert) {
-    return (
-      <>
-        <QueueControlHandler action={action} />
-        <AlertTriggerHandler alertSlug={alertSlug} username={username} giftCount={giftCount} />
-      </>
-    );
-  }
-
   return (
     <>
       <QueueControlHandler action={action} />
       <AlertTriggerHandler alertSlug={alertSlug} username={username} giftCount={giftCount} />
-      <SimpleAlertDisplay currentAlert={currentAlert} />
+      <AlertQueueManager />
+      {currentAlert && <AlertDisplay currentAlert={currentAlert} />}
     </>
   );
 };
