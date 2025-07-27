@@ -51,11 +51,12 @@ export const AlertContent: React.FC<AlertContentProps> = memo(({
   const handleComplete = useCallback(() => {
     console.log('[AlertContent] Media completed');
     setIsMediaComplete(true);
-    if (isCountComplete) {
-      console.log('[AlertContent] Both media and count complete, triggering onComplete');
+    // For non-gift alerts, complete immediately after media
+    if (!currentAlert.isGiftAlert || isCountComplete) {
+      console.log('[AlertContent] Triggering onComplete', { isGiftAlert: currentAlert.isGiftAlert, isCountComplete });
       onComplete();
     }
-  }, [isCountComplete, onComplete]);
+  }, [currentAlert.isGiftAlert, isCountComplete, onComplete]);
 
   const handleCountComplete = useCallback(() => {
     console.log('[AlertContent] Count animation completed');
@@ -84,7 +85,7 @@ export const AlertContent: React.FC<AlertContentProps> = memo(({
         <div className="w-full flex justify-center mb-4">
           {currentAlert.mediaType.startsWith('video') ? (
             <VideoAlert 
-              key={`video-${currentAlert.mediaUrl}-${currentAlert.repeatCount}-${currentAlert.repeatDelay}`}
+              key={currentAlert.mediaUrl}
               mediaUrl={currentAlert.mediaUrl}
               onComplete={handleComplete}
               onError={onError}
@@ -94,7 +95,7 @@ export const AlertContent: React.FC<AlertContentProps> = memo(({
             />
           ) : (
             <ImageAlert 
-              key={`image-${currentAlert.mediaUrl}-${currentAlert.repeatCount}`}
+              key={currentAlert.mediaUrl}
               mediaUrl={currentAlert.mediaUrl}
               onComplete={handleComplete}
               onError={onError}

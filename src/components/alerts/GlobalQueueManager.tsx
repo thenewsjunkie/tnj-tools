@@ -112,8 +112,8 @@ const GlobalQueueManager = () => {
     
     // Calculate fallback duration with repeat logic for absolute safety only
     const repeatCount = currentAlert.alert.repeat_count || 1;
-    const repeatDelay = currentAlert.alert.repeat_delay || 1000;
-    const fallbackDuration = (displayDuration * repeatCount) + (repeatDelay * (repeatCount - 1)) + 5000; // Extra safety buffer
+    const repeatDelay = currentAlert.alert.repeat_delay || 0;
+    const fallbackDuration = (displayDuration * repeatCount) + (repeatDelay * (repeatCount - 1)) + 10000; // Extra safety buffer
     
     console.log('[GlobalQueueManager] Setting fallback timer:', {
       displayDuration,
@@ -160,7 +160,7 @@ const GlobalQueueManager = () => {
     };
   }, [currentAlert?.id]);
 
-  // Initialize queue on component mount
+  // Initialize queue on component mount (only runs once)
   useEffect(() => {
     if (isInitializedRef.current) return;
     isInitializedRef.current = true;
@@ -203,12 +203,21 @@ const GlobalQueueManager = () => {
     };
 
     cleanupStuckAlerts();
-  }, [currentAlert, processNextAlert]);
+  }, [processNextAlert]); // Removed currentAlert from dependencies
 
-  // Method to update media duration
-  const updateMediaDuration = (duration: number) => {
-    mediaDurationRef.current = duration;
-  };
+  // Listen for media duration updates
+  useEffect(() => {
+    const handleMediaDurationUpdate = (event: CustomEvent) => {
+      mediaDurationRef.current = event.detail.duration;
+      console.log('[GlobalQueueManager] Media duration updated:', event.detail.duration);
+    };
+
+    window.addEventListener('media-duration-update', handleMediaDurationUpdate as EventListener);
+    
+    return () => {
+      window.removeEventListener('media-duration-update', handleMediaDurationUpdate as EventListener);
+    };
+  }, []);
 
   return null;
 };
