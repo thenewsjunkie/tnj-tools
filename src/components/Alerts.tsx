@@ -4,7 +4,7 @@ import AddAlertDialog from "./alerts/AddAlertDialog";
 import AlertsHeader from "./alerts/AlertsHeader";
 import QueueManager from "./alerts/QueueManager";
 import AlertSelector from "./alerts/AlertSelector";
-import AlertStatus from "./alerts/AlertStatus";
+
 import { useQueueState } from "@/hooks/useQueueState";
 import { useAlerts } from "@/hooks/useAlerts";
 import { useTheme } from "@/components/theme/ThemeProvider";
@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const Alerts = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [totalAlertsSent, setTotalAlertsSent] = useState(0);
+  
   const [selectedAlert, setSelectedAlert] = useState<any>(null);
   const { toast } = useToast();
   const { isPaused, togglePause, currentAlert, queueCount } = useQueueState();
@@ -35,39 +35,6 @@ const Alerts = () => {
     }
   }, [alerts]);
 
-  useEffect(() => {
-    const fetchTotalAlerts = async () => {
-      const { count, error } = await supabase
-        .from('alert_queue')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'completed');
-      
-      if (!error && count !== null) {
-        setTotalAlertsSent(count);
-      }
-    };
-
-    fetchTotalAlerts();
-
-    const channel = supabase.channel('alert-queue-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'alert_queue',
-          filter: 'status=eq.completed'
-        },
-        () => {
-          fetchTotalAlerts();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
 
   const handleAlertAdded = () => {
     refetch();
@@ -120,10 +87,6 @@ const Alerts = () => {
         )}
       </div>
 
-      <AlertStatus 
-        isPaused={isPaused}
-        totalAlertsSent={totalAlertsSent}
-      />
 
       <AddAlertDialog
         open={isDialogOpen}
