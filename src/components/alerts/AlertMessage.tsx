@@ -91,13 +91,20 @@ const AlertMessage = ({
         style={{ 
           fontSize: `${fontSize}px`,
           textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
-          whiteSpace: 'nowrap',
           lineHeight: '1.2',
-          minHeight: `${fontSize * 1.2}px`
+          color: '#4CDBC4'
         }}
       >
-        <span className="text-[#4CDBC4]">{displayUsername}</span>
-        <span> {message}</span>
+        {displayUsername}
+      </div>
+      <div
+        style={{ 
+          fontSize: `${fontSize}px`,
+          textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
+          lineHeight: '1.2'
+        }}
+      >
+        {message}
       </div>
     </div>
   );
