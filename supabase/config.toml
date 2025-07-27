@@ -6,6 +6,3 @@ verify_jwt = false
 verify_jwt = false
 [functions.process-alert-queue]
 verify_jwt = false
-
-[functions.process-alert-queue.cron]
-schedule = "*/3 * * * * *"
