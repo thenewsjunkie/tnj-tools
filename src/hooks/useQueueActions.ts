@@ -94,11 +94,18 @@ export const useQueueActions = (refetchQueue: () => Promise<any>) => {
     // This ensures any previous alert states are fully cleaned up
     await new Promise(resolve => setTimeout(resolve, 100));
 
+    // Calculate scheduled completion based on alert's display duration
+    const displayDuration = nextAlert.alert?.display_duration || 5; // Default 5 seconds
+    const now = new Date();
+    const scheduledCompletion = new Date(now.getTime() + (displayDuration * 1000));
+
     const { error } = await supabase
       .from('alert_queue')
       .update({ 
         status: 'playing',
-        state_changed_at: new Date().toISOString()
+        state_changed_at: now.toISOString(),
+        processing_started_at: now.toISOString(),
+        scheduled_completion: scheduledCompletion.toISOString()
       })
       .eq('id', nextAlert.id);
 

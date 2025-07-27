@@ -146,12 +146,53 @@ async function completeExpiredAlerts(supabase: any) {
     throw updateError;
   }
 
-  const completedCount = expiredAlerts?.length || 0;
-  if (completedCount > 0) {
-    console.log(`[process-alert-queue] Completed ${completedCount} expired alerts`);
+  let completedCount = expiredAlerts?.length || 0;
+  
+  // Handle legacy alerts without scheduled_completion (fallback)
+  if (completedCount === 0) {
+    console.log('[process-alert-queue] Checking for legacy alerts without scheduled_completion...');
     
-    // Broadcast completion event for each completed alert
-    for (const alert of expiredAlerts) {
+    // Get playing alerts without scheduled_completion that have been playing for more than 10 seconds
+    const tenSecondsAgo = new Date(now.getTime() - 10 * 1000);
+    
+    const { data: legacyAlerts, error: legacyError } = await supabase
+      .from('alert_queue')
+      .update({
+        status: 'completed',
+        completed_at: now.toISOString()
+      })
+      .eq('status', 'playing')
+      .is('scheduled_completion', null)
+      .lt('state_changed_at', tenSecondsAgo.toISOString())
+      .select('id');
+
+    if (legacyError) {
+      console.error('[process-alert-queue] Error completing legacy alerts:', legacyError);
+    } else {
+      const legacyCount = legacyAlerts?.length || 0;
+      if (legacyCount > 0) {
+        console.log(`[process-alert-queue] Completed ${legacyCount} legacy alerts without scheduled_completion`);
+        completedCount += legacyCount;
+        
+        // Broadcast completion events for legacy alerts too
+        for (const alert of legacyAlerts) {
+          await supabase
+            .channel('alert-completed')
+            .send({
+              type: 'broadcast',
+              event: 'alert-completed',
+              payload: { alertId: alert.id }
+            });
+        }
+      }
+    }
+  }
+  
+  if (completedCount > 0) {
+    console.log(`[process-alert-queue] Completed ${completedCount} expired alerts total`);
+    
+    // Broadcast completion event for scheduled alerts
+    for (const alert of expiredAlerts || []) {
       await supabase
         .channel('alert-completed')
         .send({
