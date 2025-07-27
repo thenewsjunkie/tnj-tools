@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface AlertDisplayProps {
@@ -25,9 +25,7 @@ interface AlertDisplayProps {
 }
 
 const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
-  const [isCompleting, setIsCompleting] = useState(false);
   const mediaRef = useRef<HTMLVideoElement | HTMLImageElement>(null);
-  const completionTimerRef = useRef<NodeJS.Timeout>();
   const heartbeatRef = useRef<NodeJS.Timeout>();
 
   // Determine actual media type from URL
@@ -38,74 +36,12 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
   };
 
   const actualMediaType = getActualMediaType(currentAlert.alert.media_url);
-  const displayDuration = (currentAlert.alert.display_duration || 5) * 1000;
 
-  const clearAllTimers = () => {
-    console.log('[AlertDisplay] Clearing all timers');
-    
-    if (completionTimerRef.current) {
-      clearTimeout(completionTimerRef.current);
-      completionTimerRef.current = undefined;
-    }
-    
+  const clearHeartbeat = () => {
     if (heartbeatRef.current) {
       clearInterval(heartbeatRef.current);
       heartbeatRef.current = undefined;
     }
-  };
-
-  const handleComplete = async () => {
-    if (isCompleting) {
-      console.log('[AlertDisplay] Already completing, ignoring duplicate call');
-      return;
-    }
-    
-    setIsCompleting(true);
-    console.log('[AlertDisplay] 🏁 COMPLETING alert:', currentAlert.id);
-
-    // Clear all timers immediately
-    clearAllTimers();
-
-    try {
-      console.log('[AlertDisplay] Updating database to completed...');
-      const { error } = await supabase
-        .from('alert_queue')
-        .update({ 
-          status: 'completed',
-          completed_at: new Date().toISOString()
-        })
-        .eq('id', currentAlert.id)
-        .eq('status', 'playing');
-
-      if (error) {
-        console.error('[AlertDisplay] Database error completing alert:', error);
-      } else {
-        console.log('[AlertDisplay] ✅ Alert marked as completed in database');
-      }
-    } catch (error) {
-      console.error('[AlertDisplay] Exception completing alert:', error);
-    }
-  };
-
-  const startAlertTimer = (duration: number) => {
-    console.log('[AlertDisplay] ⏰ Starting alert timer for:', duration + 'ms');
-    
-    // Use requestAnimationFrame for better reliability in background tabs
-    const startTime = performance.now();
-    
-    const checkCompletion = () => {
-      const elapsed = performance.now() - startTime;
-      
-      if (elapsed >= duration) {
-        console.log('[AlertDisplay] ⏰ Timer completed, finishing alert');
-        handleComplete();
-      } else {
-        // Check again in 100ms for more precision
-        completionTimerRef.current = setTimeout(checkCompletion, 100);
-      }
-    };
-    
-    checkCompletion();
   };
 
   const startHeartbeat = () => {
@@ -132,49 +68,13 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
 
   useEffect(() => {
     console.log('[AlertDisplay] 🚀 Alert mounted:', currentAlert.id, 'Type:', actualMediaType);
-    setIsCompleting(false);
     
-    // Start heartbeat immediately
+    // Start heartbeat immediately - this lets the server know the alert is being displayed
     startHeartbeat();
-    
-    if (actualMediaType === 'image') {
-      // For images, use display duration immediately
-      console.log('[AlertDisplay] 🖼️ Image alert, duration:', displayDuration + 'ms');
-      startAlertTimer(displayDuration);
-    } else {
-      // For videos, try to get actual duration first, fallback to display duration
-      const video = mediaRef.current as HTMLVideoElement;
-      
-      const handleLoadedMetadata = () => {
-        if (video && video.duration) {
-          const videoDuration = video.duration * 1000;
-          console.log('[AlertDisplay] 📹 Video duration:', videoDuration + 'ms');
-          startAlertTimer(videoDuration);
-        } else {
-          console.log('[AlertDisplay] 📹 No video duration, using fallback:', displayDuration + 'ms');
-          startAlertTimer(displayDuration);
-        }
-      };
-
-      if (video) {
-        if (video.duration) {
-          handleLoadedMetadata();
-        } else {
-          video.addEventListener('loadedmetadata', handleLoadedMetadata, { once: true });
-          // Fallback timer in case metadata never loads
-          setTimeout(() => {
-            if (!completionTimerRef.current) {
-              console.log('[AlertDisplay] 📹 Metadata timeout, using fallback duration');
-              startAlertTimer(displayDuration);
-            }
-          }, 1000);
-        }
-      }
-    }
     
     return () => {
       console.log('[AlertDisplay] 🧹 Alert unmounted:', currentAlert.id);
-      clearAllTimers();
+      clearHeartbeat();
     };
   }, [currentAlert.id]);
 
@@ -190,10 +90,7 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
             playsInline
             loop={false}
             onError={() => {
-              console.error('[AlertDisplay] Video error, using fallback duration');
-              if (!completionTimerRef.current) {
-                startAlertTimer(displayDuration);
-              }
+              console.error('[AlertDisplay] Video error');
             }}
             className="max-w-full max-h-full object-contain"
             style={{ width: 'auto', height: 'auto' }}
@@ -203,8 +100,7 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
             ref={mediaRef as React.RefObject<HTMLImageElement>}
             src={currentAlert.alert.media_url}
             onError={() => {
-              console.error('[AlertDisplay] Image error, completing alert');
-              handleComplete();
+              console.error('[AlertDisplay] Image error');
             }}
             alt={currentAlert.alert.title}
             className="max-w-full max-h-full object-contain"
