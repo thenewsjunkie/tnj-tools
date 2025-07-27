@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import SimpleAlertContent from "./display/SimpleAlertContent";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SimpleAlertDisplayProps {
   currentAlert: {
@@ -27,16 +28,53 @@ interface SimpleAlertDisplayProps {
 }
 
 const SimpleAlertDisplay = ({ currentAlert }: SimpleAlertDisplayProps) => {
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+
   useEffect(() => {
     console.log('[SimpleAlertDisplay] Alert mounted:', currentAlert.id);
+    setIsVisible(true);
+    setIsCompleting(false);
+    
     return () => {
       console.log('[SimpleAlertDisplay] Alert unmounted:', currentAlert.id);
     };
   }, [currentAlert.id]);
 
+  const handleComplete = async () => {
+    if (isCompleting) {
+      console.log('[SimpleAlertDisplay] Already completing, ignoring duplicate call');
+      return;
+    }
+    
+    setIsCompleting(true);
+    setIsVisible(false);
+    console.log('[SimpleAlertDisplay] Completing alert:', currentAlert.id);
+
+    try {
+      // Mark alert as completed in database
+      const { error } = await supabase
+        .from('alert_queue')
+        .update({ 
+          status: 'completed',
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', currentAlert.id)
+        .eq('status', 'playing'); // Only update if still playing
+
+      if (error) {
+        console.error('[SimpleAlertDisplay] Error completing alert:', error);
+      } else {
+        console.log('[SimpleAlertDisplay] Alert completed successfully');
+      }
+    } catch (error) {
+      console.error('[SimpleAlertDisplay] Exception completing alert:', error);
+    }
+  };
+
   const handleError = (error: string) => {
     console.error('[SimpleAlertDisplay] Alert error:', error);
-    // Server will handle completion automatically, no need for client-side completion
+    handleComplete(); // Complete on error
   };
 
   // Transform alert data for SimpleAlertContent
@@ -59,14 +97,15 @@ const SimpleAlertDisplay = ({ currentAlert }: SimpleAlertDisplayProps) => {
     giftCountColor: currentAlert.alert.gift_count_color,
   };
 
+  if (!isVisible) {
+    return null;
+  }
+
   return (
     <div className="fixed inset-0 z-50 transition-opacity duration-300">
       <SimpleAlertContent
         currentAlert={transformedAlert}
-        onComplete={() => {
-          // Server handles completion automatically via process-alert-queue edge function
-          console.log('[SimpleAlertDisplay] Media finished, server will handle completion');
-        }}
+        onComplete={handleComplete}
         onError={handleError}
       />
     </div>

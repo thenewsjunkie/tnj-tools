@@ -66,12 +66,14 @@ export const useQueueData = () => {
     (payload) => {
       console.log('[useQueueData] Alert queue updated:', payload);
       
-      // Immediate cache invalidation and refetch for any status changes
-      console.log('[useQueueData] Invalidating cache and refetching for alert update');
-      queryClient.invalidateQueries({ queryKey: ['alert_queue'] });
+      // Force invalidate and refetch when alerts are completed
+      if (payload.new?.status === 'completed') {
+        console.log('[useQueueData] Alert completed, invalidating cache');
+        queryClient.invalidateQueries({ queryKey: ['alert_queue'] });
+      }
       
-      // Force immediate refetch to update UI
-      setTimeout(() => refetch(), 100);
+      // Always refetch to ensure fresh data
+      refetch();
     }
   );
 
