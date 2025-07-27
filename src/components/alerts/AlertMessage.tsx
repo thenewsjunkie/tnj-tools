@@ -16,7 +16,7 @@ interface AlertMessageProps {
 const AlertMessage = ({ 
   message,
   username,
-  fontSize = 24,
+  fontSize = 48,
   isGiftAlert = false,
   giftCount = 1,
   giftCountAnimationSpeed = 100,

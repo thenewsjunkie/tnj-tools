@@ -16,7 +16,7 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
   const [title, setTitle] = useState("");
   const [messageEnabled, setMessageEnabled] = useState(false);
   const [messageText, setMessageText] = useState("");
-  const [fontSize, setFontSize] = useState(24);
+  const [fontSize, setFontSize] = useState(48);
   const [isGiftAlert, setIsGiftAlert] = useState(false);
   const [giftCountAnimationSpeed, setGiftCountAnimationSpeed] = useState(100);
   const [giftTextColor, setGiftTextColor] = useState("#FFFFFF");
@@ -79,7 +79,7 @@ const AddAlertDialog = ({ open, onOpenChange, onAlertAdded }: AddAlertDialogProp
       setTitle("");
       setMessageEnabled(false);
       setMessageText("");
-      setFontSize(24);
+      setFontSize(48);
       setIsGiftAlert(false);
       setGiftCountAnimationSpeed(100);
       setGiftTextColor("#FFFFFF");

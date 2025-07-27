@@ -32,7 +32,7 @@ const EditAlertDialog = ({ alert, open, onOpenChange, onAlertUpdated }: EditAler
   const [title, setTitle] = useState(alert.title);
   const [messageEnabled, setMessageEnabled] = useState(alert.message_enabled || false);
   const [messageText, setMessageText] = useState(alert.message_text || "");
-  const [fontSize, setFontSize] = useState(alert.font_size || 24);
+  const [fontSize, setFontSize] = useState(alert.font_size || 48);
   const [isGiftAlert, setIsGiftAlert] = useState(alert.is_gift_alert || false);
   const [giftCountAnimationSpeed, setGiftCountAnimationSpeed] = useState(alert.gift_count_animation_speed || 100);
   const [giftTextColor, setGiftTextColor] = useState(alert.gift_text_color || "#FFFFFF");
@@ -46,7 +46,7 @@ const EditAlertDialog = ({ alert, open, onOpenChange, onAlertUpdated }: EditAler
     setTitle(alert.title);
     setMessageEnabled(alert.message_enabled || false);
     setMessageText(alert.message_text || "");
-    setFontSize(alert.font_size || 24);
+    setFontSize(alert.font_size || 48);
     setIsGiftAlert(alert.is_gift_alert || false);
     setGiftCountAnimationSpeed(alert.gift_count_animation_speed || 100);
     setGiftTextColor(alert.gift_text_color || "#FFFFFF");
