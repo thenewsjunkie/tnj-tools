@@ -48,31 +48,29 @@ export const useQueueData = () => {
       console.log('[useQueueData] Queue data fetched:', data);
       return data || [];
     },
-    // Always poll every 2 seconds for consistent updates
-    refetchInterval: 2000,
+    // Poll more frequently for admin UI responsiveness
+    refetchInterval: 1000,
     refetchIntervalInBackground: true,
-    staleTime: 1000,
+    staleTime: 500, // Shorter stale time for immediate UI updates
     gcTime: 60000,
   });
 
-  // Subscribe to real-time alert queue changes
+  // Subscribe to real-time alert queue changes with immediate invalidation
   useRealtimeConnection(
     'alert-queue-changes',
     {
-      event: 'UPDATE',
+      event: 'UPDATE', 
       schema: 'public',
       table: 'alert_queue',
     },
     (payload) => {
       console.log('[useQueueData] Alert queue updated:', payload);
       
-      // Force invalidate and refetch when alerts are completed
-      if (payload.new?.status === 'completed') {
-        console.log('[useQueueData] Alert completed, invalidating cache');
-        queryClient.invalidateQueries({ queryKey: ['alert_queue'] });
-      }
+      // Immediately invalidate cache and refetch for any status change
+      console.log('[useQueueData] Invalidating cache for status change');
+      queryClient.invalidateQueries({ queryKey: ['alert_queue'] });
       
-      // Always refetch to ensure fresh data
+      // Force immediate refetch with stale data
       refetch();
     }
   );

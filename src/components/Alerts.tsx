@@ -7,7 +7,6 @@ import AlertSelector from "./alerts/AlertSelector";
 import AlertStatus from "./alerts/AlertStatus";
 import { useQueueState } from "@/hooks/useQueueState";
 import { useAlerts } from "@/hooks/useAlerts";
-import { useAlertQueue } from "@/hooks/useAlertQueue";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -16,9 +15,8 @@ const Alerts = () => {
   const [totalAlertsSent, setTotalAlertsSent] = useState(0);
   const [selectedAlert, setSelectedAlert] = useState<any>(null);
   const { toast } = useToast();
-  const { isPaused, togglePause } = useQueueState();
+  const { isPaused, togglePause, currentAlert, queueCount } = useQueueState();
   const { alerts, refetch } = useAlerts();
-  const { currentAlert, queueCount, processNextAlert } = useAlertQueue();
   const { theme } = useTheme();
 
   useEffect(() => {
@@ -91,10 +89,8 @@ const Alerts = () => {
   };
 
   const handleTogglePause = async () => {
-    const newPausedState = await togglePause();
-    if (!newPausedState) {
-      processNextAlert(newPausedState);
-    }
+    await togglePause();
+    // Server-side edge function will handle queue processing automatically
   };
 
   const bgColor = theme === 'light' ? 'bg-white' : 'bg-black/50';
@@ -111,7 +107,6 @@ const Alerts = () => {
         currentAlert={currentAlert}
         queueCount={queueCount}
         isPaused={isPaused}
-        processNextAlert={() => processNextAlert(isPaused)}
       />
 
       <div className="p-6 pt-0">

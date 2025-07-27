@@ -6,32 +6,10 @@ interface QueueManagerProps {
   currentAlert: any;
   queueCount: number;
   isPaused: boolean;
-  processNextAlert: () => void;
 }
 
-const QueueManager = ({ currentAlert, queueCount, isPaused, processNextAlert }: QueueManagerProps) => {
-  const processingRef = useRef(false);
-
-  // Effect to process next alert when queue is empty and not paused
-  useEffect(() => {
-    // Only process if we have alerts to process, aren't already processing, and queue isn't paused
-    if (!currentAlert && queueCount > 0 && !isPaused && !processingRef.current) {
-      console.log('[QueueManager] Processing next alert. Current state:', {
-        currentAlert,
-        queueCount,
-        isPaused,
-        processing: processingRef.current
-      });
-      
-      processingRef.current = true;
-      processNextAlert();
-    }
-    
-    // Cleanup function to reset processing state
-    return () => {
-      processingRef.current = false;
-    };
-  }, [currentAlert, queueCount, isPaused, processNextAlert]);
+const QueueManager = ({ currentAlert, queueCount, isPaused }: QueueManagerProps) => {
+  // This component is now display-only - server-side edge function handles queue processing
 
   // Only show if there are alerts in queue or if paused or if there's a current alert
   if (!currentAlert && queueCount === 0 && !isPaused) {
