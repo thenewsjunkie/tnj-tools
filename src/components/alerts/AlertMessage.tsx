@@ -91,14 +91,13 @@ const AlertMessage = ({
         style={{ 
           fontSize: `${fontSize}px`,
           textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
-          wordWrap: 'break-word',
-          whiteSpace: 'pre-wrap',
+          whiteSpace: 'nowrap',
           lineHeight: '1.2',
           minHeight: `${fontSize * 1.2}px`
         }}
       >
         <span className="text-[#4CDBC4]">{displayUsername}</span>
-        <span className="break-words"> {message}</span>
+        <span> {message}</span>
       </div>
     </div>
   );
