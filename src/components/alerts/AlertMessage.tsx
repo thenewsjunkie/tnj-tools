@@ -27,8 +27,9 @@ const AlertMessage = ({
   useGiftAnimation({ isGiftAlert, giftCount });
 
   if (isGiftAlert) {
-    // Use provided username or decode from message as fallback
-    const displayUsername = username || decodeURIComponent(message.split(' ')[0]);
+    // Decode username properly, handling URL encoding like %20
+    const displayUsername = username ? decodeURIComponent(username) : 
+      decodeURIComponent(message.split(' ')[0]);
     
     // Replace {count} placeholder with actual count
     const formattedMessage = message.replace('{count}', giftCount.toString());
@@ -77,8 +78,8 @@ const AlertMessage = ({
     );
   }
 
-  // Use provided username or try to decode from message as fallback
-  const displayUsername = username || (() => {
+  // Decode username properly, handling URL encoding like %20
+  const displayUsername = username ? decodeURIComponent(username) : (() => {
     const subscribedIndex = message.indexOf(' just');
     const encodedUsername = subscribedIndex === -1 ? message : message.slice(0, subscribedIndex);
     return decodeURIComponent(encodedUsername);
