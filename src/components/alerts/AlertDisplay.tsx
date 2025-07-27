@@ -32,6 +32,7 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
   const mediaRef = useRef<HTMLVideoElement | HTMLImageElement>(null);
   const completionTimeoutRef = useRef<NodeJS.Timeout>();
   const repeatTimeoutRef = useRef<NodeJS.Timeout>();
+  const failsafeTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Determine actual media type from URL
   const getActualMediaType = (url: string): 'video' | 'image' => {
@@ -46,22 +47,24 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
   const repeatDelay = currentAlert.alert.repeat_delay || 0;
 
   const handleComplete = async () => {
-    if (isCompleting) return;
+    if (isCompleting) {
+      console.log('[AlertDisplay] Already completing, ignoring duplicate call');
+      return;
+    }
     
     setIsCompleting(true);
-    console.log('[AlertDisplay] Completing alert:', currentAlert.id);
+    console.log('[AlertDisplay] STARTING COMPLETION for alert:', currentAlert.id);
 
-    // Clear all timers immediately
-    if (completionTimeoutRef.current) {
-      clearTimeout(completionTimeoutRef.current);
-      completionTimeoutRef.current = undefined;
-    }
-    if (repeatTimeoutRef.current) {
-      clearTimeout(repeatTimeoutRef.current);
-      repeatTimeoutRef.current = undefined;
-    }
+    // Clear ALL timers immediately
+    [completionTimeoutRef, repeatTimeoutRef, failsafeTimeoutRef].forEach(ref => {
+      if (ref.current) {
+        clearTimeout(ref.current);
+        ref.current = undefined;
+      }
+    });
 
     try {
+      console.log('[AlertDisplay] Updating database to completed...');
       const { error } = await supabase
         .from('alert_queue')
         .update({ 
@@ -72,9 +75,9 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
         .eq('status', 'playing');
 
       if (error) {
-        console.error('[AlertDisplay] Error completing alert:', error);
+        console.error('[AlertDisplay] Database error completing alert:', error);
       } else {
-        console.log('[AlertDisplay] Alert completed successfully');
+        console.log('[AlertDisplay] ✅ Alert marked as completed in database');
       }
     } catch (error) {
       console.error('[AlertDisplay] Exception completing alert:', error);
@@ -85,38 +88,41 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
     console.log('[AlertDisplay] Media loaded, repeat:', currentRepeat + 1, 'of', repeatCount);
     
     // Clear any existing timeouts
-    if (completionTimeoutRef.current) {
-      clearTimeout(completionTimeoutRef.current);
-    }
-    if (repeatTimeoutRef.current) {
-      clearTimeout(repeatTimeoutRef.current);
-    }
+    [completionTimeoutRef, repeatTimeoutRef].forEach(ref => {
+      if (ref.current) {
+        clearTimeout(ref.current);
+        ref.current = undefined;
+      }
+    });
 
     // Set timeout for this iteration
     completionTimeoutRef.current = setTimeout(() => {
+      console.log('[AlertDisplay] Media timeout triggered for repeat:', currentRepeat + 1);
       handleMediaComplete();
     }, displayDuration);
   };
 
   const handleVideoEnded = () => {
-    console.log('[AlertDisplay] Video ended, repeat:', currentRepeat + 1, 'of', repeatCount);
+    console.log('[AlertDisplay] 🎬 Video ended event for repeat:', currentRepeat + 1, 'of', repeatCount);
     handleMediaComplete();
   };
 
   const handleMediaComplete = () => {
-    if (isCompleting) return; // Prevent multiple completion calls
+    if (isCompleting) {
+      console.log('[AlertDisplay] Already completing, ignoring media complete');
+      return;
+    }
     
     const nextRepeat = currentRepeat + 1;
-    console.log('[AlertDisplay] Media complete. Current repeat:', currentRepeat + 1, 'of', repeatCount);
+    console.log('[AlertDisplay] 🔄 Media complete. Repeat:', nextRepeat, 'of', repeatCount);
     
     if (nextRepeat < repeatCount) {
-      console.log('[AlertDisplay] Starting repeat', nextRepeat + 1, 'after delay:', repeatDelay);
+      console.log('[AlertDisplay] ⏭️ Starting repeat', nextRepeat + 1, 'after delay:', repeatDelay);
       setCurrentRepeat(nextRepeat);
       
-      // If there's a delay, wait before restarting
       if (repeatDelay > 0) {
         repeatTimeoutRef.current = setTimeout(() => {
-          if (!isCompleting) { // Check if not already completing
+          if (!isCompleting) {
             restartMedia();
           }
         }, repeatDelay);
@@ -124,11 +130,9 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
         restartMedia();
       }
     } else {
-      console.log('[AlertDisplay] All repeats complete, finishing alert');
-      // Use a small delay to ensure the last repeat finishes cleanly
-      setTimeout(() => {
-        handleComplete();
-      }, 100);
+      console.log('[AlertDisplay] 🏁 ALL REPEATS COMPLETE! Triggering completion...');
+      // Force completion immediately - no delay
+      handleComplete();
     }
   };
 
@@ -151,18 +155,25 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
   };
 
   useEffect(() => {
-    console.log('[AlertDisplay] Alert mounted:', currentAlert.id, 'Type:', actualMediaType, 'Repeats:', repeatCount);
+    console.log('[AlertDisplay] 🚀 Alert mounted:', currentAlert.id, 'Type:', actualMediaType, 'Repeats:', repeatCount);
     setIsCompleting(false);
     setCurrentRepeat(0);
     
+    // Set a failsafe timeout - if nothing completes the alert in reasonable time, force completion
+    const totalExpectedDuration = (displayDuration + repeatDelay) * repeatCount + 5000; // 5s buffer
+    failsafeTimeoutRef.current = setTimeout(() => {
+      console.log('[AlertDisplay] ⚠️ FAILSAFE TIMEOUT - Force completing stuck alert');
+      handleComplete();
+    }, totalExpectedDuration);
+    
     return () => {
-      console.log('[AlertDisplay] Alert unmounted:', currentAlert.id);
-      if (completionTimeoutRef.current) {
-        clearTimeout(completionTimeoutRef.current);
-      }
-      if (repeatTimeoutRef.current) {
-        clearTimeout(repeatTimeoutRef.current);
-      }
+      console.log('[AlertDisplay] 🧹 Alert unmounted:', currentAlert.id);
+      [completionTimeoutRef, repeatTimeoutRef, failsafeTimeoutRef].forEach(ref => {
+        if (ref.current) {
+          clearTimeout(ref.current);
+          ref.current = undefined;
+        }
+      });
     };
   }, [currentAlert.id]);
 
