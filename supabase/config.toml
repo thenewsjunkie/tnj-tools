@@ -3,3 +3,5 @@ project_id = "gpmandlkcdompmdvethh"
 verify_jwt = false
 [functions.trigger-alert]
 verify_jwt = false
+[functions.process-alert-queue]
+verify_jwt = false

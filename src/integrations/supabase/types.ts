@@ -25,6 +25,8 @@ export type Database = {
           last_heartbeat: string | null
           max_duration: number | null
           played_at: string | null
+          processing_started_at: string | null
+          scheduled_completion: string | null
           scheduled_for: string | null
           state_changed_at: string | null
           status: string
@@ -40,6 +42,8 @@ export type Database = {
           last_heartbeat?: string | null
           max_duration?: number | null
           played_at?: string | null
+          processing_started_at?: string | null
+          scheduled_completion?: string | null
           scheduled_for?: string | null
           state_changed_at?: string | null
           status?: string
@@ -55,6 +59,8 @@ export type Database = {
           last_heartbeat?: string | null
           max_duration?: number | null
           played_at?: string | null
+          processing_started_at?: string | null
+          scheduled_completion?: string | null
           scheduled_for?: string | null
           state_changed_at?: string | null
           status?: string
