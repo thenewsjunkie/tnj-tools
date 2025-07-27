@@ -12,8 +12,6 @@ interface AlertDisplayProps {
       message_enabled: boolean;
       message_text?: string;
       display_duration?: number;
-      repeat_count?: number;
-      repeat_delay?: number;
       font_size?: number;
       text_color?: string;
       is_gift_alert?: boolean;
@@ -28,15 +26,9 @@ interface AlertDisplayProps {
 
 const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
   const [isCompleting, setIsCompleting] = useState(false);
-  const [currentRepeat, setCurrentRepeat] = useState(0);
-  const [videoDuration, setVideoDuration] = useState<number | null>(null);
-  const [alertStartTime] = useState(Date.now());
-  const [timerSystemSetup, setTimerSystemSetup] = useState(false);
-  
   const mediaRef = useRef<HTMLVideoElement | HTMLImageElement>(null);
-  const alertTimersRef = useRef<NodeJS.Timeout[]>([]);
+  const completionTimerRef = useRef<NodeJS.Timeout>();
   const heartbeatRef = useRef<NodeJS.Timeout>();
-  const durationDetectionRef = useRef<NodeJS.Timeout>();
 
   // Determine actual media type from URL
   const getActualMediaType = (url: string): 'video' | 'image' => {
@@ -47,26 +39,18 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
 
   const actualMediaType = getActualMediaType(currentAlert.alert.media_url);
   const displayDuration = (currentAlert.alert.display_duration || 5) * 1000;
-  const repeatCount = currentAlert.alert.repeat_count || 1;
-  const repeatDelay = (currentAlert.alert.repeat_delay || 0) * 1000;
 
   const clearAllTimers = () => {
     console.log('[AlertDisplay] Clearing all timers');
     
-    // Clear all alert timers
-    alertTimersRef.current.forEach(timer => clearTimeout(timer));
-    alertTimersRef.current = [];
-    
-    // Clear heartbeat
-    if (heartbeatRef.current) {
-      clearTimeout(heartbeatRef.current);
-      heartbeatRef.current = undefined;
+    if (completionTimerRef.current) {
+      clearTimeout(completionTimerRef.current);
+      completionTimerRef.current = undefined;
     }
     
-    // Clear duration detection
-    if (durationDetectionRef.current) {
-      clearTimeout(durationDetectionRef.current);
-      durationDetectionRef.current = undefined;
+    if (heartbeatRef.current) {
+      clearInterval(heartbeatRef.current);
+      heartbeatRef.current = undefined;
     }
   };
 
@@ -77,7 +61,7 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
     }
     
     setIsCompleting(true);
-    console.log('[AlertDisplay] 🏁 STARTING COMPLETION for alert:', currentAlert.id);
+    console.log('[AlertDisplay] 🏁 COMPLETING alert:', currentAlert.id);
 
     // Clear all timers immediately
     clearAllTimers();
@@ -103,56 +87,25 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
     }
   };
 
-  const setupTimerBasedAlert = (mediaDurationMs: number) => {
-    if (timerSystemSetup) {
-      console.log('[AlertDisplay] ⚠️ Timer system already set up, skipping duplicate setup');
-      return;
-    }
+  const startAlertTimer = (duration: number) => {
+    console.log('[AlertDisplay] ⏰ Starting alert timer for:', duration + 'ms');
     
-    console.log('[AlertDisplay] 🕒 Setting up timer-based alert system');
-    console.log('[AlertDisplay] Media duration:', mediaDurationMs + 'ms', 'Repeats:', repeatCount, 'Delay:', repeatDelay + 'ms');
+    // Use requestAnimationFrame for better reliability in background tabs
+    const startTime = performance.now();
     
-    setTimerSystemSetup(true);
-    
-    // Calculate completion times for each repeat
-    const completionTimes: number[] = [];
-    let cumulativeTime = 0;
-    
-    for (let i = 0; i < repeatCount; i++) {
-      cumulativeTime += mediaDurationMs;
-      if (i < repeatCount - 1) { // Add delay except for the last repeat
-        cumulativeTime += repeatDelay;
-      }
-      completionTimes.push(cumulativeTime);
-    }
-    
-    console.log('[AlertDisplay] Scheduled completion times:', completionTimes.map((time, i) => `Repeat ${i + 1}: ${time}ms`));
-    
-    // Set up timer for each repeat completion
-    completionTimes.forEach((time, index) => {
-      const timer = setTimeout(() => {
-        if (isCompleting) return;
-        
-        const repeatNumber = index + 1;
-        console.log('[AlertDisplay] ⏰ Timer triggered for repeat:', repeatNumber, 'of', repeatCount);
-        setCurrentRepeat(index);
-        
-        if (repeatNumber === repeatCount) {
-          // Last repeat - complete the alert
-          console.log('[AlertDisplay] 🏁 Final repeat complete, finishing alert');
-          handleComplete();
-        } else {
-          // Not the last repeat - continue to next (no video restart needed)
-          console.log('[AlertDisplay] 🔄 Repeat', repeatNumber, 'complete, continuing to next');
-        }
-      }, time);
+    const checkCompletion = () => {
+      const elapsed = performance.now() - startTime;
       
-      alertTimersRef.current.push(timer);
-    });
+      if (elapsed >= duration) {
+        console.log('[AlertDisplay] ⏰ Timer completed, finishing alert');
+        handleComplete();
+      } else {
+        // Check again in 100ms for more precision
+        completionTimerRef.current = setTimeout(checkCompletion, 100);
+      }
+    };
     
-    // Calculate total duration with buffer
-    const totalDuration = completionTimes[completionTimes.length - 1] + 5000; // 5s buffer
-    console.log('[AlertDisplay] Total alert duration (with buffer):', totalDuration + 'ms');
+    checkCompletion();
   };
 
   const startHeartbeat = () => {
@@ -174,88 +127,49 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
     sendHeartbeat();
     
     // Set up periodic heartbeat every 2 seconds
-    heartbeatRef.current = setInterval(sendHeartbeat, 2000) as any;
-  };
-
-  const handleVideoLoadedMetadata = () => {
-    const video = mediaRef.current as HTMLVideoElement;
-    if (video && video.duration && !videoDuration && !timerSystemSetup) {
-      const duration = video.duration * 1000; // Convert to milliseconds
-      setVideoDuration(duration);
-      console.log('[AlertDisplay] 📹 Video metadata loaded, duration:', duration + 'ms');
-      setupTimerBasedAlert(duration);
-      
-      // Stop duration detection since we have the duration
-      if (durationDetectionRef.current) {
-        clearInterval(durationDetectionRef.current);
-        durationDetectionRef.current = undefined;
-      }
-    }
-  };
-
-  const detectVideoDuration = () => {
-    const video = mediaRef.current as HTMLVideoElement;
-    if (!video || videoDuration || timerSystemSetup) return;
-    
-    // Try to get duration even if metadata isn't fully loaded
-    if (video.duration && video.duration > 0) {
-      const duration = video.duration * 1000;
-      setVideoDuration(duration);
-      console.log('[AlertDisplay] 📹 Video duration detected:', duration + 'ms');
-      setupTimerBasedAlert(duration);
-      return;
-    }
-    
-    // Keep trying every 100ms for up to 10 seconds
-    let attempts = 0;
-    const maxAttempts = 100;
-    
-    durationDetectionRef.current = setInterval(() => {
-      attempts++;
-      
-      if (video.duration && video.duration > 0) {
-        const duration = video.duration * 1000;
-        setVideoDuration(duration);
-        console.log('[AlertDisplay] 📹 Video duration detected after', attempts, 'attempts:', duration + 'ms');
-        setupTimerBasedAlert(duration);
-        
-        if (durationDetectionRef.current) {
-          clearInterval(durationDetectionRef.current);
-          durationDetectionRef.current = undefined;
-        }
-      } else if (attempts >= maxAttempts) {
-        console.warn('[AlertDisplay] ⚠️ Could not detect video duration, using fallback');
-        const fallbackDuration = displayDuration; // Use display_duration as fallback
-        setVideoDuration(fallbackDuration);
-        setupTimerBasedAlert(fallbackDuration);
-        
-        if (durationDetectionRef.current) {
-          clearInterval(durationDetectionRef.current);
-          durationDetectionRef.current = undefined;
-        }
-      }
-    }, 100) as any;
+    heartbeatRef.current = setInterval(sendHeartbeat, 2000);
   };
 
   useEffect(() => {
-    console.log('[AlertDisplay] 🚀 Alert mounted:', currentAlert.id, 'Type:', actualMediaType, 'Repeats:', repeatCount);
+    console.log('[AlertDisplay] 🚀 Alert mounted:', currentAlert.id, 'Type:', actualMediaType);
     setIsCompleting(false);
-    setCurrentRepeat(0);
-    setVideoDuration(null);
-    setTimerSystemSetup(false);
     
     // Start heartbeat immediately
     startHeartbeat();
     
     if (actualMediaType === 'image') {
-      // For images, we know the duration immediately
-      console.log('[AlertDisplay] 🖼️ Image alert, using display duration:', displayDuration + 'ms');
-      setupTimerBasedAlert(displayDuration);
+      // For images, use display duration immediately
+      console.log('[AlertDisplay] 🖼️ Image alert, duration:', displayDuration + 'ms');
+      startAlertTimer(displayDuration);
     } else {
-      // For videos, start trying to detect duration
-      console.log('[AlertDisplay] 📹 Video alert, waiting for duration detection');
-      // Small delay to let video element initialize
-      setTimeout(detectVideoDuration, 100);
+      // For videos, try to get actual duration first, fallback to display duration
+      const video = mediaRef.current as HTMLVideoElement;
+      
+      const handleLoadedMetadata = () => {
+        if (video && video.duration) {
+          const videoDuration = video.duration * 1000;
+          console.log('[AlertDisplay] 📹 Video duration:', videoDuration + 'ms');
+          startAlertTimer(videoDuration);
+        } else {
+          console.log('[AlertDisplay] 📹 No video duration, using fallback:', displayDuration + 'ms');
+          startAlertTimer(displayDuration);
+        }
+      };
+
+      if (video) {
+        if (video.duration) {
+          handleLoadedMetadata();
+        } else {
+          video.addEventListener('loadedmetadata', handleLoadedMetadata, { once: true });
+          // Fallback timer in case metadata never loads
+          setTimeout(() => {
+            if (!completionTimerRef.current) {
+              console.log('[AlertDisplay] 📹 Metadata timeout, using fallback duration');
+              startAlertTimer(displayDuration);
+            }
+          }, 1000);
+        }
+      }
     }
     
     return () => {
@@ -263,17 +177,6 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
       clearAllTimers();
     };
   }, [currentAlert.id]);
-
-  // Log for debugging visual events (but don't use for timing)
-  const handleVideoPlay = () => {
-    const elapsed = Date.now() - alertStartTime;
-    console.log('[AlertDisplay] 🎬 Video play event at', elapsed + 'ms', 'repeat:', currentRepeat + 1);
-  };
-
-  const handleVideoEnded = () => {
-    const elapsed = Date.now() - alertStartTime;
-    console.log('[AlertDisplay] 🎬 Video ended event at', elapsed + 'ms', 'repeat:', currentRepeat + 1, '(visual only)');
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-transparent">
@@ -286,15 +189,10 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
             muted
             playsInline
             loop={false}
-            onLoadedMetadata={handleVideoLoadedMetadata}
-            onLoadedData={detectVideoDuration}
-            onCanPlay={detectVideoDuration}
-            onPlay={handleVideoPlay}
-            onEnded={handleVideoEnded}
             onError={() => {
               console.error('[AlertDisplay] Video error, using fallback duration');
-              if (!videoDuration) {
-                setupTimerBasedAlert(displayDuration);
+              if (!completionTimerRef.current) {
+                startAlertTimer(displayDuration);
               }
             }}
             className="max-w-full max-h-full object-contain"
