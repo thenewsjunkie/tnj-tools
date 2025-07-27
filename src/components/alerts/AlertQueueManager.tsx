@@ -67,9 +67,13 @@ const AlertQueueManager = () => {
         },
         (payload) => {
           console.log('[AlertQueueManager] Alert completed, processing next');
-          setTimeout(() => {
-            processNextAlert();
-          }, 500); // Small delay before processing next
+          // Force immediate refetch to update UI
+          refetch().then(() => {
+            console.log('[AlertQueueManager] Queue refetched after completion');
+            setTimeout(() => {
+              processNextAlert();
+            }, 100); // Small delay to ensure state updates
+          });
         }
       )
       .subscribe();
