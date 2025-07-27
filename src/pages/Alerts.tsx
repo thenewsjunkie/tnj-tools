@@ -1,14 +1,12 @@
 import { useParams } from "react-router-dom";
 import { AlertDisplay } from "@/components/alerts/AlertDisplay";
 import { useQueueData } from "@/hooks/useQueueData";
-import { useAlertQueue } from "@/hooks/useAlertQueue";
 import QueueControlHandler from "@/components/alerts/url-handlers/QueueControlHandler";
 import AlertTriggerHandler from "@/components/alerts/url-handlers/AlertTriggerHandler";
 
 const Alerts = () => {
   const { alertSlug, username, action, giftCount } = useParams();
   const { queueData } = useQueueData();
-  const { handleAlertComplete } = useAlertQueue();
   
   // Find the current playing alert from queue data
   const currentAlert = queueData?.find(item => item.status === 'playing');
@@ -59,8 +57,8 @@ const Alerts = () => {
       <AlertDisplay
         currentAlert={displayAlert}
         onComplete={() => {
-          console.log('[Alerts Page] Alert completed, calling handleAlertComplete');
-          handleAlertComplete();
+          // Alert completion is now handled by GlobalQueueManager
+          console.log('[Alerts Page] Alert completed');
         }}
       />
     </>

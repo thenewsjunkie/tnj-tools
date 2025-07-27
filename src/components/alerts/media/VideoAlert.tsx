@@ -15,7 +15,7 @@ const VideoAlert = ({
   onError, 
   onMediaLoaded,
   repeatCount = 1, // Default to 1 if not provided
-  repeatDelay = 0 // Default to 0ms if not provided
+  repeatDelay = 1000 // Default to 1000ms if not provided
 }: VideoAlertProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const completedRef = useRef(false);

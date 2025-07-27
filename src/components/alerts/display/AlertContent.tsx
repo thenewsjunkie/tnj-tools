@@ -1,4 +1,4 @@
-import React, { useState, useCallback, memo, useEffect, useMemo } from "react";
+import React, { useState, useCallback, memo, useEffect } from "react";
 import VideoAlert from "../media/VideoAlert";
 import ImageAlert from "../media/ImageAlert";
 import AlertMessage from "../AlertMessage";
@@ -51,12 +51,11 @@ export const AlertContent: React.FC<AlertContentProps> = memo(({
   const handleComplete = useCallback(() => {
     console.log('[AlertContent] Media completed');
     setIsMediaComplete(true);
-    // For non-gift alerts, complete immediately when media finishes
-    if (!currentAlert.isGiftAlert || isCountComplete) {
-      console.log('[AlertContent] Triggering onComplete', { isGiftAlert: currentAlert.isGiftAlert, isCountComplete });
+    if (isCountComplete) {
+      console.log('[AlertContent] Both media and count complete, triggering onComplete');
       onComplete();
     }
-  }, [currentAlert.isGiftAlert, isCountComplete, onComplete]);
+  }, [isCountComplete, onComplete]);
 
   const handleCountComplete = useCallback(() => {
     console.log('[AlertContent] Count animation completed');
@@ -70,18 +69,6 @@ export const AlertContent: React.FC<AlertContentProps> = memo(({
   const displayMessage = currentAlert.messageEnabled && currentAlert.messageText 
     ? currentAlert.messageText
     : '';
-
-  // Memoize stable props to prevent unnecessary re-renders
-  const stableVideoProps = useMemo(() => ({
-    mediaUrl: currentAlert.mediaUrl,
-    repeatCount: currentAlert.repeatCount,
-    repeatDelay: currentAlert.repeatDelay
-  }), [currentAlert.mediaUrl, currentAlert.repeatCount, currentAlert.repeatDelay]);
-
-  const stableImageProps = useMemo(() => ({
-    mediaUrl: currentAlert.mediaUrl,
-    repeatCount: currentAlert.repeatCount
-  }), [currentAlert.mediaUrl, currentAlert.repeatCount]);
 
   useEffect(() => {
     console.log('[AlertContent] State updated:', {
@@ -97,22 +84,22 @@ export const AlertContent: React.FC<AlertContentProps> = memo(({
         <div className="w-full flex justify-center mb-4">
           {currentAlert.mediaType.startsWith('video') ? (
             <VideoAlert 
-              key={`video-${stableVideoProps.mediaUrl}`}
-              mediaUrl={stableVideoProps.mediaUrl}
+              key={`video-${currentAlert.mediaUrl}-${currentAlert.repeatCount}-${currentAlert.repeatDelay}`}
+              mediaUrl={currentAlert.mediaUrl}
               onComplete={handleComplete}
               onError={onError}
               onMediaLoaded={onMediaLoaded}
-              repeatCount={stableVideoProps.repeatCount}
-              repeatDelay={stableVideoProps.repeatDelay}
+              repeatCount={currentAlert.repeatCount}
+              repeatDelay={currentAlert.repeatDelay}
             />
           ) : (
             <ImageAlert 
-              key={`image-${stableImageProps.mediaUrl}`}
-              mediaUrl={stableImageProps.mediaUrl}
+              key={`image-${currentAlert.mediaUrl}-${currentAlert.repeatCount}`}
+              mediaUrl={currentAlert.mediaUrl}
               onComplete={handleComplete}
               onError={onError}
               onMediaLoaded={onMediaLoaded}
-              repeatCount={stableImageProps.repeatCount}
+              repeatCount={currentAlert.repeatCount}
             />
           )}
         </div>
