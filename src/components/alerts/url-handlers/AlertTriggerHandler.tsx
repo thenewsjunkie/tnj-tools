@@ -20,12 +20,10 @@ const AlertTriggerHandler = ({ alertSlug, username, giftCount }: AlertTriggerHan
 
   // Function to format username from URL
   const formatUsername = (username: string) => {
-    // First decode any URL-encoded characters
+    // First decode any URL-encoded characters (including %20 spaces)
     const decodedUsername = decodeURIComponent(username);
-    // Then format with proper capitalization
-    return decodedUsername.split('-').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
+    // Return the decoded username as-is (no need to split on hyphens)
+    return decodedUsername;
   };
 
   useEffect(() => {

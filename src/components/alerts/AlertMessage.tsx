@@ -97,7 +97,7 @@ const AlertMessage = ({
         }}
       >
         <span className="text-[#4CDBC4]">{displayUsername}</span>
-        <span className="break-words inline-block"> {message}</span>
+        <span className="break-words"> {message}</span>
       </div>
     </div>
   );
