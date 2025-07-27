@@ -95,11 +95,13 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
       }
     });
 
-    // Set timeout for this iteration
-    completionTimeoutRef.current = setTimeout(() => {
-      console.log('[AlertDisplay] Media timeout triggered for repeat:', currentRepeat + 1);
-      handleMediaComplete();
-    }, displayDuration);
+    // Only set timeout for images, videos will use 'ended' event
+    if (actualMediaType === 'image') {
+      completionTimeoutRef.current = setTimeout(() => {
+        console.log('[AlertDisplay] Image timeout triggered for repeat:', currentRepeat + 1);
+        handleMediaComplete();
+      }, displayDuration);
+    }
   };
 
   const handleVideoEnded = () => {
@@ -139,14 +141,22 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
   const restartMedia = () => {
     if (isCompleting) return; // Don't restart if completing
     
+    console.log('[AlertDisplay] Restarting media for repeat:', currentRepeat + 1);
+    
     if (mediaRef.current) {
       if (actualMediaType === 'video') {
         const video = mediaRef.current as HTMLVideoElement;
         video.currentTime = 0;
-        video.play().catch(error => {
-          console.error('[AlertDisplay] Error restarting video:', error);
-          handleComplete(); // Complete on error
-        });
+        
+        // Add user interaction check for video restart
+        const playPromise = video.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(error => {
+            console.warn('[AlertDisplay] Video restart blocked by browser:', error.message);
+            console.log('[AlertDisplay] Attempting to complete due to video restart failure');
+            handleComplete();
+          });
+        }
       } else {
         // For images, just restart the timer
         handleMediaLoaded();
@@ -186,9 +196,13 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
             src={currentAlert.alert.media_url}
             autoPlay
             muted
+            playsInline
             onLoadedData={handleMediaLoaded}
             onEnded={handleVideoEnded}
-            onError={() => handleComplete()}
+            onError={() => {
+              console.error('[AlertDisplay] Video error, completing alert');
+              handleComplete();
+            }}
             className="max-w-full max-h-full object-contain"
             style={{ width: 'auto', height: 'auto' }}
           />
