@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeConnection } from "./useRealtimeConnection";
+import { queryClient } from "@/lib/react-query";
 
 export const useQueueData = () => {
   const { data: queueData, refetch } = useQuery({
@@ -64,7 +65,14 @@ export const useQueueData = () => {
     },
     (payload) => {
       console.log('[useQueueData] Alert queue updated:', payload);
-      // Force refetch when alerts are updated (especially when completed)
+      
+      // Force invalidate and refetch when alerts are completed
+      if (payload.new?.status === 'completed') {
+        console.log('[useQueueData] Alert completed, invalidating cache');
+        queryClient.invalidateQueries({ queryKey: ['alert_queue'] });
+      }
+      
+      // Always refetch to ensure fresh data
       refetch();
     }
   );
