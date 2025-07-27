@@ -31,6 +31,7 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
   const [currentRepeat, setCurrentRepeat] = useState(0);
   const [videoDuration, setVideoDuration] = useState<number | null>(null);
   const [alertStartTime] = useState(Date.now());
+  const [timerSystemSetup, setTimerSystemSetup] = useState(false);
   
   const mediaRef = useRef<HTMLVideoElement | HTMLImageElement>(null);
   const alertTimersRef = useRef<NodeJS.Timeout[]>([]);
@@ -103,8 +104,15 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
   };
 
   const setupTimerBasedAlert = (mediaDurationMs: number) => {
+    if (timerSystemSetup) {
+      console.log('[AlertDisplay] ⚠️ Timer system already set up, skipping duplicate setup');
+      return;
+    }
+    
     console.log('[AlertDisplay] 🕒 Setting up timer-based alert system');
     console.log('[AlertDisplay] Media duration:', mediaDurationMs + 'ms', 'Repeats:', repeatCount, 'Delay:', repeatDelay + 'ms');
+    
+    setTimerSystemSetup(true);
     
     // Calculate completion times for each repeat
     const completionTimes: number[] = [];
@@ -134,15 +142,8 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
           console.log('[AlertDisplay] 🏁 Final repeat complete, finishing alert');
           handleComplete();
         } else {
-          // Not the last repeat - restart media for visual purposes
+          // Not the last repeat - continue to next (no video restart needed)
           console.log('[AlertDisplay] 🔄 Repeat', repeatNumber, 'complete, continuing to next');
-          if (actualMediaType === 'video' && mediaRef.current) {
-            const video = mediaRef.current as HTMLVideoElement;
-            video.currentTime = 0;
-            video.play().catch(err => {
-              console.warn('[AlertDisplay] Video restart failed:', err.message);
-            });
-          }
         }
       }, time);
       
@@ -235,6 +236,7 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
     setIsCompleting(false);
     setCurrentRepeat(0);
     setVideoDuration(null);
+    setTimerSystemSetup(false);
     
     // Start heartbeat immediately
     startHeartbeat();
