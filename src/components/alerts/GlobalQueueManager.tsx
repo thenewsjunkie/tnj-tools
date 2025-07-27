@@ -212,7 +212,7 @@ const GlobalQueueManager = () => {
     };
 
     cleanupStuckAlerts();
-  }, [currentAlert, processNextAlert]);
+  }, [processNextAlert]);
 
   // Method to update media duration
   const updateMediaDuration = (duration: number) => {
