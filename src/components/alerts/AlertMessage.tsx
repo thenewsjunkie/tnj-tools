@@ -3,6 +3,7 @@ import { useGiftAnimation } from "@/hooks/useGiftAnimation";
 
 interface AlertMessageProps {
   message: string;
+  username?: string;
   fontSize?: number;
   isGiftAlert?: boolean;
   giftCount?: number;
@@ -13,7 +14,8 @@ interface AlertMessageProps {
 }
 
 const AlertMessage = ({ 
-  message, 
+  message,
+  username,
   fontSize = 24,
   isGiftAlert = false,
   giftCount = 1,
@@ -25,16 +27,15 @@ const AlertMessage = ({
   useGiftAnimation({ isGiftAlert, giftCount });
 
   if (isGiftAlert) {
-    // Extract and decode username from the message
-    const encodedUsername = message.split(' ')[0];
-    const username = decodeURIComponent(encodedUsername);
+    // Use provided username or decode from message as fallback
+    const displayUsername = username || decodeURIComponent(message.split(' ')[0]);
     
     // Replace {count} placeholder with actual count
     const formattedMessage = message.replace('{count}', giftCount.toString());
     
     console.log('[AlertMessage] Gift alert details:', {
-      encodedUsername,
-      decodedUsername: username,
+      providedUsername: username,
+      displayUsername,
       giftCount,
       originalMessage: message,
       formattedMessage
@@ -50,7 +51,7 @@ const AlertMessage = ({
             color: giftTextColor
           }}
         >
-          {username} Gifted
+          {displayUsername} Gifted
         </div>
         <div className="flex justify-center w-full">
           <GiftCounter 
@@ -76,11 +77,12 @@ const AlertMessage = ({
     );
   }
 
-  // Find and decode the username for regular alerts
-  const subscribedIndex = message.indexOf(' just');
-  const encodedUsername = subscribedIndex === -1 ? message : message.slice(0, subscribedIndex);
-  const username = decodeURIComponent(encodedUsername);
-  const restOfMessage = subscribedIndex === -1 ? '' : message.slice(subscribedIndex);
+  // Use provided username or try to decode from message as fallback
+  const displayUsername = username || (() => {
+    const subscribedIndex = message.indexOf(' just');
+    const encodedUsername = subscribedIndex === -1 ? message : message.slice(0, subscribedIndex);
+    return decodeURIComponent(encodedUsername);
+  })();
 
   return (
     <div className="text-white alert-message-font text-center">
@@ -94,10 +96,8 @@ const AlertMessage = ({
           minHeight: `${fontSize * 1.2}px`
         }}
       >
-        <span className="text-[#4CDBC4]">{username}</span>
-        {restOfMessage && (
-          <span className="break-words inline-block">{restOfMessage}</span>
-        )}
+        <span className="text-[#4CDBC4]">{displayUsername}</span>
+        <span className="break-words inline-block"> {message}</span>
       </div>
     </div>
   );

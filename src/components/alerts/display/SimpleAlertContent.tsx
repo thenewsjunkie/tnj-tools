@@ -9,6 +9,7 @@ interface SimpleAlertContentProps {
     mediaType: string;
     messageEnabled: boolean;
     messageText?: string;
+    username?: string;
     displayDuration?: number;
     repeatCount?: number;
     repeatDelay?: number;
@@ -56,6 +57,7 @@ const SimpleAlertContent = memo(({
         {currentAlert.messageEnabled && currentAlert.messageText && (
           <AlertMessage
             message={currentAlert.messageText}
+            username={currentAlert.username}
             fontSize={currentAlert.fontSize || 24}
             isGiftAlert={currentAlert.isGiftAlert}
             giftCount={currentAlert.giftCount}

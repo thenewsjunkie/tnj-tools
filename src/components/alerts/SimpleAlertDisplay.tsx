@@ -84,6 +84,7 @@ const SimpleAlertDisplay = ({ currentAlert }: SimpleAlertDisplayProps) => {
     mediaType: currentAlert.alert.media_type,
     messageEnabled: currentAlert.alert.message_enabled,
     messageText: currentAlert.alert.message_text,
+    username: currentAlert.username,
     displayDuration: currentAlert.alert.display_duration,
     repeatCount: currentAlert.alert.repeat_count,
     repeatDelay: currentAlert.alert.repeat_delay,
