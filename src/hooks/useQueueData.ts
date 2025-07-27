@@ -48,10 +48,10 @@ export const useQueueData = () => {
       console.log('[useQueueData] Queue data fetched:', data);
       return data || [];
     },
-    // Reduce polling frequency since real-time updates handle most changes
-    refetchInterval: 3000,
-    refetchIntervalInBackground: true,
-    staleTime: 1000, // Allow some staleness since real-time updates are primary
+    // Disable background polling when real-time is active
+    refetchInterval: false,
+    refetchIntervalInBackground: false,
+    staleTime: 0, // Prevent stale data display
     gcTime: 60000,
   });
 
@@ -84,11 +84,14 @@ export const useQueueData = () => {
           alertId: payload.new?.id
         });
         
-        // Use removeQueries for immediate cache clearing
+        // Clear cache immediately to prevent stale data
         queryClient.removeQueries({ queryKey: ['alert_queue'] });
         
-        // Force immediate refetch
-        refetch();
+        // Wait a brief moment for the server to process, then refetch
+        setTimeout(() => {
+          console.log('[useQueueData] Refetching after cache clear');
+          refetch();
+        }, 100);
       } else {
         console.log('[useQueueData] Status change does not affect query, skipping invalidation:', {
           oldStatus,
