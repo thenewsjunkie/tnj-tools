@@ -49,7 +49,7 @@ const SimpleImageAlert = ({
     <img
       src={mediaUrl}
       alt="Alert"
-      className="w-full h-full object-cover"
+      className="max-w-2xl max-h-[80vh] object-contain"
       onError={handleImageError}
     />
   );

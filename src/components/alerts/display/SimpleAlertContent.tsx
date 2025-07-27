@@ -49,20 +49,22 @@ const SimpleAlertContent = memo(({
   };
 
   return (
-    <div className="relative w-full h-full">
-      {renderMedia()}
-      
-      {currentAlert.messageEnabled && currentAlert.messageText && (
-        <AlertMessage
-          message={currentAlert.messageText}
-          fontSize={currentAlert.fontSize || 24}
-          isGiftAlert={currentAlert.isGiftAlert}
-          giftCount={currentAlert.giftCount}
-          giftCountAnimationSpeed={currentAlert.giftCountAnimationSpeed}
-          giftTextColor={currentAlert.giftTextColor}
-          giftCountColor={currentAlert.giftCountColor}
-        />
-      )}
+    <div className="relative w-full h-full flex items-center justify-center">
+      <div className="relative max-w-2xl max-h-[80vh]">
+        {renderMedia()}
+        
+        {currentAlert.messageEnabled && currentAlert.messageText && (
+          <AlertMessage
+            message={currentAlert.messageText}
+            fontSize={currentAlert.fontSize || 24}
+            isGiftAlert={currentAlert.isGiftAlert}
+            giftCount={currentAlert.giftCount}
+            giftCountAnimationSpeed={currentAlert.giftCountAnimationSpeed}
+            giftTextColor={currentAlert.giftTextColor}
+            giftCountColor={currentAlert.giftCountColor}
+          />
+        )}
+      </div>
     </div>
   );
 });

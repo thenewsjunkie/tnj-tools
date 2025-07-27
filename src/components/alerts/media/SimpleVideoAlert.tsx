@@ -76,7 +76,7 @@ const SimpleVideoAlert = ({
     <video
       ref={videoRef}
       src={mediaUrl}
-      className="w-full h-full object-cover"
+      className="max-w-2xl max-h-[80vh] object-contain"
       playsInline
       muted
       controls={false}
