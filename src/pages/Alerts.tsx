@@ -24,12 +24,8 @@ const Alerts = () => {
       <QueueControlHandler action={action} />
       <AlertTriggerHandler alertSlug={alertSlug} username={username} giftCount={giftCount} />
       {/* Server-side processing handles queue management automatically */}
-      {currentAlert ? (
+      {currentAlert && (
         <SimpleAlertDisplay currentAlert={currentAlert} />
-      ) : (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-transparent pointer-events-none">
-          <div className="text-white/50 text-sm">No active alerts</div>
-        </div>
       )}
     </>
   );
