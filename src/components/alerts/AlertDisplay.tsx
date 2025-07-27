@@ -51,6 +51,16 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
     setIsCompleting(true);
     console.log('[AlertDisplay] Completing alert:', currentAlert.id);
 
+    // Clear all timers immediately
+    if (completionTimeoutRef.current) {
+      clearTimeout(completionTimeoutRef.current);
+      completionTimeoutRef.current = undefined;
+    }
+    if (repeatTimeoutRef.current) {
+      clearTimeout(repeatTimeoutRef.current);
+      repeatTimeoutRef.current = undefined;
+    }
+
     try {
       const { error } = await supabase
         .from('alert_queue')
@@ -94,7 +104,10 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
   };
 
   const handleMediaComplete = () => {
+    if (isCompleting) return; // Prevent multiple completion calls
+    
     const nextRepeat = currentRepeat + 1;
+    console.log('[AlertDisplay] Media complete. Current repeat:', currentRepeat + 1, 'of', repeatCount);
     
     if (nextRepeat < repeatCount) {
       console.log('[AlertDisplay] Starting repeat', nextRepeat + 1, 'after delay:', repeatDelay);
@@ -103,23 +116,33 @@ const AlertDisplay = ({ currentAlert }: AlertDisplayProps) => {
       // If there's a delay, wait before restarting
       if (repeatDelay > 0) {
         repeatTimeoutRef.current = setTimeout(() => {
-          restartMedia();
+          if (!isCompleting) { // Check if not already completing
+            restartMedia();
+          }
         }, repeatDelay);
       } else {
         restartMedia();
       }
     } else {
       console.log('[AlertDisplay] All repeats complete, finishing alert');
-      handleComplete();
+      // Use a small delay to ensure the last repeat finishes cleanly
+      setTimeout(() => {
+        handleComplete();
+      }, 100);
     }
   };
 
   const restartMedia = () => {
+    if (isCompleting) return; // Don't restart if completing
+    
     if (mediaRef.current) {
       if (actualMediaType === 'video') {
         const video = mediaRef.current as HTMLVideoElement;
         video.currentTime = 0;
-        video.play();
+        video.play().catch(error => {
+          console.error('[AlertDisplay] Error restarting video:', error);
+          handleComplete(); // Complete on error
+        });
       } else {
         // For images, just restart the timer
         handleMediaLoaded();
