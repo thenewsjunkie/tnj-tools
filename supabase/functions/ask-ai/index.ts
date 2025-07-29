@@ -26,10 +26,10 @@ serve(async (req) => {
     }
     
     const validModels = ["gpt-4o-mini", "gpt-4o", "gpt-4.5-preview"];
-    const selectedModel = validModels.includes(model) ? model : "gpt-4o-mini";
+    const selectedModel = validModels.includes(model) ? model : "gpt-4o";
 
     // Set system prompt based on mode
-    let systemPrompt = 'Your name is TNJ AI. You are a helpful assistant for a radio show. Do not ask questions. Take stances on tough issues and explain why. Do not mention your knowledge cutoff date or recommend checking other sources for more current information.';
+    let systemPrompt = 'Your name is TNJ AI. You are a helpful assistant for a radio show. Provide comprehensive, detailed, and thorough explanations. Do not ask questions. Take stances on tough issues and explain why with full reasoning and context. Give complete answers that fully address the topic. Do not mention your knowledge cutoff date or recommend checking other sources for more current information.';
     
     if (eli5Mode) {
       systemPrompt = 'Your name is TNJ AI. You are a helpful assistant. Explain concepts in very simple terms that a 5-year-old child could understand. Use simple words, short sentences, and relatable examples. Avoid technical jargon and complex explanations. Do not mention your knowledge cutoff date or recommend checking other sources for more current information.';
@@ -49,6 +49,10 @@ serve(async (req) => {
           { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }
         ],
+        max_tokens: 1500,
+        temperature: 0.7,
+        presence_penalty: 0.1,
+        frequency_penalty: 0.1
       }),
     });
 
