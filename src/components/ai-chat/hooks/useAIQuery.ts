@@ -8,7 +8,7 @@ type AIModel = "gpt-4o-mini" | "gpt-4o" | "gpt-4.5-preview";
 
 export const useAIQuery = () => {
   const [question, setQuestion] = useState("");
-  const [selectedModel, setSelectedModel] = useState<AIModel>("gpt-4o-mini");
+  const [selectedModel, setSelectedModel] = useState<AIModel>("gpt-4o");
   const [aiResponse, setAIResponse] = useState<string | null>(null);
   const [eli5Mode, setEli5Mode] = useState(false);
   const [detailedMode, setDetailedMode] = useState(false);
