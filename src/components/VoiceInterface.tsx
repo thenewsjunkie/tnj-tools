@@ -20,8 +20,8 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
   const [messages, setMessages] = useState<RealtimeMessage[]>([]);
   const [currentTranscript, setCurrentTranscript] = useState('');
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
   const chatRef = useRef<RealtimeChat | null>(null);
-
   // Session settings
   const DEFAULT_PROMPT = "You are TNJ AI, an on-air co-host on The News Junkie radio show. You are speaking with Shawn Wasson, Sabrina and C-Lane. Because we are on the radio, keep your answers concise and ask clarifying questions when useful. Stay conversational—no code blocks, no markdown. Answer direct questions.";
   const SUPPORTED_VOICES = ["alloy", "ash", "ballad", "coral", "echo", "sage", "shimmer", "verse"] as const;
@@ -112,6 +112,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
     chatRef.current?.disconnect();
     setIsConnected(false);
     setIsSpeaking(false);
+    setIsMuted(false);
     setMessages([]);
     setCurrentTranscript('');
     onSpeakingChange(false);
@@ -120,6 +121,25 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
       title: "Disconnected",
       description: "Voice conversation ended",
     });
+  };
+
+  const toggleMute = () => {
+    const next = !isMuted;
+    try {
+      chatRef.current?.setMuted(next);
+      setIsMuted(next);
+      toast({
+        title: next ? "Microphone muted" : "Microphone unmuted",
+        description: next ? "Your mic is off" : "Your mic is on",
+      });
+    } catch (error) {
+      console.error('Error toggling mute:', error);
+      toast({
+        title: "Mute Error",
+        description: error instanceof Error ? error.message : 'Failed to toggle microphone',
+        variant: "destructive",
+      });
+    }
   };
 
   useEffect(() => {
@@ -241,14 +261,24 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
               )}
             </Button>
           ) : (
-            <Button 
-              onClick={endConversation}
-              variant="destructive"
-              size="lg"
-            >
-              <MicOff className="w-4 h-4 mr-2" />
-              End Conversation
-            </Button>
+            <div className="flex items-center justify-center gap-3">
+              <Button
+                onClick={toggleMute}
+                variant={isMuted ? "secondary" : "outline"}
+                size="lg"
+              >
+                {isMuted ? <MicOff className="w-4 h-4 mr-2" /> : <Mic className="w-4 h-4 mr-2" />}
+                {isMuted ? "Unmute Mic" : "Mute Mic"}
+              </Button>
+              <Button 
+                onClick={endConversation}
+                variant="destructive"
+                size="lg"
+              >
+                <MicOff className="w-4 h-4 mr-2" />
+                End Conversation
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>

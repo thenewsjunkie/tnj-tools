@@ -16,6 +16,7 @@ export class RealtimeChat {
   private audioEl: HTMLAudioElement;
   private localStream: MediaStream | null = null;
   private isConnected = false;
+  private isMuted = false;
 
   constructor(
     private onMessage: (message: RealtimeMessage) => void,
@@ -140,6 +141,15 @@ export class RealtimeChat {
 
     this.dc.send(JSON.stringify(createMsg));
     this.dc.send(JSON.stringify({ type: "response.create" }));
+  }
+
+  setMuted(muted: boolean) {
+    this.isMuted = muted;
+    if (this.localStream) {
+      this.localStream.getAudioTracks().forEach((track) => {
+        track.enabled = !muted;
+      });
+    }
   }
 
   disconnect() {
