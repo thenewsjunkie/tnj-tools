@@ -28,6 +28,7 @@ import TNJGifsEmbed from "@/pages/TNJGifsEmbed";
 import ManageGifs from "@/pages/Admin/ManageGifs";
 import ManagePolls from "@/pages/Admin/ManagePolls";
 import PollEmbed from "@/pages/PollEmbed";
+import RealtimeAI from "@/pages/RealtimeAI";
 
 export const router = createBrowserRouter([
   {
@@ -153,6 +154,10 @@ export const router = createBrowserRouter([
       {
         path: "sharetheshow/edit",
         element: <EditShowMember />,
+      },
+      {
+        path: "realtime-ai",
+        element: <RealtimeAI />,
       },
     ]
   }
