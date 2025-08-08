@@ -7,7 +7,7 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 import AdminHeader from "@/components/admin/AdminHeader";
 import LowerThirdsCard from "@/components/admin/LowerThirdsCard";
 import QuickEditDialog from "@/components/lower-thirds/QuickEditDialog";
-import TNJAi from "@/components/AudioChat";
+
 import Alerts from "@/components/Alerts";
 import Stopwatch from "@/components/Stopwatch";
 import TNJLinks from "@/components/TNJLinks";
@@ -63,7 +63,6 @@ const Admin = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
-          <TNJAi />
           <Alerts />
         </div>
         
