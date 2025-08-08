@@ -14,11 +14,14 @@ import TNJLinks from "@/components/TNJLinks";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
 import { AskAI } from "@/components/ai-chat/AskAI";
-
+import VoiceInterface from "@/components/VoiceInterface";
 const Admin = () => {
   const { theme } = useTheme();
   const [selectedLowerThird, setSelectedLowerThird] = useState<Tables<"lower_thirds"> | null>(null);
   const [isQuickEditOpen, setIsQuickEditOpen] = useState(false);
+  
+  // Realtime voice chat status
+  const [isAISpeaking, setIsAISpeaking] = useState(false);
   
   // Collapsible states for each module
   const [isLowerThirdsOpen, setIsLowerThirdsOpen] = useState(true);
@@ -51,8 +54,21 @@ const Admin = () => {
         </div>
         
         {/* Full-width Ask AI Module */}
-        <div className="w-full">
+        <div className="w-full space-y-4">
           <AskAI />
+          {/* Realtime Voice Chat (beta) */}
+          <div className="bg-black rounded-lg shadow border border-white/10">
+            <div className="p-4 pb-0 flex justify-between items-center">
+              <h3 className="text-lg font-medium">Realtime Voice Chat (beta)</h3>
+              <div className="flex items-center gap-2 text-sm">
+                <span className={`h-2 w-2 rounded-full ${isAISpeaking ? 'bg-primary' : 'bg-border'}`} />
+                <span>{isAISpeaking ? 'AI speaking' : 'Idle'}</span>
+              </div>
+            </div>
+            <div className="p-4 pt-2">
+              <VoiceInterface onSpeakingChange={setIsAISpeaking} />
+            </div>
+          </div>
         </div>
         
         {/* Full-width Lower Thirds Module */}

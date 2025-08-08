@@ -1,9 +1,9 @@
-
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { AIQueryForm } from "./components/AIQueryForm";
 import { AIResponseDisplay } from "./components/AIResponseDisplay";
 import { useAIQuery } from "./hooks/useAIQuery";
-
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 export const AskAI = () => {
   const {
     question,
@@ -25,6 +25,12 @@ export const AskAI = () => {
     <div className="bg-black rounded-lg shadow border border-white/10">
       <Card className="bg-transparent border-0 shadow-none">
         <CardHeader className="pb-0 pt-6 px-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">TNJ AI</h3>
+            <Link to="/realtime-ai">
+              <Button size="sm" variant="outline">Realtime Voice</Button>
+            </Link>
+          </div>
           <AIQueryForm
             question={question}
             selectedModel={selectedModel}
