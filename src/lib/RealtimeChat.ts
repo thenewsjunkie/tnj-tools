@@ -17,6 +17,8 @@ export class RealtimeChat {
   private localStream: MediaStream | null = null;
   private isConnected = false;
   private isMuted = false;
+  private speakingHoldTimer: number | null = null;
+  private readonly SPEAKING_HOLD_MS = 1200;
 
   constructor(
     private onMessage: (message: RealtimeMessage) => void,
@@ -28,10 +30,26 @@ export class RealtimeChat {
     this.audioEl.style.display = "none";
     document.body.appendChild(this.audioEl);
 
-    // Heuristic speaking indicator based on audio element events
-    this.audioEl.addEventListener("playing", () => this.onSpeakingChange(true));
-    this.audioEl.addEventListener("pause", () => this.onSpeakingChange(false));
-    this.audioEl.addEventListener("ended", () => this.onSpeakingChange(false));
+    // Heuristic speaking indicator based on audio element events with hold
+    this.audioEl.addEventListener("playing", () => this.resetSpeakingHold());
+    this.audioEl.addEventListener("pause", () => this.resetSpeakingHold());
+    this.audioEl.addEventListener("ended", () => this.resetSpeakingHold());
+  }
+
+  private clearSpeakingHold() {
+    if (this.speakingHoldTimer !== null) {
+      clearTimeout(this.speakingHoldTimer);
+      this.speakingHoldTimer = null;
+    }
+  }
+
+  private resetSpeakingHold() {
+    this.clearSpeakingHold();
+    this.onSpeakingChange(true);
+    this.speakingHoldTimer = window.setTimeout(() => {
+      this.onSpeakingChange(false);
+      this.speakingHoldTimer = null;
+    }, this.SPEAKING_HOLD_MS);
   }
 
   async connect(options?: { instructions?: string; voice?: string }): Promise<void> {
@@ -80,9 +98,8 @@ export class RealtimeChat {
             item_id: msg?.item_id,
           });
 
-          // Optional speaking toggles if events exist
-          if (msg?.type === "response.audio.delta") this.onSpeakingChange(true);
-          if (msg?.type === "response.audio.done") this.onSpeakingChange(false);
+          // Speaking indicator: extend hold on audio chunks and when done
+          if (msg?.type === "response.audio.delta" || msg?.type === "response.audio.done") this.resetSpeakingHold();
         } catch (err) {
           console.warn("[RTC] Non-JSON message", e.data);
         }
@@ -154,6 +171,7 @@ export class RealtimeChat {
 
   disconnect() {
     try {
+      this.clearSpeakingHold();
       this.onSpeakingChange(false);
       if (this.dc) {
         try { this.dc.close(); } catch {}
