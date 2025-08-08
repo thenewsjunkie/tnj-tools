@@ -142,26 +142,6 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
     }
   };
 
-  const renderLiveTranscript = (text: string) => {
-    const HIGHLIGHT = 3;
-    const parts = text.match(/\S+|\s+/g) || [];
-    let remaining = HIGHLIGHT;
-    const highlightSet = new Set<number>();
-    for (let i = parts.length - 1; i >= 0 && remaining > 0; i--) {
-      if (/\S/.test(parts[i])) {
-        highlightSet.add(i);
-        remaining--;
-      }
-    }
-    return parts.map((part, idx) => (
-      highlightSet.has(idx) ? (
-        <mark key={idx} className="rounded px-1">{part}</mark>
-      ) : (
-        <span key={idx}>{part}</span>
-      )
-    ));
-  };
-
   useEffect(() => {
     return () => {
       chatRef.current?.disconnect();
@@ -321,7 +301,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
                     aria-live="polite"
                   >
                     <div className="text-sm font-medium mb-1">AI (speaking)</div>
-                    <div>{renderLiveTranscript(currentTranscript)}</div>
+                    <div>{currentTranscript}</div>
                   </div>
                 </div>
               )}
