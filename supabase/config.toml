@@ -2,7 +2,12 @@ project_id = "gpmandlkcdompmdvethh"
 
 [functions.send-interview-request]
 verify_jwt = false
+
 [functions.trigger-alert]
 verify_jwt = false
+
 [functions.process-alert-queue]
+verify_jwt = false
+
+[functions.openai-realtime-session]
 verify_jwt = false

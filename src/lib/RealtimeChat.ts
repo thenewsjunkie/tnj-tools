@@ -132,29 +132,7 @@ export class RealtimeChat {
         console.log('WebSocket connected');
         this.isConnected = true;
         this.onConnectionChange(true);
-        
-        // Send authorization
-        this.send({
-          type: 'session.update',
-          session: {
-            modalities: ['text', 'audio'],
-            instructions: 'You are a helpful AI assistant. Be conversational and engaging.',
-            voice: 'alloy',
-            input_audio_format: 'pcm16',
-            output_audio_format: 'pcm16',
-            input_audio_transcription: {
-              model: 'whisper-1'
-            },
-            turn_detection: {
-              type: 'server_vad',
-              threshold: 0.5,
-              prefix_padding_ms: 300,
-              silence_duration_ms: 1000
-            },
-            temperature: 0.8,
-            max_response_output_tokens: 'inf'
-          }
-        });
+        // Waiting for session.created before sending session.update
       };
 
       this.ws.onmessage = async (event) => {
@@ -172,8 +150,30 @@ export class RealtimeChat {
         });
 
         if (message.type === 'session.created') {
-          console.log('Session created, starting audio recording...');
+          console.log('Session created, configuring session and starting audio...');
           this.sessionEstablished = true;
+          // Send session.update AFTER session.created
+          this.send({
+            type: 'session.update',
+            session: {
+              modalities: ['text', 'audio'],
+              instructions: 'You are a helpful AI assistant. Be conversational and engaging.',
+              voice: 'alloy',
+              input_audio_format: 'pcm16',
+              output_audio_format: 'pcm16',
+              input_audio_transcription: {
+                model: 'whisper-1'
+              },
+              turn_detection: {
+                type: 'server_vad',
+                threshold: 0.5,
+                prefix_padding_ms: 300,
+                silence_duration_ms: 1000
+              },
+              temperature: 0.8,
+              max_response_output_tokens: 'inf'
+            }
+          });
           await this.startAudioRecording();
         } else if (message.type === 'response.audio.delta') {
           if (message.delta) {

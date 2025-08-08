@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import VoiceInterface from '@/components/VoiceInterface';
@@ -6,6 +6,31 @@ import { Bot, Mic } from 'lucide-react';
 
 const RealtimeAI = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
+
+  // Basic SEO tags without extra deps
+  useEffect(() => {
+    document.title = 'AI Realtime Voice Chat | TNJ';
+
+    const metaDescId = 'meta-realtime-ai-description';
+    let meta = document.querySelector(`meta[name="description"]#${metaDescId}`) as HTMLMetaElement | null;
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.name = 'description';
+      meta.id = metaDescId;
+      document.head.appendChild(meta);
+    }
+    meta.content = 'AI Realtime Voice Chat with GPT-4 Realtime. Natural speech-to-speech interaction for live conversations.';
+
+    const canonicalId = 'link-realtime-ai-canonical';
+    let canonical = document.querySelector(`link[rel="canonical"]#${canonicalId}`) as HTMLLinkElement | null;
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.rel = 'canonical';
+      canonical.id = canonicalId;
+      document.head.appendChild(canonical);
+    }
+    canonical.href = window.location.origin + '/realtime-ai';
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
