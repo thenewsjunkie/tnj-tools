@@ -185,7 +185,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
           <div className="text-left">
             <CardTitle className="flex items-center gap-3">
               <Volume2 className="w-6 h-6" />
-              Voice Chat with AI
+              Voice Chat with TNJ AI
             </CardTitle>
             <CardDescription>
               Real-time voice conversation with GPT-4 Realtime
