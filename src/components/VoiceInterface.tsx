@@ -4,10 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { RealtimeChat, RealtimeMessage } from '@/lib/RealtimeChat';
-import { Mic, MicOff, MessageSquare, Volume2 } from 'lucide-react';
+import { Mic, MicOff, MessageSquare, Volume2, Settings } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 interface VoiceInterfaceProps {
   onSpeakingChange: (speaking: boolean) => void;
 }
@@ -122,7 +123,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
       {/* Session Settings */}
-      <Card>
+      <Card className="hidden">
         <CardHeader>
           <CardTitle>Session Settings</CardTitle>
           <CardDescription>Configure system prompt and voice</CardDescription>
@@ -152,14 +153,53 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
 
       {/* Connection Status */}
       <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="flex items-center justify-center gap-3">
-            <Volume2 className="w-6 h-6" />
-            Voice Chat with AI
-          </CardTitle>
-          <CardDescription>
-            Real-time voice conversation with GPT-4 Realtime
-          </CardDescription>
+        <CardHeader className="flex items-start justify-between">
+          <div className="text-left">
+            <CardTitle className="flex items-center gap-3">
+              <Volume2 className="w-6 h-6" />
+              Voice Chat with AI
+            </CardTitle>
+            <CardDescription>
+              Real-time voice conversation with GPT-4 Realtime
+            </CardDescription>
+          </div>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Open voice settings">
+                <Settings className="w-5 h-5" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Voice Chat Settings</DialogTitle>
+                <DialogDescription>Configure system prompt and voice. Applied on next connect.</DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="prompt">System prompt</Label>
+                  <Textarea id="prompt" value={prompt} onChange={(e) => setPrompt(e.target.value)} rows={4} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="voice">Voice</Label>
+                  <Select value={voice} onValueChange={setVoice}>
+                    <SelectTrigger id="voice">
+                      <SelectValue placeholder="Select voice" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SUPPORTED_VOICES.map((v) => (
+                        <SelectItem key={v} value={v}>{v}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button type="button">Save</Button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </CardHeader>
         <CardContent className="text-center space-y-4">
           <div className="flex justify-center gap-4">
