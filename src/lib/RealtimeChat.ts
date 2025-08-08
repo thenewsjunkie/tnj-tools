@@ -18,7 +18,13 @@ export class RealtimeChat {
   private isConnected = false;
   private isMuted = false;
   private speakingHoldTimer: number | null = null;
-  private readonly SPEAKING_HOLD_MS = 1200;
+  private readonly SPEAKING_HOLD_MS = 2000;
+  // WebAudio VAD fields for remote audio
+  private remoteAudioContext: AudioContext | null = null;
+  private remoteAnalyser: AnalyserNode | null = null;
+  private remoteSource: MediaStreamAudioSourceNode | null = null;
+  private vadRafId: number | null = null;
+  private readonly VAD_THRESHOLD = 0.015;
 
   constructor(
     private onMessage: (message: RealtimeMessage) => void,
@@ -52,6 +58,70 @@ export class RealtimeChat {
     }, this.SPEAKING_HOLD_MS);
   }
 
+  // Start WebAudio VAD on the remote audio stream
+  private async setupVAD(stream: MediaStream) {
+    try {
+      this.stopVAD();
+
+      // Some browsers require a user gesture; resume if suspended
+      this.remoteAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+      await this.remoteAudioContext.resume().catch(() => {});
+
+      this.remoteSource = this.remoteAudioContext.createMediaStreamSource(stream);
+      this.remoteAnalyser = this.remoteAudioContext.createAnalyser();
+      this.remoteAnalyser.fftSize = 1024;
+      this.remoteAnalyser.smoothingTimeConstant = 0.3;
+
+      this.remoteSource.connect(this.remoteAnalyser);
+
+      const buffer = new Float32Array(this.remoteAnalyser.fftSize);
+      const loop = () => {
+        if (!this.remoteAnalyser) return;
+        this.remoteAnalyser.getFloatTimeDomainData(buffer);
+
+        // RMS energy
+        let sum = 0;
+        for (let i = 0; i < buffer.length; i++) {
+          const v = buffer[i];
+          sum += v * v;
+        }
+        const rms = Math.sqrt(sum / buffer.length);
+
+        if (rms > this.VAD_THRESHOLD) {
+          this.resetSpeakingHold();
+        }
+
+        this.vadRafId = requestAnimationFrame(loop);
+      };
+
+      this.vadRafId = requestAnimationFrame(loop);
+      console.log("[RTC] VAD started");
+    } catch (err) {
+      console.warn("[RTC] VAD setup failed", err);
+    }
+  }
+
+  private stopVAD() {
+    if (this.vadRafId !== null) {
+      cancelAnimationFrame(this.vadRafId);
+      this.vadRafId = null;
+    }
+    try {
+      if (this.remoteSource) {
+        this.remoteSource.disconnect();
+        this.remoteSource = null;
+      }
+      if (this.remoteAnalyser) {
+        this.remoteAnalyser.disconnect();
+        this.remoteAnalyser = null;
+      }
+      if (this.remoteAudioContext) {
+        this.remoteAudioContext.close().catch(() => {});
+        this.remoteAudioContext = null;
+      }
+    } catch {}
+  }
+
   async connect(options?: { instructions?: string; voice?: string }): Promise<void> {
     try {
       console.log("[RTC] Requesting ephemeral session token...");
@@ -72,7 +142,9 @@ export class RealtimeChat {
       // Remote audio handling
       this.pc.ontrack = (e) => {
         console.log("[RTC] Remote track received");
-        this.audioEl.srcObject = e.streams[0];
+        const remoteStream = e.streams[0];
+        this.audioEl.srcObject = remoteStream;
+        this.setupVAD(remoteStream);
       };
 
       // Add local microphone
@@ -172,6 +244,7 @@ export class RealtimeChat {
   disconnect() {
     try {
       this.clearSpeakingHold();
+      this.stopVAD();
       this.onSpeakingChange(false);
       if (this.dc) {
         try { this.dc.close(); } catch {}
