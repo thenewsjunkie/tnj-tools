@@ -48,27 +48,28 @@ const Admin = () => {
       <AdminHeader />
       
       <div className="space-y-8 max-w-7xl mx-auto">
+        {/* Realtime Voice Chat (beta) */}
+        <div className="bg-black rounded-lg shadow border border-white/10">
+          <div className="p-4 pb-0 flex justify-between items-center">
+            <h3 className="text-lg font-medium">Realtime Voice Chat (beta)</h3>
+            <div className="flex items-center gap-2 text-sm">
+              <span className={`h-2 w-2 rounded-full ${isAISpeaking ? 'bg-primary' : 'bg-border'}`} />
+              <span>{isAISpeaking ? 'AI speaking' : 'Idle'}</span>
+            </div>
+          </div>
+          <div className="p-4 pt-2">
+            <VoiceInterface onSpeakingChange={setIsAISpeaking} />
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
           <TNJAi />
           <Alerts />
         </div>
         
         {/* Full-width Ask AI Module */}
-        <div className="w-full space-y-4">
+        <div className="w-full">
           <AskAI />
-          {/* Realtime Voice Chat (beta) */}
-          <div className="bg-black rounded-lg shadow border border-white/10">
-            <div className="p-4 pb-0 flex justify-between items-center">
-              <h3 className="text-lg font-medium">Realtime Voice Chat (beta)</h3>
-              <div className="flex items-center gap-2 text-sm">
-                <span className={`h-2 w-2 rounded-full ${isAISpeaking ? 'bg-primary' : 'bg-border'}`} />
-                <span>{isAISpeaking ? 'AI speaking' : 'Idle'}</span>
-              </div>
-            </div>
-            <div className="p-4 pt-2">
-              <VoiceInterface onSpeakingChange={setIsAISpeaking} />
-            </div>
-          </div>
         </div>
         
         {/* Full-width Lower Thirds Module */}
