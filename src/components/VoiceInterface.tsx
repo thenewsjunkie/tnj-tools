@@ -49,14 +49,22 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
     if (message.type === 'response.audio_transcript.delta') {
       setCurrentTranscript(prev => prev + (message.delta || ''));
     } else if (message.type === 'response.audio_transcript.done') {
-      if (currentTranscript.trim()) {
-        setMessages(prev => [...prev, {
-          type: 'assistant',
-          content: currentTranscript,
-          timestamp: Date.now()
-        }]);
-      }
-      setCurrentTranscript('');
+      // Use functional update to avoid stale closure and ensure we commit the latest transcript
+      setCurrentTranscript((latest) => {
+        const finalized = latest.trim();
+        console.log('Transcript done. Finalizing message:', finalized);
+        if (finalized) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              type: 'assistant',
+              content: finalized,
+              timestamp: Date.now(),
+            },
+          ]);
+        }
+        return '';
+      });
     } else if (message.type === 'conversation.item.input_audio_transcription.completed') {
       const transcription = message.content;
       if (transcription) {
