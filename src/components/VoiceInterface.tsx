@@ -294,7 +294,19 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
           </CardHeader>
           <CardContent>
             <div className="space-y-4 max-h-96 overflow-y-auto">
-              {messages.map((message, index) => (
+              {currentTranscript && (
+                <div className="flex justify-start">
+                  <div
+                    className="max-w-[80%] rounded-lg px-4 py-2 bg-primary/10 text-foreground border-2 border-primary/30"
+                    aria-live="polite"
+                  >
+                    <div className="text-sm font-medium mb-1">AI (speaking)</div>
+                    <div>{currentTranscript}</div>
+                  </div>
+                </div>
+              )}
+
+              {[...messages].slice().reverse().map((message, index) => (
                 <div
                   key={index}
                   className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -313,15 +325,6 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
                   </div>
                 </div>
               ))}
-              
-              {currentTranscript && (
-                <div className="flex justify-start">
-                  <div className="max-w-[80%] rounded-lg px-4 py-2 bg-muted text-muted-foreground border-2 border-dashed">
-                    <div className="text-sm font-medium mb-1">AI</div>
-                    <div className="opacity-70">{currentTranscript}</div>
-                  </div>
-                </div>
-              )}
             </div>
           </CardContent>
         </Card>
