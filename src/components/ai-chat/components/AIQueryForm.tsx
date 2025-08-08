@@ -42,7 +42,7 @@ export const AIQueryForm = ({
   return (
     <>
       <div className="flex flex-row items-center justify-between pb-2">
-        <div className="text-lg font-medium">Ask AI</div>
+        
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">ELI5</span>

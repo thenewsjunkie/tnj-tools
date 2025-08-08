@@ -26,7 +26,7 @@ export const AskAI = () => {
       <Card className="bg-transparent border-0 shadow-none">
         <CardHeader className="pb-0 pt-6 px-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">TNJ AI</h3>
+            <h3 className="text-lg font-semibold">Ask AI</h3>
             <Link to="/realtime-ai">
               <Button size="sm" variant="outline">Realtime Voice</Button>
             </Link>
