@@ -33,10 +33,15 @@ export class RealtimeChat {
     this.audioEl.addEventListener("ended", () => this.onSpeakingChange(false));
   }
 
-  async connect(): Promise<void> {
+  async connect(options?: { instructions?: string; voice?: string }): Promise<void> {
     try {
       console.log("[RTC] Requesting ephemeral session token...");
-      const { data, error } = await supabase.functions.invoke("openai-realtime-session");
+      const { data, error } = await supabase.functions.invoke("openai-realtime-session", {
+        body: {
+          instructions: options?.instructions,
+          voice: options?.voice,
+        },
+      });
       if (error) throw error;
 
       const EPHEMERAL_KEY = data?.client_secret?.value;

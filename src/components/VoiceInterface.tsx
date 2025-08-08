@@ -5,7 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { RealtimeChat, RealtimeMessage } from '@/lib/RealtimeChat';
 import { Mic, MicOff, MessageSquare, Volume2 } from 'lucide-react';
-
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 interface VoiceInterfaceProps {
   onSpeakingChange: (speaking: boolean) => void;
 }
@@ -18,6 +20,27 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
   const [currentTranscript, setCurrentTranscript] = useState('');
   const [isSpeaking, setIsSpeaking] = useState(false);
   const chatRef = useRef<RealtimeChat | null>(null);
+
+  // Session settings
+  const DEFAULT_PROMPT = "You are TNJ AI, an on-air co-host on The News Junkie radio show. You are speaking with Shawn Wasson, Sabrina and C-Lane. Because we are on the radio, keep your answers concise and ask clarifying questions when useful. Stay conversational—no code blocks, no markdown. Answer direct questions.";
+  const SUPPORTED_VOICES = ["alloy", "ash", "ballad", "coral", "echo", "sage", "shimmer", "verse"] as const;
+  const [prompt, setPrompt] = useState<string>(DEFAULT_PROMPT);
+  const [voice, setVoice] = useState<string>("alloy");
+
+  useEffect(() => {
+    const savedPrompt = localStorage.getItem("realtime_voice_prompt");
+    const savedVoice = localStorage.getItem("realtime_voice_voice");
+    if (savedPrompt) setPrompt(savedPrompt);
+    if (savedVoice && SUPPORTED_VOICES.includes(savedVoice as any)) setVoice(savedVoice);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("realtime_voice_prompt", prompt);
+  }, [prompt]);
+
+  useEffect(() => {
+    localStorage.setItem("realtime_voice_voice", voice);
+  }, [voice]);
 
   const handleMessage = (message: RealtimeMessage) => {
     console.log('Received message:', message);
@@ -58,7 +81,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
         setIsConnected,
         handleSpeakingChange
       );
-      await chatRef.current.connect();
+      await chatRef.current.connect({ instructions: prompt, voice });
       
       toast({
         title: "Connected",
@@ -98,6 +121,35 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
+      {/* Session Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Session Settings</CardTitle>
+          <CardDescription>Configure system prompt and voice</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="prompt">System prompt</Label>
+              <Textarea id="prompt" value={prompt} onChange={(e) => setPrompt(e.target.value)} rows={4} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="voice">Voice</Label>
+              <Select value={voice} onValueChange={setVoice}>
+                <SelectTrigger id="voice">
+                  <SelectValue placeholder="Select voice" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SUPPORTED_VOICES.map((v) => (
+                    <SelectItem key={v} value={v}>{v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Connection Status */}
       <Card>
         <CardHeader className="text-center">

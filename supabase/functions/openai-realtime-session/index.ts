@@ -17,6 +17,20 @@ serve(async (req) => {
       throw new Error("OPENAI_API_KEY is not set");
     }
 
+    // Read optional overrides from the request body (instructions, voice)
+    let payload: { instructions?: string; voice?: string } = {};
+    try {
+      payload = await req.json();
+    } catch (_) {
+      // No JSON body provided; fall back to defaults
+    }
+
+    const DEFAULT_INSTRUCTIONS = "You are TNJ AI, an on-air co-host on The News Junkie radio show. You are speaking with Shawn Wasson, Sabrina and C-Lane. Because we are on the radio, keep your answers concise and ask clarifying questions when useful. Stay conversational—no code blocks, no markdown. Answer direct questions.";
+    const resolvedVoice = typeof payload.voice === "string" && payload.voice.trim() ? payload.voice : "alloy";
+    const resolvedInstructions = typeof payload.instructions === "string" && payload.instructions.trim()
+      ? payload.instructions
+      : DEFAULT_INSTRUCTIONS;
+
     const response = await fetch("https://api.openai.com/v1/realtime/sessions", {
       method: "POST",
       headers: {
@@ -25,9 +39,8 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: "gpt-4o-realtime-preview-2024-12-17",
-        voice: "alloy",
-        // You can customize instructions if needed
-        // instructions: "You are a helpful assistant for realtime voice chats.",
+        voice: resolvedVoice,
+        instructions: resolvedInstructions,
       }),
     });
 
