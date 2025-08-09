@@ -208,7 +208,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
               Voice Chat with TNJ AI
             </CardTitle>
             <CardDescription>
-              Real-time voice conversation with our Viral News Supercomputer
+              Real-time chat with our Viral News Supercomputer
             </CardDescription>
           </div>
           <Dialog>
