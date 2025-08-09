@@ -29,7 +29,8 @@ export class RealtimeChat {
   constructor(
     private onMessage: (message: RealtimeMessage) => void,
     private onConnectionChange: (connected: boolean) => void,
-    private onSpeakingChange: (speaking: boolean) => void
+    private onSpeakingChange: (speaking: boolean) => void,
+    private onRemoteLevel?: (level: number) => void
   ) {
     this.audioEl = document.createElement("audio");
     this.audioEl.autoplay = true;
@@ -86,6 +87,15 @@ export class RealtimeChat {
           sum += v * v;
         }
         const rms = Math.sqrt(sum / buffer.length);
+
+        // Map to 0..1 range using VAD threshold as noise floor
+        const noiseFloor = this.VAD_THRESHOLD;
+        let normalized = (rms - noiseFloor) / (0.3 - noiseFloor);
+        if (!isFinite(normalized)) normalized = 0;
+        normalized = Math.max(0, Math.min(1, normalized));
+
+        // Emit remote audio level for UI visualizers
+        try { this.onRemoteLevel?.(normalized); } catch {}
 
         if (rms > this.VAD_THRESHOLD) {
           this.resetSpeakingHold();

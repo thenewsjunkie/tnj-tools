@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { RealtimeChat, RealtimeMessage } from '@/lib/RealtimeChat';
+import { FancyAudioVisualizer } from '@/components/audio/FancyAudioVisualizer';
 import { Mic, MicOff, MessageSquare, Volume2, Settings } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -22,6 +23,22 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const chatRef = useRef<RealtimeChat | null>(null);
+  const remoteLevelRef = useRef(0);
+  const [remoteLevel, setRemoteLevel] = useState(0);
+  useEffect(() => {
+    let raf = 0 as number;
+    let last = 0;
+    const loop = (ts: number) => {
+      if (ts - last > 50) {
+        const lv = remoteLevelRef.current;
+        setRemoteLevel((prev) => (Math.abs(prev - lv) > 0.01 ? lv : prev));
+        last = ts;
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, []);
   // Session settings
   const DEFAULT_PROMPT = "You are TNJ AI, an on-air co-host on The News Junkie radio show. You are speaking with Shawn Wasson, Sabrina and C-Lane. Because we are on the radio, keep your answers concise and ask clarifying questions when useful. Stay conversational—no code blocks, no markdown. Answer direct questions.";
   const SUPPORTED_VOICES = ["alloy", "ash", "ballad", "coral", "echo", "sage", "shimmer", "verse"] as const;
@@ -88,7 +105,10 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
       chatRef.current = new RealtimeChat(
         handleMessage,
         setIsConnected,
-        handleSpeakingChange
+        handleSpeakingChange,
+        (lv: number) => {
+          remoteLevelRef.current = lv;
+        }
       );
       await chatRef.current.connect({ instructions: prompt, voice });
       
@@ -230,6 +250,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
           </Dialog>
         </CardHeader>
         <CardContent className="text-center space-y-4">
+          <FancyAudioVisualizer level={remoteLevel} active={isConnected || isSpeaking} height={160} />
           <div className="flex justify-center gap-4">
             <Badge variant={isConnected ? "default" : "secondary"}>
               {isConnected ? "Connected" : "Disconnected"}
