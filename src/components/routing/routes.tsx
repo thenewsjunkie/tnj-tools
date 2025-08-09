@@ -1,39 +1,45 @@
 
 import { createBrowserRouter } from "react-router-dom";
-import AppLayout from "@/components/layout/AppLayout";
-import Index from "@/pages/Index";
-import Login from "@/pages/Login";
-import Admin from "@/pages/Admin";
+import { Suspense, lazy } from "react";
 import AdminRoute from "./AdminRoute";
-import Reviews from "@/pages/Reviews";
-import Alerts from "@/pages/Alerts";
-import Settings from "@/pages/Settings";
-import Instructions from "@/pages/Instructions";
-import QueueHistory from "@/pages/QueueHistory";
-import Fritz from "@/pages/Fritz";
-import CurrentScore from "@/pages/CurrentScore";
-import TotalScore from "@/pages/TotalScore";
-import FritzScoreHandler from "@/components/fritz/FritzScoreHandler";
-import LowerThird from "@/pages/LowerThird";
-import LowerThirds from "@/pages/Admin/LowerThirds";
-import Leaderboard from "@/pages/Leaderboard";
-import LeaderboardOBS from "@/pages/LeaderboardOBS";
-import GiftStats from "@/pages/Admin/GiftStats";
-import StreamReview from "@/pages/StreamReview";
-import TNJAiOBSPage from "@/pages/TNJAiOBSPage";
-import ShareTheShow from "@/pages/ShareTheShow";
-import EditShowMember from "@/pages/EditShowMember";
-import TNJGifs from "@/pages/TNJGifs";
-import TNJGifsEmbed from "@/pages/TNJGifsEmbed";
-import ManageGifs from "@/pages/Admin/ManageGifs";
-import ManagePolls from "@/pages/Admin/ManagePolls";
-import PollEmbed from "@/pages/PollEmbed";
-import RealtimeAI from "@/pages/RealtimeAI";
+
+const AppLayout = lazy(() => import("@/components/layout/AppLayout"));
+const Index = lazy(() => import("@/pages/Index"));
+const Login = lazy(() => import("@/pages/Login"));
+const Admin = lazy(() => import("@/pages/Admin"));
+const Reviews = lazy(() => import("@/pages/Reviews"));
+const Alerts = lazy(() => import("@/pages/Alerts"));
+const Settings = lazy(() => import("@/pages/Settings"));
+const Instructions = lazy(() => import("@/pages/Instructions"));
+const QueueHistory = lazy(() => import("@/pages/QueueHistory"));
+const Fritz = lazy(() => import("@/pages/Fritz"));
+const CurrentScore = lazy(() => import("@/pages/CurrentScore"));
+const TotalScore = lazy(() => import("@/pages/TotalScore"));
+const FritzScoreHandler = lazy(() => import("@/components/fritz/FritzScoreHandler"));
+const LowerThird = lazy(() => import("@/pages/LowerThird"));
+const LowerThirds = lazy(() => import("@/pages/Admin/LowerThirds"));
+const Leaderboard = lazy(() => import("@/pages/Leaderboard"));
+const LeaderboardOBS = lazy(() => import("@/pages/LeaderboardOBS"));
+const GiftStats = lazy(() => import("@/pages/Admin/GiftStats"));
+const StreamReview = lazy(() => import("@/pages/StreamReview"));
+const TNJAiOBSPage = lazy(() => import("@/pages/TNJAiOBSPage"));
+const ShareTheShow = lazy(() => import("@/pages/ShareTheShow"));
+const EditShowMember = lazy(() => import("@/pages/EditShowMember"));
+const TNJGifs = lazy(() => import("@/pages/TNJGifs"));
+const TNJGifsEmbed = lazy(() => import("@/pages/TNJGifsEmbed"));
+const ManageGifs = lazy(() => import("@/pages/Admin/ManageGifs"));
+const ManagePolls = lazy(() => import("@/pages/Admin/ManagePolls"));
+const PollEmbed = lazy(() => import("@/pages/PollEmbed"));
+const RealtimeAI = lazy(() => import("@/pages/RealtimeAI"));
 
 export const router = createBrowserRouter([
   {
     path: "/",
-    element: <AppLayout />,
+    element: (
+      <Suspense fallback={<div className="p-8 text-muted-foreground">Loading...</div>}>
+        <AppLayout />
+      </Suspense>
+    ),
     children: [
       {
         index: true,

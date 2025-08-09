@@ -8,6 +8,12 @@ const Index = () => {
   const { theme } = useTheme();
   
   useEffect(() => {
+    const shouldConnect = new URLSearchParams(window.location.search).get('realtime') === '1';
+    if (!shouldConnect) {
+      console.log('Skipping realtime connection on homepage (enable with ?realtime=1)');
+      return;
+    }
+
     // Set up realtime connection with debug logging
     const channel = supabase.channel('system')
       .on('system', { event: '*' }, (status) => {
