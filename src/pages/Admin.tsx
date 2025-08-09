@@ -48,10 +48,10 @@ const Admin = () => {
       <AdminHeader />
       
       <div className="space-y-8 max-w-7xl mx-auto">
-        {/* Realtime Voice Chat (beta) */}
+        {/* Realtime Voice Chat (v1.0) */}
         <div className="bg-black rounded-lg shadow border border-white/10">
           <div className="p-4 pb-0 flex justify-between items-center">
-            <h3 className="text-lg font-medium">Realtime Voice Chat (beta)</h3>
+            <h3 className="text-lg font-medium">Realtime Voice Chat (v1.0)</h3>
             <div className="flex items-center gap-2 text-sm">
               <span className={`h-2 w-2 rounded-full ${isAISpeaking ? 'bg-primary' : 'bg-border'}`} />
               <span>{isAISpeaking ? 'AI speaking' : 'Idle'}</span>
