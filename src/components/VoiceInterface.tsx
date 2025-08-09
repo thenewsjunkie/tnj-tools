@@ -29,9 +29,9 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
     let raf = 0 as number;
     let last = 0;
     const loop = (ts: number) => {
-      if (ts - last > 50) {
+      if (ts - last > 33) {
         const lv = remoteLevelRef.current;
-        setRemoteLevel((prev) => (Math.abs(prev - lv) > 0.01 ? lv : prev));
+        setRemoteLevel(lv);
         last = ts;
       }
       raf = requestAnimationFrame(loop);

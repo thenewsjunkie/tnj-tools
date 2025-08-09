@@ -90,7 +90,7 @@ export class RealtimeChat {
 
         // Map to 0..1 range using VAD threshold as noise floor
         const noiseFloor = this.VAD_THRESHOLD;
-        let normalized = (rms - noiseFloor) / (0.3 - noiseFloor);
+        let normalized = (rms - noiseFloor) / (0.2 - noiseFloor);
         if (!isFinite(normalized)) normalized = 0;
         normalized = Math.max(0, Math.min(1, normalized));
 

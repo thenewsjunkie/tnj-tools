@@ -22,7 +22,10 @@ export const FancyAudioVisualizer: React.FC<FancyAudioVisualizerProps> = ({
   const internalLevelRef = useRef(0);
   const rafRef = useRef<number | null>(null);
   const lastTsRef = useRef<number>(0);
-
+  const levelRef = useRef(level);
+  const activeRef = useRef(active);
+  useEffect(() => { levelRef.current = level; }, [level]);
+  useEffect(() => { activeRef.current = active; }, [active]);
   // Resolve theme colors from CSS variables (HSL tokens)
   const resolveHsl = (variableName: string, fallback: string): string => {
     const raw = getComputedStyle(document.documentElement).getPropertyValue(variableName).trim();
@@ -61,15 +64,17 @@ export const FancyAudioVisualizer: React.FC<FancyAudioVisualizerProps> = ({
       const dt = Math.min(32, ts - (lastTsRef.current || ts));
       lastTsRef.current = ts;
 
-      // Smooth level towards target
-      const target = Math.max(0, Math.min(1, level || 0));
-      const smoothing = active ? 0.2 : 0.08;
-      internalLevelRef.current = lerp(internalLevelRef.current, target, smoothing);
+      // Smooth level towards target (read from refs to avoid effect re-inits)
+      const act = !!activeRef.current;
+      const raw = Math.max(0, Math.min(1, levelRef.current || 0));
+      const smoothing = act ? 0.35 : 0.12;
+      internalLevelRef.current = lerp(internalLevelRef.current, raw, smoothing);
 
       // Idle pulse when inactive
       const time = ts * 0.001;
-      const idle = 0.06 + 0.04 * Math.sin(time * 1.2);
-      const displayLevel = active ? internalLevelRef.current : idle;
+      const idle = 0.05 + 0.035 * Math.sin(time * 1.1);
+      const amp = 1.6; // visual gain to make movement noticeable on stream
+      const displayLevel = act ? Math.min(1, internalLevelRef.current * amp) : idle;
 
       // Clear
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -143,7 +148,7 @@ export const FancyAudioVisualizer: React.FC<FancyAudioVisualizerProps> = ({
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       ro.disconnect();
     };
-  }, [level, active, height, bars]);
+  }, [height, bars]);
 
   return (
     <div
