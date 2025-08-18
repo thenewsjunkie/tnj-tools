@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -917,10 +917,10 @@ export type Database = {
       get_next_alert: {
         Args: Record<PropertyKey, never>
         Returns: {
-          id: string
           alert_id: string
-          username: string
+          id: string
           scheduled_for: string
+          username: string
         }[]
       }
       get_next_conversation: {
@@ -930,6 +930,10 @@ export type Database = {
       increment_poll_option_votes: {
         Args: { option_id: string }
         Returns: undefined
+      }
+      is_digital_client_admin: {
+        Args: { _user_id: string }
+        Returns: boolean
       }
       manage_conversation_queue: {
         Args: Record<PropertyKey, never>
@@ -946,20 +950,20 @@ export type Database = {
       update_contestant_score: {
         Args:
           | {
+              p_auth_token: string
               p_contestant_name: string
-              p_increment: boolean
               p_current_version: number
+              p_increment: boolean
             }
           | {
               p_contestant_name: string
-              p_increment: boolean
               p_current_version: number
-              p_auth_token: string
+              p_increment: boolean
             }
         Returns: {
-          success: boolean
           new_score: number
           new_version: number
+          success: boolean
         }[]
       }
     }
