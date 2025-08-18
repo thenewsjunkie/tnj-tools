@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { RealtimeChat, RealtimeMessage } from '@/lib/RealtimeChat';
 import { FancyAudioVisualizer } from '@/components/audio/FancyAudioVisualizer';
 import { Mic, MicOff, MessageSquare, Volume2, Settings } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -44,12 +45,15 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
   const SUPPORTED_VOICES = ["alloy", "ash", "ballad", "coral", "echo", "sage", "shimmer", "verse"] as const;
   const [prompt, setPrompt] = useState<string>(DEFAULT_PROMPT);
   const [voice, setVoice] = useState<string>("alloy");
+  const [autoMuteEnabled, setAutoMuteEnabled] = useState<boolean>(true);
 
   useEffect(() => {
     const savedPrompt = localStorage.getItem("realtime_voice_prompt");
     const savedVoice = localStorage.getItem("realtime_voice_voice");
+    const savedAutoMute = localStorage.getItem("realtime_voice_auto_mute");
     if (savedPrompt) setPrompt(savedPrompt);
     if (savedVoice && SUPPORTED_VOICES.includes(savedVoice as any)) setVoice(savedVoice);
+    if (savedAutoMute !== null) setAutoMuteEnabled(savedAutoMute === 'true');
   }, []);
 
   useEffect(() => {
@@ -59,6 +63,10 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
   useEffect(() => {
     localStorage.setItem("realtime_voice_voice", voice);
   }, [voice]);
+
+  useEffect(() => {
+    localStorage.setItem("realtime_voice_auto_mute", autoMuteEnabled.toString());
+  }, [autoMuteEnabled]);
 
   const handleMessage = (message: RealtimeMessage) => {
     console.log('Received message:', message);
@@ -97,6 +105,23 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
   const handleSpeakingChange = (speaking: boolean) => {
     setIsSpeaking(speaking);
     onSpeakingChange(speaking);
+    
+    // Auto-mute functionality
+    if (autoMuteEnabled && isConnected && chatRef.current) {
+      try {
+        if (speaking && !isMuted) {
+          // AI started speaking, auto-mute the mic
+          chatRef.current.setMuted(true);
+          setIsMuted(true);
+        } else if (!speaking && isMuted) {
+          // AI stopped speaking, auto-unmute the mic
+          chatRef.current.setMuted(false);
+          setIsMuted(false);
+        }
+      } catch (error) {
+        console.error('Error with auto-mute:', error);
+      }
+    }
   };
 
   const startConversation = async () => {
@@ -239,6 +264,19 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="flex items-center justify-between space-y-2">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="auto-mute">Auto-mute microphone</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Automatically mute your mic when AI is speaking
+                    </p>
+                  </div>
+                  <Switch
+                    id="auto-mute"
+                    checked={autoMuteEnabled}
+                    onCheckedChange={setAutoMuteEnabled}
+                  />
                 </div>
               </div>
               <DialogFooter>
