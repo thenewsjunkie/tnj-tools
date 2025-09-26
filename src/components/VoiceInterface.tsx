@@ -46,14 +46,18 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
   const [prompt, setPrompt] = useState<string>(DEFAULT_PROMPT);
   const [voice, setVoice] = useState<string>("alloy");
   const [autoMuteEnabled, setAutoMuteEnabled] = useState<boolean>(true);
+  const [pttEnabled, setPttEnabled] = useState<boolean>(false);
+  const [isPttActive, setIsPttActive] = useState<boolean>(false);
 
   useEffect(() => {
     const savedPrompt = localStorage.getItem("realtime_voice_prompt");
     const savedVoice = localStorage.getItem("realtime_voice_voice");
     const savedAutoMute = localStorage.getItem("realtime_voice_auto_mute");
+    const savedPtt = localStorage.getItem("realtime_voice_ptt");
     if (savedPrompt) setPrompt(savedPrompt);
     if (savedVoice && SUPPORTED_VOICES.includes(savedVoice as any)) setVoice(savedVoice);
     if (savedAutoMute !== null) setAutoMuteEnabled(savedAutoMute === 'true');
+    if (savedPtt !== null) setPttEnabled(savedPtt === 'true');
   }, []);
 
   useEffect(() => {
@@ -67,6 +71,10 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
   useEffect(() => {
     localStorage.setItem("realtime_voice_auto_mute", autoMuteEnabled.toString());
   }, [autoMuteEnabled]);
+
+  useEffect(() => {
+    localStorage.setItem("realtime_voice_ptt", pttEnabled.toString());
+  }, [pttEnabled]);
 
   const handleMessage = (message: RealtimeMessage) => {
     console.log('Received message:', message);
@@ -106,8 +114,8 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
     setIsSpeaking(speaking);
     onSpeakingChange(speaking);
     
-    // Auto-mute functionality
-    if (autoMuteEnabled && isConnected && chatRef.current) {
+    // Auto-mute functionality (only when PTT is disabled)
+    if (autoMuteEnabled && !pttEnabled && isConnected && chatRef.current) {
       try {
         if (speaking && !isMuted) {
           // AI started speaking, auto-mute the mic
@@ -137,9 +145,15 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
       );
       await chatRef.current.connect({ instructions: prompt, voice });
       
+      // If PTT mode is enabled, start with mic muted
+      if (pttEnabled) {
+        chatRef.current.setMuted(true);
+        setIsMuted(true);
+      }
+      
       toast({
         title: "Connected",
-        description: "Voice interface is ready. Start speaking!",
+        description: pttEnabled ? "Voice interface ready. Hold spacebar to talk!" : "Voice interface is ready. Start speaking!",
       });
     } catch (error) {
       console.error('Error starting conversation:', error);
@@ -158,6 +172,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
     setIsConnected(false);
     setIsSpeaking(false);
     setIsMuted(false);
+    setIsPttActive(false);
     setMessages([]);
     setCurrentTranscript('');
     onSpeakingChange(false);
@@ -169,6 +184,8 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
   };
 
   const toggleMute = () => {
+    if (pttEnabled) return; // PTT mode handles muting differently
+    
     const next = !isMuted;
     try {
       chatRef.current?.setMuted(next);
@@ -186,6 +203,57 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
       });
     }
   };
+
+  const handlePttPress = () => {
+    if (!pttEnabled || !isConnected) return;
+    
+    try {
+      chatRef.current?.setMuted(false);
+      setIsMuted(false);
+      setIsPttActive(true);
+    } catch (error) {
+      console.error('Error activating PTT:', error);
+    }
+  };
+
+  const handlePttRelease = () => {
+    if (!pttEnabled || !isConnected) return;
+    
+    try {
+      chatRef.current?.setMuted(true);
+      setIsMuted(true);
+      setIsPttActive(false);
+    } catch (error) {
+      console.error('Error deactivating PTT:', error);
+    }
+  };
+
+  // Keyboard support for PTT
+  useEffect(() => {
+    if (!pttEnabled || !isConnected) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && !e.repeat) {
+        e.preventDefault();
+        handlePttPress();
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        handlePttRelease();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [pttEnabled, isConnected]);
 
   useEffect(() => {
     return () => {
@@ -276,6 +344,20 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
                     id="auto-mute"
                     checked={autoMuteEnabled}
                     onCheckedChange={setAutoMuteEnabled}
+                    disabled={pttEnabled}
+                  />
+                </div>
+                <div className="flex items-center justify-between space-y-2">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="ptt-mode">Push-to-Talk mode</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Hold spacebar or button to talk (prevents background noise)
+                    </p>
+                  </div>
+                  <Switch
+                    id="ptt-mode"
+                    checked={pttEnabled}
+                    onCheckedChange={setPttEnabled}
                   />
                 </div>
               </div>
@@ -321,14 +403,28 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
             </Button>
           ) : (
             <div className="flex items-center justify-center gap-3">
-              <Button
-                onClick={toggleMute}
-                variant={isMuted ? "secondary" : "outline"}
-                size="lg"
-              >
-                {isMuted ? <MicOff className="w-4 h-4 mr-2" /> : <Mic className="w-4 h-4 mr-2" />}
-                {isMuted ? "Unmute Mic" : "Mute Mic"}
-              </Button>
+              {pttEnabled ? (
+                <Button
+                  onMouseDown={handlePttPress}
+                  onMouseUp={handlePttRelease}
+                  onMouseLeave={handlePttRelease}
+                  variant={isPttActive ? "default" : "secondary"}
+                  size="lg"
+                  className={isPttActive ? "bg-primary text-primary-foreground" : ""}
+                >
+                  <Mic className="w-4 h-4 mr-2" />
+                  {isPttActive ? "Talking..." : "Hold to Talk (Space)"}
+                </Button>
+              ) : (
+                <Button
+                  onClick={toggleMute}
+                  variant={isMuted ? "secondary" : "outline"}
+                  size="lg"
+                >
+                  {isMuted ? <MicOff className="w-4 h-4 mr-2" /> : <Mic className="w-4 h-4 mr-2" />}
+                  {isMuted ? "Unmute Mic" : "Mute Mic"}
+                </Button>
+              )}
               <Button 
                 onClick={endConversation}
                 variant="destructive"
