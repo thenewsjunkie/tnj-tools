@@ -48,16 +48,34 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
   const [autoMuteEnabled, setAutoMuteEnabled] = useState<boolean>(true);
   const [pttEnabled, setPttEnabled] = useState<boolean>(false);
   const [isPttActive, setIsPttActive] = useState<boolean>(false);
+  const [availableMicrophones, setAvailableMicrophones] = useState<MediaDeviceInfo[]>([]);
+  const [selectedMicId, setSelectedMicId] = useState<string>('default');
+
+  // Enumerate microphones on mount
+  useEffect(() => {
+    const enumerateDevices = async () => {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const audioInputs = devices.filter(d => d.kind === 'audioinput');
+        setAvailableMicrophones(audioInputs);
+      } catch (error) {
+        console.error('Error enumerating devices:', error);
+      }
+    };
+    enumerateDevices();
+  }, []);
 
   useEffect(() => {
     const savedPrompt = localStorage.getItem("realtime_voice_prompt");
     const savedVoice = localStorage.getItem("realtime_voice_voice");
     const savedAutoMute = localStorage.getItem("realtime_voice_auto_mute");
     const savedPtt = localStorage.getItem("realtime_voice_ptt");
+    const savedMicId = localStorage.getItem("realtime_voice_microphone_id");
     if (savedPrompt) setPrompt(savedPrompt);
     if (savedVoice && SUPPORTED_VOICES.includes(savedVoice as any)) setVoice(savedVoice);
     if (savedAutoMute !== null) setAutoMuteEnabled(savedAutoMute === 'true');
     if (savedPtt !== null) setPttEnabled(savedPtt === 'true');
+    if (savedMicId) setSelectedMicId(savedMicId);
   }, []);
 
   useEffect(() => {
@@ -75,6 +93,10 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
   useEffect(() => {
     localStorage.setItem("realtime_voice_ptt", pttEnabled.toString());
   }, [pttEnabled]);
+
+  useEffect(() => {
+    localStorage.setItem("realtime_voice_microphone_id", selectedMicId);
+  }, [selectedMicId]);
 
   const handleMessage = (message: RealtimeMessage) => {
     console.log('Received message:', message);
@@ -143,7 +165,11 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
           remoteLevelRef.current = lv;
         }
       );
-      await chatRef.current.connect({ instructions: prompt, voice });
+      await chatRef.current.connect({ 
+        instructions: prompt, 
+        voice,
+        deviceId: selectedMicId !== 'default' ? selectedMicId : undefined 
+      });
       
       // If PTT mode is enabled, start with mic muted
       if (pttEnabled) {
@@ -329,6 +355,23 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
                     <SelectContent>
                       {SUPPORTED_VOICES.map((v) => (
                         <SelectItem key={v} value={v}>{v}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="microphone">Microphone</Label>
+                  <Select value={selectedMicId} onValueChange={setSelectedMicId}>
+                    <SelectTrigger id="microphone">
+                      <SelectValue placeholder="Select microphone" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">Default Microphone</SelectItem>
+                      {availableMicrophones.map((device) => (
+                        <SelectItem key={device.deviceId} value={device.deviceId}>
+                          {device.label || `Microphone ${device.deviceId.slice(0, 8)}`}
+                          {device.label?.toLowerCase().includes('bluetooth') && ' (Bluetooth)'}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

@@ -132,7 +132,7 @@ export class RealtimeChat {
     } catch {}
   }
 
-  async connect(options?: { instructions?: string; voice?: string }): Promise<void> {
+  async connect(options?: { instructions?: string; voice?: string; deviceId?: string }): Promise<void> {
     try {
       console.log("[RTC] Requesting ephemeral session token...");
       const { data, error } = await supabase.functions.invoke("openai-realtime-session", {
@@ -158,7 +158,16 @@ export class RealtimeChat {
       };
 
       // Add local microphone
-      this.localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      this.localStream = await navigator.mediaDevices.getUserMedia({ 
+        audio: options?.deviceId 
+          ? { 
+              deviceId: { exact: options.deviceId },
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true,
+            }
+          : true 
+      });
       const [audioTrack] = this.localStream.getAudioTracks();
       if (audioTrack) this.pc.addTrack(audioTrack, this.localStream);
 
