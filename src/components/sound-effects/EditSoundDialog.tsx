@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Play, Pause, RotateCcw } from 'lucide-react';
+import { Play, Pause, RotateCcw, Upload } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -28,6 +28,8 @@ interface EditSoundDialogProps {
     volume?: number;
     trim_start?: number;
     trim_end?: number | null;
+    file?: File;
+    oldAudioUrl?: string;
   }) => Promise<unknown>;
   onDelete: (id: string) => Promise<unknown>;
   isLoading: boolean;
@@ -46,9 +48,11 @@ export function EditSoundDialog({
   const [volume, setVolume] = useState(1);
   const [trimStart, setTrimStart] = useState(0);
   const [trimEnd, setTrimEnd] = useState<number | null>(null);
+  const [newFile, setNewFile] = useState<File | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (sound) {
@@ -57,6 +61,7 @@ export function EditSoundDialog({
       setVolume(sound.volume);
       setTrimStart(sound.trim_start);
       setTrimEnd(sound.trim_end);
+      setNewFile(null);
     }
   }, [sound]);
 
@@ -68,6 +73,16 @@ export function EditSoundDialog({
     };
   }, []);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      setNewFile(selectedFile);
+      // Reset trim when new file is selected
+      setTrimStart(0);
+      setTrimEnd(null);
+    }
+  };
+
   const handlePlayPreview = () => {
     if (!sound) return;
 
@@ -77,7 +92,9 @@ export function EditSoundDialog({
       return;
     }
 
-    const audio = new Audio(sound.audio_url);
+    // Use new file URL or existing audio URL
+    const audioSource = newFile ? URL.createObjectURL(newFile) : sound.audio_url;
+    const audio = new Audio(audioSource);
     audioRef.current = audio;
     audio.volume = Math.min(volume, 1);
     audio.currentTime = trimStart;
@@ -125,6 +142,7 @@ export function EditSoundDialog({
       volume,
       trim_start: trimStart,
       trim_end: trimEnd,
+      ...(newFile && { file: newFile, oldAudioUrl: sound.audio_url }),
     });
     onOpenChange(false);
   };
@@ -157,6 +175,30 @@ export function EditSoundDialog({
               id="edit-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Replace Audio File</Label>
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center justify-center h-12 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+            >
+              {newFile ? (
+                <span className="text-sm text-muted-foreground">{newFile.name}</span>
+              ) : (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Upload className="h-4 w-4" />
+                  <span className="text-sm">Click to replace audio</span>
+                </div>
+              )}
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="audio/*"
+              onChange={handleFileChange}
+              className="hidden"
             />
           </div>
 
