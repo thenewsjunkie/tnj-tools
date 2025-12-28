@@ -906,16 +906,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      auto_complete_displayed_conversations: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_stale_alerts: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      auto_complete_displayed_conversations: { Args: never; Returns: undefined }
+      cleanup_stale_alerts: { Args: never; Returns: undefined }
       get_next_alert: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           alert_id: string
           id: string
@@ -923,49 +917,44 @@ export type Database = {
           username: string
         }[]
       }
-      get_next_conversation: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      get_next_conversation: { Args: never; Returns: string }
       increment_poll_option_votes: {
         Args: { option_id: string }
         Returns: undefined
       }
-      is_digital_client_admin: {
-        Args: { _user_id: string }
-        Returns: boolean
-      }
-      manage_conversation_queue: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      is_digital_client_admin: { Args: { _user_id: string }; Returns: boolean }
+      manage_conversation_queue: { Args: never; Returns: undefined }
       mark_as_displayed: {
         Args: { conversation_id: string }
         Returns: undefined
       }
-      run_queue_management: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      update_contestant_score: {
-        Args:
-          | {
+      run_queue_management: { Args: never; Returns: undefined }
+      update_contestant_score:
+        | {
+            Args: {
+              p_contestant_name: string
+              p_current_version: number
+              p_increment: boolean
+            }
+            Returns: {
+              new_score: number
+              new_version: number
+              success: boolean
+            }[]
+          }
+        | {
+            Args: {
               p_auth_token: string
               p_contestant_name: string
               p_current_version: number
               p_increment: boolean
             }
-          | {
-              p_contestant_name: string
-              p_current_version: number
-              p_increment: boolean
-            }
-        Returns: {
-          new_score: number
-          new_version: number
-          success: boolean
-        }[]
-      }
+            Returns: {
+              new_score: number
+              new_version: number
+              success: boolean
+            }[]
+          }
     }
     Enums: {
       alert_type: "standard" | "message" | "gift"
