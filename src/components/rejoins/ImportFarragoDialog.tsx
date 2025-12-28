@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import { Upload, FileArchive, CheckCircle2, XCircle } from 'lucide-react';
+import { FileArchive, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Progress } from '@/components/ui/progress';
 import { parseFarragoSet, isValidFarragoSet, FarragoSound } from '@/utils/farragoImport';
+import { transcodeMany, TranscodeProgress } from '@/utils/audioTranscode';
+import { toast } from 'sonner';
 
 interface ImportFarragoDialogProps {
   open: boolean;
@@ -36,6 +39,8 @@ export function ImportFarragoDialog({
 }: ImportFarragoDialogProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [parsing, setParsing] = useState(false);
+  const [transcoding, setTranscoding] = useState(false);
+  const [transcodeProgress, setTranscodeProgress] = useState<TranscodeProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [setName, setSetName] = useState<string | null>(null);
   const [sounds, setSounds] = useState<FarragoSound[]>([]);
@@ -48,6 +53,8 @@ export function ImportFarragoDialog({
     setSounds([]);
     setSelectedSounds(new Set());
     setParsing(false);
+    setTranscoding(false);
+    setTranscodeProgress(null);
   }, []);
 
   const handleFile = async (file: File) => {
@@ -120,22 +127,56 @@ export function ImportFarragoDialog({
   };
 
   const handleImport = async () => {
-    const soundsToImport = sounds
-      .filter((_, i) => selectedSounds.has(i))
-      .map(s => ({
-        title: s.title,
-        audioBlob: s.audioBlob,
-        extension: s.extension,
-        color: s.color,
-        volume: s.volume,
-        trim_start: s.trimStart,
-        trim_end: s.trimEnd,
-        duration: s.duration,
-      }));
-
-    await onImport(soundsToImport);
-    resetState();
-    onOpenChange(false);
+    const selectedList = sounds.filter((_, i) => selectedSounds.has(i));
+    
+    // Transcode all selected sounds to WAV for reliable playback
+    setTranscoding(true);
+    setTranscodeProgress({ current: 0, total: selectedList.length, currentFile: '', failed: [] });
+    
+    try {
+      const { results, failed } = await transcodeMany(
+        selectedList.map(s => ({ title: s.title, blob: s.audioBlob })),
+        setTranscodeProgress
+      );
+      
+      if (failed.length > 0) {
+        toast.warning(`${failed.length} file(s) couldn't be converted`, {
+          description: failed.slice(0, 3).join(', ') + (failed.length > 3 ? '...' : ''),
+        });
+      }
+      
+      // Build final import list with transcoded WAV blobs
+      const soundsToImport = selectedList
+        .map((s, idx) => {
+          const transcoded = results.get(idx);
+          if (!transcoded) return null;
+          return {
+            title: s.title,
+            audioBlob: transcoded.blob,
+            extension: 'wav',
+            color: s.color,
+            volume: s.volume,
+            trim_start: s.trimStart,
+            trim_end: s.trimEnd,
+            duration: transcoded.duration,
+          };
+        })
+        .filter((s): s is NonNullable<typeof s> => s !== null);
+      
+      if (soundsToImport.length === 0) {
+        setError('No sounds could be converted. Try exporting from Farrago as MP3 or AAC.');
+        setTranscoding(false);
+        return;
+      }
+      
+      await onImport(soundsToImport);
+      resetState();
+      onOpenChange(false);
+    } catch (e) {
+      console.error('Transcode error:', e);
+      setError('Failed to convert audio files');
+      setTranscoding(false);
+    }
   };
 
   const handleOpenChange = (open: boolean) => {
@@ -155,7 +196,29 @@ export function ImportFarragoDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {sounds.length === 0 ? (
+        {transcoding && transcodeProgress ? (
+          <div className="flex flex-col items-center justify-center h-40 space-y-4">
+            <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
+            <div className="text-center">
+              <p className="text-sm font-medium text-foreground">
+                Converting audio ({transcodeProgress.current}/{transcodeProgress.total})
+              </p>
+              <p className="text-xs text-muted-foreground truncate max-w-[300px]">
+                {transcodeProgress.currentFile}
+              </p>
+            </div>
+            <Progress 
+              value={(transcodeProgress.current / transcodeProgress.total) * 100} 
+              className="w-full max-w-xs"
+            />
+            {transcodeProgress.failed.length > 0 && (
+              <div className="flex items-center gap-1 text-xs text-amber-500">
+                <AlertTriangle className="h-3 w-3" />
+                {transcodeProgress.failed.length} failed
+              </div>
+            )}
+          </div>
+        ) : sounds.length === 0 ? (
           <div
             onClick={() => fileInputRef.current?.click()}
             onDrop={handleDrop}
@@ -238,15 +301,16 @@ export function ImportFarragoDialog({
           <Button
             variant="outline"
             onClick={() => handleOpenChange(false)}
+            disabled={transcoding}
           >
             Cancel
           </Button>
-          {sounds.length > 0 && (
+          {sounds.length > 0 && !transcoding && (
             <Button 
               onClick={handleImport} 
-              disabled={selectedSounds.size === 0 || isLoading}
+              disabled={selectedSounds.size === 0 || isLoading || transcoding}
             >
-              {isLoading 
+              {isLoading
                 ? 'Importing...' 
                 : `Import ${selectedSounds.size} Rejoin${selectedSounds.size !== 1 ? 's' : ''}`
               }

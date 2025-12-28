@@ -1,5 +1,7 @@
 import JSZip from 'jszip';
 
+// Note: Transcoding to WAV is handled in ImportFarragoDialog after parsing
+// This keeps parsing fast and allows showing transcoding progress separately
 export interface FarragoSound {
   title: string;
   audioBlob: Blob;
