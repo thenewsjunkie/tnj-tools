@@ -29,6 +29,8 @@ export interface UpdateSoundEffectInput {
   volume?: number;
   trim_start?: number;
   trim_end?: number | null;
+  file?: File;
+  oldAudioUrl?: string;
 }
 
 export function useSoundEffects() {
@@ -94,10 +96,52 @@ export function useSoundEffects() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, ...updates }: UpdateSoundEffectInput) => {
+    mutationFn: async ({ id, file, oldAudioUrl, ...updates }: UpdateSoundEffectInput) => {
+      let audioUrl: string | undefined;
+      let duration: number | undefined;
+
+      // If a new file is provided, upload it and delete the old one
+      if (file) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('sound_effects')
+          .upload(fileName, file);
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('sound_effects')
+          .getPublicUrl(fileName);
+
+        audioUrl = publicUrl;
+        duration = await getAudioDuration(file);
+
+        // Delete old file if exists
+        if (oldAudioUrl) {
+          try {
+            const url = new URL(oldAudioUrl);
+            const oldFileName = url.pathname.split('/').pop();
+            if (oldFileName) {
+              await supabase.storage
+                .from('sound_effects')
+                .remove([oldFileName]);
+            }
+          } catch (e) {
+            console.error('Error deleting old file:', e);
+          }
+        }
+      }
+
       const { data, error } = await supabase
         .from('sound_effects')
-        .update(updates)
+        .update({
+          ...updates,
+          ...(audioUrl && { audio_url: audioUrl }),
+          ...(duration !== undefined && { duration, trim_start: 0, trim_end: null }),
+        })
         .eq('id', id)
         .select()
         .single();

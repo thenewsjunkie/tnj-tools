@@ -58,6 +58,11 @@ const Admin = () => {
           <VoiceInterface onSpeakingChange={setIsAISpeaking} />
         </CollapsibleModule>
 
+        {/* Sound Effects Library - Full Width */}
+        <CollapsibleModule id="sound-effects" title="Sound Effects" defaultOpen={false}>
+          <SoundEffectsLibrary />
+        </CollapsibleModule>
+
         {/* Row: Alerts + Ask AI */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <CollapsibleModule
@@ -77,11 +82,6 @@ const Admin = () => {
             <AskAI />
           </CollapsibleModule>
         </div>
-
-        {/* Sound Effects Library - Full Width */}
-        <CollapsibleModule id="sound-effects" title="Sound Effects" defaultOpen={false}>
-          <SoundEffectsLibrary />
-        </CollapsibleModule>
         
         {/* Lower Thirds - Full Width */}
         <CollapsibleModule id="lower-thirds" title="Lower Thirds" defaultOpen={false}>
