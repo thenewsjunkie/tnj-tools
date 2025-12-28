@@ -2,23 +2,29 @@ import { useRef, useState, useCallback, useEffect } from 'react';
 import { SoundEffect } from './useSoundEffects';
 
 export function useSoundPlayer() {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
+  const gainNodeRef = useRef<GainNode | null>(null);
+  const startTimeRef = useRef<number>(0);
+  const offsetRef = useRef<number>(0);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [remainingTime, setRemainingTime] = useState<number | null>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const currentSoundRef = useRef<SoundEffect | null>(null);
 
   // Update remaining time while playing
   useEffect(() => {
     const updateTime = () => {
-      if (audioRef.current && currentSoundRef.current && playingId) {
-        const currentTime = audioRef.current.currentTime;
-        const trimEnd = currentSoundRef.current.trim_end ?? currentSoundRef.current.duration ?? audioRef.current.duration;
-        const remaining = Math.max(0, trimEnd - currentTime);
+      if (audioContextRef.current && currentSoundRef.current && playingId) {
+        const elapsed = audioContextRef.current.currentTime - startTimeRef.current;
+        const currentPosition = offsetRef.current + elapsed;
+        const trimEnd = currentSoundRef.current.trim_end ?? currentSoundRef.current.duration ?? 0;
+        const remaining = Math.max(0, trimEnd - currentPosition);
         setRemainingTime(remaining);
-        animationFrameRef.current = requestAnimationFrame(updateTime);
+        
+        if (remaining > 0) {
+          animationFrameRef.current = requestAnimationFrame(updateTime);
+        }
       }
     };
 
@@ -34,13 +40,13 @@ export function useSoundPlayer() {
   }, [playingId]);
 
   const stopCurrent = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
+    if (sourceNodeRef.current) {
+      try {
+        sourceNodeRef.current.stop();
+      } catch (e) {
+        // Already stopped
+      }
+      sourceNodeRef.current = null;
     }
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
@@ -50,76 +56,67 @@ export function useSoundPlayer() {
       audioContextRef.current.close().catch(() => {});
       audioContextRef.current = null;
     }
+    gainNodeRef.current = null;
     currentSoundRef.current = null;
     setRemainingTime(null);
   }, []);
 
-  const playSound = useCallback((sound: SoundEffect) => {
+  const playSound = useCallback(async (sound: SoundEffect) => {
     // Stop any currently playing sound
     stopCurrent();
-
-    const audio = new Audio(sound.audio_url);
-    audio.crossOrigin = 'anonymous';
-    audioRef.current = audio;
-    currentSoundRef.current = sound;
-    
-    // Apply trim start
-    audio.currentTime = sound.trim_start || 0;
-    
-    // Set initial remaining time
-    const soundTrimEnd = sound.trim_end ?? sound.duration ?? 0;
-    setRemainingTime(soundTrimEnd - (sound.trim_start || 0));
-    
     setPlayingId(sound.id);
+    currentSoundRef.current = sound;
 
-    // Handle trim end
-    if (soundTrimEnd > (sound.trim_start || 0)) {
-      const playDuration = (soundTrimEnd - (sound.trim_start || 0)) * 1000;
-      timeoutRef.current = setTimeout(() => {
-        audio.pause();
+    try {
+      // Fetch the audio file
+      const response = await fetch(sound.audio_url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch audio: ${response.status}`);
+      }
+      const arrayBuffer = await response.arrayBuffer();
+
+      // Create audio context and decode
+      const audioContext = new AudioContext();
+      audioContextRef.current = audioContext;
+      
+      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+      // Set up gain node for volume control (supports >1.0 for boost)
+      const gainNode = audioContext.createGain();
+      gainNode.gain.value = Math.max(sound.volume, 0);
+      gainNodeRef.current = gainNode;
+      gainNode.connect(audioContext.destination);
+
+      // Create buffer source
+      const sourceNode = audioContext.createBufferSource();
+      sourceNode.buffer = audioBuffer;
+      sourceNode.connect(gainNode);
+      sourceNodeRef.current = sourceNode;
+
+      // Calculate trim points
+      const trimStart = sound.trim_start || 0;
+      const trimEnd = sound.trim_end ?? sound.duration ?? audioBuffer.duration;
+      const playDuration = trimEnd - trimStart;
+
+      // Set initial remaining time
+      setRemainingTime(playDuration);
+      offsetRef.current = trimStart;
+      startTimeRef.current = audioContext.currentTime;
+
+      // Handle playback end
+      sourceNode.onended = () => {
         setPlayingId(null);
         setRemainingTime(null);
-      }, playDuration);
+      };
+
+      // Start playback with trim points
+      sourceNode.start(0, trimStart, playDuration);
+      
+    } catch (err) {
+      console.error('Audio playback error:', err);
+      setPlayingId(null);
+      setRemainingTime(null);
     }
-
-    audio.addEventListener('ended', () => {
-      setPlayingId(null);
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
-    });
-
-    audio.addEventListener('error', (e) => {
-      console.error('Audio playback error:', sound.audio_url, e);
-      const ext = sound.audio_url.split('.').pop() || 'unknown';
-      console.warn(`Failed to play audio (format: .${ext}). This format may not be supported by your browser.`);
-      setPlayingId(null);
-    });
-
-    // Set up Web Audio API for volume boost support
-    const startPlayback = async () => {
-      try {
-        const audioContext = new AudioContext();
-        audioContextRef.current = audioContext;
-        
-        const source = audioContext.createMediaElementSource(audio);
-        const gainNode = audioContext.createGain();
-        gainNode.gain.value = Math.max(sound.volume, 0);
-        
-        source.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        await audio.play();
-      } catch (err) {
-        // Fallback to native volume if Web Audio fails
-        console.warn('Web Audio API failed, using native volume:', err);
-        audio.volume = Math.min(Math.max(sound.volume, 0), 1);
-        audio.play().catch(() => setPlayingId(null));
-      }
-    };
-
-    startPlayback();
   }, [stopCurrent]);
 
   const stopAll = useCallback(() => {
