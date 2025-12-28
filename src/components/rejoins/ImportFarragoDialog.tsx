@@ -51,7 +51,7 @@ export function ImportFarragoDialog({
 
   const handleFile = async (file: File) => {
     if (!isValidFarragoSet(file)) {
-      setError('Please select a valid .farragoset file');
+      setError('Please select a valid .farragoset or .zip file');
       return;
     }
 
@@ -180,7 +180,7 @@ export function ImportFarragoDialog({
             <input
               ref={fileInputRef}
               type="file"
-              accept=".farragoset"
+              accept=".farragoset,.zip,application/zip,application/octet-stream"
               onChange={handleFileInput}
               className="hidden"
             />

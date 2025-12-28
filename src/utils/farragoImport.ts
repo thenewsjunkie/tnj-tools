@@ -164,5 +164,11 @@ export async function parseFarragoSet(file: File): Promise<FarragoSetMetadata> {
 }
 
 export function isValidFarragoSet(file: File): boolean {
-  return file.name.toLowerCase().endsWith('.farragoset');
+  const name = file.name.toLowerCase();
+  const isValidExtension = name.endsWith('.farragoset') || name.endsWith('.zip');
+  const isZipMime = file.type === 'application/zip' || 
+                    file.type === 'application/x-zip-compressed' || 
+                    file.type === 'application/octet-stream' ||
+                    file.type === '';
+  return isValidExtension || isZipMime;
 }
