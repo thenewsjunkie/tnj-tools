@@ -40,6 +40,7 @@ export interface UpdateRejoinInput {
 export interface ImportRejoinInput {
   title: string;
   audioBlob: Blob;
+  extension?: string;
   color?: string;
   volume?: number;
   trim_start?: number;
@@ -207,7 +208,7 @@ export function useRejoins() {
       const results = [];
       
       for (const rejoin of rejoinsToImport) {
-        const fileName = `${crypto.randomUUID()}.mp3`;
+        const fileName = `${crypto.randomUUID()}.${rejoin.extension || 'mp3'}`;
         
         const { error: uploadError } = await supabase.storage
           .from('rejoins')
