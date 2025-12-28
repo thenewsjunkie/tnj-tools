@@ -90,7 +90,10 @@ export function useSoundPlayer() {
       }
     });
 
-    audio.addEventListener('error', () => {
+    audio.addEventListener('error', (e) => {
+      console.error('Audio playback error:', sound.audio_url, e);
+      const ext = sound.audio_url.split('.').pop() || 'unknown';
+      console.warn(`Failed to play audio (format: .${ext}). This format may not be supported by your browser.`);
       setPlayingId(null);
     });
 
