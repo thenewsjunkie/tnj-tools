@@ -52,7 +52,11 @@ export function EditSoundDialog({
   const [newFile, setNewFile] = useState<File | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const startTimeRef = useRef<number>(0);
+  const offsetRef = useRef<number>(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -68,8 +72,16 @@ export function EditSoundDialog({
 
   useEffect(() => {
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
+      if (sourceNodeRef.current) {
+        try {
+          sourceNodeRef.current.stop();
+        } catch (e) {}
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close().catch(() => {});
+      }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
       }
     };
   }, []);
@@ -84,44 +96,94 @@ export function EditSoundDialog({
     }
   };
 
-  const handlePlayPreview = () => {
+  const stopPlayback = () => {
+    if (sourceNodeRef.current) {
+      try {
+        sourceNodeRef.current.stop();
+      } catch (e) {}
+      sourceNodeRef.current = null;
+    }
+    if (audioContextRef.current) {
+      audioContextRef.current.close().catch(() => {});
+      audioContextRef.current = null;
+    }
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    setIsPlaying(false);
+  };
+
+  const handlePlayPreview = async () => {
     if (!sound) return;
 
-    if (isPlaying && audioRef.current) {
-      audioRef.current.pause();
-      setIsPlaying(false);
+    if (isPlaying) {
+      stopPlayback();
       return;
     }
 
-    // Use new file URL or existing audio URL
-    const audioSource = newFile ? URL.createObjectURL(newFile) : sound.audio_url;
-    const audio = new Audio(audioSource);
-    audioRef.current = audio;
-    audio.volume = Math.min(volume, 1);
-    audio.currentTime = trimStart;
+    try {
+      // Get audio source
+      const audioSource = newFile ? URL.createObjectURL(newFile) : sound.audio_url;
+      const response = await fetch(audioSource);
+      if (!response.ok) throw new Error('Failed to fetch audio');
+      const arrayBuffer = await response.arrayBuffer();
 
-    audio.addEventListener('timeupdate', () => {
-      setCurrentTime(audio.currentTime);
-      const end = trimEnd ?? sound.duration ?? audio.duration;
-      if (audio.currentTime >= end) {
-        audio.pause();
-        setIsPlaying(false);
-      }
-    });
+      // Create audio context
+      const audioContext = new AudioContext();
+      audioContextRef.current = audioContext;
 
-    audio.addEventListener('ended', () => {
+      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+      // Set up gain node for volume (supports >1.0)
+      const gainNode = audioContext.createGain();
+      gainNode.gain.value = Math.max(volume, 0);
+      gainNode.connect(audioContext.destination);
+
+      // Create source
+      const sourceNode = audioContext.createBufferSource();
+      sourceNode.buffer = audioBuffer;
+      sourceNode.connect(gainNode);
+      sourceNodeRef.current = sourceNode;
+
+      // Calculate playback
+      const actualDuration = audioBuffer.duration;
+      const end = trimEnd ?? sound.duration ?? actualDuration;
+      const playDuration = end - trimStart;
+
+      offsetRef.current = trimStart;
+      startTimeRef.current = audioContext.currentTime;
+
+      // Update current time during playback
+      const updateTime = () => {
+        if (audioContextRef.current && isPlaying) {
+          const elapsed = audioContextRef.current.currentTime - startTimeRef.current;
+          const pos = offsetRef.current + elapsed;
+          setCurrentTime(pos);
+          if (pos < end) {
+            animationFrameRef.current = requestAnimationFrame(updateTime);
+          }
+        }
+      };
+
+      sourceNode.onended = () => {
+        stopPlayback();
+      };
+
+      sourceNode.start(0, trimStart, playDuration);
+      setIsPlaying(true);
+      setCurrentTime(trimStart);
+      animationFrameRef.current = requestAnimationFrame(updateTime);
+
+    } catch (err) {
+      console.error('Preview playback error:', err);
       setIsPlaying(false);
-    });
-
-    audio.play();
-    setIsPlaying(true);
+    }
   };
 
   const handleSeek = (time: number) => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = time;
-      setCurrentTime(time);
-    }
+    // For seek, we need to restart playback at new position
+    setCurrentTime(time);
   };
 
   const handleResetTrim = () => {
