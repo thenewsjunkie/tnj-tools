@@ -254,16 +254,65 @@ export function useRejoins() {
     },
   });
 
+  const deleteAllMutation = useMutation({
+    mutationFn: async () => {
+      // Get all rejoins to find their file URLs
+      const { data: allRejoins, error: fetchError } = await supabase
+        .from('rejoins')
+        .select('id, audio_url');
+
+      if (fetchError) throw fetchError;
+      if (!allRejoins || allRejoins.length === 0) return 0;
+
+      // Extract file names from URLs and delete from storage
+      const fileNames = allRejoins
+        .map(r => {
+          try {
+            const url = new URL(r.audio_url);
+            return url.pathname.split('/').pop();
+          } catch {
+            return null;
+          }
+        })
+        .filter((f): f is string => !!f);
+
+      if (fileNames.length > 0) {
+        await supabase.storage
+          .from('rejoins')
+          .remove(fileNames);
+      }
+
+      // Delete all records from the table
+      const { error: deleteError } = await supabase
+        .from('rejoins')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all (neq to impossible id)
+
+      if (deleteError) throw deleteError;
+      return allRejoins.length;
+    },
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ['rejoins'] });
+      toast.success(`Deleted ${count} rejoins`);
+    },
+    onError: (error) => {
+      console.error('Error deleting all rejoins:', error);
+      toast.error('Failed to delete rejoins');
+    },
+  });
+
   return {
     rejoins,
     isLoading,
     createRejoin: createMutation.mutateAsync,
     updateRejoin: updateMutation.mutateAsync,
     deleteRejoin: deleteMutation.mutateAsync,
+    deleteAllRejoins: deleteAllMutation.mutateAsync,
     importRejoins: importMutation.mutateAsync,
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
+    isDeletingAll: deleteAllMutation.isPending,
     isImporting: importMutation.isPending,
   };
 }

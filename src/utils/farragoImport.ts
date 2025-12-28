@@ -104,7 +104,7 @@ export async function parseFarragoSet(file: File): Promise<FarragoSetMetadata> {
   });
   
   // Try to parse metadata for sound settings
-  let soundMetadata: Map<string, { color?: string; volume?: number; inPoint?: number; outPoint?: number }> = new Map();
+  let soundMetadata: Map<string, { title?: string; color?: string; volume?: number; inPoint?: number; outPoint?: number }> = new Map();
   
   for (const [path, entry] of metadataFiles) {
     try {
@@ -118,6 +118,7 @@ export async function parseFarragoSet(file: File): Promise<FarragoSetMetadata> {
           for (const sound of json.sounds) {
             if (sound.filename) {
               soundMetadata.set(sound.filename, {
+                title: sound.title || sound.name,
                 color: parseColorValue(sound.color),
                 volume: sound.volume,
                 inPoint: sound.inPoint,
@@ -134,18 +135,22 @@ export async function parseFarragoSet(file: File): Promise<FarragoSetMetadata> {
         const nameMatch = content.match(/<key>name<\/key>\s*<string>([^<]+)<\/string>/);
         if (nameMatch) setName = nameMatch[1];
         
-        // Look for tile/sound entries
-        const tileMatches = content.matchAll(/<dict>\s*<key>filename<\/key>\s*<string>([^<]+)<\/string>.*?<\/dict>/gs);
+        // Look for tile/sound entries - match each dict that contains a filename
+        const tileMatches = content.matchAll(/<dict>[\s\S]*?<key>filename<\/key>\s*<string>([^<]+)<\/string>[\s\S]*?<\/dict>/g);
         for (const match of tileMatches) {
           const filename = match[1];
           const dictContent = match[0];
           
+          // Extract title/name from the dict
+          const titleMatch = dictContent.match(/<key>title<\/key>\s*<string>([^<]+)<\/string>/) ||
+                            dictContent.match(/<key>name<\/key>\s*<string>([^<]+)<\/string>/);
           const colorMatch = dictContent.match(/<key>color<\/key>\s*<string>([^<]+)<\/string>/);
           const volumeMatch = dictContent.match(/<key>volume<\/key>\s*<real>([^<]+)<\/real>/);
           const inPointMatch = dictContent.match(/<key>inPoint<\/key>\s*<real>([^<]+)<\/real>/);
           const outPointMatch = dictContent.match(/<key>outPoint<\/key>\s*<real>([^<]+)<\/real>/);
           
           soundMetadata.set(filename, {
+            title: titleMatch ? titleMatch[1] : undefined,
             color: colorMatch ? parseColorValue(colorMatch[1]) : undefined,
             volume: volumeMatch ? parseFloat(volumeMatch[1]) : undefined,
             inPoint: inPointMatch ? parseFloat(inPointMatch[1]) : undefined,
@@ -174,7 +179,7 @@ export async function parseFarragoSet(file: File): Promise<FarragoSetMetadata> {
       const meta = soundMetadata.get(fileName) || soundMetadata.get(path) || {};
       
       sounds.push({
-        title,
+        title: meta.title || title,
         audioBlob,
         extension,
         mimeType,
