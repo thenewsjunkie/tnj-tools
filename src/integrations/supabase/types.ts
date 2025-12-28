@@ -769,6 +769,48 @@ export type Database = {
         }
         Relationships: []
       }
+      sound_effects: {
+        Row: {
+          audio_url: string
+          color: string
+          created_at: string
+          display_order: number
+          duration: number | null
+          id: string
+          title: string
+          trim_end: number | null
+          trim_start: number
+          updated_at: string
+          volume: number
+        }
+        Insert: {
+          audio_url: string
+          color?: string
+          created_at?: string
+          display_order?: number
+          duration?: number | null
+          id?: string
+          title: string
+          trim_end?: number | null
+          trim_start?: number
+          updated_at?: string
+          volume?: number
+        }
+        Update: {
+          audio_url?: string
+          color?: string
+          created_at?: string
+          display_order?: number
+          duration?: number | null
+          id?: string
+          title?: string
+          trim_end?: number | null
+          trim_start?: number
+          updated_at?: string
+          volume?: number
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
           key: string
