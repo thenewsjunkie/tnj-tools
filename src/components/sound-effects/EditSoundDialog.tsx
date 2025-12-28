@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { SoundEffect } from '@/hooks/useSoundEffects';
+import { WaveformEditor } from './WaveformEditor';
 
 const COLOR_PRESETS = [
   '#ef4444', '#f97316', '#eab308', '#22c55e', '#14b8a6',
@@ -116,15 +117,10 @@ export function EditSoundDialog({
     setIsPlaying(true);
   };
 
-  const handleSetTrimStart = () => {
+  const handleSeek = (time: number) => {
     if (audioRef.current) {
-      setTrimStart(audioRef.current.currentTime);
-    }
-  };
-
-  const handleSetTrimEnd = () => {
-    if (audioRef.current) {
-      setTrimEnd(audioRef.current.currentTime);
+      audioRef.current.currentTime = time;
+      setCurrentTime(time);
     }
   };
 
@@ -238,6 +234,20 @@ export function EditSoundDialog({
 
           <div className="space-y-2">
             <Label>Trim</Label>
+            {sound && (
+              <WaveformEditor
+                audioUrl={newFile ? URL.createObjectURL(newFile) : sound.audio_url}
+                file={newFile}
+                duration={duration}
+                trimStart={trimStart}
+                trimEnd={trimEnd}
+                currentTime={currentTime}
+                isPlaying={isPlaying}
+                onTrimStartChange={setTrimStart}
+                onTrimEndChange={setTrimEnd}
+                onSeek={handleSeek}
+              />
+            )}
             <div className="flex items-center gap-2">
               <Button
                 type="button"
@@ -254,32 +264,18 @@ export function EditSoundDialog({
               <span className="text-sm text-muted-foreground font-mono">
                 {formatTime(currentTime)} / {formatTime(duration)}
               </span>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleSetTrimStart}
-              >
-                Set Start ({formatTime(trimStart)})
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleSetTrimEnd}
-              >
-                Set End ({formatTime(trimEnd ?? duration)})
-              </Button>
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
                 onClick={handleResetTrim}
+                title="Reset trim"
               >
                 <RotateCcw className="h-4 w-4" />
               </Button>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Start: {formatTime(trimStart)} | End: {formatTime(trimEnd ?? duration)}
             </div>
           </div>
 
