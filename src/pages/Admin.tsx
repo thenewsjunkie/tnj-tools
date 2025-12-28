@@ -15,6 +15,7 @@ import { AskAI } from "@/components/ai-chat/AskAI";
 import VoiceInterface from "@/components/VoiceInterface";
 import { Badge } from "@/components/ui/badge";
 import { useQueueState } from "@/hooks/useQueueState";
+import { SoundEffectsLibrary } from "@/components/sound-effects/SoundEffectsLibrary";
 
 const Admin = () => {
   const { theme } = useTheme();
@@ -76,6 +77,11 @@ const Admin = () => {
             <AskAI />
           </CollapsibleModule>
         </div>
+
+        {/* Sound Effects Library - Full Width */}
+        <CollapsibleModule id="sound-effects" title="Sound Effects" defaultOpen={false}>
+          <SoundEffectsLibrary />
+        </CollapsibleModule>
         
         {/* Lower Thirds - Full Width */}
         <CollapsibleModule id="lower-thirds" title="Lower Thirds" defaultOpen={false}>
