@@ -1,11 +1,37 @@
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import { SoundEffect } from './useSoundEffects';
 
 export function useSoundPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const [remainingTime, setRemainingTime] = useState<number | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const currentSoundRef = useRef<SoundEffect | null>(null);
+
+  // Update remaining time while playing
+  useEffect(() => {
+    const updateTime = () => {
+      if (audioRef.current && currentSoundRef.current && playingId) {
+        const currentTime = audioRef.current.currentTime;
+        const trimEnd = currentSoundRef.current.trim_end ?? currentSoundRef.current.duration ?? audioRef.current.duration;
+        const remaining = Math.max(0, trimEnd - currentTime);
+        setRemainingTime(remaining);
+        animationFrameRef.current = requestAnimationFrame(updateTime);
+      }
+    };
+
+    if (playingId) {
+      animationFrameRef.current = requestAnimationFrame(updateTime);
+    }
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [playingId]);
 
   const stopCurrent = useCallback(() => {
     if (audioRef.current) {
@@ -16,10 +42,16 @@ export function useSoundPlayer() {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
     if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
       audioContextRef.current.close().catch(() => {});
       audioContextRef.current = null;
     }
+    currentSoundRef.current = null;
+    setRemainingTime(null);
   }, []);
 
   const playSound = useCallback((sound: SoundEffect) => {
@@ -29,19 +61,24 @@ export function useSoundPlayer() {
     const audio = new Audio(sound.audio_url);
     audio.crossOrigin = 'anonymous';
     audioRef.current = audio;
+    currentSoundRef.current = sound;
     
     // Apply trim start
     audio.currentTime = sound.trim_start || 0;
     
+    // Set initial remaining time
+    const soundTrimEnd = sound.trim_end ?? sound.duration ?? 0;
+    setRemainingTime(soundTrimEnd - (sound.trim_start || 0));
+    
     setPlayingId(sound.id);
 
     // Handle trim end
-    const trimEnd = sound.trim_end ?? sound.duration ?? null;
-    if (trimEnd !== null && trimEnd > (sound.trim_start || 0)) {
-      const playDuration = (trimEnd - (sound.trim_start || 0)) * 1000;
+    if (soundTrimEnd > (sound.trim_start || 0)) {
+      const playDuration = (soundTrimEnd - (sound.trim_start || 0)) * 1000;
       timeoutRef.current = setTimeout(() => {
         audio.pause();
         setPlayingId(null);
+        setRemainingTime(null);
       }, playDuration);
     }
 
@@ -85,6 +122,7 @@ export function useSoundPlayer() {
   const stopAll = useCallback(() => {
     stopCurrent();
     setPlayingId(null);
+    setRemainingTime(null);
   }, [stopCurrent]);
 
   const isPlaying = useCallback((id: string) => {
@@ -96,5 +134,6 @@ export function useSoundPlayer() {
     stopAll,
     isPlaying,
     playingId,
+    remainingTime,
   };
 }

@@ -11,15 +11,23 @@ import {
 interface SoundEffectButtonProps {
   sound: SoundEffect;
   isPlaying: boolean;
+  remainingTime?: number | null;
   onPlay: () => void;
   onStop: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }
 
+const formatTime = (seconds: number): string => {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
+
 export function SoundEffectButton({
   sound,
   isPlaying,
+  remainingTime,
   onPlay,
   onStop,
   onEdit,
@@ -64,9 +72,15 @@ export function SoundEffectButton({
           ) : (
             <Volume2 className="h-4 w-4 mb-1" />
           )}
-          <span className="text-xs font-medium truncate w-full text-center px-1">
-            {sound.title}
-          </span>
+          {isPlaying && remainingTime != null ? (
+            <span className="text-xs font-mono font-bold">
+              {formatTime(remainingTime)}
+            </span>
+          ) : (
+            <span className="text-xs font-medium truncate w-full text-center px-1">
+              {sound.title}
+            </span>
+          )}
         </button>
       </ContextMenuTrigger>
       <ContextMenuContent>
