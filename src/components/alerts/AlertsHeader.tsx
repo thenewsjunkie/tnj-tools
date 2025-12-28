@@ -13,44 +13,41 @@ const AlertsHeader = ({ isPaused, togglePause, openDialog }: AlertsHeaderProps) 
   const { toast } = useToast();
 
   return (
-    <div className="flex flex-col space-y-1.5 p-6">
-      <div className="flex justify-between items-center">
-        <h3 className="text-2xl font-semibold leading-none tracking-tight">Alerts</h3>
-        <div className="flex items-center gap-2">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={togglePause}
+          className={isPaused ? "text-neon-red" : "text-neon-red"}
+        >
+          {isPaused ? <Play className="h-3 w-3" /> : <Pause className="h-3 w-3" />}
+        </Button>
+        <RouterLink to="/admin/queue-history">
           <Button
             variant="outline"
-            size="icon"
-            onClick={togglePause}
-            className={isPaused ? "text-neon-red" : "text-neon-red"}
-          >
-            {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
-          </Button>
-          <RouterLink to="/admin/queue-history">
-            <Button
-              variant="outline"
-              size="icon"
-              className="alert-icon hover:text-neon-red hover:bg-white/10"
-            >
-              <History className="h-4 w-4" />
-            </Button>
-          </RouterLink>
-          <a
-            href="/alerts"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="alert-icon hover:text-neon-red hover:bg-white/10 rounded-md p-2"
-          >
-            <Link className="h-4 w-4" />
-          </a>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={openDialog}
+            size="sm"
             className="alert-icon hover:text-neon-red hover:bg-white/10"
           >
-            <Plus className="h-4 w-4" />
+            <History className="h-3 w-3" />
           </Button>
-        </div>
+        </RouterLink>
+        <a
+          href="/alerts"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="alert-icon hover:text-neon-red hover:bg-white/10 rounded-md p-1.5"
+        >
+          <Link className="h-3 w-3" />
+        </a>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={openDialog}
+          className="alert-icon hover:text-neon-red hover:bg-white/10"
+        >
+          <Plus className="h-3 w-3" />
+        </Button>
       </div>
     </div>
   );

@@ -1,12 +1,9 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { useTheme } from "@/components/theme/ThemeProvider";
 
 const Stopwatch = () => {
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
-  const { theme } = useTheme();
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout | undefined;
@@ -28,39 +25,33 @@ const Stopwatch = () => {
     setIsRunning(false);
   };
 
-  const bgColor = theme === 'light' ? 'bg-white' : 'bg-black/50';
-  const textColor = theme === 'light' ? 'text-black' : 'text-white';
+  const formatTime = () => 
+    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(2, '0')}`;
 
   return (
-    <Card className={`${bgColor} border border-gray-200 dark:border-white/10`}>
-      <CardHeader>
-        <CardTitle className={`${textColor} text-lg sm:text-xl`}>Stopwatch</CardTitle>
-      </CardHeader>
-      <CardContent className="px-2 sm:px-6">
-        <div className="digital text-neon-red text-[clamp(1.5rem,5vw,2.5rem)] mb-4 animate-led-flicker tracking-wider">
-          {hours.toString().padStart(2, '0')}:
-          {minutes.toString().padStart(2, '0')}:
-          {seconds.toString().padStart(2, '0')}.
-          {milliseconds.toString().padStart(2, '0')}
-        </div>
-        <div className="flex gap-2 px-2">
-          <Button 
-            onClick={() => setIsRunning(!isRunning)}
-            variant="outline"
-            className="flex-1 text-sm"
-          >
-            {isRunning ? 'Stop' : 'Start'}
-          </Button>
-          <Button 
-            onClick={reset}
-            variant="outline"
-            className="flex-1 text-sm"
-          >
-            Reset
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="space-y-2">
+      <div className="digital text-neon-red text-xl animate-led-flicker tracking-wider">
+        {formatTime()}
+      </div>
+      <div className="flex gap-2">
+        <Button 
+          onClick={() => setIsRunning(!isRunning)}
+          variant="outline"
+          size="sm"
+          className="flex-1 text-xs"
+        >
+          {isRunning ? 'Stop' : 'Start'}
+        </Button>
+        <Button 
+          onClick={reset}
+          variant="outline"
+          size="sm"
+          className="flex-1 text-xs"
+        >
+          Reset
+        </Button>
+      </div>
+    </div>
   );
 };
 
