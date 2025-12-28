@@ -74,6 +74,166 @@ function parseColorValue(colorValue: unknown): string {
   return '#3b82f6';
 }
 
+// Parse plist XML using DOMParser for robust extraction
+type PlistValue = string | number | boolean | PlistValue[] | { [key: string]: PlistValue };
+
+function parsePlistXml(xmlContent: string): PlistValue | null {
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xmlContent, 'application/xml');
+    
+    const parseError = doc.querySelector('parsererror');
+    if (parseError) {
+      console.warn('Plist XML parse error:', parseError.textContent);
+      return null;
+    }
+    
+    const plist = doc.querySelector('plist');
+    if (!plist) return null;
+    
+    const firstChild = plist.firstElementChild;
+    if (!firstChild) return null;
+    
+    return parseNode(firstChild);
+  } catch (e) {
+    console.warn('Failed to parse plist:', e);
+    return null;
+  }
+}
+
+function parseNode(node: Element): PlistValue {
+  const tagName = node.tagName.toLowerCase();
+  
+  switch (tagName) {
+    case 'string':
+      return node.textContent || '';
+    case 'integer':
+      return parseInt(node.textContent || '0', 10);
+    case 'real':
+      return parseFloat(node.textContent || '0');
+    case 'true':
+      return true;
+    case 'false':
+      return false;
+    case 'array': {
+      const items: PlistValue[] = [];
+      for (const child of Array.from(node.children)) {
+        items.push(parseNode(child));
+      }
+      return items;
+    }
+    case 'dict': {
+      const obj: { [key: string]: PlistValue } = {};
+      const children = Array.from(node.children);
+      for (let i = 0; i < children.length; i += 2) {
+        const keyNode = children[i];
+        const valueNode = children[i + 1];
+        if (keyNode?.tagName?.toLowerCase() === 'key' && valueNode) {
+          const key = keyNode.textContent || '';
+          obj[key] = parseNode(valueNode);
+        }
+      }
+      return obj;
+    }
+    default:
+      return '';
+  }
+}
+
+interface SoundMetadata {
+  title?: string;
+  color?: string;
+  volume?: number;
+  inPoint?: number;
+  outPoint?: number;
+}
+
+// Extract sound metadata from parsed plist object
+function extractSoundMetadata(plistData: PlistValue): Map<string, SoundMetadata> {
+  const metadata = new Map<string, SoundMetadata>();
+  
+  function traverse(value: PlistValue) {
+    if (typeof value !== 'object' || value === null) return;
+    
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        traverse(item);
+      }
+      return;
+    }
+    
+    // Check if this object looks like a sound entry
+    const obj = value as { [key: string]: PlistValue };
+    
+    // Look for filename, uuid, or id fields to use as keys
+    const filename = obj['filename'] as string | undefined;
+    const uuid = obj['uuid'] as string | undefined;
+    const id = obj['id'] as string | undefined;
+    const title = (obj['title'] as string) || (obj['name'] as string);
+    
+    if (title && (filename || uuid || id)) {
+      const meta: SoundMetadata = {
+        title,
+        color: parseColorValue(obj['color']),
+        volume: typeof obj['volume'] === 'number' ? obj['volume'] : undefined,
+        inPoint: typeof obj['inPoint'] === 'number' ? obj['inPoint'] : undefined,
+        outPoint: typeof obj['outPoint'] === 'number' ? obj['outPoint'] : undefined,
+      };
+      
+      // Store under multiple keys for matching
+      if (filename) {
+        metadata.set(filename, meta);
+        metadata.set(filename.toLowerCase(), meta);
+        // Also store without extension
+        const baseName = filename.replace(/\.[^/.]+$/, '');
+        metadata.set(baseName, meta);
+        metadata.set(baseName.toLowerCase(), meta);
+      }
+      if (uuid) {
+        metadata.set(uuid, meta);
+        metadata.set(uuid.toLowerCase(), meta);
+        metadata.set(uuid.toUpperCase(), meta);
+      }
+      if (id && typeof id === 'string') {
+        metadata.set(id, meta);
+        metadata.set(id.toLowerCase(), meta);
+      }
+    }
+    
+    // Recurse into child objects
+    for (const key of Object.keys(obj)) {
+      traverse(obj[key]);
+    }
+  }
+  
+  traverse(plistData);
+  return metadata;
+}
+
+// Try to find metadata for an audio file using various key formats
+function findMetadata(
+  fileName: string,
+  metadata: Map<string, SoundMetadata>
+): SoundMetadata | undefined {
+  const baseName = fileName.replace(/\.[^/.]+$/, '');
+  
+  // Try various key formats
+  const keysToTry = [
+    fileName,
+    fileName.toLowerCase(),
+    baseName,
+    baseName.toLowerCase(),
+    baseName.toUpperCase(),
+  ];
+  
+  for (const key of keysToTry) {
+    const meta = metadata.get(key);
+    if (meta) return meta;
+  }
+  
+  return undefined;
+}
+
 export async function parseFarragoSet(file: File): Promise<FarragoSetMetadata> {
   const zip = new JSZip();
   const contents = await zip.loadAsync(file);
@@ -103,59 +263,56 @@ export async function parseFarragoSet(file: File): Promise<FarragoSetMetadata> {
     }
   });
   
-  // Try to parse metadata for sound settings
-  let soundMetadata: Map<string, { title?: string; color?: string; volume?: number; inPoint?: number; outPoint?: number }> = new Map();
+  // Parse all metadata files and build a combined metadata map
+  let soundMetadata = new Map<string, SoundMetadata>();
   
   for (const [path, entry] of metadataFiles) {
     try {
       const content = await entry.async('string');
       
       // Try JSON first
-      if (path.endsWith('.json')) {
-        const json = JSON.parse(content);
-        if (json.name) setName = json.name;
-        if (json.sounds && Array.isArray(json.sounds)) {
-          for (const sound of json.sounds) {
-            if (sound.filename) {
-              soundMetadata.set(sound.filename, {
-                title: sound.title || sound.name,
-                color: parseColorValue(sound.color),
-                volume: sound.volume,
-                inPoint: sound.inPoint,
-                outPoint: sound.outPoint,
-              });
+      if (path.toLowerCase().endsWith('.json')) {
+        try {
+          const json = JSON.parse(content);
+          if (json.name) setName = json.name;
+          if (json.sounds && Array.isArray(json.sounds)) {
+            for (const sound of json.sounds) {
+              if (sound.filename || sound.uuid || sound.id) {
+                const meta: SoundMetadata = {
+                  title: sound.title || sound.name,
+                  color: parseColorValue(sound.color),
+                  volume: sound.volume,
+                  inPoint: sound.inPoint,
+                  outPoint: sound.outPoint,
+                };
+                const key = sound.filename || sound.uuid || sound.id;
+                soundMetadata.set(key, meta);
+                soundMetadata.set(key.toLowerCase(), meta);
+              }
             }
           }
+        } catch {
+          // Not valid JSON, skip
         }
       }
       
-      // Try to parse plist (simplified - just extract key values)
-      if (path.endsWith('.plist')) {
-        // Extract set name from plist if present
-        const nameMatch = content.match(/<key>name<\/key>\s*<string>([^<]+)<\/string>/);
-        if (nameMatch) setName = nameMatch[1];
-        
-        // Look for tile/sound entries - match each dict that contains a filename
-        const tileMatches = content.matchAll(/<dict>[\s\S]*?<key>filename<\/key>\s*<string>([^<]+)<\/string>[\s\S]*?<\/dict>/g);
-        for (const match of tileMatches) {
-          const filename = match[1];
-          const dictContent = match[0];
+      // Try plist XML
+      if (path.toLowerCase().endsWith('.plist')) {
+        const parsed = parsePlistXml(content);
+        if (parsed) {
+          // Check for set name at root level
+          if (typeof parsed === 'object' && !Array.isArray(parsed)) {
+            const rootObj = parsed as { [key: string]: PlistValue };
+            if (rootObj['name'] && typeof rootObj['name'] === 'string') {
+              setName = rootObj['name'];
+            }
+          }
           
-          // Extract title/name from the dict
-          const titleMatch = dictContent.match(/<key>title<\/key>\s*<string>([^<]+)<\/string>/) ||
-                            dictContent.match(/<key>name<\/key>\s*<string>([^<]+)<\/string>/);
-          const colorMatch = dictContent.match(/<key>color<\/key>\s*<string>([^<]+)<\/string>/);
-          const volumeMatch = dictContent.match(/<key>volume<\/key>\s*<real>([^<]+)<\/real>/);
-          const inPointMatch = dictContent.match(/<key>inPoint<\/key>\s*<real>([^<]+)<\/real>/);
-          const outPointMatch = dictContent.match(/<key>outPoint<\/key>\s*<real>([^<]+)<\/real>/);
-          
-          soundMetadata.set(filename, {
-            title: titleMatch ? titleMatch[1] : undefined,
-            color: colorMatch ? parseColorValue(colorMatch[1]) : undefined,
-            volume: volumeMatch ? parseFloat(volumeMatch[1]) : undefined,
-            inPoint: inPointMatch ? parseFloat(inPointMatch[1]) : undefined,
-            outPoint: outPointMatch ? parseFloat(outPointMatch[1]) : undefined,
-          });
+          // Extract all sound metadata
+          const extracted = extractSoundMetadata(parsed);
+          for (const [key, value] of extracted) {
+            soundMetadata.set(key, value);
+          }
         }
       }
     } catch (e) {
@@ -163,30 +320,34 @@ export async function parseFarragoSet(file: File): Promise<FarragoSetMetadata> {
     }
   }
   
+  console.log('Farrago metadata keys:', Array.from(soundMetadata.keys()));
+  
   // Process audio files
   for (const [path, entry] of audioFiles) {
     try {
       const audioData = await entry.async('arraybuffer');
       const fileName = path.split('/').pop() || path;
-      const title = fileName.replace(/\.[^/.]+$/, ''); // Remove extension
+      const baseName = fileName.replace(/\.[^/.]+$/, ''); // Remove extension for fallback title
       const extension = getExtension(fileName);
       const mimeType = getMimeType(fileName);
       
       // Create blob with correct MIME type
       const audioBlob = new Blob([audioData], { type: mimeType });
       
-      // Look up metadata by filename
-      const meta = soundMetadata.get(fileName) || soundMetadata.get(path) || {};
+      // Look up metadata
+      const meta = findMetadata(fileName, soundMetadata);
+      
+      console.log(`Processing: ${fileName}, meta found:`, !!meta, meta?.title);
       
       sounds.push({
-        title: meta.title || title,
+        title: meta?.title || baseName,
         audioBlob,
         extension,
         mimeType,
-        color: meta.color || '#3b82f6',
-        volume: meta.volume,
-        trimStart: meta.inPoint,
-        trimEnd: meta.outPoint,
+        color: meta?.color || '#3b82f6',
+        volume: meta?.volume,
+        trimStart: meta?.inPoint,
+        trimEnd: meta?.outPoint,
       });
     } catch (e) {
       console.warn('Could not process audio file:', path, e);

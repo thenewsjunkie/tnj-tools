@@ -2,6 +2,20 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+function getMimeTypeFromExt(ext: string): string {
+  const mimeTypes: Record<string, string> = {
+    'mp3': 'audio/mpeg',
+    'wav': 'audio/wav',
+    'aiff': 'audio/aiff',
+    'aif': 'audio/aiff',
+    'm4a': 'audio/mp4',
+    'aac': 'audio/aac',
+    'ogg': 'audio/ogg',
+    'flac': 'audio/flac',
+  };
+  return mimeTypes[ext.toLowerCase()] || 'audio/mpeg';
+}
+
 export interface Rejoin {
   id: string;
   title: string;
@@ -72,7 +86,9 @@ export function useRejoins() {
       
       const { error: uploadError } = await supabase.storage
         .from('rejoins')
-        .upload(fileName, file);
+        .upload(fileName, file, {
+          contentType: file.type || getMimeTypeFromExt(fileExt || 'mp3'),
+        });
 
       if (uploadError) throw uploadError;
 
@@ -117,7 +133,9 @@ export function useRejoins() {
         
         const { error: uploadError } = await supabase.storage
           .from('rejoins')
-          .upload(fileName, file);
+          .upload(fileName, file, {
+            contentType: file.type || getMimeTypeFromExt(fileExt || 'mp3'),
+          });
 
         if (uploadError) throw uploadError;
 
@@ -208,11 +226,15 @@ export function useRejoins() {
       const results = [];
       
       for (const rejoin of rejoinsToImport) {
-        const fileName = `${crypto.randomUUID()}.${rejoin.extension || 'mp3'}`;
+        const ext = rejoin.extension || 'mp3';
+        const fileName = `${crypto.randomUUID()}.${ext}`;
+        const mimeType = rejoin.audioBlob.type || getMimeTypeFromExt(ext);
         
         const { error: uploadError } = await supabase.storage
           .from('rejoins')
-          .upload(fileName, rejoin.audioBlob);
+          .upload(fileName, rejoin.audioBlob, {
+            contentType: mimeType,
+          });
 
         if (uploadError) {
           console.error('Error uploading rejoin:', rejoin.title, uploadError);
