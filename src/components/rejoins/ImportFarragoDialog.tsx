@@ -79,6 +79,10 @@ export function ImportFarragoDialog({
     }
   };
 
+  const progressText = transcodeProgress?.status === 'loading'
+    ? 'Loading audio converter...'
+    : `Converting audio (${transcodeProgress?.current || 0}/${transcodeProgress?.total || 0})`;
+
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
@@ -131,7 +135,7 @@ export function ImportFarragoDialog({
     
     // Transcode all selected sounds to WAV for reliable playback
     setTranscoding(true);
-    setTranscodeProgress({ current: 0, total: selectedList.length, currentFile: '', failed: [] });
+    setTranscodeProgress({ current: 0, total: selectedList.length, currentFile: '', failed: [], status: 'loading' });
     
     try {
       const { results, failed } = await transcodeMany(
@@ -153,7 +157,7 @@ export function ImportFarragoDialog({
           return {
             title: s.title,
             audioBlob: transcoded.blob,
-            extension: 'wav',
+            extension: 'mp3',
             color: s.color,
             volume: s.volume,
             trim_start: s.trimStart,
@@ -164,7 +168,7 @@ export function ImportFarragoDialog({
         .filter((s): s is NonNullable<typeof s> => s !== null);
       
       if (soundsToImport.length === 0) {
-        setError('No sounds could be converted. Try exporting from Farrago as MP3 or AAC.');
+        setError('No sounds could be converted. The audio format may not be supported.');
         setTranscoding(false);
         return;
       }
@@ -201,16 +205,20 @@ export function ImportFarragoDialog({
             <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
             <div className="text-center">
               <p className="text-sm font-medium text-foreground">
-                Converting audio ({transcodeProgress.current}/{transcodeProgress.total})
+                {progressText}
               </p>
-              <p className="text-xs text-muted-foreground truncate max-w-[300px]">
-                {transcodeProgress.currentFile}
-              </p>
+              {transcodeProgress?.status === 'transcoding' && (
+                <p className="text-xs text-muted-foreground truncate max-w-[300px]">
+                  {transcodeProgress.currentFile}
+                </p>
+              )}
             </div>
-            <Progress 
-              value={(transcodeProgress.current / transcodeProgress.total) * 100} 
-              className="w-full max-w-xs"
-            />
+            {transcodeProgress?.status === 'transcoding' && (
+              <Progress 
+                value={(transcodeProgress.current / transcodeProgress.total) * 100} 
+                className="w-full max-w-xs"
+              />
+            )}
             {transcodeProgress.failed.length > 0 && (
               <div className="flex items-center gap-1 text-xs text-amber-500">
                 <AlertTriangle className="h-3 w-3" />
