@@ -189,7 +189,7 @@ export function ImportFarragoDialog({
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="font-medium">{setName}</h4>
+                <h4 className="font-medium text-foreground">{setName}</h4>
                 <p className="text-sm text-muted-foreground">
                   {sounds.length} sounds found
                 </p>
@@ -204,7 +204,7 @@ export function ImportFarragoDialog({
                 {sounds.map((sound, index) => (
                   <div
                     key={index}
-                    className="flex items-center gap-3 p-2 rounded hover:bg-muted/50 cursor-pointer"
+                    className="flex items-center gap-3 p-2 rounded hover:bg-muted/50 cursor-pointer text-foreground"
                     onClick={() => toggleSound(index)}
                   >
                     <Checkbox 
