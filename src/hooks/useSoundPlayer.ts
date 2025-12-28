@@ -3,6 +3,9 @@ import { SoundEffect } from './useSoundEffects';
 
 export function useSoundPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const gainNodeRef = useRef<GainNode | null>(null);
+  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -20,8 +23,13 @@ export function useSoundPlayer() {
     const audio = new Audio(sound.audio_url);
     audioRef.current = audio;
     
-    // Apply volume
-    audio.volume = Math.min(Math.max(sound.volume, 0), 2);
+    // Use Web Audio API for volume control (allows values > 1 for boost)
+    const audioContext = new AudioContext();
+    audioContextRef.current = audioContext;
+    
+    const gainNode = audioContext.createGain();
+    gainNode.gain.value = Math.max(sound.volume, 0);
+    gainNodeRef.current = gainNode;
     
     // Apply trim start
     audio.currentTime = sound.trim_start || 0;
@@ -50,6 +58,16 @@ export function useSoundPlayer() {
       setPlayingId(null);
     });
 
+    // Connect audio to gain node after play starts (required for some browsers)
+    audio.addEventListener('canplaythrough', () => {
+      if (!sourceRef.current && audioContextRef.current) {
+        const source = audioContextRef.current.createMediaElementSource(audio);
+        sourceRef.current = source;
+        source.connect(gainNode);
+        gainNode.connect(audioContextRef.current.destination);
+      }
+    }, { once: true });
+
     audio.play().catch(() => {
       setPlayingId(null);
     });
@@ -64,6 +82,12 @@ export function useSoundPlayer() {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+    sourceRef.current = null;
+    gainNodeRef.current = null;
     setPlayingId(null);
   }, []);
 
