@@ -53,11 +53,20 @@ async function loadFFmpeg(): Promise<FFmpeg> {
       console.log('[FFmpeg] Fetching core.wasm...');
       const wasmURL = await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm');
       
-      console.log('[FFmpeg] Loading FFmpeg...');
-      await ffmpeg.load({
-        coreURL,
-        wasmURL,
-      });
+      console.log('[FFmpeg] Fetching worker.js...');
+      const workerURL = await toBlobURL(`${baseURL}/ffmpeg-core.worker.js`, 'text/javascript');
+      
+      console.log('[FFmpeg] Loading FFmpeg with worker...');
+      
+      // Add timeout for load operation
+      const loadPromiseWithTimeout = Promise.race([
+        ffmpeg.load({ coreURL, wasmURL, workerURL }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('FFMPEG_LOAD_TIMEOUT')), 30000)
+        )
+      ]);
+      
+      await loadPromiseWithTimeout;
       
       console.log('[FFmpeg] Loaded successfully');
       ffmpegLoaded = true;
@@ -65,11 +74,10 @@ async function loadFFmpeg(): Promise<FFmpeg> {
     } catch (error) {
       console.error('[FFmpeg] Load failed:', error);
       ffmpegLoaded = false;
-      ffmpeg = null;
-      throw error;
-    } finally {
       ffmpegLoading = false;
+      ffmpeg = null;
       loadPromise = null;
+      throw error;
     }
   })();
   
