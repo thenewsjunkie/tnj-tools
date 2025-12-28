@@ -62,6 +62,7 @@ const Admin = () => {
           <CollapsibleModule
             id="alerts"
             title="Alerts"
+            defaultOpen={false}
             statusBadge={
               queueCount > 0 ? (
                 <Badge variant="secondary" className="text-xs">{queueCount}</Badge>
@@ -71,13 +72,13 @@ const Admin = () => {
             <Alerts />
           </CollapsibleModule>
           
-          <CollapsibleModule id="ask-ai" title="Ask AI">
+          <CollapsibleModule id="ask-ai" title="Ask AI" defaultOpen={false}>
             <AskAI />
           </CollapsibleModule>
         </div>
         
         {/* Lower Thirds - Full Width */}
-        <CollapsibleModule id="lower-thirds" title="Lower Thirds">
+        <CollapsibleModule id="lower-thirds" title="Lower Thirds" defaultOpen={false}>
           <LowerThirdsCard
             lowerThirds={lowerThirds}
             isLoading={isLoading}
@@ -90,11 +91,11 @@ const Admin = () => {
         
         {/* Row: Stopwatch + TNJ Links */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <CollapsibleModule id="stopwatch" title="Stopwatch">
+          <CollapsibleModule id="stopwatch" title="Stopwatch" defaultOpen={false}>
             <Stopwatch />
           </CollapsibleModule>
           
-          <CollapsibleModule id="tnj-links" title="TNJ Links">
+          <CollapsibleModule id="tnj-links" title="TNJ Links" defaultOpen={false}>
             <TNJLinks />
           </CollapsibleModule>
         </div>
