@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { useTheme } from "@/components/theme/ThemeProvider";
 import AddLinkDialog from "./tnj-links/AddLinkDialog";
 import EditLinkDialog from "./tnj-links/EditLinkDialog";
 import SortableLink from "./tnj-links/SortableLink";
@@ -26,7 +24,6 @@ import {
 const TNJLinks = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { theme } = useTheme();
   const [selectedLink, setSelectedLink] = useState<any>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
@@ -121,7 +118,6 @@ const TNJLinks = () => {
     const checkLinksStatus = async () => {
       for (const link of links) {
         try {
-          // Use Supabase Edge Function to check status
           const { data, error } = await supabase.functions.invoke('check-link-status', {
             body: { url: link.url }
           });
@@ -130,7 +126,6 @@ const TNJLinks = () => {
 
           const newStatus = data.isUp ? 'up' : 'down';
           
-          // Only update if status has changed
           if (link.status !== newStatus) {
             await supabase
               .from('tnj_links')
@@ -143,7 +138,6 @@ const TNJLinks = () => {
             queryClient.invalidateQueries({ queryKey: ['tnj-links'] });
           }
         } catch (error) {
-          // Only update if status isn't already down
           if (link.status !== 'down') {
             await supabase
               .from('tnj_links')
@@ -165,52 +159,45 @@ const TNJLinks = () => {
   }, [links, queryClient]);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div className="text-sm text-muted-foreground">Loading...</div>;
   }
 
-  const bgColor = theme === 'light' ? 'bg-white' : 'bg-black/50';
-  const textColor = theme === 'light' ? 'text-black' : 'text-white';
-
   return (
-    <Card className={`w-full ${bgColor} border border-gray-200 dark:border-white/10`}>
-      <CardHeader>
-        <CardTitle className={`${textColor} text-lg sm:text-xl`}>TNJ Links</CardTitle>
-        <AddLinkDialog 
-          onLinkAdded={() => queryClient.invalidateQueries({ queryKey: ['tnj-links'] })}
-          lastOrder={links.length > 0 ? Math.max(...links.map(l => l.display_order)) : 0}
-        />
-      </CardHeader>
-      <CardContent>
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
+    <div className="space-y-2">
+      <AddLinkDialog 
+        onLinkAdded={() => queryClient.invalidateQueries({ queryKey: ['tnj-links'] })}
+        lastOrder={links.length > 0 ? Math.max(...links.map(l => l.display_order)) : 0}
+      />
+      
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={links.map(link => link.id)}
+          strategy={verticalListSortingStrategy}
         >
-          <SortableContext
-            items={links.map(link => link.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <div className="space-y-2 sm:space-y-4">
-              {links.map((link) => (
-                <SortableLink
-                  key={link.id}
-                  id={link.id}
-                  title={link.title}
-                  url={link.url}
-                  status={link.status}
-                  target={link.target}
-                  onDelete={() => deleteLinkMutation.mutate(link.id)}
-                  onEdit={() => {
-                    setSelectedLink(link);
-                    setIsEditDialogOpen(true);
-                  }}
-                  theme={theme}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
-      </CardContent>
+          <div className="space-y-1">
+            {links.map((link) => (
+              <SortableLink
+                key={link.id}
+                id={link.id}
+                title={link.title}
+                url={link.url}
+                status={link.status}
+                target={link.target}
+                onDelete={() => deleteLinkMutation.mutate(link.id)}
+                onEdit={() => {
+                  setSelectedLink(link);
+                  setIsEditDialogOpen(true);
+                }}
+                theme="dark"
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
 
       <EditLinkDialog
         link={selectedLink}
@@ -221,7 +208,7 @@ const TNJLinks = () => {
           setSelectedLink(null);
         }}
       />
-    </Card>
+    </div>
   );
 };
 

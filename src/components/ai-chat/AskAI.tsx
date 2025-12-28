@@ -1,7 +1,7 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { AIQueryForm } from "./components/AIQueryForm";
 import { AIResponseDisplay } from "./components/AIResponseDisplay";
 import { useAIQuery } from "./hooks/useAIQuery";
+
 export const AskAI = () => {
   const {
     question,
@@ -20,37 +20,28 @@ export const AskAI = () => {
   } = useAIQuery();
 
   return (
-    <div className="bg-black rounded-lg shadow border border-white/10">
-      <Card className="bg-transparent border-0 shadow-none">
-        <CardHeader className="pb-0 pt-6 px-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Ask AI</h3>
-          </div>
-          <AIQueryForm
-            question={question}
-            selectedModel={selectedModel}
-            eli5Mode={eli5Mode}
-            detailedMode={detailedMode}
-            isLoading={isLoading}
-            onQuestionChange={handleQuestionChange}
-            onModelChange={handleModelChange}
-            onEli5Change={handleEli5Change}
-            onDetailedChange={handleDetailedChange}
-            onSubmit={handleSubmit}
-          />
-        </CardHeader>
-        <CardContent className="px-6 py-4">
-          {aiResponse && (
-            <AIResponseDisplay 
-              aiResponse={aiResponse} 
-              eli5Mode={eli5Mode}
-              detailedMode={detailedMode}
-              conversationId={conversationId}
-              onDisplayInOBS={displayInOBS}
-            />
-          )}
-        </CardContent>
-      </Card>
+    <div className="space-y-3">
+      <AIQueryForm
+        question={question}
+        selectedModel={selectedModel}
+        eli5Mode={eli5Mode}
+        detailedMode={detailedMode}
+        isLoading={isLoading}
+        onQuestionChange={handleQuestionChange}
+        onModelChange={handleModelChange}
+        onEli5Change={handleEli5Change}
+        onDetailedChange={handleDetailedChange}
+        onSubmit={handleSubmit}
+      />
+      {aiResponse && (
+        <AIResponseDisplay 
+          aiResponse={aiResponse} 
+          eli5Mode={eli5Mode}
+          detailedMode={detailedMode}
+          conversationId={conversationId}
+          onDisplayInOBS={displayInOBS}
+        />
+      )}
     </div>
   );
 };

@@ -60,10 +60,8 @@ const Alerts = () => {
     // Server-side edge function will handle queue processing automatically
   };
 
-  const bgColor = theme === 'light' ? 'bg-white' : 'bg-black/50';
-
   return (
-    <div className={`rounded-lg ${bgColor} text-card-foreground shadow-sm border border-gray-200 dark:border-white/10 relative pb-8`}>
+    <div className="space-y-3">
       <AlertsHeader 
         isPaused={isPaused}
         togglePause={handleTogglePause}
@@ -76,17 +74,14 @@ const Alerts = () => {
         isPaused={isPaused}
       />
 
-      <div className="p-6 pt-0">
-        {selectedAlert && (
-          <AlertSelector
-            selectedAlert={selectedAlert}
-            alerts={alerts}
-            onAlertSelect={setSelectedAlert}
-            onAlertDeleted={handleAlertDeleted}
-          />
-        )}
-      </div>
-
+      {selectedAlert && (
+        <AlertSelector
+          selectedAlert={selectedAlert}
+          alerts={alerts}
+          onAlertSelect={setSelectedAlert}
+          onAlertDeleted={handleAlertDeleted}
+        />
+      )}
 
       <AddAlertDialog
         open={isDialogOpen}
