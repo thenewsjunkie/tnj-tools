@@ -133,15 +133,24 @@ export function ImportFarragoDialog({
   const handleImport = async () => {
     const selectedList = sounds.filter((_, i) => selectedSounds.has(i));
     
-    // Transcode all selected sounds to WAV for reliable playback
+    // Transcode all selected sounds to MP3 for reliable playback
     setTranscoding(true);
     setTranscodeProgress({ current: 0, total: selectedList.length, currentFile: '', failed: [], status: 'loading' });
     
+    // Set a timeout for the entire transcode operation (30s for loading + 10s per file)
+    const timeoutMs = 30000 + (selectedList.length * 10000);
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('TIMEOUT')), timeoutMs);
+    });
+    
     try {
-      const { results, failed } = await transcodeMany(
-        selectedList.map(s => ({ title: s.title, blob: s.audioBlob })),
-        setTranscodeProgress
-      );
+      const { results, failed } = await Promise.race([
+        transcodeMany(
+          selectedList.map(s => ({ title: s.title, blob: s.audioBlob })),
+          setTranscodeProgress
+        ),
+        timeoutPromise,
+      ]);
       
       if (failed.length > 0) {
         toast.warning(`${failed.length} file(s) couldn't be converted`, {
@@ -149,7 +158,7 @@ export function ImportFarragoDialog({
         });
       }
       
-      // Build final import list with transcoded WAV blobs
+      // Build final import list with transcoded MP3 blobs
       const soundsToImport = selectedList
         .map((s, idx) => {
           const transcoded = results.get(idx);
@@ -178,7 +187,17 @@ export function ImportFarragoDialog({
       onOpenChange(false);
     } catch (e) {
       console.error('Transcode error:', e);
-      setError('Failed to convert audio files');
+      if (e instanceof Error && e.message === 'TIMEOUT') {
+        toast.error('Audio converter timed out', {
+          description: 'Check your network connection or try with fewer files.',
+        });
+        setError('Audio converter timed out. Try again or use fewer files.');
+      } else {
+        toast.error('Audio converter failed to load', {
+          description: 'Check network, ad-blocker, or browser security settings.',
+        });
+        setError('Failed to load audio converter. Check console for details.');
+      }
       setTranscoding(false);
     }
   };
