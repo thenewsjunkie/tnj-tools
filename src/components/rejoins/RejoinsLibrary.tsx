@@ -1,7 +1,18 @@
 import { useState, useMemo } from 'react';
-import { Plus, Search, Square, Upload } from 'lucide-react';
+import { Plus, Search, Square, Trash2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useRejoins, Rejoin } from '@/hooks/useRejoins';
 import { useSoundPlayer } from '@/hooks/useSoundPlayer';
 import { RejoinButton } from './RejoinButton';
@@ -21,9 +32,11 @@ export function RejoinsLibrary() {
     createRejoin,
     updateRejoin,
     deleteRejoin,
+    deleteAllRejoins,
     importRejoins,
     isCreating,
     isUpdating,
+    isDeletingAll,
     isImporting,
   } = useRejoins();
 
@@ -78,6 +91,34 @@ export function RejoinsLibrary() {
           <Plus className="h-4 w-4 mr-1" />
           Add
         </Button>
+        {rejoins.length > 0 && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm" disabled={isDeletingAll}>
+                <Trash2 className="h-4 w-4 mr-1" />
+                {isDeletingAll ? 'Deleting...' : 'Delete All'}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete all rejoins?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete all {rejoins.length} rejoins and their audio files.
+                  This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => deleteAllRejoins()}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete All
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
       </div>
 
       {isLoading ? (
