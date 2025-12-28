@@ -24,7 +24,7 @@ export function SoundEffectsLibrary() {
     isDeleting,
   } = useSoundEffects();
 
-  const { playSound, stopAll, isPlaying, playingId } = useSoundPlayer();
+  const { playSound, stopAll, isPlaying, playingId, remainingTime } = useSoundPlayer();
 
   const filteredSounds = useMemo(() => {
     if (!searchQuery.trim()) return soundEffects;
@@ -84,6 +84,7 @@ export function SoundEffectsLibrary() {
               key={sound.id}
               sound={sound}
               isPlaying={isPlaying(sound.id)}
+              remainingTime={isPlaying(sound.id) ? remainingTime : null}
               onPlay={() => playSound(sound)}
               onStop={stopAll}
               onEdit={() => setEditingSound(sound)}
