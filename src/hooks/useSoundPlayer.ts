@@ -4,13 +4,10 @@ import { SoundEffect } from './useSoundEffects';
 export function useSoundPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
-  const gainNodeRef = useRef<GainNode | null>(null);
-  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const playSound = useCallback((sound: SoundEffect) => {
-    // Stop any currently playing sound
+  const stopCurrent = useCallback(() => {
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
@@ -19,17 +16,19 @@ export function useSoundPlayer() {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      audioContextRef.current.close().catch(() => {});
+      audioContextRef.current = null;
+    }
+  }, []);
+
+  const playSound = useCallback((sound: SoundEffect) => {
+    // Stop any currently playing sound
+    stopCurrent();
 
     const audio = new Audio(sound.audio_url);
+    audio.crossOrigin = 'anonymous';
     audioRef.current = audio;
-    
-    // Use Web Audio API for volume control (allows values > 1 for boost)
-    const audioContext = new AudioContext();
-    audioContextRef.current = audioContext;
-    
-    const gainNode = audioContext.createGain();
-    gainNode.gain.value = Math.max(sound.volume, 0);
-    gainNodeRef.current = gainNode;
     
     // Apply trim start
     audio.currentTime = sound.trim_start || 0;
@@ -58,38 +57,35 @@ export function useSoundPlayer() {
       setPlayingId(null);
     });
 
-    // Connect audio to gain node after play starts (required for some browsers)
-    audio.addEventListener('canplaythrough', () => {
-      if (!sourceRef.current && audioContextRef.current) {
-        const source = audioContextRef.current.createMediaElementSource(audio);
-        sourceRef.current = source;
+    // Set up Web Audio API for volume boost support
+    const startPlayback = async () => {
+      try {
+        const audioContext = new AudioContext();
+        audioContextRef.current = audioContext;
+        
+        const source = audioContext.createMediaElementSource(audio);
+        const gainNode = audioContext.createGain();
+        gainNode.gain.value = Math.max(sound.volume, 0);
+        
         source.connect(gainNode);
-        gainNode.connect(audioContextRef.current.destination);
+        gainNode.connect(audioContext.destination);
+        
+        await audio.play();
+      } catch (err) {
+        // Fallback to native volume if Web Audio fails
+        console.warn('Web Audio API failed, using native volume:', err);
+        audio.volume = Math.min(Math.max(sound.volume, 0), 1);
+        audio.play().catch(() => setPlayingId(null));
       }
-    }, { once: true });
+    };
 
-    audio.play().catch(() => {
-      setPlayingId(null);
-    });
-  }, []);
+    startPlayback();
+  }, [stopCurrent]);
 
   const stopAll = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
-    }
-    sourceRef.current = null;
-    gainNodeRef.current = null;
+    stopCurrent();
     setPlayingId(null);
-  }, []);
+  }, [stopCurrent]);
 
   const isPlaying = useCallback((id: string) => {
     return playingId === id;
