@@ -674,6 +674,48 @@ export type Database = {
         }
         Relationships: []
       }
+      rejoins: {
+        Row: {
+          audio_url: string
+          color: string
+          created_at: string
+          display_order: number
+          duration: number | null
+          id: string
+          title: string
+          trim_end: number | null
+          trim_start: number
+          updated_at: string
+          volume: number
+        }
+        Insert: {
+          audio_url: string
+          color?: string
+          created_at?: string
+          display_order?: number
+          duration?: number | null
+          id?: string
+          title: string
+          trim_end?: number | null
+          trim_start?: number
+          updated_at?: string
+          volume?: number
+        }
+        Update: {
+          audio_url?: string
+          color?: string
+          created_at?: string
+          display_order?: number
+          duration?: number | null
+          id?: string
+          title?: string
+          trim_end?: number | null
+          trim_start?: number
+          updated_at?: string
+          volume?: number
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           content: string
