@@ -96,6 +96,16 @@ export function WaveformEditor({
     return () => window.removeEventListener('resize', updateWidth);
   }, []);
 
+  // Helper to resolve CSS variables to actual color values
+  const getCssColor = (variable: string, opacity?: number): string => {
+    const value = getComputedStyle(document.documentElement)
+      .getPropertyValue(variable).trim();
+    if (opacity !== undefined) {
+      return `hsl(${value} / ${opacity})`;
+    }
+    return `hsl(${value})`;
+  };
+
   // Draw waveform
   const drawWaveform = useCallback(() => {
     const canvas = canvasRef.current;
@@ -108,6 +118,13 @@ export function WaveformEditor({
     const height = canvas.height;
     const barWidth = width / waveformData.length;
 
+    // Resolve CSS colors
+    const mutedColor = getCssColor('--muted');
+    const bgColor = getCssColor('--background');
+    const primaryColor = getCssColor('--primary');
+    const mutedFgColor = getCssColor('--muted-foreground', 0.3);
+    const destructiveColor = getCssColor('--destructive');
+
     // Clear canvas
     ctx.clearRect(0, 0, width, height);
 
@@ -117,11 +134,11 @@ export function WaveformEditor({
     const playheadX = (currentTime / duration) * width;
 
     // Draw background (dimmed outside trim region)
-    ctx.fillStyle = 'hsl(var(--muted))';
+    ctx.fillStyle = mutedColor;
     ctx.fillRect(0, 0, width, height);
 
     // Draw selected region background
-    ctx.fillStyle = 'hsl(var(--background))';
+    ctx.fillStyle = bgColor;
     ctx.fillRect(startX, 0, endX - startX, height);
 
     // Draw waveform bars
@@ -132,15 +149,13 @@ export function WaveformEditor({
 
       // Different colors for inside/outside trim region
       const isInRegion = x >= startX && x <= endX;
-      ctx.fillStyle = isInRegion 
-        ? 'hsl(var(--primary))' 
-        : 'hsl(var(--muted-foreground) / 0.3)';
+      ctx.fillStyle = isInRegion ? primaryColor : mutedFgColor;
       
       ctx.fillRect(x, y, Math.max(barWidth - 1, 1), barHeight);
     });
 
     // Draw trim handles
-    ctx.fillStyle = 'hsl(var(--primary))';
+    ctx.fillStyle = primaryColor;
     
     // Start handle
     ctx.fillRect(startX - 2, 0, 4, height);
@@ -166,7 +181,7 @@ export function WaveformEditor({
 
     // Draw playhead
     if (currentTime > 0) {
-      ctx.fillStyle = 'hsl(var(--destructive))';
+      ctx.fillStyle = destructiveColor;
       ctx.fillRect(playheadX - 1, 0, 2, height);
     }
   }, [waveformData, duration, trimStart, effectiveTrimEnd, currentTime]);
