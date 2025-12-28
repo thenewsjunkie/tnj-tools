@@ -3,11 +3,32 @@ import JSZip from 'jszip';
 export interface FarragoSound {
   title: string;
   audioBlob: Blob;
+  extension: string;
+  mimeType: string;
   color?: string;
   volume?: number;
   trimStart?: number;
   trimEnd?: number | null;
   duration?: number;
+}
+
+function getMimeType(fileName: string): string {
+  const ext = fileName.split('.').pop()?.toLowerCase() || '';
+  const mimeTypes: Record<string, string> = {
+    'mp3': 'audio/mpeg',
+    'wav': 'audio/wav',
+    'aiff': 'audio/aiff',
+    'aif': 'audio/aiff',
+    'm4a': 'audio/mp4',
+    'aac': 'audio/aac',
+    'ogg': 'audio/ogg',
+    'flac': 'audio/flac',
+  };
+  return mimeTypes[ext] || 'audio/mpeg';
+}
+
+function getExtension(fileName: string): string {
+  return fileName.split('.').pop()?.toLowerCase() || 'mp3';
 }
 
 export interface FarragoSetMetadata {
@@ -140,16 +161,23 @@ export async function parseFarragoSet(file: File): Promise<FarragoSetMetadata> {
   // Process audio files
   for (const [path, entry] of audioFiles) {
     try {
-      const audioData = await entry.async('blob');
+      const audioData = await entry.async('arraybuffer');
       const fileName = path.split('/').pop() || path;
       const title = fileName.replace(/\.[^/.]+$/, ''); // Remove extension
+      const extension = getExtension(fileName);
+      const mimeType = getMimeType(fileName);
+      
+      // Create blob with correct MIME type
+      const audioBlob = new Blob([audioData], { type: mimeType });
       
       // Look up metadata by filename
       const meta = soundMetadata.get(fileName) || soundMetadata.get(path) || {};
       
       sounds.push({
         title,
-        audioBlob: audioData,
+        audioBlob,
+        extension,
+        mimeType,
         color: meta.color || '#3b82f6',
         volume: meta.volume,
         trimStart: meta.inPoint,

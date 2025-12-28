@@ -18,6 +18,7 @@ interface ImportFarragoDialogProps {
   onImport: (sounds: { 
     title: string; 
     audioBlob: Blob; 
+    extension?: string;
     color?: string;
     volume?: number;
     trim_start?: number;
@@ -124,6 +125,7 @@ export function ImportFarragoDialog({
       .map(s => ({
         title: s.title,
         audioBlob: s.audioBlob,
+        extension: s.extension,
         color: s.color,
         volume: s.volume,
         trim_start: s.trimStart,
