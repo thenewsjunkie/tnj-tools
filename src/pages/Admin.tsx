@@ -16,6 +16,7 @@ import VoiceInterface from "@/components/VoiceInterface";
 import { Badge } from "@/components/ui/badge";
 import { useQueueState } from "@/hooks/useQueueState";
 import { SoundEffectsLibrary } from "@/components/sound-effects/SoundEffectsLibrary";
+import { RejoinsLibrary } from "@/components/rejoins/RejoinsLibrary";
 
 const Admin = () => {
   const { theme } = useTheme();
@@ -61,6 +62,11 @@ const Admin = () => {
         {/* Sound Effects Library - Full Width */}
         <CollapsibleModule id="sound-effects" title="Sound Effects" defaultOpen={false}>
           <SoundEffectsLibrary />
+        </CollapsibleModule>
+
+        {/* Rejoins Library - Full Width */}
+        <CollapsibleModule id="rejoins" title="Rejoins" defaultOpen={false}>
+          <RejoinsLibrary />
         </CollapsibleModule>
 
         {/* Row: Alerts + Ask AI */}
