@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 interface FancyAudioVisualizerProps {
   level: number; // 0..1
@@ -16,16 +16,34 @@ export const FancyAudioVisualizer: React.FC<FancyAudioVisualizerProps> = ({
   active = false,
   height = 144,
   className = "",
-  bars = 56,
+  bars = 24, // Reduced from 56 for better performance
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const internalLevelRef = useRef(0);
   const rafRef = useRef<number | null>(null);
   const lastTsRef = useRef<number>(0);
+  const lastDrawTsRef = useRef<number>(0);
   const levelRef = useRef(level);
   const activeRef = useRef(active);
+  const [isVisible, setIsVisible] = useState(true);
+  
   useEffect(() => { levelRef.current = level; }, [level]);
   useEffect(() => { activeRef.current = active; }, [active]);
+
+  // Pause animation when off-screen
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsVisible(entry.isIntersecting),
+      { threshold: 0 }
+    );
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
   // Resolve theme colors from CSS variables (HSL tokens)
   const resolveHsl = (variableName: string, fallback: string): string => {
     const raw = getComputedStyle(document.documentElement).getPropertyValue(variableName).trim();
@@ -61,11 +79,21 @@ export const FancyAudioVisualizer: React.FC<FancyAudioVisualizerProps> = ({
     const c3 = resolveHsl("--secondary", c2);
 
     const draw = (ts: number) => {
+      // Throttle frame rate: 60fps when active, 15fps when inactive
+      const act = !!activeRef.current;
+      const targetFps = act ? 60 : 15;
+      const frameInterval = 1000 / targetFps;
+      
+      if (ts - lastDrawTsRef.current < frameInterval) {
+        rafRef.current = requestAnimationFrame(draw);
+        return;
+      }
+      lastDrawTsRef.current = ts;
+
       const dt = Math.min(32, ts - (lastTsRef.current || ts));
       lastTsRef.current = ts;
 
       // Smooth level towards target (read from refs to avoid effect re-inits)
-      const act = !!activeRef.current;
       const raw = Math.max(0, Math.min(1, levelRef.current || 0));
       const smoothing = act ? 0.35 : 0.12;
       internalLevelRef.current = lerp(internalLevelRef.current, raw, smoothing);
@@ -99,8 +127,12 @@ export const FancyAudioVisualizer: React.FC<FancyAudioVisualizerProps> = ({
       ctx.save();
       ctx.translate(0, midY);
       ctx.fillStyle = grad;
-      ctx.shadowColor = c2;
-      ctx.shadowBlur = 18 * dpr;
+      
+      // Only apply shadow when active and with reduced blur
+      if (act && displayLevel > 0.1) {
+        ctx.shadowColor = c2;
+        ctx.shadowBlur = 4 * dpr; // Reduced from 18 for performance
+      }
 
       // Center-emphasis envelope
       for (let i = -bars; i <= bars; i++) {
@@ -142,16 +174,20 @@ export const FancyAudioVisualizer: React.FC<FancyAudioVisualizerProps> = ({
       rafRef.current = requestAnimationFrame(draw);
     };
 
-    rafRef.current = requestAnimationFrame(draw);
+    // Only run animation when visible
+    if (isVisible) {
+      rafRef.current = requestAnimationFrame(draw);
+    }
 
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       ro.disconnect();
     };
-  }, [height, bars]);
+  }, [height, bars, isVisible]);
 
   return (
     <div
+      ref={containerRef}
       className={[
         "w-full rounded-xl overflow-hidden bg-muted/30 ring-1 ring-border",
         className,
