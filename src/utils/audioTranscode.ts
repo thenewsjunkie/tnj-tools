@@ -1,7 +1,9 @@
 /**
- * Transcodes audio blobs to WAV format using Web Audio API
- * This ensures browser-compatible playback for formats like ALAC
+ * Transcodes audio blobs to MP3 format using FFmpeg.wasm
+ * This handles formats like ALAC that browsers can't decode natively
  */
+import { FFmpeg } from '@ffmpeg/ffmpeg';
+import { fetchFile, toBlobURL } from '@ffmpeg/util';
 
 export interface TranscodeResult {
   blob: Blob;
@@ -13,80 +15,122 @@ export interface TranscodeProgress {
   total: number;
   currentFile: string;
   failed: string[];
+  status: 'loading' | 'transcoding';
 }
 
+let ffmpeg: FFmpeg | null = null;
+let ffmpegLoaded = false;
+let ffmpegLoading = false;
+
 /**
- * Encode PCM audio data as a WAV file
+ * Load FFmpeg.wasm (only once)
  */
-function encodeWav(audioBuffer: AudioBuffer): Blob {
-  const numChannels = audioBuffer.numberOfChannels;
-  const sampleRate = audioBuffer.sampleRate;
-  const format = 1; // PCM
-  const bitDepth = 16;
-  
-  // Interleave channels
-  const length = audioBuffer.length * numChannels;
-  const buffer = new ArrayBuffer(44 + length * 2);
-  const view = new DataView(buffer);
-  
-  // Get channel data
-  const channels: Float32Array[] = [];
-  for (let i = 0; i < numChannels; i++) {
-    channels.push(audioBuffer.getChannelData(i));
+async function loadFFmpeg(onProgress?: (progress: TranscodeProgress) => void): Promise<FFmpeg> {
+  if (ffmpegLoaded && ffmpeg) {
+    return ffmpeg;
   }
   
-  // Write WAV header
-  const writeString = (offset: number, str: string) => {
-    for (let i = 0; i < str.length; i++) {
-      view.setUint8(offset + i, str.charCodeAt(i));
+  if (ffmpegLoading) {
+    // Wait for existing load to complete
+    while (ffmpegLoading) {
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
-  };
-  
-  writeString(0, 'RIFF');
-  view.setUint32(4, 36 + length * 2, true);
-  writeString(8, 'WAVE');
-  writeString(12, 'fmt ');
-  view.setUint32(16, 16, true); // fmt chunk size
-  view.setUint16(20, format, true);
-  view.setUint16(22, numChannels, true);
-  view.setUint32(24, sampleRate, true);
-  view.setUint32(28, sampleRate * numChannels * (bitDepth / 8), true); // byte rate
-  view.setUint16(32, numChannels * (bitDepth / 8), true); // block align
-  view.setUint16(34, bitDepth, true);
-  writeString(36, 'data');
-  view.setUint32(40, length * 2, true);
-  
-  // Write interleaved PCM samples
-  let offset = 44;
-  for (let i = 0; i < audioBuffer.length; i++) {
-    for (let ch = 0; ch < numChannels; ch++) {
-      const sample = Math.max(-1, Math.min(1, channels[ch][i]));
-      const intSample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
-      view.setInt16(offset, intSample, true);
-      offset += 2;
+    if (ffmpegLoaded && ffmpeg) {
+      return ffmpeg;
     }
   }
   
-  return new Blob([buffer], { type: 'audio/wav' });
-}
-
-/**
- * Transcode a single audio blob to WAV format
- */
-export async function transcodeToWav(blob: Blob): Promise<TranscodeResult> {
-  const arrayBuffer = await blob.arrayBuffer();
-  const audioContext = new AudioContext();
+  ffmpegLoading = true;
   
   try {
-    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-    const wavBlob = encodeWav(audioBuffer);
-    return {
-      blob: wavBlob,
-      duration: audioBuffer.duration,
-    };
+    ffmpeg = new FFmpeg();
+    
+    // Use CDN for core files
+    const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
+    
+    await ffmpeg.load({
+      coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+      wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+    });
+    
+    ffmpegLoaded = true;
+    return ffmpeg;
+  } catch (error) {
+    ffmpegLoading = false;
+    throw error;
   } finally {
-    await audioContext.close();
+    ffmpegLoading = false;
   }
+}
+
+/**
+ * Transcode a single audio blob to MP3 using FFmpeg.wasm
+ */
+async function transcodeWithFFmpeg(
+  ffmpeg: FFmpeg,
+  blob: Blob,
+  inputExt: string
+): Promise<TranscodeResult> {
+  const inputName = `input.${inputExt}`;
+  const outputName = 'output.mp3';
+  
+  // Write input file
+  await ffmpeg.writeFile(inputName, await fetchFile(blob));
+  
+  // Convert to MP3 (high quality, 192kbps)
+  await ffmpeg.exec([
+    '-i', inputName,
+    '-vn', // No video
+    '-ar', '44100', // Sample rate
+    '-ac', '2', // Stereo
+    '-b:a', '192k', // Bitrate
+    '-f', 'mp3',
+    outputName
+  ]);
+  
+  // Read output
+  const data = await ffmpeg.readFile(outputName);
+  // Safely copy to a new ArrayBuffer to avoid SharedArrayBuffer issues
+  const uint8 = data as Uint8Array;
+  const copy = new Uint8Array(uint8.length);
+  copy.set(uint8);
+  const outputBlob = new Blob([copy.buffer as ArrayBuffer], { type: 'audio/mpeg' });
+  
+  // Clean up
+  await ffmpeg.deleteFile(inputName);
+  await ffmpeg.deleteFile(outputName);
+  
+  // Get duration using Audio element
+  const duration = await getAudioDuration(outputBlob);
+  
+  return { blob: outputBlob, duration };
+}
+
+/**
+ * Get audio duration from a blob
+ */
+function getAudioDuration(blob: Blob): Promise<number> {
+  return new Promise((resolve) => {
+    const audio = new Audio();
+    audio.src = URL.createObjectURL(blob);
+    audio.addEventListener('loadedmetadata', () => {
+      const duration = audio.duration;
+      URL.revokeObjectURL(audio.src);
+      resolve(duration);
+    });
+    audio.addEventListener('error', () => {
+      URL.revokeObjectURL(audio.src);
+      resolve(0);
+    });
+  });
+}
+
+/**
+ * Get file extension from filename
+ */
+function getExtension(title: string): string {
+  const match = title.match(/\.([a-zA-Z0-9]+)$/);
+  return match ? match[1].toLowerCase() : 'm4a';
 }
 
 /**
@@ -99,6 +143,25 @@ export async function transcodeMany(
   const results = new Map<number, TranscodeResult>();
   const failed: string[] = [];
   
+  // Load FFmpeg first
+  onProgress?.({
+    current: 0,
+    total: files.length,
+    currentFile: 'Loading FFmpeg...',
+    failed: [],
+    status: 'loading',
+  });
+  
+  let ffmpegInstance: FFmpeg;
+  try {
+    ffmpegInstance = await loadFFmpeg(onProgress);
+  } catch (error) {
+    console.error('Failed to load FFmpeg:', error);
+    // Return all as failed
+    return { results, failed: files.map(f => f.title) };
+  }
+  
+  // Process each file
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
     
@@ -107,10 +170,12 @@ export async function transcodeMany(
       total: files.length,
       currentFile: file.title,
       failed,
+      status: 'transcoding',
     });
     
     try {
-      const result = await transcodeToWav(file.blob);
+      const ext = getExtension(file.title);
+      const result = await transcodeWithFFmpeg(ffmpegInstance, file.blob, ext);
       results.set(i, result);
     } catch (error) {
       console.warn(`Failed to transcode "${file.title}":`, error);
