@@ -21,46 +21,59 @@ export interface TranscodeProgress {
 let ffmpeg: FFmpeg | null = null;
 let ffmpegLoaded = false;
 let ffmpegLoading = false;
+let loadPromise: Promise<FFmpeg> | null = null;
 
 /**
  * Load FFmpeg.wasm (only once)
  */
-async function loadFFmpeg(onProgress?: (progress: TranscodeProgress) => void): Promise<FFmpeg> {
+async function loadFFmpeg(): Promise<FFmpeg> {
+  // Already loaded
   if (ffmpegLoaded && ffmpeg) {
     return ffmpeg;
   }
   
-  if (ffmpegLoading) {
-    // Wait for existing load to complete
-    while (ffmpegLoading) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-    if (ffmpegLoaded && ffmpeg) {
-      return ffmpeg;
-    }
+  // Loading in progress - wait for it
+  if (ffmpegLoading && loadPromise) {
+    return loadPromise;
   }
   
   ffmpegLoading = true;
   
-  try {
-    ffmpeg = new FFmpeg();
-    
-    // Use CDN for core files
-    const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
-    
-    await ffmpeg.load({
-      coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-      wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-    });
-    
-    ffmpegLoaded = true;
-    return ffmpeg;
-  } catch (error) {
-    ffmpegLoading = false;
-    throw error;
-  } finally {
-    ffmpegLoading = false;
-  }
+  loadPromise = (async () => {
+    try {
+      console.log('[FFmpeg] Starting load...');
+      ffmpeg = new FFmpeg();
+      
+      // Use jsDelivr CDN with matching version (0.12.10)
+      const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm';
+      
+      console.log('[FFmpeg] Fetching core.js...');
+      const coreURL = await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript');
+      
+      console.log('[FFmpeg] Fetching core.wasm...');
+      const wasmURL = await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm');
+      
+      console.log('[FFmpeg] Loading FFmpeg...');
+      await ffmpeg.load({
+        coreURL,
+        wasmURL,
+      });
+      
+      console.log('[FFmpeg] Loaded successfully');
+      ffmpegLoaded = true;
+      return ffmpeg;
+    } catch (error) {
+      console.error('[FFmpeg] Load failed:', error);
+      ffmpegLoaded = false;
+      ffmpeg = null;
+      throw error;
+    } finally {
+      ffmpegLoading = false;
+      loadPromise = null;
+    }
+  })();
+  
+  return loadPromise;
 }
 
 /**
@@ -154,7 +167,7 @@ export async function transcodeMany(
   
   let ffmpegInstance: FFmpeg;
   try {
-    ffmpegInstance = await loadFFmpeg(onProgress);
+    ffmpegInstance = await loadFFmpeg();
   } catch (error) {
     console.error('Failed to load FFmpeg:', error);
     // Return all as failed
