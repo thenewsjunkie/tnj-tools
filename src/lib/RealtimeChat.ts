@@ -10,6 +10,52 @@ export interface RealtimeMessage {
   item_id?: string;
 }
 
+export type ConnectionErrorType = "mic_permission" | "network" | "webrtc" | "token" | "unknown";
+
+export interface ConnectionError extends Error {
+  errorType: ConnectionErrorType;
+  actionable?: string;
+}
+
+function createConnectionError(
+  message: string,
+  errorType: ConnectionErrorType,
+  actionable?: string
+): ConnectionError {
+  const err = new Error(message) as ConnectionError;
+  err.errorType = errorType;
+  err.actionable = actionable;
+  return err;
+}
+
+// Helper to wait for ICE gathering to complete (with timeout)
+function waitForIceGatheringComplete(
+  pc: RTCPeerConnection,
+  timeoutMs = 5000
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (pc.iceGatheringState === "complete") {
+      resolve();
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      console.warn("[RTC] ICE gathering timed out, proceeding anyway");
+      resolve(); // Don't reject - some candidates are better than none
+    }, timeoutMs);
+
+    const handler = () => {
+      if (pc.iceGatheringState === "complete") {
+        clearTimeout(timeout);
+        pc.removeEventListener("icegatheringstatechange", handler);
+        resolve();
+      }
+    };
+
+    pc.addEventListener("icegatheringstatechange", handler);
+  });
+}
+
 export class RealtimeChat {
   private pc: RTCPeerConnection | null = null;
   private dc: RTCDataChannel | null = null;
@@ -134,20 +180,88 @@ export class RealtimeChat {
 
   async connect(options?: { instructions?: string; voice?: string; deviceId?: string }): Promise<void> {
     try {
+      // Step 1: Get ephemeral token
       console.log("[RTC] Requesting ephemeral session token...");
-      const { data, error } = await supabase.functions.invoke("openai-realtime-session", {
-        body: {
-          instructions: options?.instructions,
-          voice: options?.voice,
-        },
-      });
-      if (error) throw error;
+      let EPHEMERAL_KEY: string;
+      try {
+        const { data, error } = await supabase.functions.invoke("openai-realtime-session", {
+          body: {
+            instructions: options?.instructions,
+            voice: options?.voice,
+          },
+        });
+        if (error) throw error;
+        EPHEMERAL_KEY = data?.client_secret?.value;
+        if (!EPHEMERAL_KEY) {
+          throw new Error(data?.error || "Missing ephemeral key from session function");
+        }
+        console.log("[RTC] Ephemeral token received");
+      } catch (err: any) {
+        throw createConnectionError(
+          `Failed to get session token: ${err?.message || "Unknown error"}`,
+          "token",
+          "Check that OPENAI_API_KEY is set in Supabase Edge Function secrets."
+        );
+      }
 
-      const EPHEMERAL_KEY = data?.client_secret?.value;
-      if (!EPHEMERAL_KEY) throw new Error("Missing ephemeral key from session function");
+      // Step 2: Get microphone access
+      console.log("[RTC] Requesting microphone access...");
+      try {
+        this.localStream = await navigator.mediaDevices.getUserMedia({ 
+          audio: options?.deviceId 
+            ? { 
+                deviceId: { exact: options.deviceId },
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true,
+              }
+            : true 
+        });
+        console.log("[RTC] Microphone access granted");
+      } catch (err: any) {
+        const errorName = err?.name || "Unknown";
+        let message = "Microphone access denied";
+        let actionable = "Allow microphone access in your browser settings.";
 
+        if (errorName === "NotAllowedError") {
+          message = "Microphone permission blocked";
+          actionable = "Click the lock icon in your browser's address bar and allow microphone access.";
+        } else if (errorName === "NotFoundError") {
+          message = "No microphone found";
+          actionable = "Please connect a microphone and try again.";
+        } else if (errorName === "NotReadableError") {
+          message = "Microphone is in use";
+          actionable = "Close other apps using the microphone and try again.";
+        }
+
+        throw createConnectionError(message, "mic_permission", actionable);
+      }
+
+      // Step 3: Setup WebRTC with explicit STUN servers
       console.log("[RTC] Setting up RTCPeerConnection...");
-      this.pc = new RTCPeerConnection();
+      this.pc = new RTCPeerConnection({
+        iceServers: [
+          { urls: "stun:stun.l.google.com:19302" },
+          { urls: "stun:stun1.l.google.com:19302" },
+        ],
+      });
+
+      // WebRTC event logging
+      this.pc.onicegatheringstatechange = () => {
+        console.log("[RTC] ICE gathering state:", this.pc?.iceGatheringState);
+      };
+      this.pc.oniceconnectionstatechange = () => {
+        console.log("[RTC] ICE connection state:", this.pc?.iceConnectionState);
+        if (this.pc?.iceConnectionState === "failed") {
+          console.error("[RTC] ICE connection failed - likely firewall/NAT issue");
+        }
+      };
+      this.pc.onconnectionstatechange = () => {
+        console.log("[RTC] Connection state:", this.pc?.connectionState);
+      };
+      this.pc.onicecandidateerror = (event) => {
+        console.warn("[RTC] ICE candidate error:", event);
+      };
 
       // Remote audio handling
       this.pc.ontrack = (e) => {
@@ -158,16 +272,6 @@ export class RealtimeChat {
       };
 
       // Add local microphone
-      this.localStream = await navigator.mediaDevices.getUserMedia({ 
-        audio: options?.deviceId 
-          ? { 
-              deviceId: { exact: options.deviceId },
-              echoCancellation: true,
-              noiseSuppression: true,
-              autoGainControl: true,
-            }
-          : true 
-      });
       const [audioTrack] = this.localStream.getAudioTracks();
       if (audioTrack) this.pc.addTrack(audioTrack, this.localStream);
 
@@ -178,7 +282,6 @@ export class RealtimeChat {
       this.dc.onmessage = (e) => {
         try {
           const msg = JSON.parse(e.data);
-          // console.debug("[RTC] Event:", msg?.type, msg);
           this.onMessage({
             type: msg?.type ?? "event",
             timestamp: Date.now(),
@@ -196,23 +299,64 @@ export class RealtimeChat {
         }
       };
 
-      // Create SDP offer
+      // Step 4: Create SDP offer and wait for ICE gathering
+      console.log("[RTC] Creating SDP offer...");
       const offer = await this.pc.createOffer({ offerToReceiveAudio: true });
       await this.pc.setLocalDescription(offer);
 
+      // Wait for ICE gathering to complete (or timeout)
+      console.log("[RTC] Waiting for ICE gathering...");
+      await waitForIceGatheringComplete(this.pc, 5000);
+      console.log("[RTC] ICE gathering complete, gathered candidates:", this.pc.localDescription?.sdp?.match(/a=candidate/g)?.length || 0);
+
+      // Step 5: Exchange SDP with OpenAI
       console.log("[RTC] Exchanging SDP with OpenAI Realtime...");
-      const sdpResponse = await fetch("https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17", {
-        method: "POST",
-        body: offer.sdp!,
-        headers: {
-          Authorization: `Bearer ${EPHEMERAL_KEY}`,
-          "Content-Type": "application/sdp",
-        },
-      });
+      let sdpResponse: Response;
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        sdpResponse = await fetch("https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17", {
+          method: "POST",
+          body: this.pc.localDescription?.sdp,
+          headers: {
+            Authorization: `Bearer ${EPHEMERAL_KEY}`,
+            "Content-Type": "application/sdp",
+          },
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+      } catch (err: any) {
+        if (err.name === "AbortError") {
+          throw createConnectionError(
+            "Connection timed out",
+            "network",
+            "The connection to OpenAI took too long. Check your internet connection."
+          );
+        }
+        // TypeError with "Failed to fetch" usually means network/CORS/firewall
+        if (err.name === "TypeError" && (err.message?.includes("fetch") || err.message?.includes("network"))) {
+          throw createConnectionError(
+            "Network blocked",
+            "network",
+            "Your browser or network blocked the connection to OpenAI. Try disabling ad-blockers, VPN, or try a different network."
+          );
+        }
+        throw createConnectionError(
+          `Network error: ${err.message}`,
+          "network",
+          "Check your internet connection and try again."
+        );
+      }
 
       if (!sdpResponse.ok) {
         const errText = await sdpResponse.text();
-        throw new Error(`OpenAI SDP exchange failed: ${errText}`);
+        throw createConnectionError(
+          `OpenAI SDP exchange failed: ${sdpResponse.status} ${errText}`,
+          "network",
+          "OpenAI rejected the connection. The API key may be invalid or the service may be temporarily unavailable."
+        );
       }
 
       const answer = { type: "answer" as RTCSdpType, sdp: await sdpResponse.text() };
