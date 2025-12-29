@@ -1,7 +1,17 @@
 
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark" style="background-color: #0a0a0a;">
   <head>
+    <script>
+      (function() {
+        var theme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.classList.remove('dark', 'light');
+        document.documentElement.classList.add(theme);
+        if (theme === 'light') {
+          document.documentElement.style.backgroundColor = '#ffffff';
+        }
+      })();
+    </script>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
