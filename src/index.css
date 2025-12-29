@@ -4,6 +4,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent flash of white background before theme loads */
+html {
+  background-color: hsl(20 14.3% 4.1%);
+}
+html.light {
+  background-color: hsl(0 0% 100%);
+}
+
 @font-face {
   font-family: 'Digital-7';
   src: url('/digital-7.mono.ttf') format('truetype');
