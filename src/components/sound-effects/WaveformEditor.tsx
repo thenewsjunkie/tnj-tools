@@ -10,6 +10,7 @@ interface WaveformEditorProps {
   trimEnd: number | null;
   currentTime: number;
   isPlaying: boolean;
+  volume?: number;
   onTrimStartChange: (time: number) => void;
   onTrimEndChange: (time: number) => void;
   onSeek: (time: number) => void;
@@ -28,6 +29,7 @@ export function WaveformEditor({
   trimEnd,
   currentTime,
   isPlaying,
+  volume = 1,
   onTrimStartChange,
   onTrimEndChange,
   onSeek,
@@ -148,6 +150,7 @@ export function WaveformEditor({
     const primaryColor = getCssColor('--primary');
     const mutedFgColor = getCssColor('--muted-foreground', 0.3);
     const destructiveColor = getCssColor('--destructive');
+    const warningColor = getCssColor('--chart-4'); // Orange/yellow for clipping
 
     // Clear canvas
     ctx.clearRect(0, 0, width, height);
@@ -169,6 +172,24 @@ export function WaveformEditor({
       ctx.fillRect(visibleStartX, 0, visibleEndX - visibleStartX, height);
     }
 
+    // Calculate the "ceiling" line position (100% volume level)
+    const maxNormalHeight = height * 0.8;
+    const ceilingY = (height - maxNormalHeight) / 2;
+
+    // Draw ceiling line if volume > 1
+    if (volume > 1) {
+      ctx.strokeStyle = getCssColor('--destructive', 0.4);
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(0, ceilingY);
+      ctx.lineTo(width, ceilingY);
+      ctx.moveTo(0, height - ceilingY);
+      ctx.lineTo(width, height - ceilingY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
     // Draw waveform bars (only visible ones)
     const barWidth = (width / waveformData.length) * zoomLevel;
     waveformData.forEach((amplitude, i) => {
@@ -178,14 +199,37 @@ export function WaveformEditor({
       // Skip bars outside visible area
       if (x + barWidth < 0 || x > width) return;
       
-      const barHeight = amplitude * (height * 0.8);
+      // Scale amplitude by volume
+      const scaledAmplitude = amplitude * volume;
+      const barHeight = scaledAmplitude * (height * 0.8);
       const y = (height - barHeight) / 2;
 
       // Different colors for inside/outside trim region
       const isInRegion = barTime >= trimStart && barTime <= effectiveTrimEnd;
-      ctx.fillStyle = isInRegion ? primaryColor : mutedFgColor;
       
-      ctx.fillRect(x, y, Math.max(barWidth - 1, 1), barHeight);
+      // Check if this bar exceeds the ceiling (clipping)
+      const isClipping = scaledAmplitude > 1 && isInRegion;
+      
+      if (isClipping) {
+        // Draw the normal part (below ceiling)
+        const normalHeight = maxNormalHeight;
+        const normalY = (height - normalHeight) / 2;
+        ctx.fillStyle = primaryColor;
+        ctx.fillRect(x, normalY, Math.max(barWidth - 1, 1), normalHeight);
+        
+        // Draw the clipping part (above ceiling) in warning/destructive color
+        const clippingHeight = barHeight - normalHeight;
+        if (clippingHeight > 0) {
+          // Top clipping
+          ctx.fillStyle = warningColor;
+          ctx.fillRect(x, y, Math.max(barWidth - 1, 1), clippingHeight / 2);
+          // Bottom clipping
+          ctx.fillRect(x, height - y - clippingHeight / 2, Math.max(barWidth - 1, 1), clippingHeight / 2);
+        }
+      } else {
+        ctx.fillStyle = isInRegion ? primaryColor : mutedFgColor;
+        ctx.fillRect(x, y, Math.max(barWidth - 1, 1), barHeight);
+      }
     });
 
     // Draw trim handles (only if visible)
@@ -222,7 +266,7 @@ export function WaveformEditor({
       ctx.fillStyle = destructiveColor;
       ctx.fillRect(playheadX - 1, 0, 2, height);
     }
-  }, [waveformData, duration, trimStart, effectiveTrimEnd, currentTime, timeToX, zoomLevel]);
+  }, [waveformData, duration, trimStart, effectiveTrimEnd, currentTime, timeToX, zoomLevel, volume]);
 
   // Draw minimap
   const drawMinimap = useCallback(() => {

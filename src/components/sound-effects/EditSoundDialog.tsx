@@ -305,6 +305,7 @@ export function EditSoundDialog({
                 trimEnd={trimEnd}
                 currentTime={currentTime}
                 isPlaying={isPlaying}
+                volume={volume}
                 onTrimStartChange={setTrimStart}
                 onTrimEndChange={setTrimEnd}
                 onSeek={handleSeek}
