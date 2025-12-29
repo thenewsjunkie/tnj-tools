@@ -3,14 +3,17 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { RealtimeChat, RealtimeMessage } from '@/lib/RealtimeChat';
+import { RealtimeChat, RealtimeMessage, ConnectionError } from '@/lib/RealtimeChat';
+import { runVoiceDiagnostics, formatDiagnosticsForCopy, DiagnosticsReport } from '@/lib/voiceDiagnostics';
 import { FancyAudioVisualizer } from '@/components/audio/FancyAudioVisualizer';
-import { Mic, MicOff, MessageSquare, Volume2, Settings } from 'lucide-react';
+import { Mic, MicOff, MessageSquare, Volume2, Settings, AlertCircle, Copy, Check, RefreshCw } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+
 interface VoiceInterfaceProps {
   onSpeakingChange: (speaking: boolean) => void;
 }
@@ -50,6 +53,13 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
   const [isPttActive, setIsPttActive] = useState<boolean>(false);
   const [availableMicrophones, setAvailableMicrophones] = useState<MediaDeviceInfo[]>([]);
   const [selectedMicId, setSelectedMicId] = useState<string>('default');
+  
+  // Diagnostics state
+  const [diagnosticsReport, setDiagnosticsReport] = useState<DiagnosticsReport | null>(null);
+  const [isRunningDiagnostics, setIsRunningDiagnostics] = useState(false);
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const [copiedDiagnostics, setCopiedDiagnostics] = useState(false);
+  const [lastConnectionError, setLastConnectionError] = useState<string | null>(null);
 
   // Enumerate microphones on mount
   useEffect(() => {
@@ -154,8 +164,35 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
     }
   };
 
+  const runDiagnostics = async () => {
+    setIsRunningDiagnostics(true);
+    setShowDiagnostics(true);
+    try {
+      const report = await runVoiceDiagnostics();
+      setDiagnosticsReport(report);
+    } catch (err) {
+      console.error("Diagnostics failed:", err);
+    } finally {
+      setIsRunningDiagnostics(false);
+    }
+  };
+
+  const copyDiagnostics = async () => {
+    if (!diagnosticsReport) return;
+    try {
+      await navigator.clipboard.writeText(formatDiagnosticsForCopy(diagnosticsReport));
+      setCopiedDiagnostics(true);
+      setTimeout(() => setCopiedDiagnostics(false), 2000);
+      toast({ title: "Copied", description: "Diagnostics copied to clipboard" });
+    } catch {
+      toast({ title: "Copy failed", variant: "destructive" });
+    }
+  };
+
   const startConversation = async () => {
     setIsConnecting(true);
+    setLastConnectionError(null);
+    setShowDiagnostics(false);
     try {
       chatRef.current = new RealtimeChat(
         handleMessage,
@@ -183,10 +220,42 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
       });
     } catch (error) {
       console.error('Error starting conversation:', error);
+      
+      // Handle typed connection errors
+      const connError = error as ConnectionError;
+      let title = "Connection Error";
+      let description = error instanceof Error ? error.message : 'Failed to start conversation';
+      let actionable = connError.actionable;
+
+      if (connError.errorType === "mic_permission") {
+        title = "Microphone Access Required";
+      } else if (connError.errorType === "network") {
+        title = "Network Error";
+      } else if (connError.errorType === "token") {
+        title = "Authentication Error";
+      }
+
+      setLastConnectionError(actionable || description);
+
       toast({
-        title: "Connection Error",
-        description: error instanceof Error ? error.message : 'Failed to start conversation',
+        title,
+        description: (
+          <div className="space-y-2">
+            <p>{description}</p>
+            {actionable && <p className="text-sm opacity-80">{actionable}</p>}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="mt-2"
+              onClick={runDiagnostics}
+            >
+              <RefreshCw className="w-3 h-3 mr-1" />
+              Run Diagnostics
+            </Button>
+          </div>
+        ),
         variant: "destructive",
+        duration: 10000,
       });
     } finally {
       setIsConnecting(false);
@@ -413,6 +482,61 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onSpeakingChange }) => 
           </Dialog>
         </CardHeader>
         <CardContent className="text-center space-y-4">
+          {/* Diagnostics Panel */}
+          {showDiagnostics && (
+            <Alert className="text-left">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle className="flex items-center justify-between">
+                Connection Diagnostics
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="sm" onClick={copyDiagnostics} disabled={!diagnosticsReport}>
+                    {copiedDiagnostics ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={runDiagnostics} disabled={isRunningDiagnostics}>
+                    <RefreshCw className={`w-4 h-4 ${isRunningDiagnostics ? 'animate-spin' : ''}`} />
+                  </Button>
+                </div>
+              </AlertTitle>
+              <AlertDescription>
+                {isRunningDiagnostics ? (
+                  <p className="text-sm">Running diagnostics...</p>
+                ) : diagnosticsReport ? (
+                  <div className="space-y-2 mt-2">
+                    {diagnosticsReport.results.map((r, i) => (
+                      <div key={i} className="flex items-start gap-2 text-sm">
+                        <span className={r.status === "ok" ? "text-green-500" : r.status === "error" ? "text-red-500" : "text-yellow-500"}>
+                          {r.status === "ok" ? "✓" : r.status === "error" ? "✗" : "…"}
+                        </span>
+                        <div>
+                          <span className="font-medium">{r.step}:</span> {r.message}
+                          {r.details && <p className="text-xs text-muted-foreground">{r.details}</p>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <Button variant="outline" size="sm" onClick={runDiagnostics} className="mt-2">
+                    Run Diagnostics
+                  </Button>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Error hint when not showing full diagnostics */}
+          {lastConnectionError && !showDiagnostics && (
+            <Alert variant="destructive" className="text-left">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Connection Failed</AlertTitle>
+              <AlertDescription className="flex items-center justify-between">
+                <span>{lastConnectionError}</span>
+                <Button variant="outline" size="sm" onClick={runDiagnostics}>
+                  Diagnose
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+
           <FancyAudioVisualizer level={remoteLevel} active={isConnected || isSpeaking} height={160} />
           <div className="flex justify-center gap-4">
             <Badge variant={isConnected ? "default" : "secondary"}>
