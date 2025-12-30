@@ -12,6 +12,14 @@ html.light {
   background-color: hsl(0 0% 100%);
 }
 
+/* Alerts overlay needs transparent background for OBS */
+html:has(body.alerts-overlay) {
+  background-color: transparent !important;
+}
+body.alerts-overlay {
+  background-color: transparent !important;
+}
+
 @font-face {
   font-family: 'Digital-7';
   src: url('/digital-7.mono.ttf') format('truetype');
