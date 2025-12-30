@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQueueData } from "@/hooks/useQueueData";
 import SimpleAlertDisplay from "@/components/alerts/SimpleAlertDisplay";
@@ -7,6 +8,14 @@ import AlertTriggerHandler from "@/components/alerts/url-handlers/AlertTriggerHa
 
 const Alerts = () => {
   const { alertSlug, username, action, giftCount } = useParams();
+
+  // Add class to body for transparent background (OBS overlay)
+  useEffect(() => {
+    document.body.classList.add('alerts-overlay');
+    return () => {
+      document.body.classList.remove('alerts-overlay');
+    };
+  }, []);
   const { queueData, refetch } = useQueueData();
 
   // Find the currently playing alert

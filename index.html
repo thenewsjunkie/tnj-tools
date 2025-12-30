@@ -4,6 +4,11 @@
   <head>
     <script>
       (function() {
+        // Don't set background on alerts page - needs transparency for OBS
+        if (window.location.pathname.startsWith('/alerts')) {
+          document.documentElement.style.backgroundColor = 'transparent';
+          return;
+        }
         var theme = localStorage.getItem('theme') || 'dark';
         document.documentElement.classList.remove('dark', 'light');
         document.documentElement.classList.add(theme);
