@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.openai-realtime-session]
 verify_jwt = false
+
+[functions.fetch-link-metadata]
+verify_jwt = false
