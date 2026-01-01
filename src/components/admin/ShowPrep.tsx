@@ -78,7 +78,7 @@ const ShowPrep = () => {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div className="space-y-3 text-base leading-loose">
         {/* Line 1: Auto-filled date */}
         <p className="text-foreground">
@@ -119,19 +119,21 @@ const ShowPrep = () => {
         <p className="text-foreground">
           plus your calls, Dispatches, emails, texts & more.
         </p>
+        
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleClear}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <Trash2 className="h-3 w-3 mr-1" />
+          Clear All
+        </Button>
       </div>
-      
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={handleClear}
-        className="text-muted-foreground hover:text-foreground"
-      >
-        <Trash2 className="h-3 w-3 mr-1" />
-        Clear All
-      </Button>
 
-      <ShowPrepNotes />
+      <div className="lg:pl-6 lg:border-l border-border">
+        <ShowPrepNotes />
+      </div>
     </div>
   );
 };
