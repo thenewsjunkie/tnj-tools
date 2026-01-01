@@ -1,9 +1,10 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, X, Upload, Link as LinkIcon } from "lucide-react";
+import { X, Upload, Link as LinkIcon, ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface ImageGalleryProps {
   images: string[];
@@ -15,6 +16,7 @@ const ImageGallery = ({ images, onChange, isEditing = false }: ImageGalleryProps
   const [isAddingUrl, setIsAddingUrl] = useState(false);
   const [newUrl, setNewUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAddUrl = () => {
@@ -29,13 +31,14 @@ const ImageGallery = ({ images, onChange, isEditing = false }: ImageGalleryProps
     onChange(images.filter((_, i) => i !== index));
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const uploadFile = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast.error("Only image files are allowed");
+      return;
+    }
 
     setIsUploading(true);
     try {
-      // Use the edge function for upload (same as other components)
       const formData = new FormData();
       formData.append('file', file);
 
@@ -54,14 +57,60 @@ const ImageGallery = ({ images, onChange, isEditing = false }: ImageGalleryProps
       toast.error("Failed to upload image");
     } finally {
       setIsUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await uploadFile(file);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+    if (files.length === 0) {
+      toast.error("No valid image files found");
+      return;
+    }
+    
+    for (const file of files) {
+      await uploadFile(file);
     }
   };
 
   return (
-    <div className="space-y-2">
+    <div 
+      className={cn(
+        "space-y-2 p-2 -m-2 rounded-lg transition-colors",
+        isDragOver && "bg-primary/10 border-2 border-dashed border-primary"
+      )}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {isDragOver && (
+        <div className="flex items-center justify-center py-4 text-sm text-primary">
+          <ImageIcon className="h-4 w-4 mr-2" />
+          Drop image here
+        </div>
+      )}
+
       {images.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {images.map((url, index) => (
@@ -149,6 +198,7 @@ const ImageGallery = ({ images, onChange, isEditing = false }: ImageGalleryProps
             <LinkIcon className="h-3 w-3 mr-1" />
             Paste URL
           </Button>
+          <span className="text-xs text-muted-foreground">or drag & drop</span>
         </div>
       )}
     </div>
