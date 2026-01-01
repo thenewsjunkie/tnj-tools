@@ -1,17 +1,17 @@
 import { useState, useEffect } from "react";
-import { Topic } from "./types";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronRight, GripVertical, Trash2, CheckCircle2 } from "lucide-react";
+import { ChevronDown, GripVertical, Trash2, Pencil, Check, CheckCircle2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import BulletEditor from "./BulletEditor";
 import LinksList from "./LinksList";
 import ImageGallery from "./ImageGallery";
+import { Topic, Bullet } from "./types";
 import { v4 as uuidv4 } from "uuid";
-import { cn } from "@/lib/utils";
 
 interface TopicCardProps {
   topic: Topic;
@@ -20,23 +20,10 @@ interface TopicCardProps {
 }
 
 const TopicCard = ({ topic, onChange, onDelete }: TopicCardProps) => {
-  const [isHovered, setIsHovered] = useState(false);
-  
-  // Calculate completion
-  const bulletsWithText = topic.bullets.filter(b => b.text.trim());
-  const checkedCount = bulletsWithText.filter(b => b.checked).length;
-  const totalCount = bulletsWithText.length;
-  const isComplete = totalCount > 0 && checkedCount === totalCount;
-  
-  // Auto-collapse when complete
-  const [isOpen, setIsOpen] = useState(!isComplete);
-  
-  useEffect(() => {
-    if (isComplete) {
-      setIsOpen(false);
-    }
-  }, [isComplete]);
-  
+  const hasContent = topic.title.trim() || topic.bullets.some(b => b.text.trim()) || topic.links.length > 0 || topic.images.length > 0;
+  const [isEditing, setIsEditing] = useState(!hasContent);
+  const [isOpen, setIsOpen] = useState(true);
+
   const {
     attributes,
     listeners,
@@ -49,112 +36,186 @@ const TopicCard = ({ topic, onChange, onDelete }: TopicCardProps) => {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
   };
 
-  const handleTitleChange = (title: string) => {
-    onChange({ ...topic, title });
+  const completedBullets = topic.bullets.filter((b) => b.checked).length;
+  const totalBullets = topic.bullets.filter((b) => b.text.trim()).length;
+  const progress = totalBullets > 0 ? (completedBullets / totalBullets) * 100 : 0;
+
+  useEffect(() => {
+    if (topic.bullets.length === 0) {
+      onChange({
+        ...topic,
+        bullets: [{ id: uuidv4(), text: "", checked: false, indent: 0 }],
+      });
+    }
+  }, []);
+
+  const handleSave = () => {
+    setIsEditing(false);
   };
 
-  const handleBulletsChange = (bullets: Topic["bullets"]) => {
-    onChange({ ...topic, bullets });
+  const handleEdit = () => {
+    setIsEditing(true);
+    setIsOpen(true);
   };
 
-  const handleLinksChange = (links: Topic["links"]) => {
-    onChange({ ...topic, links });
-  };
-
-  const handleImagesChange = (images: string[]) => {
-    onChange({ ...topic, images });
-  };
-
-  // Initialize with one bullet if empty
-  const bullets = topic.bullets.length > 0 
-    ? topic.bullets 
-    : [{ id: uuidv4(), text: "", indent: 0, checked: false }];
+  const displayBullets = topic.bullets.filter(b => b.text.trim());
 
   return (
-    <Card 
-      ref={setNodeRef} 
-      style={style} 
-      className={cn(
-        "bg-card/50 border-l-2 transition-colors",
-        isComplete ? "border-l-green-500/50 bg-green-500/5" : "border-l-primary/30"
-      )}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(isDragging && "opacity-50")}
     >
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <CardHeader className="p-3 pb-0">
-          <div className="flex items-center gap-2">
-            <button
-              {...attributes}
-              {...listeners}
-              className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
-            >
-              <GripVertical className="h-4 w-4" />
-            </button>
-            
-            <CollapsibleTrigger asChild>
-              <button className="text-muted-foreground hover:text-foreground">
-                {isOpen ? (
-                  <ChevronDown className="h-4 w-4" />
+      <Card className="border-border/50">
+        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+          <CardHeader className="py-2 px-3">
+            <div className="flex items-center gap-2">
+              <div
+                {...attributes}
+                {...listeners}
+                className="cursor-grab active:cursor-grabbing touch-none"
+              >
+                <GripVertical className="h-4 w-4 text-muted-foreground" />
+              </div>
+
+              <CollapsibleTrigger className="flex-shrink-0">
+                <ChevronDown
+                  className={cn(
+                    "h-4 w-4 text-muted-foreground transition-transform",
+                    isOpen && "rotate-180"
+                  )}
+                />
+              </CollapsibleTrigger>
+
+              <div className="flex-1 min-w-0">
+                {isEditing ? (
+                  <Input
+                    value={topic.title}
+                    onChange={(e) => onChange({ ...topic, title: e.target.value })}
+                    placeholder="Topic title..."
+                    className="h-7 text-sm font-medium border-0 bg-transparent px-0 focus-visible:ring-0"
+                  />
                 ) : (
-                  <ChevronRight className="h-4 w-4" />
+                  <span className="text-sm font-medium truncate block">
+                    {topic.title || "Untitled Topic"}
+                  </span>
                 )}
-              </button>
-            </CollapsibleTrigger>
-            
-            {isComplete && (
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
-            )}
-            
-            <Input
-              value={topic.title}
-              onChange={(e) => handleTitleChange(e.target.value)}
-              placeholder="Topic title..."
-              className={cn(
-                "h-8 flex-1 border-0 bg-transparent text-base font-semibold focus-visible:ring-0 px-1",
-                isComplete && "text-muted-foreground"
+              </div>
+
+              {totalBullets > 0 && (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <div className="w-12 h-1.5 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary transition-all"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                  <span>{completedBullets}/{totalBullets}</span>
+                </div>
               )}
-            />
-            
-            {/* Progress indicator */}
-            {totalCount > 0 && (
-              <span className={cn(
-                "text-xs tabular-nums",
-                isComplete ? "text-green-500" : "text-muted-foreground"
-              )}>
-                {checkedCount}/{totalCount}
-              </span>
-            )}
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                "h-7 w-7 p-0 text-muted-foreground hover:text-destructive transition-opacity",
-                isHovered ? "opacity-100" : "opacity-0"
-              )}
-              onClick={onDelete}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardHeader>
-        
-        <CollapsibleContent>
-          <CardContent className="p-3 pt-2 space-y-4">
-            <BulletEditor bullets={bullets} onChange={handleBulletsChange} />
-            
-            <div className="space-y-3 pt-2 border-t border-border/50">
-              <LinksList links={topic.links} onChange={handleLinksChange} isEditing={isHovered} />
-              <ImageGallery images={topic.images} onChange={handleImagesChange} isEditing={isHovered} />
+
+              <div className="flex items-center gap-1">
+                {isEditing ? (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 w-7 p-0 text-primary hover:text-primary"
+                    onClick={handleSave}
+                  >
+                    <Check className="h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 w-7 p-0"
+                    onClick={handleEdit}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 w-7 p-0 hover:text-destructive"
+                  onClick={onDelete}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
             </div>
-          </CardContent>
-        </CollapsibleContent>
-      </Collapsible>
-    </Card>
+          </CardHeader>
+
+          <CollapsibleContent>
+            <CardContent className="pt-0 pb-3 px-3 space-y-3">
+              {isEditing ? (
+                <>
+                  <BulletEditor
+                    bullets={topic.bullets}
+                    onChange={(bullets) => onChange({ ...topic, bullets })}
+                  />
+                  <LinksList
+                    links={topic.links}
+                    onChange={(links) => onChange({ ...topic, links })}
+                    isEditing={true}
+                  />
+                  <ImageGallery
+                    images={topic.images}
+                    onChange={(images) => onChange({ ...topic, images })}
+                    isEditing={true}
+                  />
+                </>
+              ) : (
+                <>
+                  {/* View mode: Display bullets as formatted list */}
+                  {displayBullets.length > 0 && (
+                    <div className="space-y-1">
+                      {displayBullets.map((bullet) => (
+                        <div
+                          key={bullet.id}
+                          className="flex items-start gap-2"
+                          style={{ paddingLeft: `${bullet.indent * 16}px` }}
+                        >
+                          {bullet.checked ? (
+                            <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                          ) : (
+                            <span className="text-muted-foreground mt-0.5">•</span>
+                          )}
+                          <span
+                            className={cn(
+                              "text-sm",
+                              bullet.checked && "line-through text-muted-foreground"
+                            )}
+                          >
+                            {bullet.text}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* View mode: Display links (read-only) */}
+                  <LinksList
+                    links={topic.links}
+                    onChange={(links) => onChange({ ...topic, links })}
+                    isEditing={false}
+                  />
+                  
+                  {/* View mode: Display images (read-only) */}
+                  <ImageGallery
+                    images={topic.images}
+                    onChange={(images) => onChange({ ...topic, images })}
+                    isEditing={false}
+                  />
+                </>
+              )}
+            </CardContent>
+          </CollapsibleContent>
+        </Collapsible>
+      </Card>
+    </div>
   );
 };
 

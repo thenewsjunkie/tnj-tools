@@ -105,12 +105,14 @@ const LinksList = ({ links, onChange, isEditing = false }: LinksListProps) => {
                     </span>
                   )}
                 </a>
-                <button
-                  onClick={() => handleRemove(link.id)}
-                  className="p-1 opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity"
-                >
-                  <X className="h-3 w-3" />
-                </button>
+                {isEditing && (
+                  <button
+                    onClick={() => handleRemove(link.id)}
+                    className="p-1 hover:text-destructive transition-colors"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
               </div>
             );
           })}
@@ -150,7 +152,7 @@ const LinksList = ({ links, onChange, isEditing = false }: LinksListProps) => {
             <X className="h-3 w-3" />
           </Button>
         </div>
-      ) : (isEditing || links.length === 0) && (
+      ) : isEditing && (
         <button
           onClick={() => setIsAdding(true)}
           className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
