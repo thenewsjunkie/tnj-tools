@@ -7,6 +7,19 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Copy, Check } from "lucide-react";
 import { format, startOfWeek, addWeeks, subWeeks } from "date-fns";
 import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+interface SegmentValue {
+  day: string;
+  time: string;
+  description: string;
+}
 
 interface WeekendSegmentData {
   id?: string;
@@ -27,6 +40,9 @@ interface WeekendSegmentData {
 
 const STATIONS_TEXT = "WZZR 92.1 West Palm Beach, WCZR 101.7 Treasure Coast, 970 WFLA Tampa, Z105 Sarasota, WTKS Real Radio 104.1, X 101.5 Tallahassee, 96 Rock Panama City, 97.3 Planet Radio Jacksonville Talk Radio 640 WGST Atlanta, Georgia Radio 95.1 Rochester, New York - Real Talk 97.1 New Radio 103.1/810 WGY Albany New York";
 
+const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const TIMES = ["5AM", "6AM", "7AM", "8AM", "9AM", "10AM", "11AM", "12PM", "1PM", "2PM", "3PM", "4PM", "5PM", "6PM"];
+
 const emptyData = (): Omit<WeekendSegmentData, "week_start"> => ({
   hour1_segment1: "",
   hour1_segment2: "",
@@ -41,6 +57,36 @@ const emptyData = (): Omit<WeekendSegmentData, "week_start"> => ({
   am_segment8: "",
   best_of_notes: "",
 });
+
+const parseSegment = (value: string): SegmentValue => {
+  if (!value) return { day: "", time: "", description: "" };
+  try {
+    const parsed = JSON.parse(value);
+    return {
+      day: parsed.day || "",
+      time: parsed.time || "",
+      description: parsed.description || "",
+    };
+  } catch {
+    // Legacy plain text - put it in description
+    return { day: "", time: "", description: value };
+  }
+};
+
+const serializeSegment = (seg: SegmentValue): string => {
+  if (!seg.day && !seg.time && !seg.description) return "";
+  return JSON.stringify(seg);
+};
+
+const formatSegmentForCopy = (seg: SegmentValue): string => {
+  const parts = [];
+  if (seg.day) parts.push(seg.day);
+  if (seg.time) parts.push(seg.time);
+  if (parts.length > 0 && seg.description) {
+    return `${parts.join(" ")} - ${seg.description}`;
+  }
+  return seg.description || "";
+};
 
 const getMonday = (date: Date): Date => {
   return startOfWeek(date, { weekStartsOn: 1 });
@@ -105,6 +151,16 @@ const WeekendEditionSegments = () => {
     [localData, saveTimeout, saveMutation]
   );
 
+  const handleSegmentChange = useCallback(
+    (field: keyof WeekendSegmentData, part: keyof SegmentValue, value: string) => {
+      if (!localData) return;
+      const current = parseSegment(localData[field]);
+      const updated = { ...current, [part]: value };
+      handleChange(field, serializeSegment(updated));
+    },
+    [localData, handleChange]
+  );
+
   const goToPreviousWeek = () => setCurrentWeek((w) => subWeeks(w, 1));
   const goToNextWeek = () => setCurrentWeek((w) => addWeeks(w, 1));
 
@@ -115,30 +171,36 @@ const WeekendEditionSegments = () => {
       "am_segment1", "am_segment2", "am_segment3", "am_segment4",
       "am_segment5", "am_segment6", "am_segment7", "am_segment8",
     ] as const;
-    return fields.filter((f) => localData[f]?.trim()).length;
+    return fields.filter((f) => {
+      const seg = parseSegment(localData[f]);
+      return seg.description?.trim() !== "";
+    }).length;
   };
 
   const copyToClipboard = () => {
     if (!localData) return;
 
+    const getSegmentText = (field: keyof WeekendSegmentData) =>
+      formatSegmentForCopy(parseSegment(localData[field]));
+
     const text = `The News Junkie Weekend Edition Segments
 Week of ${format(currentWeek, "MMMM d, yyyy")}
 
 Hour 1
-Segment 1 - 12 Minutes: ${localData.hour1_segment1}
-Segment 2 - 14 Minutes: ${localData.hour1_segment2}
-Segment 3 - 15 Minutes: ${localData.hour1_segment3}
+Segment 1 - 12 Minutes: ${getSegmentText("hour1_segment1")}
+Segment 2 - 14 Minutes: ${getSegmentText("hour1_segment2")}
+Segment 3 - 15 Minutes: ${getSegmentText("hour1_segment3")}
 
 AM Stations
-Segment 1 - 8 Minutes: ${localData.am_segment1}
-Segment 2 - 12 Minutes: ${localData.am_segment2}
-Segment 3 - 8 Minutes: ${localData.am_segment3}
-Segment 4 - 12 Minutes: ${localData.am_segment4}
+Segment 1 - 8 Minutes: ${getSegmentText("am_segment1")}
+Segment 2 - 12 Minutes: ${getSegmentText("am_segment2")}
+Segment 3 - 8 Minutes: ${getSegmentText("am_segment3")}
+Segment 4 - 12 Minutes: ${getSegmentText("am_segment4")}
 
-Segment 5 - 8 Minutes: ${localData.am_segment5}
-Segment 6 - 12 Minutes: ${localData.am_segment6}
-Segment 7 - 8 Minutes: ${localData.am_segment7}
-Segment 8 - 12 Minutes: ${localData.am_segment8}
+Segment 5 - 8 Minutes: ${getSegmentText("am_segment5")}
+Segment 6 - 12 Minutes: ${getSegmentText("am_segment6")}
+Segment 7 - 8 Minutes: ${getSegmentText("am_segment7")}
+Segment 8 - 12 Minutes: ${getSegmentText("am_segment8")}
 
 Stations: ${STATIONS_TEXT}
 
@@ -154,6 +216,54 @@ ${localData.best_of_notes}`;
   if (isLoading || !localData) {
     return <div className="text-sm text-muted-foreground">Loading...</div>;
   }
+
+  const SegmentInput = ({
+    label,
+    field,
+  }: {
+    label: string;
+    field: keyof WeekendSegmentData;
+  }) => {
+    const segment = parseSegment(localData[field]);
+
+    return (
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-muted-foreground w-32 shrink-0">{label}:</span>
+        <Select
+          value={segment.day}
+          onValueChange={(v) => handleSegmentChange(field, "day", v)}
+        >
+          <SelectTrigger className="w-28 h-8 text-xs shrink-0">
+            <SelectValue placeholder="Day" />
+          </SelectTrigger>
+          <SelectContent>
+            {DAYS.map((day) => (
+              <SelectItem key={day} value={day}>{day}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          value={segment.time}
+          onValueChange={(v) => handleSegmentChange(field, "time", v)}
+        >
+          <SelectTrigger className="w-20 h-8 text-xs shrink-0">
+            <SelectValue placeholder="Time" />
+          </SelectTrigger>
+          <SelectContent>
+            {TIMES.map((time) => (
+              <SelectItem key={time} value={time}>{time}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Input
+          value={segment.description}
+          onChange={(e) => handleSegmentChange(field, "description", e.target.value)}
+          className="h-8 text-sm flex-1"
+          placeholder="Description..."
+        />
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -180,69 +290,25 @@ ${localData.best_of_notes}`;
       {/* Hour 1 */}
       <div className="space-y-2">
         <h4 className="text-sm font-semibold text-foreground">HOUR 1</h4>
-        <SegmentInput
-          label="Segment 1 - 12 Minutes"
-          value={localData.hour1_segment1}
-          onChange={(v) => handleChange("hour1_segment1", v)}
-        />
-        <SegmentInput
-          label="Segment 2 - 14 Minutes"
-          value={localData.hour1_segment2}
-          onChange={(v) => handleChange("hour1_segment2", v)}
-        />
-        <SegmentInput
-          label="Segment 3 - 15 Minutes"
-          value={localData.hour1_segment3}
-          onChange={(v) => handleChange("hour1_segment3", v)}
-        />
+        <SegmentInput label="Seg 1 - 12 min" field="hour1_segment1" />
+        <SegmentInput label="Seg 2 - 14 min" field="hour1_segment2" />
+        <SegmentInput label="Seg 3 - 15 min" field="hour1_segment3" />
       </div>
 
       {/* AM Stations */}
       <div className="space-y-2">
         <h4 className="text-sm font-semibold text-foreground">AM STATIONS</h4>
-        <SegmentInput
-          label="Segment 1 - 8 Minutes"
-          value={localData.am_segment1}
-          onChange={(v) => handleChange("am_segment1", v)}
-        />
-        <SegmentInput
-          label="Segment 2 - 12 Minutes"
-          value={localData.am_segment2}
-          onChange={(v) => handleChange("am_segment2", v)}
-        />
-        <SegmentInput
-          label="Segment 3 - 8 Minutes"
-          value={localData.am_segment3}
-          onChange={(v) => handleChange("am_segment3", v)}
-        />
-        <SegmentInput
-          label="Segment 4 - 12 Minutes"
-          value={localData.am_segment4}
-          onChange={(v) => handleChange("am_segment4", v)}
-        />
+        <SegmentInput label="Seg 1 - 8 min" field="am_segment1" />
+        <SegmentInput label="Seg 2 - 12 min" field="am_segment2" />
+        <SegmentInput label="Seg 3 - 8 min" field="am_segment3" />
+        <SegmentInput label="Seg 4 - 12 min" field="am_segment4" />
         
         <div className="border-t border-border/30 my-2" />
         
-        <SegmentInput
-          label="Segment 5 - 8 Minutes"
-          value={localData.am_segment5}
-          onChange={(v) => handleChange("am_segment5", v)}
-        />
-        <SegmentInput
-          label="Segment 6 - 12 Minutes"
-          value={localData.am_segment6}
-          onChange={(v) => handleChange("am_segment6", v)}
-        />
-        <SegmentInput
-          label="Segment 7 - 8 Minutes"
-          value={localData.am_segment7}
-          onChange={(v) => handleChange("am_segment7", v)}
-        />
-        <SegmentInput
-          label="Segment 8 - 12 Minutes"
-          value={localData.am_segment8}
-          onChange={(v) => handleChange("am_segment8", v)}
-        />
+        <SegmentInput label="Seg 5 - 8 min" field="am_segment5" />
+        <SegmentInput label="Seg 6 - 12 min" field="am_segment6" />
+        <SegmentInput label="Seg 7 - 8 min" field="am_segment7" />
+        <SegmentInput label="Seg 8 - 12 min" field="am_segment8" />
       </div>
 
       {/* Stations */}
@@ -282,26 +348,6 @@ ${localData.best_of_notes}`;
   );
 };
 
-const SegmentInput = ({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-}) => (
-  <div className="flex items-center gap-2">
-    <span className="text-xs text-muted-foreground w-36 shrink-0">{label}:</span>
-    <Input
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="h-8 text-sm"
-      placeholder="Enter segment description..."
-    />
-  </div>
-);
-
 export default WeekendEditionSegments;
 
 export const getWeekendSegmentFilledCount = async (weekStart: string): Promise<number> => {
@@ -319,5 +365,13 @@ export const getWeekendSegmentFilledCount = async (weekStart: string): Promise<n
     "am_segment5", "am_segment6", "am_segment7", "am_segment8",
   ] as const;
   
-  return fields.filter((f) => (data as any)[f]?.trim()).length;
+  return fields.filter((f) => {
+    const val = (data as any)[f] || "";
+    try {
+      const parsed = JSON.parse(val);
+      return parsed.description?.trim() !== "";
+    } catch {
+      return val.trim() !== "";
+    }
+  }).length;
 };
