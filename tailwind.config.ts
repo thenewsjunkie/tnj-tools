@@ -61,6 +61,11 @@ export default {
           light: "#f2f2f2",
           dark: "#f21516",
         },
+        podium: {
+          gold: "#FFD700",
+          silver: "#C0C0C0",
+          bronze: "#CD7F32",
+        },
       },
       keyframes: {
         marquee: {
@@ -92,6 +97,15 @@ export default {
           "80%": { opacity: "0.92" },
           "90%": { opacity: "1.0" },
         },
+        "score-pulse": {
+          "0%": { transform: "scale(1)" },
+          "50%": { transform: "scale(1.05)", boxShadow: "0 0 30px rgba(242, 21, 22, 0.6)" },
+          "100%": { transform: "scale(1)" },
+        },
+        "gradient-border": {
+          "0%, 100%": { opacity: "0.3" },
+          "50%": { opacity: "0.6" },
+        },
       },
       animation: {
         "marquee": "marquee 60s linear infinite",
@@ -100,6 +114,8 @@ export default {
         "fade-in": "fade-in 0.4s ease-out",
         "fade-out": "fade-out 0.4s ease-out",
         "led-flicker": "led-flicker 3s infinite",
+        "score-pulse": "score-pulse 0.6s ease-out",
+        "gradient-border": "gradient-border 3s ease-in-out infinite",
       },
     },
   },
