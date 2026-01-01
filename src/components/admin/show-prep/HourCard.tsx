@@ -15,7 +15,7 @@ interface HourCardProps {
 }
 
 const HourCard = ({ hour, onChange }: HourCardProps) => {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleAddTopic = () => {
     const newTopic: Topic = {

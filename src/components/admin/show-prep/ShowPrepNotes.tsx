@@ -135,7 +135,7 @@ const ShowPrepNotes = () => {
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {hours.map((hour, index) => (
             <HourCard
               key={hour.id}
