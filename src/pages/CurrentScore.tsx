@@ -196,12 +196,12 @@ const CurrentScore = () => {
               compact ? "pt-2" : "pt-0"
             )}>
               <div className={cn(
-                "flex gap-3",
+                "flex gap-3 justify-center",
                 compact 
                   ? layout === 'horizontal' 
                     ? "flex-row" 
                     : "flex-col"
-                  : "flex-row flex-wrap justify-center"
+                  : "flex-row flex-nowrap"
               )}>
                 {filteredContestants.map((contestant, index) => (
                   <div 
