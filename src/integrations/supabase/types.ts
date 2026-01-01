@@ -846,23 +846,35 @@ export type Database = {
       }
       show_prep_notes: {
         Row: {
+          and_topic: string | null
           created_at: string
           date: string
+          from_topic: string | null
           id: string
+          last_minute_from: string | null
+          to_topic: string | null
           topics: Json
           updated_at: string
         }
         Insert: {
+          and_topic?: string | null
           created_at?: string
           date: string
+          from_topic?: string | null
           id?: string
+          last_minute_from?: string | null
+          to_topic?: string | null
           topics?: Json
           updated_at?: string
         }
         Update: {
+          and_topic?: string | null
           created_at?: string
           date?: string
+          from_topic?: string | null
           id?: string
+          last_minute_from?: string | null
+          to_topic?: string | null
           topics?: Json
           updated_at?: string
         }
