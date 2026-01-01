@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { format, isToday } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
+import { DndContext, closestCenter, DragEndEvent, DragOverlay, DragStartEvent } from "@dnd-kit/core";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, CalendarOff } from "lucide-react";
 import { toast } from "sonner";
 import DateSelector from "./DateSelector";
 import HourCard from "./HourCard";
-import { HourBlock, DEFAULT_SHOW_HOURS } from "./types";
+import DroppableHour from "./DroppableHour";
+import { HourBlock, Topic, DEFAULT_SHOW_HOURS } from "./types";
 import { isWeekend, getScheduledSegments, ScheduledSegment } from "./scheduledSegments";
 import ScheduledSegmentsManager from "./ScheduledSegmentsManager";
 
@@ -128,11 +130,94 @@ const ShowPrepNotes = () => {
     return () => clearTimeout(timeoutId);
   }, [hours, isLoading, saveNotes]);
 
+  const [activeTopicId, setActiveTopicId] = useState<string | null>(null);
+
   const handleHourChange = (index: number, updatedHour: HourBlock) => {
     const newHours = [...hours];
     newHours[index] = updatedHour;
     setHours(newHours);
   };
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveTopicId(event.active.id as string);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveTopicId(null);
+    
+    if (!over) return;
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    // Find which hour contains the dragged topic
+    const sourceHourIndex = hours.findIndex(h => 
+      h.topics.some(t => t.id === activeId)
+    );
+    if (sourceHourIndex === -1) return;
+
+    const sourceHour = hours[sourceHourIndex];
+    const draggedTopic = sourceHour.topics.find(t => t.id === activeId);
+    if (!draggedTopic) return;
+
+    // Check if dropped on an hour (droppable zone) or on another topic
+    let targetHourIndex: number;
+    let targetTopicIndex: number | null = null;
+
+    // First check if over is a topic ID
+    const overTopicHourIndex = hours.findIndex(h => 
+      h.topics.some(t => t.id === overId)
+    );
+
+    if (overTopicHourIndex !== -1) {
+      // Dropped on a topic
+      targetHourIndex = overTopicHourIndex;
+      targetTopicIndex = hours[targetHourIndex].topics.findIndex(t => t.id === overId);
+    } else {
+      // Dropped on a droppable hour zone
+      targetHourIndex = hours.findIndex(h => h.id === overId);
+      if (targetHourIndex === -1) return;
+    }
+
+    const newHours = [...hours];
+
+    if (sourceHourIndex === targetHourIndex) {
+      // Same hour - reorder within the hour
+      const topics = [...newHours[sourceHourIndex].topics];
+      const oldIndex = topics.findIndex(t => t.id === activeId);
+      const newIndex = targetTopicIndex ?? topics.length - 1;
+      
+      if (oldIndex !== newIndex) {
+        const [removed] = topics.splice(oldIndex, 1);
+        topics.splice(newIndex, 0, removed);
+        // Update display orders
+        topics.forEach((t, i) => t.display_order = i);
+        newHours[sourceHourIndex] = { ...newHours[sourceHourIndex], topics };
+      }
+    } else {
+      // Different hour - move topic
+      // Remove from source
+      const sourceTopics = newHours[sourceHourIndex].topics.filter(t => t.id !== activeId);
+      sourceTopics.forEach((t, i) => t.display_order = i);
+      newHours[sourceHourIndex] = { ...newHours[sourceHourIndex], topics: sourceTopics };
+
+      // Add to target
+      const targetTopics = [...newHours[targetHourIndex].topics];
+      const insertIndex = targetTopicIndex ?? targetTopics.length;
+      const movedTopic: Topic = { ...draggedTopic, display_order: insertIndex };
+      targetTopics.splice(insertIndex, 0, movedTopic);
+      targetTopics.forEach((t, i) => t.display_order = i);
+      newHours[targetHourIndex] = { ...newHours[targetHourIndex], topics: targetTopics };
+    }
+
+    setHours(newHours);
+  };
+
+  // Find the currently dragged topic for overlay
+  const activeTopic = activeTopicId 
+    ? hours.flatMap(h => h.topics).find(t => t.id === activeTopicId)
+    : null;
 
   // Check if current time is within an hour block (with 5-minute early start)
   const isCurrentHour = (hour: HourBlock): boolean => {
@@ -183,17 +268,31 @@ const ShowPrepNotes = () => {
           <p className="text-sm">No show on weekends</p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {hours.map((hour, index) => (
-            <HourCard
-              key={hour.id}
-              hour={hour}
-              onChange={(updated) => handleHourChange(index, updated)}
-              defaultOpen={isCurrentHour(hour)}
-              scheduledSegments={getScheduledSegments(selectedDate, hour.id, scheduledSegments)}
-            />
-          ))}
-        </div>
+        <DndContext
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="space-y-2">
+            {hours.map((hour, index) => (
+              <DroppableHour key={hour.id} id={hour.id}>
+                <HourCard
+                  hour={hour}
+                  onChange={(updated) => handleHourChange(index, updated)}
+                  defaultOpen={isCurrentHour(hour)}
+                  scheduledSegments={getScheduledSegments(selectedDate, hour.id, scheduledSegments)}
+                />
+              </DroppableHour>
+            ))}
+          </div>
+          <DragOverlay>
+            {activeTopic ? (
+              <div className="bg-card border rounded-lg p-3 shadow-lg opacity-90">
+                <span className="font-medium text-sm">{activeTopic.title || "Untitled Topic"}</span>
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
       )}
     </div>
   );

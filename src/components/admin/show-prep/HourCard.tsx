@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -42,20 +41,6 @@ const HourCard = ({ hour, onChange, defaultOpen = false, scheduledSegments = [] 
     onChange({ ...hour, topics: hour.topics.filter((_, i) => i !== index) });
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    const oldIndex = hour.topics.findIndex((t) => t.id === active.id);
-    const newIndex = hour.topics.findIndex((t) => t.id === over.id);
-
-    const reordered = arrayMove(hour.topics, oldIndex, newIndex).map((topic, i) => ({
-      ...topic,
-      display_order: i,
-    }));
-
-    onChange({ ...hour, topics: reordered });
-  };
 
   return (
     <Card className="bg-muted/30">
@@ -116,20 +101,18 @@ const HourCard = ({ hour, onChange, defaultOpen = false, scheduledSegments = [] 
                 No topics scheduled. Click "Add Topic" to add content for this hour.
               </p>
             ) : (
-              <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={hour.topics.map((t) => t.id)} strategy={verticalListSortingStrategy}>
-                  <div className="space-y-2">
-                    {hour.topics.map((topic, index) => (
-                      <TopicCard
-                        key={topic.id}
-                        topic={topic}
-                        onChange={(updated) => handleTopicChange(index, updated)}
-                        onDelete={() => handleTopicDelete(index)}
-                      />
-                    ))}
-                  </div>
-                </SortableContext>
-              </DndContext>
+              <SortableContext items={hour.topics.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-2">
+                  {hour.topics.map((topic, index) => (
+                    <TopicCard
+                      key={topic.id}
+                      topic={topic}
+                      onChange={(updated) => handleTopicChange(index, updated)}
+                      onDelete={() => handleTopicDelete(index)}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
             )}
           </CardContent>
         </CollapsibleContent>
