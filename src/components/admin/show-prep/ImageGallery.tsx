@@ -127,12 +127,14 @@ const ImageGallery = ({ images, onChange, isEditing = false }: ImageGalleryProps
                   className="h-16 w-16 object-cover rounded-md border border-border hover:opacity-80 transition-opacity cursor-pointer"
                 />
               </a>
-              <button
-                onClick={() => handleRemove(index)}
-                className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <X className="h-3 w-3" />
-              </button>
+              {isEditing && (
+                <button
+                  onClick={() => handleRemove(index)}
+                  className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
             </div>
           ))}
         </div>
@@ -177,7 +179,7 @@ const ImageGallery = ({ images, onChange, isEditing = false }: ImageGalleryProps
             <X className="h-3 w-3" />
           </Button>
         </div>
-      ) : (isEditing || images.length === 0) && (
+      ) : isEditing && (
         <div className="flex gap-2 items-center">
           <Button
             size="sm"
