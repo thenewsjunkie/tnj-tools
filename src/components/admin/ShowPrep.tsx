@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { format, isFriday as checkIsFriday, addDays, isToday } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight, Pencil, Save, Plus, X } from "lucide-react";
 import ShowPrepNotes from "./show-prep/ShowPrepNotes";
 
 const getStorageKey = (baseKey: string, date: Date) => {
@@ -82,22 +82,23 @@ const ShowPrep = () => {
   const [topics, setTopics] = useState<ShowPrepTopics>(() => loadTopics(new Date()));
   const [quickNotes, setQuickNotes] = useState<string>(() => loadQuickNotes(new Date()));
   const [lastMinuteFrom, setLastMinuteFrom] = useState<string>(() => loadLastMinute(new Date()));
+  
+  // Notes editing state
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [draftNotes, setDraftNotes] = useState("");
 
   // Load data when date changes
   useEffect(() => {
     setTopics(loadTopics(selectedDate));
     setQuickNotes(loadQuickNotes(selectedDate));
     setLastMinuteFrom(loadLastMinute(selectedDate));
+    setIsEditingNotes(false);
   }, [selectedDate, loadTopics, loadQuickNotes, loadLastMinute]);
 
-  // Save data when it changes
+  // Save topics and last minute when they change (auto-save)
   useEffect(() => {
     localStorage.setItem(getStorageKey("show-prep-topics", selectedDate), JSON.stringify(topics));
   }, [topics, selectedDate]);
-
-  useEffect(() => {
-    localStorage.setItem(getStorageKey("show-prep-quick-notes", selectedDate), quickNotes);
-  }, [quickNotes, selectedDate]);
 
   useEffect(() => {
     localStorage.setItem(getStorageKey("show-prep-last-minute", selectedDate), lastMinuteFrom);
@@ -119,12 +120,30 @@ const ShowPrep = () => {
     setTopics({ fromTopic: "", toTopic: "", andTopic: "" });
   };
 
-  const handleClearQuickNotes = () => {
-    setQuickNotes("");
-  };
-
   const handleClearLastMinute = () => {
     setLastMinuteFrom("");
+  };
+
+  const handleEditNotes = () => {
+    setDraftNotes(quickNotes);
+    setIsEditingNotes(true);
+  };
+
+  const handleSaveNotes = () => {
+    setQuickNotes(draftNotes);
+    localStorage.setItem(getStorageKey("show-prep-quick-notes", selectedDate), draftNotes);
+    setIsEditingNotes(false);
+  };
+
+  const handleCancelEdit = () => {
+    setDraftNotes("");
+    setIsEditingNotes(false);
+  };
+
+  const handleDeleteNotes = () => {
+    setQuickNotes("");
+    localStorage.setItem(getStorageKey("show-prep-quick-notes", selectedDate), "");
+    setIsEditingNotes(false);
   };
 
   return (
@@ -220,22 +239,48 @@ const ShowPrep = () => {
           </div>
         ) : (
           <div className="mt-4 space-y-2">
-            <label className="text-sm font-medium text-foreground">Quick Notes</label>
-            <Textarea
-              value={quickNotes}
-              onChange={(e) => setQuickNotes(e.target.value)}
-              placeholder="Jot down quick reminders..."
-              className="min-h-[80px] text-sm resize-y"
-            />
-            {quickNotes && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleClearQuickNotes}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <Trash2 className="h-3 w-3 mr-1" />
-                Clear Notes
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-foreground">Notes</label>
+              {!isEditingNotes && quickNotes && (
+                <Button variant="outline" size="sm" onClick={handleEditNotes}>
+                  <Pencil className="h-3 w-3 mr-1" />
+                  Edit
+                </Button>
+              )}
+            </div>
+            
+            {isEditingNotes ? (
+              <div className="space-y-2">
+                <Textarea
+                  value={draftNotes}
+                  onChange={(e) => setDraftNotes(e.target.value)}
+                  placeholder="Jot down notes..."
+                  className="min-h-[80px] text-sm resize-y"
+                  autoFocus
+                />
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={handleSaveNotes}>
+                    <Save className="h-3 w-3 mr-1" />
+                    Save
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={handleCancelEdit}>
+                    <X className="h-3 w-3 mr-1" />
+                    Cancel
+                  </Button>
+                  {quickNotes && (
+                    <Button variant="ghost" size="sm" onClick={handleDeleteNotes} className="text-destructive hover:text-destructive">
+                      <Trash2 className="h-3 w-3 mr-1" />
+                      Delete
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ) : quickNotes ? (
+              <p className="text-sm whitespace-pre-wrap bg-muted/50 p-3 rounded-md">{quickNotes}</p>
+            ) : (
+              <Button variant="outline" size="sm" onClick={handleEditNotes}>
+                <Plus className="h-3 w-3 mr-1" />
+                Add Notes
               </Button>
             )}
           </div>
