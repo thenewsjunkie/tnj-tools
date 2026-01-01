@@ -3,7 +3,8 @@ import { Link } from "./types";
 import { v4 as uuidv4 } from "uuid";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ExternalLink, X, Plus, Link as LinkIcon } from "lucide-react";
+import { ExternalLink, X, Plus, Link as LinkIcon, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface LinksListProps {
   links: Link[];
@@ -15,15 +16,44 @@ const LinksList = ({ links, onChange, isEditing = false }: LinksListProps) => {
   const [isAdding, setIsAdding] = useState(false);
   const [newUrl, setNewUrl] = useState("");
   const [newTitle, setNewTitle] = useState("");
+  const [isFetching, setIsFetching] = useState(false);
 
-  const handleAdd = () => {
+  const fetchPageTitle = async (url: string): Promise<string | undefined> => {
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-link-metadata', {
+        body: { url }
+      });
+      
+      if (error || !data?.success) {
+        console.log('Failed to fetch title:', error || data?.error);
+        return undefined;
+      }
+      
+      return data.title || undefined;
+    } catch (err) {
+      console.log('Error fetching title:', err);
+      return undefined;
+    }
+  };
+
+  const handleAdd = async () => {
     if (!newUrl.trim()) return;
     
     const url = newUrl.startsWith("http") ? newUrl : `https://${newUrl}`;
+    
+    // If user provided a manual title, use it; otherwise fetch from page
+    let title = newTitle.trim() || undefined;
+    
+    if (!title) {
+      setIsFetching(true);
+      title = await fetchPageTitle(url);
+      setIsFetching(false);
+    }
+    
     const newLink: Link = {
       id: uuidv4(),
       url,
-      title: newTitle.trim() || undefined,
+      title,
     };
     onChange([...links, newLink]);
     setNewUrl("");
@@ -128,6 +158,7 @@ const LinksList = ({ links, onChange, isEditing = false }: LinksListProps) => {
             placeholder="URL..."
             className="h-7 text-xs flex-1"
             autoFocus
+            disabled={isFetching}
           />
           <Input
             value={newTitle}
@@ -135,9 +166,16 @@ const LinksList = ({ links, onChange, isEditing = false }: LinksListProps) => {
             onKeyDown={handleKeyDown}
             placeholder="Title (optional)"
             className="h-7 text-xs w-32"
+            disabled={isFetching}
           />
-          <Button size="sm" variant="ghost" className="h-7 px-2" onClick={handleAdd}>
-            Add
+          <Button 
+            size="sm" 
+            variant="ghost" 
+            className="h-7 px-2" 
+            onClick={handleAdd}
+            disabled={isFetching}
+          >
+            {isFetching ? <Loader2 className="h-3 w-3 animate-spin" /> : "Add"}
           </Button>
           <Button
             size="sm"
@@ -148,6 +186,7 @@ const LinksList = ({ links, onChange, isEditing = false }: LinksListProps) => {
               setNewUrl("");
               setNewTitle("");
             }}
+            disabled={isFetching}
           >
             <X className="h-3 w-3" />
           </Button>
