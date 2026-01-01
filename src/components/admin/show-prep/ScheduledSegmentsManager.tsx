@@ -142,14 +142,15 @@ const ScheduledSegmentsManager = () => {
       <Dialog open={managerOpen} onOpenChange={setManagerOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              <span>Scheduled Segments</span>
-              <Button size="sm" onClick={handleAdd} className="ml-4">
-                <Plus className="h-4 w-4 mr-1" />
-                Add Segment
-              </Button>
-            </DialogTitle>
+            <DialogTitle>Scheduled Segments</DialogTitle>
           </DialogHeader>
+
+          <div className="flex justify-end mb-4">
+            <Button size="sm" onClick={handleAdd}>
+              <Plus className="h-4 w-4 mr-1" />
+              Add Segment
+            </Button>
+          </div>
 
           {isLoading ? (
             <div className="py-8 text-center text-muted-foreground">Loading...</div>
@@ -161,11 +162,11 @@ const ScheduledSegmentsManager = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Time</TableHead>
-                  <TableHead>Hour</TableHead>
-                  <TableHead>Days</TableHead>
-                  <TableHead className="w-[80px]">Actions</TableHead>
+                  <TableHead className="text-foreground">Name</TableHead>
+                  <TableHead className="text-foreground">Time</TableHead>
+                  <TableHead className="text-foreground">Hour</TableHead>
+                  <TableHead className="text-foreground">Days</TableHead>
+                  <TableHead className="text-foreground w-[80px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
