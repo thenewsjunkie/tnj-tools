@@ -40,8 +40,14 @@ interface WeekendSegmentData {
 
 const STATIONS_TEXT = "WZZR 92.1 West Palm Beach, WCZR 101.7 Treasure Coast, 970 WFLA Tampa, Z105 Sarasota, WTKS Real Radio 104.1, X 101.5 Tallahassee, 96 Rock Panama City, 97.3 Planet Radio Jacksonville Talk Radio 640 WGST Atlanta, Georgia Radio 95.1 Rochester, New York - Real Talk 97.1 New Radio 103.1/810 WGY Albany New York";
 
-const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-const TIMES = ["5AM", "6AM", "7AM", "8AM", "9AM", "10AM", "11AM", "12PM", "1PM", "2PM", "3PM", "4PM", "5PM", "6PM"];
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+const TIMES = [
+  '11:00', '11:15', '11:30', '11:45',
+  '12:00', '12:15', '12:30', '12:45',
+  '1:00', '1:15', '1:30', '1:45',
+  '2:00', '2:15', '2:30', '2:45',
+  '3:00'
+];
 
 const emptyData = (): Omit<WeekendSegmentData, "week_start"> => ({
   hour1_segment1: "",
