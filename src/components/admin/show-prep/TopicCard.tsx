@@ -20,6 +20,7 @@ interface TopicCardProps {
 
 const TopicCard = ({ topic, onChange, onDelete }: TopicCardProps) => {
   const [isOpen, setIsOpen] = useState(true);
+  const [isHovered, setIsHovered] = useState(false);
   
   const {
     attributes,
@@ -58,7 +59,13 @@ const TopicCard = ({ topic, onChange, onDelete }: TopicCardProps) => {
     : [{ id: uuidv4(), text: "", indent: 0 }];
 
   return (
-    <Card ref={setNodeRef} style={style} className="bg-card/50">
+    <Card 
+      ref={setNodeRef} 
+      style={style} 
+      className="bg-card/50"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CardHeader className="p-3 pb-0">
           <div className="flex items-center gap-2">
@@ -99,10 +106,10 @@ const TopicCard = ({ topic, onChange, onDelete }: TopicCardProps) => {
         </CardHeader>
         
         <CollapsibleContent>
-          <CardContent className="p-3 pt-2 space-y-3">
+        <CardContent className="p-3 pt-2 space-y-3">
             <BulletEditor bullets={bullets} onChange={handleBulletsChange} />
-            <LinksList links={topic.links} onChange={handleLinksChange} />
-            <ImageGallery images={topic.images} onChange={handleImagesChange} />
+            <LinksList links={topic.links} onChange={handleLinksChange} isEditing={isHovered} />
+            <ImageGallery images={topic.images} onChange={handleImagesChange} isEditing={isHovered} />
           </CardContent>
         </CollapsibleContent>
       </Collapsible>

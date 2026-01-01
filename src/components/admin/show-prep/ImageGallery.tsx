@@ -8,9 +8,10 @@ import { toast } from "sonner";
 interface ImageGalleryProps {
   images: string[];
   onChange: (images: string[]) => void;
+  isEditing?: boolean;
 }
 
-const ImageGallery = ({ images, onChange }: ImageGalleryProps) => {
+const ImageGallery = ({ images, onChange, isEditing = false }: ImageGalleryProps) => {
   const [isAddingUrl, setIsAddingUrl] = useState(false);
   const [newUrl, setNewUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
@@ -83,57 +84,57 @@ const ImageGallery = ({ images, onChange }: ImageGalleryProps) => {
         </div>
       )}
 
-      <div className="flex gap-2 items-center">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleFileUpload}
-          className="hidden"
-        />
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-7 px-2 text-xs"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading}
-        >
-          <Upload className="h-3 w-3 mr-1" />
-          {isUploading ? "Uploading..." : "Upload"}
-        </Button>
-
-        {isAddingUrl ? (
-          <div className="flex gap-1 items-center flex-1">
-            <Input
-              value={newUrl}
-              onChange={(e) => setNewUrl(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleAddUrl();
-                if (e.key === "Escape") {
-                  setIsAddingUrl(false);
-                  setNewUrl("");
-                }
-              }}
-              placeholder="Image URL..."
-              className="h-7 text-xs"
-              autoFocus
-            />
-            <Button size="sm" variant="ghost" className="h-7 px-2" onClick={handleAddUrl}>
-              Add
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-7 px-2"
-              onClick={() => {
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileUpload}
+        className="hidden"
+      />
+      
+      {isAddingUrl ? (
+        <div className="flex gap-1 items-center">
+          <Input
+            value={newUrl}
+            onChange={(e) => setNewUrl(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleAddUrl();
+              if (e.key === "Escape") {
                 setIsAddingUrl(false);
                 setNewUrl("");
-              }}
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          </div>
-        ) : (
+              }
+            }}
+            placeholder="Image URL..."
+            className="h-7 text-xs"
+            autoFocus
+          />
+          <Button size="sm" variant="ghost" className="h-7 px-2" onClick={handleAddUrl}>
+            Add
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 px-2"
+            onClick={() => {
+              setIsAddingUrl(false);
+              setNewUrl("");
+            }}
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
+      ) : (isEditing || images.length === 0) && (
+        <div className="flex gap-2 items-center">
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 px-2 text-xs"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+          >
+            <Upload className="h-3 w-3 mr-1" />
+            {isUploading ? "Uploading..." : "Upload"}
+          </Button>
           <Button
             size="sm"
             variant="ghost"
@@ -143,8 +144,8 @@ const ImageGallery = ({ images, onChange }: ImageGalleryProps) => {
             <LinkIcon className="h-3 w-3 mr-1" />
             Paste URL
           </Button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
