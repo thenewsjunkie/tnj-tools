@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { format, isToday } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
+import { Loader2, CalendarOff } from "lucide-react";
 import { toast } from "sonner";
 import DateSelector from "./DateSelector";
 import HourCard from "./HourCard";
 import { HourBlock, DEFAULT_SHOW_HOURS } from "./types";
+import { isWeekend, getScheduledSegments } from "./scheduledSegments";
 
 const createEmptyHours = (): HourBlock[] => {
   return DEFAULT_SHOW_HOURS.map((hour) => ({
@@ -157,6 +158,12 @@ const ShowPrepNotes = () => {
         <div className="flex items-center justify-center py-8">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
+      ) : isWeekend(selectedDate) ? (
+        <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+          <CalendarOff className="h-12 w-12 mb-3 opacity-50" />
+          <p className="text-lg font-medium">Show is OFF</p>
+          <p className="text-sm">No show on weekends</p>
+        </div>
       ) : (
         <div className="space-y-2">
           {hours.map((hour, index) => (
@@ -165,6 +172,7 @@ const ShowPrepNotes = () => {
               hour={hour}
               onChange={(updated) => handleHourChange(index, updated)}
               defaultOpen={isCurrentHour(hour)}
+              scheduledSegments={getScheduledSegments(selectedDate, hour.id)}
             />
           ))}
         </div>

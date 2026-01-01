@@ -5,17 +5,19 @@ import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-ki
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronRight, Clock, Plus } from "lucide-react";
+import { ChevronDown, ChevronRight, Clock, Plus, CalendarClock } from "lucide-react";
 import TopicCard from "./TopicCard";
 import { HourBlock, Topic } from "./types";
+import { ScheduledSegment } from "./scheduledSegments";
 
 interface HourCardProps {
   hour: HourBlock;
   onChange: (hour: HourBlock) => void;
   defaultOpen?: boolean;
+  scheduledSegments?: ScheduledSegment[];
 }
 
-const HourCard = ({ hour, onChange, defaultOpen = false }: HourCardProps) => {
+const HourCard = ({ hour, onChange, defaultOpen = false, scheduledSegments = [] }: HourCardProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   const handleAddTopic = () => {
@@ -93,8 +95,23 @@ const HourCard = ({ hour, onChange, defaultOpen = false }: HourCardProps) => {
         </CardHeader>
 
         <CollapsibleContent>
-          <CardContent className="p-3 pt-0">
-            {hour.topics.length === 0 ? (
+          <CardContent className="p-3 pt-0 space-y-3">
+            {scheduledSegments.length > 0 && (
+              <div className="space-y-1 pb-2 border-b border-border/50">
+                {scheduledSegments.map((segment, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-2 text-xs text-muted-foreground italic"
+                  >
+                    <CalendarClock className="h-3 w-3 text-primary/60" />
+                    <span className="font-medium">{segment.time}</span>
+                    <span>—</span>
+                    <span>{segment.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {hour.topics.length === 0 && scheduledSegments.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-4">
                 No topics scheduled. Click "Add Topic" to add content for this hour.
               </p>
