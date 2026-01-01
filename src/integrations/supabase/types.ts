@@ -1042,6 +1042,63 @@ export type Database = {
         }
         Relationships: []
       }
+      weekend_segments: {
+        Row: {
+          am_segment1: string | null
+          am_segment2: string | null
+          am_segment3: string | null
+          am_segment4: string | null
+          am_segment5: string | null
+          am_segment6: string | null
+          am_segment7: string | null
+          am_segment8: string | null
+          best_of_notes: string | null
+          created_at: string | null
+          hour1_segment1: string | null
+          hour1_segment2: string | null
+          hour1_segment3: string | null
+          id: string
+          updated_at: string | null
+          week_start: string
+        }
+        Insert: {
+          am_segment1?: string | null
+          am_segment2?: string | null
+          am_segment3?: string | null
+          am_segment4?: string | null
+          am_segment5?: string | null
+          am_segment6?: string | null
+          am_segment7?: string | null
+          am_segment8?: string | null
+          best_of_notes?: string | null
+          created_at?: string | null
+          hour1_segment1?: string | null
+          hour1_segment2?: string | null
+          hour1_segment3?: string | null
+          id?: string
+          updated_at?: string | null
+          week_start: string
+        }
+        Update: {
+          am_segment1?: string | null
+          am_segment2?: string | null
+          am_segment3?: string | null
+          am_segment4?: string | null
+          am_segment5?: string | null
+          am_segment6?: string | null
+          am_segment7?: string | null
+          am_segment8?: string | null
+          best_of_notes?: string | null
+          created_at?: string | null
+          hour1_segment1?: string | null
+          hour1_segment2?: string | null
+          hour1_segment3?: string | null
+          id?: string
+          updated_at?: string | null
+          week_start?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

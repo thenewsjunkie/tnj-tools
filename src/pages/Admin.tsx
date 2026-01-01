@@ -14,6 +14,7 @@ import TNJLinks from "@/components/TNJLinks";
 import { AskAI } from "@/components/ai-chat/AskAI";
 import VoiceInterface from "@/components/VoiceInterface";
 import ShowPrep from "@/components/admin/ShowPrep";
+import WeekendEditionSegments from "@/components/admin/WeekendEditionSegments";
 import { Badge } from "@/components/ui/badge";
 import { useQueueState } from "@/hooks/useQueueState";
 
@@ -62,6 +63,15 @@ const Admin = () => {
           }
         >
           <VoiceInterface onSpeakingChange={setIsAISpeaking} />
+        </CollapsibleModule>
+
+        {/* Weekend Edition Segments */}
+        <CollapsibleModule
+          id="weekend-edition"
+          title="Weekend Edition Segments"
+          defaultOpen={false}
+        >
+          <WeekendEditionSegments />
         </CollapsibleModule>
 
         {/* Row: Alerts + Ask AI */}
