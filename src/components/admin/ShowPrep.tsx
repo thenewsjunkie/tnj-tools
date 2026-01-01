@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import ShowPrepNotes from "./show-prep/ShowPrepNotes";
@@ -12,6 +11,44 @@ interface ShowPrepTopics {
   toTopic: string;
   andTopic: string;
 }
+
+interface AutoSizeInputProps {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}
+
+const AutoSizeInput = ({ value, onChange, placeholder }: AutoSizeInputProps) => {
+  const spanRef = useRef<HTMLSpanElement>(null);
+  const [width, setWidth] = useState(80);
+
+  useEffect(() => {
+    if (spanRef.current) {
+      const newWidth = Math.max(80, spanRef.current.offsetWidth + 4);
+      setWidth(newWidth);
+    }
+  }, [value]);
+
+  return (
+    <span className="relative inline-block">
+      <span
+        ref={spanRef}
+        className="invisible absolute whitespace-pre font-medium text-base px-1"
+        aria-hidden="true"
+      >
+        {value || placeholder}
+      </span>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        style={{ width: `${width}px` }}
+        className="h-8 border-0 border-b-2 border-muted-foreground rounded-none bg-transparent px-1 font-medium text-base focus:outline-none focus:border-primary placeholder:text-muted-foreground/50"
+      />
+    </span>
+  );
+};
 
 const ShowPrep = () => {
   const todayFormatted = format(new Date(), "EEEE, MMMM do yyyy");
@@ -49,37 +86,34 @@ const ShowPrep = () => {
         </p>
         
         {/* Line 2: From topic */}
-        <div className="flex items-center gap-1 flex-wrap">
-          <span className="text-foreground">Lots to get to today from</span>
-          <Input
+        <p className="text-foreground">
+          Lots to get to today from{" "}
+          <AutoSizeInput
             value={topics.fromTopic}
-            onChange={(e) => handleChange("fromTopic", e.target.value)}
+            onChange={(value) => handleChange("fromTopic", value)}
             placeholder="topic..."
-            className="h-8 flex-1 min-w-40 inline-flex border-0 border-b-2 border-muted-foreground rounded-none bg-transparent px-1 font-medium focus-visible:ring-0 focus-visible:border-primary"
           />
-        </div>
+        </p>
         
         {/* Line 3: To topic */}
-        <div className="flex items-center gap-1 flex-wrap">
-          <span className="text-foreground">to</span>
-          <Input
+        <p className="text-foreground">
+          to{" "}
+          <AutoSizeInput
             value={topics.toTopic}
-            onChange={(e) => handleChange("toTopic", e.target.value)}
+            onChange={(value) => handleChange("toTopic", value)}
             placeholder="topic..."
-            className="h-8 flex-1 min-w-40 inline-flex border-0 border-b-2 border-muted-foreground rounded-none bg-transparent px-1 font-medium focus-visible:ring-0 focus-visible:border-primary"
           />
-        </div>
+        </p>
         
         {/* Line 4: And topic */}
-        <div className="flex items-center gap-1 flex-wrap">
-          <span className="text-foreground">and</span>
-          <Input
+        <p className="text-foreground">
+          and{" "}
+          <AutoSizeInput
             value={topics.andTopic}
-            onChange={(e) => handleChange("andTopic", e.target.value)}
+            onChange={(value) => handleChange("andTopic", value)}
             placeholder="topic..."
-            className="h-8 flex-1 min-w-40 inline-flex border-0 border-b-2 border-muted-foreground rounded-none bg-transparent px-1 font-medium focus-visible:ring-0 focus-visible:border-primary"
           />
-        </div>
+        </p>
         
         {/* Static closing line */}
         <p className="text-foreground">
