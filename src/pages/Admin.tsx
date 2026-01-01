@@ -1,11 +1,6 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Tables } from "@/integrations/supabase/types";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import AdminHeader from "@/components/admin/AdminHeader";
-import LowerThirdsCard from "@/components/admin/LowerThirdsCard";
-import QuickEditDialog from "@/components/lower-thirds/QuickEditDialog";
 import CollapsibleModule from "@/components/admin/CollapsibleModule";
 
 import Alerts from "@/components/Alerts";
@@ -21,8 +16,6 @@ import { Mic } from "lucide-react";
 
 const Admin = () => {
   const { theme } = useTheme();
-  const [selectedLowerThird, setSelectedLowerThird] = useState<Tables<"lower_thirds"> | null>(null);
-  const [isQuickEditOpen, setIsQuickEditOpen] = useState(false);
   const [isAISpeaking, setIsAISpeaking] = useState(false);
   const [isVoiceChatOpen, setIsVoiceChatOpen] = useState(() => {
     const saved = localStorage.getItem("admin-voice-chat-open");
@@ -35,20 +28,6 @@ const Admin = () => {
   }, [isVoiceChatOpen]);
   
   console.log("[Admin] Rendering Admin page, theme:", theme);
-
-  const { data: lowerThirds = [], isLoading } = useQuery({
-    queryKey: ["lower-thirds"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("lower_thirds")
-        .select("*")
-        .order("display_order", { ascending: true })
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data as Tables<"lower_thirds">[];
-    },
-  });
 
   return (
     <div className="min-h-screen bg-background text-foreground p-3 sm:p-4">
@@ -118,17 +97,6 @@ const Admin = () => {
           </CollapsibleModule>
         </div>
         
-        {/* Lower Thirds - Full Width */}
-        <CollapsibleModule id="lower-thirds" title="Lower Thirds" defaultOpen={false}>
-          <LowerThirdsCard
-            lowerThirds={lowerThirds}
-            isLoading={isLoading}
-            onQuickEdit={(lt) => {
-              setSelectedLowerThird(lt);
-              setIsQuickEditOpen(true);
-            }}
-          />
-        </CollapsibleModule>
         
         {/* Row: Stopwatch + TNJ Links */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -142,11 +110,6 @@ const Admin = () => {
         </div>
       </div>
 
-      <QuickEditDialog
-        lowerThird={selectedLowerThird}
-        open={isQuickEditOpen}
-        onOpenChange={setIsQuickEditOpen}
-      />
     </div>
   );
 };
