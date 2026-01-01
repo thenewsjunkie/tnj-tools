@@ -3,7 +3,7 @@ import { Link } from "./types";
 import { v4 as uuidv4 } from "uuid";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ExternalLink, X, Plus, Link as LinkIcon, Loader2 } from "lucide-react";
+import { ExternalLink, X, Plus, Link as LinkIcon, Loader2, Pencil, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface LinksListProps {
@@ -17,6 +17,9 @@ const LinksList = ({ links, onChange, isEditing = false }: LinksListProps) => {
   const [newUrl, setNewUrl] = useState("");
   const [newTitle, setNewTitle] = useState("");
   const [isFetching, setIsFetching] = useState(false);
+  const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
+  const [editUrl, setEditUrl] = useState("");
+  const [editTitle, setEditTitle] = useState("");
 
   const fetchPageTitle = async (url: string): Promise<string | undefined> => {
     try {
@@ -65,6 +68,41 @@ const LinksList = ({ links, onChange, isEditing = false }: LinksListProps) => {
     onChange(links.filter((link) => link.id !== id));
   };
 
+  const handleStartEdit = (link: Link) => {
+    setEditingLinkId(link.id);
+    setEditUrl(link.url);
+    setEditTitle(link.title || "");
+  };
+
+  const handleSaveEdit = () => {
+    if (!editUrl.trim() || !editingLinkId) return;
+    
+    const url = editUrl.startsWith("http") ? editUrl : `https://${editUrl}`;
+    onChange(links.map(link => 
+      link.id === editingLinkId 
+        ? { ...link, url, title: editTitle.trim() || undefined }
+        : link
+    ));
+    setEditingLinkId(null);
+    setEditUrl("");
+    setEditTitle("");
+  };
+
+  const handleCancelEdit = () => {
+    setEditingLinkId(null);
+    setEditUrl("");
+    setEditTitle("");
+  };
+
+  const handleEditKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSaveEdit();
+    } else if (e.key === "Escape") {
+      handleCancelEdit();
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -101,6 +139,34 @@ const LinksList = ({ links, onChange, isEditing = false }: LinksListProps) => {
             const hostname = getHostname(link.url);
             const faviconUrl = getFaviconUrl(link.url);
             
+            if (editingLinkId === link.id) {
+              return (
+                <div key={link.id} className="flex gap-2 items-center p-2 rounded-md bg-muted/30">
+                  <Input
+                    value={editUrl}
+                    onChange={(e) => setEditUrl(e.target.value)}
+                    onKeyDown={handleEditKeyDown}
+                    placeholder="URL..."
+                    className="h-7 text-xs flex-1"
+                    autoFocus
+                  />
+                  <Input
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    onKeyDown={handleEditKeyDown}
+                    placeholder="Title (optional)"
+                    className="h-7 text-xs w-32"
+                  />
+                  <Button size="sm" variant="ghost" className="h-7 px-2" onClick={handleSaveEdit}>
+                    <Check className="h-3 w-3" />
+                  </Button>
+                  <Button size="sm" variant="ghost" className="h-7 px-2" onClick={handleCancelEdit}>
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              );
+            }
+            
             return (
               <div
                 key={link.id}
@@ -136,12 +202,20 @@ const LinksList = ({ links, onChange, isEditing = false }: LinksListProps) => {
                   )}
                 </a>
                 {isEditing && (
-                  <button
-                    onClick={() => handleRemove(link.id)}
-                    className="p-1 hover:text-destructive transition-colors"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
+                  <>
+                    <button
+                      onClick={() => handleStartEdit(link)}
+                      className="p-1 hover:text-primary transition-colors"
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </button>
+                    <button
+                      onClick={() => handleRemove(link.id)}
+                      className="p-1 hover:text-destructive transition-colors"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </>
                 )}
               </div>
             );
