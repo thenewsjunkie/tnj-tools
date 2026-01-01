@@ -35,22 +35,20 @@ const ImageGallery = ({ images, onChange, isEditing = false }: ImageGalleryProps
 
     setIsUploading(true);
     try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const filePath = `show-prep/${fileName}`;
+      // Use the edge function for upload (same as other components)
+      const formData = new FormData();
+      formData.append('file', file);
 
-      const { error: uploadError } = await supabase.storage
-        .from("show_notes_images")
-        .upload(filePath, file);
+      const { data, error } = await supabase.functions.invoke('upload-show-note-image', {
+        body: formData,
+      });
 
-      if (uploadError) throw uploadError;
+      if (error) throw error;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from("show_notes_images")
-        .getPublicUrl(filePath);
-
-      onChange([...images, publicUrl]);
-      toast.success("Image uploaded");
+      if (data?.url) {
+        onChange([...images, data.url]);
+        toast.success("Image uploaded");
+      }
     } catch (error) {
       console.error("Upload error:", error);
       toast.error("Failed to upload image");
