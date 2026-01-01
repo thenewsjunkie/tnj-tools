@@ -132,7 +132,7 @@ const ShowPrepNotes = () => {
   };
 
   return (
-    <div className="space-y-4 pt-4 border-t border-border">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <DateSelector date={selectedDate} onChange={setSelectedDate} />
         <div className="flex items-center gap-2">
