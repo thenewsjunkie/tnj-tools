@@ -749,6 +749,39 @@ export type Database = {
         }
         Relationships: []
       }
+      scheduled_segments: {
+        Row: {
+          created_at: string | null
+          days: number[]
+          hour_block: string
+          id: string
+          is_active: boolean | null
+          name: string
+          time: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          days?: number[]
+          hour_block: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          time: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          days?: number[]
+          hour_block?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          time?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       show_member_socials: {
         Row: {
           created_at: string | null
