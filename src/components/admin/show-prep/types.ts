@@ -2,6 +2,7 @@ export interface Bullet {
   id: string;
   text: string;
   indent: number;
+  checked?: boolean;
 }
 
 export interface Link {
