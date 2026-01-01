@@ -52,7 +52,7 @@ const Admin = () => {
 
         {/* Voice Chat - Full Width */}
         <CollapsibleModule
-          id="voice-chat"
+          id="realtime-voice-chat"
           title="Realtime Voice Chat"
           defaultOpen={false}
           statusBadge={
