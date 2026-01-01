@@ -172,10 +172,10 @@ const ScheduledSegmentsManager = () => {
               <TableBody>
                 {segments.map((segment) => (
                   <TableRow key={segment.id} className={!segment.is_active ? "opacity-50" : ""}>
-                    <TableCell className="font-medium">{segment.name}</TableCell>
-                    <TableCell>{segment.time}</TableCell>
-                    <TableCell>{HOUR_LABELS[segment.hour_block] || segment.hour_block}</TableCell>
-                    <TableCell>{formatDays(segment.days)}</TableCell>
+                    <TableCell className="font-medium text-foreground">{segment.name}</TableCell>
+                    <TableCell className="text-foreground">{segment.time}</TableCell>
+                    <TableCell className="text-foreground">{HOUR_LABELS[segment.hour_block] || segment.hour_block}</TableCell>
+                    <TableCell className="text-foreground">{formatDays(segment.days)}</TableCell>
                     <TableCell>
                       <div className="flex gap-1">
                         <Button
