@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
@@ -17,13 +17,22 @@ import ShowPrep from "@/components/admin/ShowPrep";
 import WeekendEditionSegments from "@/components/admin/WeekendEditionSegments";
 import { Badge } from "@/components/ui/badge";
 import { useQueueState } from "@/hooks/useQueueState";
+import { Mic } from "lucide-react";
 
 const Admin = () => {
   const { theme } = useTheme();
   const [selectedLowerThird, setSelectedLowerThird] = useState<Tables<"lower_thirds"> | null>(null);
   const [isQuickEditOpen, setIsQuickEditOpen] = useState(false);
   const [isAISpeaking, setIsAISpeaking] = useState(false);
+  const [isVoiceChatOpen, setIsVoiceChatOpen] = useState(() => {
+    const saved = localStorage.getItem("admin-voice-chat-open");
+    return saved === "true";
+  });
   const { queueCount } = useQueueState();
+
+  useEffect(() => {
+    localStorage.setItem("admin-voice-chat-open", String(isVoiceChatOpen));
+  }, [isVoiceChatOpen]);
   
   console.log("[Admin] Rendering Admin page, theme:", theme);
 
@@ -44,25 +53,40 @@ const Admin = () => {
   return (
     <div className="min-h-screen bg-background text-foreground p-3 sm:p-4">
       <AdminHeader />
+
+      {/* Centered Voice Chat Tab */}
+      <div className="flex justify-center mb-4">
+        <button
+          onClick={() => setIsVoiceChatOpen(!isVoiceChatOpen)}
+          className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all duration-200 ${
+            isVoiceChatOpen 
+              ? "bg-primary text-primary-foreground shadow-lg" 
+              : "bg-muted hover:bg-muted/80 text-foreground"
+          }`}
+        >
+          <Mic className={`h-5 w-5 ${isAISpeaking ? "animate-pulse" : ""}`} />
+          <span>Realtime Voice Chat</span>
+          {isAISpeaking && (
+            <Badge variant="secondary" className="text-xs ml-1">Speaking</Badge>
+          )}
+        </button>
+      </div>
+
+      {/* Expandable Voice Chat Panel */}
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          isVoiceChatOpen ? "max-h-[2000px] opacity-100 mb-4" : "max-h-0 opacity-0"
+        }`}
+      >
+        <div className="max-w-4xl mx-auto">
+          <VoiceInterface onSpeakingChange={setIsAISpeaking} />
+        </div>
+      </div>
       
       <div className="space-y-3 max-w-7xl mx-auto">
         {/* Show Prep - Full Width */}
         <CollapsibleModule id="show-prep" title="Show Prep" defaultOpen={true}>
           <ShowPrep />
-        </CollapsibleModule>
-
-        {/* Voice Chat - Full Width */}
-        <CollapsibleModule
-          id="realtime-voice-chat"
-          title="Realtime Voice Chat"
-          defaultOpen={false}
-          statusBadge={
-            isAISpeaking ? (
-              <Badge variant="secondary" className="text-xs">Speaking</Badge>
-            ) : null
-          }
-        >
-          <VoiceInterface onSpeakingChange={setIsAISpeaking} />
         </CollapsibleModule>
 
         {/* Weekend Edition Segments */}
