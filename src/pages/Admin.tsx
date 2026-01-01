@@ -13,6 +13,7 @@ import Stopwatch from "@/components/Stopwatch";
 import TNJLinks from "@/components/TNJLinks";
 import { AskAI } from "@/components/ai-chat/AskAI";
 import VoiceInterface from "@/components/VoiceInterface";
+import ShowPrep from "@/components/admin/ShowPrep";
 import { Badge } from "@/components/ui/badge";
 import { useQueueState } from "@/hooks/useQueueState";
 
@@ -44,10 +45,16 @@ const Admin = () => {
       <AdminHeader />
       
       <div className="space-y-3 max-w-7xl mx-auto">
+        {/* Show Prep - Full Width */}
+        <CollapsibleModule id="show-prep" title="Show Prep" defaultOpen={true}>
+          <ShowPrep />
+        </CollapsibleModule>
+
         {/* Voice Chat - Full Width */}
         <CollapsibleModule
           id="voice-chat"
           title="Realtime Voice Chat"
+          defaultOpen={false}
           statusBadge={
             isAISpeaking ? (
               <Badge variant="secondary" className="text-xs">Speaking</Badge>
