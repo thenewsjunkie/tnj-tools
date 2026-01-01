@@ -58,6 +58,7 @@ const ShowPrep = () => {
   const [lastMinuteFrom, setLastMinuteFrom] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const hasLoadedRef = useRef(false);
   const { toast } = useToast();
 
   const selectedDateFormatted = format(selectedDate, "EEEE, MMMM do yyyy");
@@ -67,6 +68,7 @@ const ShowPrep = () => {
 
   // Load data from Supabase
   const loadData = useCallback(async () => {
+    hasLoadedRef.current = false;
     setIsLoading(true);
     try {
       const { data, error } = await supabase
@@ -125,6 +127,10 @@ const ShowPrep = () => {
       });
     } finally {
       setIsLoading(false);
+      // Mark as loaded after state has settled
+      setTimeout(() => {
+        hasLoadedRef.current = true;
+      }, 100);
     }
   }, [dateKey, toast]);
 
@@ -132,9 +138,9 @@ const ShowPrep = () => {
     loadData();
   }, [loadData]);
 
-  // Debounced save to Supabase
+  // Debounced save to Supabase - only after initial load is complete
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || !hasLoadedRef.current) return;
 
     const timer = setTimeout(async () => {
       setIsSaving(true);
