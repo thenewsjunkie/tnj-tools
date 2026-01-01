@@ -257,8 +257,6 @@ Segment 6 - 12 Minutes: ${getSegmentText("am_segment6")}
 Segment 7 - 8 Minutes: ${getSegmentText("am_segment7")}
 Segment 8 - 12 Minutes: ${getSegmentText("am_segment8")}
 
-Stations: ${stationsText}
-
 Potential Best Of Segments:
 ${localData.best_of_notes}`;
 
