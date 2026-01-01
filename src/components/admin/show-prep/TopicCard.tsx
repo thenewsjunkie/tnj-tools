@@ -3,7 +3,7 @@ import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, GripVertical, Trash2, Pencil, Check, CheckCircle2 } from "lucide-react";
+import { ChevronDown, GripVertical, Trash2, Pencil, Check, CheckCircle2, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -22,7 +22,7 @@ interface TopicCardProps {
 const TopicCard = ({ topic, onChange, onDelete }: TopicCardProps) => {
   const hasContent = topic.title.trim() || topic.bullets.some(b => b.text.trim()) || topic.links.length > 0 || topic.images.length > 0;
   const [isEditing, setIsEditing] = useState(!hasContent);
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(!topic.completed);
 
   const {
     attributes,
@@ -60,6 +60,14 @@ const TopicCard = ({ topic, onChange, onDelete }: TopicCardProps) => {
     setIsOpen(true);
   };
 
+  const handleToggleComplete = () => {
+    const newCompleted = !topic.completed;
+    onChange({ ...topic, completed: newCompleted });
+    if (newCompleted) {
+      setIsOpen(false);
+    }
+  };
+
   const displayBullets = topic.bullets.filter(b => b.text.trim());
 
   return (
@@ -68,7 +76,7 @@ const TopicCard = ({ topic, onChange, onDelete }: TopicCardProps) => {
       style={style}
       className={cn(isDragging && "opacity-50")}
     >
-      <Card className="border-border/50">
+      <Card className={cn("border-border/50", topic.completed && "bg-muted/30 opacity-70")}>
         <Collapsible open={isOpen} onOpenChange={setIsOpen}>
           <CardHeader className="py-2 px-3">
             <div className="flex items-center gap-2">
@@ -98,7 +106,10 @@ const TopicCard = ({ topic, onChange, onDelete }: TopicCardProps) => {
                     className="h-7 text-sm font-medium border-0 bg-transparent px-0 focus-visible:ring-0"
                   />
                 ) : (
-                  <span className="text-sm font-medium truncate block">
+                  <span className={cn(
+                    "text-sm font-medium truncate block",
+                    topic.completed && "line-through text-muted-foreground"
+                  )}>
                     {topic.title || "Untitled Topic"}
                   </span>
                 )}
@@ -117,6 +128,22 @@ const TopicCard = ({ topic, onChange, onDelete }: TopicCardProps) => {
               )}
 
               <div className="flex items-center gap-1">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className={cn(
+                    "h-7 w-7 p-0",
+                    topic.completed ? "text-green-500 hover:text-green-600" : "text-muted-foreground hover:text-foreground"
+                  )}
+                  onClick={handleToggleComplete}
+                  title={topic.completed ? "Mark as incomplete" : "Mark as complete"}
+                >
+                  {topic.completed ? (
+                    <CheckCircle2 className="h-4 w-4" />
+                  ) : (
+                    <Circle className="h-4 w-4" />
+                  )}
+                </Button>
                 {isEditing ? (
                   <Button
                     size="sm"

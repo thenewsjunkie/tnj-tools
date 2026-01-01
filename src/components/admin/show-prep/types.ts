@@ -18,6 +18,7 @@ export interface Topic {
   bullets: Bullet[];
   links: Link[];
   images: string[];
+  completed?: boolean;
 }
 
 export interface HourBlock {
