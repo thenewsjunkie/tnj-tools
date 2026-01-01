@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Copy, Check } from "lucide-react";
+import { ChevronLeft, ChevronRight, Copy, Check, Pencil } from "lucide-react";
 import { format, startOfWeek, addWeeks, subWeeks } from "date-fns";
 import { toast } from "sonner";
 import {
@@ -150,6 +150,8 @@ const WeekendEditionSegments = () => {
   const [currentWeek, setCurrentWeek] = useState(() => getMonday(new Date()));
   const [localData, setLocalData] = useState<WeekendSegmentData | null>(null);
   const [copied, setCopied] = useState(false);
+  const [isEditingStations, setIsEditingStations] = useState(false);
+  const [stationsText, setStationsText] = useState(STATIONS_TEXT);
   const [saveTimeout, setSaveTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const weekStartStr = format(currentWeek, "yyyy-MM-dd");
@@ -255,7 +257,7 @@ Segment 6 - 12 Minutes: ${getSegmentText("am_segment6")}
 Segment 7 - 8 Minutes: ${getSegmentText("am_segment7")}
 Segment 8 - 12 Minutes: ${getSegmentText("am_segment8")}
 
-Stations: ${STATIONS_TEXT}
+Stations: ${stationsText}
 
 Potential Best Of Segments:
 ${localData.best_of_notes}`;
@@ -318,10 +320,29 @@ ${localData.best_of_notes}`;
 
       {/* Stations */}
       <div className="space-y-2">
-        <h4 className="text-sm font-semibold text-foreground">STATIONS</h4>
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          {STATIONS_TEXT}
-        </p>
+        <div className="flex items-center gap-2">
+          <h4 className="text-sm font-semibold text-foreground">STATIONS</h4>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-6 w-6 p-0"
+            onClick={() => setIsEditingStations(!isEditingStations)}
+          >
+            <Pencil className="h-3 w-3" />
+          </Button>
+        </div>
+        {isEditingStations ? (
+          <Textarea
+            value={stationsText}
+            onChange={(e) => setStationsText(e.target.value)}
+            placeholder="Enter station list..."
+            className="min-h-[80px] text-xs"
+          />
+        ) : (
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            {stationsText}
+          </p>
+        )}
       </div>
 
       {/* Best Of */}
