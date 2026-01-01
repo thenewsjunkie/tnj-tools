@@ -1,13 +1,13 @@
-import { useState, useEffect, useRef } from "react";
-import { format, isFriday as checkIsFriday } from "date-fns";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { format, isFriday as checkIsFriday, addDays, isToday } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2 } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import ShowPrepNotes from "./show-prep/ShowPrepNotes";
 
-const STORAGE_KEY = "show-prep-topics";
-const QUICK_NOTES_KEY = "show-prep-quick-notes";
-const LAST_MINUTE_MESSAGE_KEY = "show-prep-last-minute-message";
+const getStorageKey = (baseKey: string, date: Date) => {
+  return `${baseKey}-${format(date, "yyyy-MM-dd")}`;
+};
 
 interface ShowPrepTopics {
   fromTopic: string;
@@ -54,12 +54,13 @@ const AutoSizeInput = ({ value, onChange, placeholder }: AutoSizeInputProps) => 
 };
 
 const ShowPrep = () => {
-  const today = new Date();
-  const todayFormatted = format(today, "EEEE, MMMM do yyyy");
-  const isFriday = checkIsFriday(today);
-  
-  const [topics, setTopics] = useState<ShowPrepTopics>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
+  const [selectedDate, setSelectedDate] = useState(() => new Date());
+  const selectedDateFormatted = format(selectedDate, "EEEE, MMMM do yyyy");
+  const isFriday = checkIsFriday(selectedDate);
+  const isSelectedToday = isToday(selectedDate);
+
+  const loadTopics = useCallback((date: Date): ShowPrepTopics => {
+    const stored = localStorage.getItem(getStorageKey("show-prep-topics", date));
     if (stored) {
       try {
         return JSON.parse(stored);
@@ -68,27 +69,47 @@ const ShowPrep = () => {
       }
     }
     return { fromTopic: "", toTopic: "", andTopic: "" };
-  });
+  }, []);
 
-  const [quickNotes, setQuickNotes] = useState<string>(() => {
-    return localStorage.getItem(QUICK_NOTES_KEY) || "";
-  });
+  const loadQuickNotes = useCallback((date: Date): string => {
+    return localStorage.getItem(getStorageKey("show-prep-quick-notes", date)) || "";
+  }, []);
 
-  const [lastMinuteFrom, setLastMinuteFrom] = useState<string>(() => {
-    return localStorage.getItem(LAST_MINUTE_MESSAGE_KEY) || "";
-  });
+  const loadLastMinute = useCallback((date: Date): string => {
+    return localStorage.getItem(getStorageKey("show-prep-last-minute", date)) || "";
+  }, []);
+
+  const [topics, setTopics] = useState<ShowPrepTopics>(() => loadTopics(new Date()));
+  const [quickNotes, setQuickNotes] = useState<string>(() => loadQuickNotes(new Date()));
+  const [lastMinuteFrom, setLastMinuteFrom] = useState<string>(() => loadLastMinute(new Date()));
+
+  // Load data when date changes
+  useEffect(() => {
+    setTopics(loadTopics(selectedDate));
+    setQuickNotes(loadQuickNotes(selectedDate));
+    setLastMinuteFrom(loadLastMinute(selectedDate));
+  }, [selectedDate, loadTopics, loadQuickNotes, loadLastMinute]);
+
+  // Save data when it changes
+  useEffect(() => {
+    localStorage.setItem(getStorageKey("show-prep-topics", selectedDate), JSON.stringify(topics));
+  }, [topics, selectedDate]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(topics));
-  }, [topics]);
+    localStorage.setItem(getStorageKey("show-prep-quick-notes", selectedDate), quickNotes);
+  }, [quickNotes, selectedDate]);
 
   useEffect(() => {
-    localStorage.setItem(QUICK_NOTES_KEY, quickNotes);
-  }, [quickNotes]);
+    localStorage.setItem(getStorageKey("show-prep-last-minute", selectedDate), lastMinuteFrom);
+  }, [lastMinuteFrom, selectedDate]);
 
-  useEffect(() => {
-    localStorage.setItem(LAST_MINUTE_MESSAGE_KEY, lastMinuteFrom);
-  }, [lastMinuteFrom]);
+  const navigateDay = (offset: number) => {
+    setSelectedDate(prev => addDays(prev, offset));
+  };
+
+  const goToToday = () => {
+    setSelectedDate(new Date());
+  };
 
   const handleChange = (field: keyof ShowPrepTopics, value: string) => {
     setTopics(prev => ({ ...prev, [field]: value }));
@@ -109,10 +130,25 @@ const ShowPrep = () => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div className="space-y-3 text-base leading-loose">
-        {/* Line 1: Auto-filled date */}
-        <p className="text-foreground">
-          It is <span className="font-semibold">{todayFormatted}</span>
-        </p>
+        {/* Date Navigation Header */}
+        <div className="flex items-center justify-between mb-2">
+          <Button variant="ghost" size="icon" onClick={() => navigateDay(-1)}>
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <div className="text-center">
+            <p className="text-foreground">
+              It is <span className="font-semibold">{selectedDateFormatted}</span>
+            </p>
+            {!isSelectedToday && (
+              <Button variant="link" size="sm" onClick={goToToday} className="text-xs p-0 h-auto">
+                Go to Today
+              </Button>
+            )}
+          </div>
+          <Button variant="ghost" size="icon" onClick={() => navigateDay(1)}>
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+        </div>
         
         {/* Line 2: From topic */}
         <p className="text-foreground">
