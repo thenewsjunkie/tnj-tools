@@ -12,10 +12,11 @@ import { HourBlock, Topic } from "./types";
 interface HourCardProps {
   hour: HourBlock;
   onChange: (hour: HourBlock) => void;
+  defaultOpen?: boolean;
 }
 
-const HourCard = ({ hour, onChange }: HourCardProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+const HourCard = ({ hour, onChange, defaultOpen = false }: HourCardProps) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
 
   const handleAddTopic = () => {
     const newTopic: Topic = {

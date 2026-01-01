@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { format } from "date-fns";
+import { format, isToday } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -118,6 +118,29 @@ const ShowPrepNotes = () => {
     setHours(newHours);
   };
 
+  // Check if current time is within an hour block (with 5-minute early start)
+  const isCurrentHour = (hour: HourBlock): boolean => {
+    if (!isToday(selectedDate)) return false;
+
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    // Parse "11:00 AM" format to minutes since midnight
+    const parseTimeToMinutes = (timeStr: string) => {
+      const [time, period] = timeStr.split(" ");
+      let [hours, mins] = time.split(":").map(Number);
+      if (period === "PM" && hours !== 12) hours += 12;
+      if (period === "AM" && hours === 12) hours = 0;
+      return hours * 60 + mins;
+    };
+
+    const startMinutes = parseTimeToMinutes(hour.startTime);
+    const endMinutes = parseTimeToMinutes(hour.endTime);
+
+    // Expand if within 5 minutes before start OR during the hour
+    return currentMinutes >= startMinutes - 5 && currentMinutes < endMinutes;
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -141,6 +164,7 @@ const ShowPrepNotes = () => {
               key={hour.id}
               hour={hour}
               onChange={(updated) => handleHourChange(index, updated)}
+              defaultOpen={isCurrentHour(hour)}
             />
           ))}
         </div>
