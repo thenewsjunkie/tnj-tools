@@ -8,9 +8,10 @@ import { ExternalLink, X, Plus } from "lucide-react";
 interface LinksListProps {
   links: Link[];
   onChange: (links: Link[]) => void;
+  isEditing?: boolean;
 }
 
-const LinksList = ({ links, onChange }: LinksListProps) => {
+const LinksList = ({ links, onChange, isEditing = false }: LinksListProps) => {
   const [isAdding, setIsAdding] = useState(false);
   const [newUrl, setNewUrl] = useState("");
   const [newTitle, setNewTitle] = useState("");
@@ -109,7 +110,7 @@ const LinksList = ({ links, onChange }: LinksListProps) => {
             <X className="h-3 w-3" />
           </Button>
         </div>
-      ) : (
+      ) : (isEditing || links.length === 0) && (
         <button
           onClick={() => setIsAdding(true)}
           className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
