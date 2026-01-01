@@ -65,7 +65,7 @@ const Admin = () => {
           }`}
         >
           <Mic className={`h-5 w-5 ${isAISpeaking ? "animate-pulse" : ""}`} />
-          <span>Realtime Voice Chat</span>
+          <span>Ask TNJ AI</span>
           {isAISpeaking && (
             <Badge variant="secondary" className="text-xs ml-1">Speaking</Badge>
           )}
