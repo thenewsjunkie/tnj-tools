@@ -55,7 +55,7 @@ const ShowPrep = () => {
             value={topics.fromTopic}
             onChange={(e) => handleChange("fromTopic", e.target.value)}
             placeholder="topic..."
-            className="h-7 w-40 inline-flex border-0 border-b border-muted-foreground/30 rounded-none bg-transparent px-1 focus-visible:ring-0 focus-visible:border-primary"
+            className="h-7 flex-1 min-w-40 inline-flex border-0 border-b border-muted-foreground/30 rounded-none bg-transparent px-1 focus-visible:ring-0 focus-visible:border-primary"
           />
         </div>
         
@@ -66,7 +66,7 @@ const ShowPrep = () => {
             value={topics.toTopic}
             onChange={(e) => handleChange("toTopic", e.target.value)}
             placeholder="topic..."
-            className="h-7 w-40 inline-flex border-0 border-b border-muted-foreground/30 rounded-none bg-transparent px-1 focus-visible:ring-0 focus-visible:border-primary"
+            className="h-7 flex-1 min-w-40 inline-flex border-0 border-b border-muted-foreground/30 rounded-none bg-transparent px-1 focus-visible:ring-0 focus-visible:border-primary"
           />
         </div>
         
@@ -77,7 +77,7 @@ const ShowPrep = () => {
             value={topics.andTopic}
             onChange={(e) => handleChange("andTopic", e.target.value)}
             placeholder="topic..."
-            className="h-7 w-40 inline-flex border-0 border-b border-muted-foreground/30 rounded-none bg-transparent px-1 focus-visible:ring-0 focus-visible:border-primary"
+            className="h-7 flex-1 min-w-40 inline-flex border-0 border-b border-muted-foreground/30 rounded-none bg-transparent px-1 focus-visible:ring-0 focus-visible:border-primary"
           />
         </div>
         
