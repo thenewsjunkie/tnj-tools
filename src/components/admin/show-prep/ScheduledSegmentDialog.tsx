@@ -99,7 +99,7 @@ const ScheduledSegmentDialog = ({ open, onOpenChange, segment, onSave }: Schedul
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Segment Name</Label>
+            <Label htmlFor="name" className="text-foreground">Segment Name</Label>
             <Input
               id="name"
               value={name}
@@ -111,7 +111,7 @@ const ScheduledSegmentDialog = ({ open, onOpenChange, segment, onSave }: Schedul
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Time</Label>
+              <Label className="text-foreground">Time</Label>
               <Select value={time} onValueChange={setTime}>
                 <SelectTrigger>
                   <SelectValue />
@@ -125,7 +125,7 @@ const ScheduledSegmentDialog = ({ open, onOpenChange, segment, onSave }: Schedul
             </div>
 
             <div className="space-y-2">
-              <Label>Hour Block</Label>
+              <Label className="text-foreground">Hour Block</Label>
               <Select value={hourBlock} onValueChange={setHourBlock}>
                 <SelectTrigger>
                   <SelectValue />
@@ -142,7 +142,7 @@ const ScheduledSegmentDialog = ({ open, onOpenChange, segment, onSave }: Schedul
           </div>
 
           <div className="space-y-2">
-            <Label>Days</Label>
+            <Label className="text-foreground">Days</Label>
             <div className="flex gap-3">
               {DAYS.map((day) => (
                 <label key={day.value} className="flex items-center gap-1.5 cursor-pointer">
@@ -150,14 +150,14 @@ const ScheduledSegmentDialog = ({ open, onOpenChange, segment, onSave }: Schedul
                     checked={days.includes(day.value)}
                     onCheckedChange={() => handleDayToggle(day.value)}
                   />
-                  <span className="text-sm">{day.label}</span>
+                  <span className="text-sm text-foreground">{day.label}</span>
                 </label>
               ))}
             </div>
           </div>
 
           <div className="flex items-center justify-between">
-            <Label htmlFor="active">Active</Label>
+            <Label htmlFor="active" className="text-foreground">Active</Label>
             <Switch
               id="active"
               checked={isActive}
