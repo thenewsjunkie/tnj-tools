@@ -811,6 +811,30 @@ export type Database = {
         }
         Relationships: []
       }
+      show_prep_notes: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          topics: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          topics?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          topics?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sound_effects: {
         Row: {
           audio_url: string

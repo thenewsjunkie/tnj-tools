@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
+import ShowPrepNotes from "./show-prep/ShowPrepNotes";
 
 const STORAGE_KEY = "show-prep-topics";
 
@@ -95,6 +96,8 @@ const ShowPrep = () => {
         <Trash2 className="h-3 w-3 mr-1" />
         Clear All
       </Button>
+
+      <ShowPrepNotes />
     </div>
   );
 };
