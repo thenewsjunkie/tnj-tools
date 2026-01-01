@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { format, isToday } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, CalendarOff } from "lucide-react";
 import { toast } from "sonner";
 import DateSelector from "./DateSelector";
 import HourCard from "./HourCard";
 import { HourBlock, DEFAULT_SHOW_HOURS } from "./types";
-import { isWeekend, getScheduledSegments } from "./scheduledSegments";
+import { isWeekend, getScheduledSegments, ScheduledSegment } from "./scheduledSegments";
+import ScheduledSegmentsManager from "./ScheduledSegmentsManager";
 
 const createEmptyHours = (): HourBlock[] => {
   return DEFAULT_SHOW_HOURS.map((hour) => ({
@@ -23,6 +25,19 @@ const ShowPrepNotes = () => {
   const [noteId, setNoteId] = useState<string | null>(null);
 
   const dateKey = format(selectedDate, "yyyy-MM-dd");
+
+  // Fetch scheduled segments from database
+  const { data: scheduledSegments = [] } = useQuery({
+    queryKey: ["scheduled-segments"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("scheduled_segments")
+        .select("*")
+        .eq("is_active", true);
+      if (error) throw error;
+      return data as ScheduledSegment[];
+    },
+  });
 
   // Load notes for selected date
   useEffect(() => {
@@ -145,7 +160,10 @@ const ShowPrepNotes = () => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <DateSelector date={selectedDate} onChange={setSelectedDate} />
+        <div className="flex items-center gap-2">
+          <DateSelector date={selectedDate} onChange={setSelectedDate} />
+          <ScheduledSegmentsManager />
+        </div>
         {isSaving && (
           <span className="text-xs text-muted-foreground flex items-center gap-1">
             <Loader2 className="h-3 w-3 animate-spin" />
@@ -172,7 +190,7 @@ const ShowPrepNotes = () => {
               hour={hour}
               onChange={(updated) => handleHourChange(index, updated)}
               defaultOpen={isCurrentHour(hour)}
-              scheduledSegments={getScheduledSegments(selectedDate, hour.id)}
+              scheduledSegments={getScheduledSegments(selectedDate, hour.id, scheduledSegments)}
             />
           ))}
         </div>
