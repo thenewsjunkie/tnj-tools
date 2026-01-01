@@ -78,7 +78,7 @@ const ShowPrep = () => {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div className="space-y-3 text-base leading-loose">
         {/* Line 1: Auto-filled date */}
         <p className="text-foreground">
@@ -131,7 +131,7 @@ const ShowPrep = () => {
         </Button>
       </div>
 
-      <div className="lg:pl-6 lg:border-l border-border">
+      <div className="md:pl-6 md:border-l border-border">
         <ShowPrepNotes />
       </div>
     </div>
