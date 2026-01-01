@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { format } from "date-fns";
+import { format, isFriday as checkIsFriday } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Trash2 } from "lucide-react";
@@ -7,6 +7,7 @@ import ShowPrepNotes from "./show-prep/ShowPrepNotes";
 
 const STORAGE_KEY = "show-prep-topics";
 const QUICK_NOTES_KEY = "show-prep-quick-notes";
+const LAST_MINUTE_MESSAGE_KEY = "show-prep-last-minute-message";
 
 interface ShowPrepTopics {
   fromTopic: string;
@@ -53,7 +54,9 @@ const AutoSizeInput = ({ value, onChange, placeholder }: AutoSizeInputProps) => 
 };
 
 const ShowPrep = () => {
-  const todayFormatted = format(new Date(), "EEEE, MMMM do yyyy");
+  const today = new Date();
+  const todayFormatted = format(today, "EEEE, MMMM do yyyy");
+  const isFriday = checkIsFriday(today);
   
   const [topics, setTopics] = useState<ShowPrepTopics>(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -71,6 +74,10 @@ const ShowPrep = () => {
     return localStorage.getItem(QUICK_NOTES_KEY) || "";
   });
 
+  const [lastMinuteFrom, setLastMinuteFrom] = useState<string>(() => {
+    return localStorage.getItem(LAST_MINUTE_MESSAGE_KEY) || "";
+  });
+
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(topics));
   }, [topics]);
@@ -78,6 +85,10 @@ const ShowPrep = () => {
   useEffect(() => {
     localStorage.setItem(QUICK_NOTES_KEY, quickNotes);
   }, [quickNotes]);
+
+  useEffect(() => {
+    localStorage.setItem(LAST_MINUTE_MESSAGE_KEY, lastMinuteFrom);
+  }, [lastMinuteFrom]);
 
   const handleChange = (field: keyof ShowPrepTopics, value: string) => {
     setTopics(prev => ({ ...prev, [field]: value }));
@@ -89,6 +100,10 @@ const ShowPrep = () => {
 
   const handleClearQuickNotes = () => {
     setQuickNotes("");
+  };
+
+  const handleClearLastMinute = () => {
+    setLastMinuteFrom("");
   };
 
   return (
@@ -144,27 +159,51 @@ const ShowPrep = () => {
           Clear All
         </Button>
 
-        {/* Quick Notes Section */}
-        <div className="mt-4 space-y-2">
-          <label className="text-sm font-medium text-foreground">Quick Notes</label>
-          <Textarea
-            value={quickNotes}
-            onChange={(e) => setQuickNotes(e.target.value)}
-            placeholder="Jot down quick reminders..."
-            className="min-h-[80px] text-sm resize-y"
-          />
-          {quickNotes && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleClearQuickNotes}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <Trash2 className="h-3 w-3 mr-1" />
-              Clear Notes
-            </Button>
-          )}
-        </div>
+        {/* Friday: Last Minute Message / Other days: Quick Notes */}
+        {isFriday ? (
+          <div className="mt-4 space-y-2">
+            <p className="text-foreground">
+              Last Minute Message From:{" "}
+              <AutoSizeInput
+                value={lastMinuteFrom}
+                onChange={setLastMinuteFrom}
+                placeholder="name..."
+              />
+            </p>
+            {lastMinuteFrom && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClearLastMinute}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <Trash2 className="h-3 w-3 mr-1" />
+                Clear
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="mt-4 space-y-2">
+            <label className="text-sm font-medium text-foreground">Quick Notes</label>
+            <Textarea
+              value={quickNotes}
+              onChange={(e) => setQuickNotes(e.target.value)}
+              placeholder="Jot down quick reminders..."
+              className="min-h-[80px] text-sm resize-y"
+            />
+            {quickNotes && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClearQuickNotes}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <Trash2 className="h-3 w-3 mr-1" />
+                Clear Notes
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="md:pl-6 md:border-l border-border">
