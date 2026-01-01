@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { Trash2 } from "lucide-react";
 import ShowPrepNotes from "./show-prep/ShowPrepNotes";
 
 const STORAGE_KEY = "show-prep-topics";
+const QUICK_NOTES_KEY = "show-prep-quick-notes";
 
 interface ShowPrepTopics {
   fromTopic: string;
@@ -65,9 +67,17 @@ const ShowPrep = () => {
     return { fromTopic: "", toTopic: "", andTopic: "" };
   });
 
+  const [quickNotes, setQuickNotes] = useState<string>(() => {
+    return localStorage.getItem(QUICK_NOTES_KEY) || "";
+  });
+
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(topics));
   }, [topics]);
+
+  useEffect(() => {
+    localStorage.setItem(QUICK_NOTES_KEY, quickNotes);
+  }, [quickNotes]);
 
   const handleChange = (field: keyof ShowPrepTopics, value: string) => {
     setTopics(prev => ({ ...prev, [field]: value }));
@@ -75,6 +85,10 @@ const ShowPrep = () => {
 
   const handleClear = () => {
     setTopics({ fromTopic: "", toTopic: "", andTopic: "" });
+  };
+
+  const handleClearQuickNotes = () => {
+    setQuickNotes("");
   };
 
   return (
@@ -129,6 +143,28 @@ const ShowPrep = () => {
           <Trash2 className="h-3 w-3 mr-1" />
           Clear All
         </Button>
+
+        {/* Quick Notes Section */}
+        <div className="mt-4 space-y-2">
+          <label className="text-sm font-medium text-foreground">Quick Notes</label>
+          <Textarea
+            value={quickNotes}
+            onChange={(e) => setQuickNotes(e.target.value)}
+            placeholder="Jot down quick reminders..."
+            className="min-h-[80px] text-sm resize-y"
+          />
+          {quickNotes && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClearQuickNotes}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <Trash2 className="h-3 w-3 mr-1" />
+              Clear Notes
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="md:pl-6 md:border-l border-border">
