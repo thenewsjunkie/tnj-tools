@@ -66,11 +66,18 @@ const ImageGallery = ({ images, onChange, isEditing = false }: ImageGalleryProps
         <div className="flex flex-wrap gap-2">
           {images.map((url, index) => (
             <div key={index} className="relative group">
-              <img
-                src={url}
-                alt=""
-                className="h-16 w-16 object-cover rounded-md border border-border"
-              />
+              <a 
+                href={url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="block"
+              >
+                <img
+                  src={url}
+                  alt=""
+                  className="h-16 w-16 object-cover rounded-md border border-border hover:opacity-80 transition-opacity cursor-pointer"
+                />
+              </a>
               <button
                 onClick={() => handleRemove(index)}
                 className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
