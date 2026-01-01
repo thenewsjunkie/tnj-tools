@@ -99,7 +99,7 @@ const TopicCard = ({ topic, onChange, onDelete }: TopicCardProps) => {
         </CardHeader>
         
         <CollapsibleContent>
-          <CardContent className="p-3 pt-2 space-y-4">
+          <CardContent className="p-3 pt-2 space-y-3">
             <BulletEditor bullets={bullets} onChange={handleBulletsChange} />
             <LinksList links={topic.links} onChange={handleLinksChange} />
             <ImageGallery images={topic.images} onChange={handleImagesChange} />
