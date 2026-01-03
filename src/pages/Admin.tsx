@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import AdminHeader from "@/components/admin/AdminHeader";
 import CollapsibleModule from "@/components/admin/CollapsibleModule";
@@ -13,7 +14,7 @@ import WeekendEditionSegments from "@/components/admin/WeekendEditionSegments";
 import VideoTools from "@/components/admin/VideoTools";
 import { Badge } from "@/components/ui/badge";
 import { useQueueState } from "@/hooks/useQueueState";
-import { Mic } from "lucide-react";
+import { Mic, Archive } from "lucide-react";
 
 const Admin = () => {
   const { theme } = useTheme();
@@ -65,7 +66,20 @@ const Admin = () => {
       
       <div className="space-y-3 max-w-7xl mx-auto">
         {/* Show Prep - Full Width */}
-        <CollapsibleModule id="show-prep" title="Show Prep" defaultOpen={true}>
+        <CollapsibleModule 
+          id="show-prep" 
+          title="Show Prep" 
+          defaultOpen={true}
+          headerAction={
+            <Link 
+              to="/admin/topic-archive" 
+              onClick={(e) => e.stopPropagation()}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Archive className="h-4 w-4" />
+            </Link>
+          }
+        >
           <ShowPrep />
         </CollapsibleModule>
 

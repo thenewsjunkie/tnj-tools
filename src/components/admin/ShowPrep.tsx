@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { format, isFriday as checkIsFriday, addDays, isToday } from "date-fns";
-import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Trash2, ChevronLeft, ChevronRight, Loader2, Archive } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import ShowPrepNotes from "./show-prep/ShowPrepNotes";
@@ -202,12 +201,6 @@ const ShowPrep = () => {
                   Go to Today
                 </Button>
               )}
-              <Link to="/admin/topic-archive">
-                <Button variant="link" size="sm" className="text-xs p-0 h-auto">
-                  <Archive className="h-3 w-3 mr-1" />
-                  Topic Archive
-                </Button>
-              </Link>
             </div>
           </div>
           <Button variant="ghost" size="icon" onClick={() => navigateDay(1)}>
