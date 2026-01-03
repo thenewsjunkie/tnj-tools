@@ -9,6 +9,7 @@ export interface Link {
   id: string;
   url: string;
   title?: string;
+  thumbnail_url?: string;
 }
 
 export interface Topic {

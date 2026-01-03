@@ -11,12 +11,13 @@ import { ScheduledSegment } from "./scheduledSegments";
 
 interface HourCardProps {
   hour: HourBlock;
+  date: string;
   onChange: (hour: HourBlock) => void;
   defaultOpen?: boolean;
   scheduledSegments?: ScheduledSegment[];
 }
 
-const HourCard = ({ hour, onChange, defaultOpen = false, scheduledSegments = [] }: HourCardProps) => {
+const HourCard = ({ hour, date, onChange, defaultOpen = false, scheduledSegments = [] }: HourCardProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   const handleAddTopic = () => {
@@ -107,6 +108,7 @@ const HourCard = ({ hour, onChange, defaultOpen = false, scheduledSegments = [] 
                     <TopicCard
                       key={topic.id}
                       topic={topic}
+                      date={date}
                       onChange={(updated) => handleTopicChange(index, updated)}
                       onDelete={() => handleTopicDelete(index)}
                     />
