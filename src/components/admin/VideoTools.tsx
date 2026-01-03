@@ -1,9 +1,13 @@
-import { Monitor } from "lucide-react";
+import { Monitor, Link } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const VideoTools = () => {
   const openGreenScreen = () => {
     window.open("/green-screen", "_blank");
+  };
+
+  const openResources = () => {
+    window.open("/resources", "_blank");
   };
 
   return (
@@ -15,6 +19,14 @@ const VideoTools = () => {
       >
         <Monitor className="h-8 w-8 text-[#00FF00]" />
         <span className="text-sm font-medium">Green Screen</span>
+      </Button>
+      <Button
+        variant="outline"
+        className="h-24 flex flex-col gap-2 bg-primary/10 border-primary/30 hover:bg-primary/20 hover:border-primary/50"
+        onClick={openResources}
+      >
+        <Link className="h-8 w-8 text-primary" />
+        <span className="text-sm font-medium">Resources</span>
       </Button>
     </div>
   );

@@ -32,6 +32,7 @@ const ManagePolls = lazy(() => import("@/pages/Admin/ManagePolls"));
 const PollEmbed = lazy(() => import("@/pages/PollEmbed"));
 const RealtimeAI = lazy(() => import("@/pages/RealtimeAI"));
 const GreenScreen = lazy(() => import("@/pages/GreenScreen"));
+const Resources = lazy(() => import("@/pages/Resources"));
 
 export const router = createBrowserRouter([
   {
@@ -169,6 +170,10 @@ export const router = createBrowserRouter([
       {
         path: "green-screen",
         element: <GreenScreen />,
+      },
+      {
+        path: "resources",
+        element: <Resources />,
       },
     ]
   }
