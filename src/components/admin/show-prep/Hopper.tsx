@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Link2, Loader2, GripVertical, X, Unlink, Pencil, Check } from "lucide-react";
+import { Plus, Trash2, Link2, Loader2, GripVertical, X, Unlink, Pencil, Check, FolderPlus } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -367,6 +367,41 @@ const Hopper = ({ selectedDate }: HopperProps) => {
     },
   });
 
+  // Add to Resources mutation
+  const addToResourcesMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const selectedItems = items.filter((i) => ids.includes(i.id));
+      
+      // Get current max order from video_resources
+      const { data: existingResources } = await supabase
+        .from("video_resources")
+        .select("display_order")
+        .order("display_order", { ascending: false })
+        .limit(1);
+      
+      const maxOrder = existingResources?.[0]?.display_order ?? -1;
+      
+      const newResources = selectedItems.map((item, index) => ({
+        title: item.title || "Untitled",
+        url: item.url,
+        thumbnail_url: item.thumbnail_url,
+        display_order: maxOrder + 1 + index,
+        type: "link" as const,
+      }));
+      
+      const { error } = await supabase.from("video_resources").insert(newResources);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["video-resources"] });
+      setSelectedIds(new Set());
+      toast({ title: "Added to Resources" });
+    },
+    onError: () => {
+      toast({ title: "Failed to add to Resources", variant: "destructive" });
+    },
+  });
+
   // Group selected items mutation
   const groupMutation = useMutation({
     mutationFn: async (itemIds: string[]) => {
@@ -587,16 +622,27 @@ const Hopper = ({ selectedDate }: HopperProps) => {
         )}
 
         {selectedIds.size >= 1 && (
-          <Button
-            size="sm"
-            variant="outline"
-            className="text-destructive border-destructive hover:bg-destructive/10"
-            onClick={() => bulkDeleteMutation.mutate(Array.from(selectedIds))}
-            disabled={bulkDeleteMutation.isPending}
-          >
-            <Trash2 className="h-4 w-4 mr-1" />
-            Delete ({selectedIds.size})
-          </Button>
+          <>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => addToResourcesMutation.mutate(Array.from(selectedIds))}
+              disabled={addToResourcesMutation.isPending}
+            >
+              <FolderPlus className="h-4 w-4 mr-1" />
+              To Resources
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-destructive border-destructive hover:bg-destructive/10"
+              onClick={() => bulkDeleteMutation.mutate(Array.from(selectedIds))}
+              disabled={bulkDeleteMutation.isPending}
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Delete ({selectedIds.size})
+            </Button>
+          </>
         )}
 
         {canGroup && (

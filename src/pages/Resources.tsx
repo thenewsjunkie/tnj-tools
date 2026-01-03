@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { AddResourceForm } from "@/components/resources/AddResourceForm";
 import { SortableResourceCard } from "@/components/resources/SortableResourceCard";
-import { useAddToHopper } from "@/hooks/useAddToHopper";
 import {
   DndContext,
   closestCenter,
@@ -53,7 +52,6 @@ const Resources = () => {
   const [editTitle, setEditTitle] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const addToHopper = useAddToHopper();
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -338,11 +336,6 @@ const Resources = () => {
                     onDelete={() => deleteMutation.mutate(resource.id)}
                     getThumbnailUrl={getThumbnailUrl}
                     onRemoveThumbnail={resource.type !== "image" && resource.thumbnail_url ? () => removeThumbnailMutation.mutate(resource.id) : undefined}
-                    onAddToHopper={() => addToHopper.mutate({
-                      url: resource.url,
-                      title: resource.title,
-                      thumbnailUrl: resource.thumbnail_url || undefined,
-                    })}
                   />
                 ))}
               </div>
