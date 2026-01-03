@@ -263,6 +263,8 @@ const Hopper = ({ selectedDate }: HopperProps) => {
     })
   );
 
+  const MAX_HOPPER_ITEMS = 50;
+
   // Fetch hopper items for the date
   const { data: items = [], isLoading: isLoadingItems } = useQuery({
     queryKey: ["hopper-items", dateKey],
@@ -271,11 +273,14 @@ const Hopper = ({ selectedDate }: HopperProps) => {
         .from("hopper_items")
         .select("*")
         .eq("date", dateKey)
-        .order("display_order", { ascending: true });
+        .order("display_order", { ascending: true })
+        .limit(MAX_HOPPER_ITEMS);
       if (error) throw error;
       return data as HopperItem[];
     },
   });
+
+  const isAtCapacity = items.length >= MAX_HOPPER_ITEMS;
 
   // Fetch hopper groups for the date
   const { data: groups = [] } = useQuery({
@@ -294,10 +299,17 @@ const Hopper = ({ selectedDate }: HopperProps) => {
   // Add items mutation
   const addMutation = useMutation({
     mutationFn: async (urls: string[]) => {
+      // Limit how many can be added
+      const availableSlots = MAX_HOPPER_ITEMS - items.length;
+      if (availableSlots <= 0) {
+        throw new Error("Hopper is at capacity");
+      }
+      const urlsToAdd = urls.slice(0, availableSlots);
+      
       const maxOrder = items.length > 0 ? Math.max(...items.map((i) => i.display_order)) : -1;
 
       const newItems = await Promise.all(
-        urls.map(async (url, index) => {
+        urlsToAdd.map(async (url, index) => {
           let processedUrl = url.trim();
           if (!processedUrl.startsWith("http://") && !processedUrl.startsWith("https://")) {
             processedUrl = "https://" + processedUrl;
@@ -577,7 +589,11 @@ const Hopper = ({ selectedDate }: HopperProps) => {
             </div>
           </div>
         ) : (
-          <Button size="sm" onClick={() => setIsAdding(true)}>
+          <Button 
+            size="sm" 
+            onClick={() => setIsAdding(true)}
+            disabled={isAtCapacity}
+          >
             <Plus className="h-4 w-4 mr-1" />
             Add Links
           </Button>
@@ -606,6 +622,11 @@ const Hopper = ({ selectedDate }: HopperProps) => {
             Group ({selectedIds.size})
           </Button>
         )}
+
+        {/* Item count indicator */}
+        <span className={`text-xs ml-auto ${isAtCapacity ? 'text-destructive' : 'text-muted-foreground'}`}>
+          {items.length}/{MAX_HOPPER_ITEMS}
+        </span>
       </div>
 
       {/* Items list */}
