@@ -1059,6 +1059,7 @@ export type Database = {
           created_at: string
           display_order: number
           id: string
+          thumbnail_url: string | null
           title: string
           url: string
         }
@@ -1066,6 +1067,7 @@ export type Database = {
           created_at?: string
           display_order?: number
           id?: string
+          thumbnail_url?: string | null
           title: string
           url: string
         }
@@ -1073,6 +1075,7 @@ export type Database = {
           created_at?: string
           display_order?: number
           id?: string
+          thumbnail_url?: string | null
           title?: string
           url?: string
         }
