@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, subDays, isAfter, isBefore, parseISO } from "date-fns";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Search, Calendar, Link2, Image, List } from "lucide-react";
+import { ArrowLeft, Search, Calendar, Link2, Image, List, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +22,7 @@ interface FlattenedTopic {
   bullets: { id: string; text: string }[];
   searchText: string;
   hourLabel: string;
+  tags: string[];
 }
 
 type DateFilter = "7days" | "30days" | "all" | "custom";
@@ -31,6 +32,7 @@ const TopicArchive = () => {
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [customDateStart, setCustomDateStart] = useState<Date | undefined>();
   const [customDateEnd, setCustomDateEnd] = useState<Date | undefined>();
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const { data: showPrepNotes, isLoading } = useQuery({
     queryKey: ["all-show-prep-notes"],
@@ -61,6 +63,7 @@ const TopicArchive = () => {
             hour.topics.forEach((topic: Topic) => {
               const bulletTexts = topic.bullets?.map((b) => b.text) || [];
               const linkTitles = topic.links?.map((l) => l.title || l.url) || [];
+              const tagTexts = topic.tags || [];
 
               topics.push({
                 id: topic.id,
@@ -70,10 +73,12 @@ const TopicArchive = () => {
                 imagesCount: topic.images?.length || 0,
                 bulletsCount: topic.bullets?.length || 0,
                 bullets: topic.bullets?.slice(0, 3) || [],
+                tags: tagTexts,
                 searchText: [
                   topic.title,
                   ...bulletTexts,
                   ...linkTitles,
+                  ...tagTexts,
                 ].join(" ").toLowerCase(),
                 hourLabel: hour.label,
               });
@@ -86,6 +91,15 @@ const TopicArchive = () => {
     return topics;
   }, [showPrepNotes]);
 
+  // Extract all unique tags
+  const allTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    flattenedTopics.forEach((topic) => {
+      topic.tags.forEach((tag) => tagSet.add(tag));
+    });
+    return Array.from(tagSet).sort();
+  }, [flattenedTopics]);
+
   const filteredTopics = useMemo(() => {
     let filtered = flattenedTopics;
 
@@ -94,6 +108,13 @@ const TopicArchive = () => {
       const lowerSearch = searchTerm.toLowerCase();
       filtered = filtered.filter((topic) =>
         topic.searchText.includes(lowerSearch)
+      );
+    }
+
+    // Apply tag filter
+    if (selectedTags.length > 0) {
+      filtered = filtered.filter((topic) =>
+        selectedTags.some((tag) => topic.tags.includes(tag))
       );
     }
 
@@ -121,7 +142,14 @@ const TopicArchive = () => {
     }
 
     return filtered;
-  }, [flattenedTopics, searchTerm, dateFilter, customDateStart, customDateEnd]);
+  }, [flattenedTopics, searchTerm, dateFilter, customDateStart, customDateEnd, selectedTags]);
+
+  // Toggle tag selection
+  const toggleTag = (tag: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  };
 
   // Group by date for display
   const groupedByDate = useMemo(() => {
@@ -226,6 +254,40 @@ const TopicArchive = () => {
           </Popover>
         </div>
 
+        {/* Tag Cloud */}
+        {allTags.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-muted-foreground">Tags:</span>
+              {selectedTags.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 text-xs"
+                  onClick={() => setSelectedTags([])}
+                >
+                  Clear all
+                </Button>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {allTags.map((tag) => (
+                <Badge
+                  key={tag}
+                  variant={selectedTags.includes(tag) ? "default" : "outline"}
+                  className="cursor-pointer text-xs"
+                  onClick={() => toggleTag(tag)}
+                >
+                  {tag}
+                  {selectedTags.includes(tag) && (
+                    <X className="h-3 w-3 ml-1" />
+                  )}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Results count */}
         <p className="text-sm text-muted-foreground">
           {filteredTopics.length} topic{filteredTopics.length !== 1 ? "s" : ""} found
@@ -259,9 +321,24 @@ const TopicArchive = () => {
                   <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
                     <CardHeader className="pb-2">
                       <div className="flex items-start justify-between gap-2">
-                        <CardTitle className="text-base font-medium">
-                          {topic.title || "Untitled Topic"}
-                        </CardTitle>
+                        <div className="space-y-1.5">
+                          <CardTitle className="text-base font-medium">
+                            {topic.title || "Untitled Topic"}
+                          </CardTitle>
+                          {topic.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {topic.tags.map((tag) => (
+                                <Badge
+                                  key={tag}
+                                  variant="secondary"
+                                  className="text-[10px] px-1.5 py-0"
+                                >
+                                  {tag}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                         <Badge variant="secondary" className="shrink-0 text-xs">
                           {topic.hourLabel}
                         </Badge>

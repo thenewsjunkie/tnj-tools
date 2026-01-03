@@ -15,9 +15,10 @@ interface HourCardProps {
   onChange: (hour: HourBlock) => void;
   defaultOpen?: boolean;
   scheduledSegments?: ScheduledSegment[];
+  allTags?: string[];
 }
 
-const HourCard = ({ hour, date, onChange, defaultOpen = false, scheduledSegments = [] }: HourCardProps) => {
+const HourCard = ({ hour, date, onChange, defaultOpen = false, scheduledSegments = [], allTags = [] }: HourCardProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   const handleAddTopic = () => {
@@ -111,6 +112,7 @@ const HourCard = ({ hour, date, onChange, defaultOpen = false, scheduledSegments
                       date={date}
                       onChange={(updated) => handleTopicChange(index, updated)}
                       onDelete={() => handleTopicDelete(index)}
+                      allTags={allTags}
                     />
                   ))}
                 </div>
