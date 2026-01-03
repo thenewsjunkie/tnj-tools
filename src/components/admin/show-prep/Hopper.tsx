@@ -367,6 +367,34 @@ const Hopper = ({ selectedDate }: HopperProps) => {
     },
   });
 
+  // Clear all mutation
+  const clearAllMutation = useMutation({
+    mutationFn: async () => {
+      // Delete all items for this date
+      const { error: itemsError } = await supabase
+        .from("hopper_items")
+        .delete()
+        .eq("date", dateKey);
+      if (itemsError) throw itemsError;
+
+      // Delete all groups for this date
+      const { error: groupsError } = await supabase
+        .from("hopper_groups")
+        .delete()
+        .eq("date", dateKey);
+      if (groupsError) throw groupsError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["hopper-items", dateKey] });
+      queryClient.invalidateQueries({ queryKey: ["hopper-groups", dateKey] });
+      setSelectedIds(new Set());
+      toast({ title: "Hopper cleared" });
+    },
+    onError: () => {
+      toast({ title: "Failed to clear hopper", variant: "destructive" });
+    },
+  });
+
   // Add to Resources mutation
   const addToResourcesMutation = useMutation({
     mutationFn: async (ids: string[]) => {
@@ -656,11 +684,22 @@ const Hopper = ({ selectedDate }: HopperProps) => {
           </Button>
         )}
 
-        {/* Item count indicator */}
+        {/* Item count and clear all */}
         {items.length > 0 && (
-          <span className="text-xs ml-auto text-muted-foreground">
-            {items.length} items
-          </span>
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">
+              {items.length} items
+            </span>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive"
+              onClick={() => clearAllMutation.mutate()}
+              disabled={clearAllMutation.isPending}
+            >
+              Clear All
+            </Button>
+          </div>
         )}
       </div>
 
