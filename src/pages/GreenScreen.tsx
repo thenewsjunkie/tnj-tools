@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,28 +15,49 @@ const PRESET_COLORS = [
 const GreenScreen = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const containerRef = useRef<HTMLDivElement>(null);
   const initialColor = searchParams.get("color") 
     ? `#${searchParams.get("color")}` 
     : "#00FF00";
   
   const [color, setColor] = useState(initialColor);
-  const [showControls, setShowControls] = useState(true);
+  const [showControls, setShowControls] = useState(false);
   const [hideTimeout, setHideTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const resetHideTimer = useCallback(() => {
     setShowControls(true);
     if (hideTimeout) clearTimeout(hideTimeout);
-    const timeout = setTimeout(() => setShowControls(false), 3000);
+    const timeout = setTimeout(() => setShowControls(false), 2000);
     setHideTimeout(timeout);
   }, [hideTimeout]);
 
-  const handleExit = () => {
+  const enterFullscreen = useCallback(async () => {
+    try {
+      if (containerRef.current && !document.fullscreenElement) {
+        await containerRef.current.requestFullscreen();
+      }
+    } catch (err) {
+      console.log("Fullscreen not supported");
+    }
+  }, []);
+
+  const handleExit = useCallback(async () => {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    }
     navigate("/admin");
-  };
+  }, [navigate]);
+
+  const handleFullscreenChange = useCallback(() => {
+    // When user exits fullscreen (via Escape), navigate back
+    if (!document.fullscreenElement) {
+      navigate("/admin");
+    }
+  }, [navigate]);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // Don't handle Escape - let the browser's fullscreen handle it
     if (e.key === "Escape") {
-      handleExit();
       return;
     }
     
@@ -48,29 +69,40 @@ const GreenScreen = () => {
   }, [resetHideTimer]);
 
   useEffect(() => {
+    // Enter fullscreen on mount
+    enterFullscreen();
+    
     window.addEventListener("keydown", handleKeyDown);
-    resetHideTimer();
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
     
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
       if (hideTimeout) clearTimeout(hideTimeout);
     };
-  }, [handleKeyDown]);
+  }, [handleKeyDown, handleFullscreenChange, enterFullscreen]);
 
   const handleMouseMove = () => {
     resetHideTimer();
   };
 
   const handleClick = () => {
-    setShowControls(!showControls);
-    if (!showControls) resetHideTimer();
+    if (!showControls) {
+      resetHideTimer();
+    } else {
+      setShowControls(false);
+    }
   };
 
   const isDark = color === "#000000" || color === "#0000FF";
 
   return (
     <div
-      className="fixed inset-0 z-50 cursor-none"
+      ref={containerRef}
+      className={cn(
+        "fixed inset-0 z-50 transition-cursor duration-300",
+        showControls ? "cursor-auto" : "cursor-none"
+      )}
       style={{ backgroundColor: color }}
       onMouseMove={handleMouseMove}
       onClick={handleClick}
