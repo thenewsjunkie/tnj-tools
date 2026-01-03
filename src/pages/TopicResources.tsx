@@ -1,11 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { ArrowLeft, Plus, Trash2, Pencil, X, Check, Link as LinkIcon, Image as ImageIcon, Loader2, ExternalLink, Upload } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Pencil, X, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -20,23 +19,18 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Topic, Link, HourBlock } from "@/components/admin/show-prep/types";
 import { v4 as uuidv4 } from "uuid";
-import { format, parseISO } from "date-fns";
 
 const TopicResources = () => {
   const { date, topicId } = useParams<{ date: string; topicId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [isAddingLink, setIsAddingLink] = useState(false);
-  const [newUrl, setNewUrl] = useState("");
-  const [newTitle, setNewTitle] = useState("");
+  const [isAdding, setIsAdding] = useState(false);
+  const [url, setUrl] = useState("");
+  const [title, setTitle] = useState("");
   const [isFetchingTitle, setIsFetchingTitle] = useState(false);
-  const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
-  
-  const [isAddingImage, setIsAddingImage] = useState(false);
-  const [newImageUrl, setNewImageUrl] = useState("");
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // Fetch show prep notes for the date
   const { data: showPrepData, isLoading } = useQuery({
@@ -90,50 +84,49 @@ const TopicResources = () => {
   });
 
   // Fetch title from URL
-  const fetchTitleFromUrl = async (url: string): Promise<{ title?: string; thumbnail_url?: string }> => {
+  const fetchTitleFromUrl = async (inputUrl: string) => {
+    if (!inputUrl.trim() || title.trim()) return;
+    
+    let processedUrl = inputUrl.trim();
+    if (!processedUrl.startsWith("http://") && !processedUrl.startsWith("https://")) {
+      processedUrl = "https://" + processedUrl;
+    }
+
+    setIsFetchingTitle(true);
     try {
       const { data, error } = await supabase.functions.invoke("fetch-link-metadata", {
-        body: { url },
+        body: { url: processedUrl },
       });
-      if (error) throw error;
       
-      // Generate thumbnail URL
-      const encodedUrl = encodeURIComponent(url);
-      const thumbnail_url = `https://image.thum.io/get/width/300/${url}`;
-      
-      return { 
-        title: data?.title,
-        thumbnail_url 
-      };
-    } catch (error) {
-      console.error("Failed to fetch title:", error);
-      return {};
+      if (!error && data?.title) {
+        setTitle(data.title);
+      }
+    } catch (e) {
+      console.error("Failed to fetch title:", e);
+    } finally {
+      setIsFetchingTitle(false);
     }
   };
 
+  // Get thumbnail URL for a link
+  const getThumbnailUrl = (url: string) => {
+    return `https://image.thum.io/get/width/300/${url}`;
+  };
+
   // Handle adding a new link
-  const handleAddLink = async () => {
-    if (!newUrl.trim() || !topic) return;
+  const handleAddLink = () => {
+    if (!url.trim() || !title.trim() || !topic) return;
     
-    let title = newTitle.trim();
-    let thumbnail_url: string | undefined;
-    
-    if (!title) {
-      setIsFetchingTitle(true);
-      const metadata = await fetchTitleFromUrl(newUrl);
-      title = metadata.title || new URL(newUrl).hostname;
-      thumbnail_url = metadata.thumbnail_url;
-      setIsFetchingTitle(false);
-    } else {
-      const encodedUrl = encodeURIComponent(newUrl);
-      thumbnail_url = `https://image.thum.io/get/width/300/${newUrl}`;
+    let processedUrl = url.trim();
+    if (!processedUrl.startsWith("http://") && !processedUrl.startsWith("https://")) {
+      processedUrl = "https://" + processedUrl;
     }
-    
+
     const newLink: Link = {
       id: uuidv4(),
-      url: newUrl,
-      title,
-      thumbnail_url,
+      url: processedUrl,
+      title: title.trim(),
+      thumbnail_url: getThumbnailUrl(processedUrl),
     };
     
     updateMutation.mutate({
@@ -141,41 +134,34 @@ const TopicResources = () => {
       links: [...topic.links, newLink],
     });
     
-    setNewUrl("");
-    setNewTitle("");
-    setIsAddingLink(false);
+    setUrl("");
+    setTitle("");
+    setIsAdding(false);
     toast.success("Link added");
   };
 
-  // Handle URL blur to auto-fetch title
-  const handleUrlBlur = async () => {
-    if (!newUrl.trim() || newTitle.trim()) return;
-    
-    setIsFetchingTitle(true);
-    const metadata = await fetchTitleFromUrl(newUrl);
-    if (metadata.title) {
-      setNewTitle(metadata.title);
-    }
-    setIsFetchingTitle(false);
-  };
-
   // Handle editing a link
-  const startEditingLink = (link: Link) => {
-    setEditingLinkId(link.id);
+  const startEditing = (link: Link) => {
+    setEditingId(link.id);
     setEditTitle(link.title || "");
   };
 
-  const saveEditLink = () => {
-    if (!topic || !editingLinkId) return;
+  const saveEdit = () => {
+    if (!topic || !editingId || !editTitle.trim()) return;
     
     updateMutation.mutate({
       ...topic,
       links: topic.links.map(l => 
-        l.id === editingLinkId ? { ...l, title: editTitle } : l
+        l.id === editingId ? { ...l, title: editTitle.trim() } : l
       ),
     });
     
-    setEditingLinkId(null);
+    setEditingId(null);
+    setEditTitle("");
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
     setEditTitle("");
   };
 
@@ -187,7 +173,7 @@ const TopicResources = () => {
       ...topic,
       links: topic.links.filter(l => l.id !== linkId),
     });
-    toast.success("Link removed");
+    toast.success("Link deleted");
   };
 
   // Handle clearing all links
@@ -201,81 +187,9 @@ const TopicResources = () => {
     toast.success("All links cleared");
   };
 
-  // Handle adding an image
-  const handleAddImage = () => {
-    if (!newImageUrl.trim() || !topic) return;
-    
-    updateMutation.mutate({
-      ...topic,
-      images: [...topic.images, newImageUrl],
-    });
-    
-    setNewImageUrl("");
-    setIsAddingImage(false);
-    toast.success("Image added");
-  };
-
-  // Handle uploading an image
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !topic) return;
-    
-    setIsUploadingImage(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      
-      const { data, error } = await supabase.functions.invoke("upload-show-note-image", {
-        body: formData,
-      });
-      
-      if (error) throw error;
-      
-      updateMutation.mutate({
-        ...topic,
-        images: [...topic.images, data.url],
-      });
-      
-      toast.success("Image uploaded");
-    } catch (error) {
-      console.error("Failed to upload image:", error);
-      toast.error("Failed to upload image");
-    } finally {
-      setIsUploadingImage(false);
-    }
-  };
-
-  // Handle deleting an image
-  const handleDeleteImage = (index: number) => {
-    if (!topic) return;
-    
-    updateMutation.mutate({
-      ...topic,
-      images: topic.images.filter((_, i) => i !== index),
-    });
-    toast.success("Image removed");
-  };
-
-  // Handle clearing all images
-  const handleClearAllImages = () => {
-    if (!topic) return;
-    
-    updateMutation.mutate({
-      ...topic,
-      images: [],
-    });
-    toast.success("All images cleared");
-  };
-
-  // Get thumbnail URL for a link
-  const getThumbnailUrl = (link: Link) => {
-    if (link.thumbnail_url) return link.thumbnail_url;
-    return `https://image.thum.io/get/width/300/${link.url}`;
-  };
-
   if (isLoading) {
     return (
-      <div className="p-8 flex items-center justify-center">
+      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
@@ -283,278 +197,198 @@ const TopicResources = () => {
 
   if (!topic) {
     return (
-      <div className="p-8 text-center">
-        <p className="text-muted-foreground">Topic not found</p>
-        <Button variant="outline" className="mt-4" onClick={() => navigate(-1)}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Go Back
-        </Button>
+      <div className="min-h-screen bg-background p-6">
+        <div className="max-w-3xl mx-auto text-center py-12">
+          <p className="text-muted-foreground mb-4">Topic not found</p>
+          <Button variant="outline" onClick={() => navigate(-1)}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Go Back
+          </Button>
+        </div>
       </div>
     );
   }
 
-  const formattedDate = date ? format(parseISO(date), "MMMM d, yyyy") : "";
-  const resourceCount = topic.links.length + topic.images.length;
-
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-2">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Show Prep
-          </Button>
-          <h1 className="text-2xl font-bold">Resources for "{topic.title || "Untitled Topic"}"</h1>
-          <p className="text-muted-foreground">{formattedDate}</p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-background p-6">
+      <div className="max-w-3xl mx-auto">
+        {/* Back button */}
+        <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-4">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
 
-      {/* Links Section */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <LinkIcon className="h-5 w-5" />
-            Links
-            {topic.links.length > 0 && (
-              <span className="text-sm font-normal text-muted-foreground">({topic.links.length})</span>
-            )}
-          </h2>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-2xl font-bold text-foreground">
+            Resources for "{topic.title || "Untitled Topic"}"
+          </h1>
           <div className="flex gap-2">
             {topic.links.length > 0 && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" className="text-destructive border-destructive hover:bg-destructive/10">
                     Clear All
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Clear all links?</AlertDialogTitle>
+                    <AlertDialogTitle>Clear all resources?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will remove all {topic.links.length} links from this topic. This action cannot be undone.
+                      This will permanently delete all {topic.links.length} resource links. This action cannot be undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleClearAllLinks}>Clear All</AlertDialogAction>
+                    <AlertDialogAction
+                      onClick={handleClearAllLinks}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Clear All
+                    </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
             )}
-            <Button size="sm" onClick={() => setIsAddingLink(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Link
-            </Button>
+            {!isAdding && (
+              <Button onClick={() => setIsAdding(true)} size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Link
+              </Button>
+            )}
           </div>
         </div>
 
         {/* Add Link Form */}
-        {isAddingLink && (
-          <Card className="p-4 space-y-3">
-            <div className="space-y-2">
-              <Input
-                placeholder="Paste URL here..."
-                value={newUrl}
-                onChange={(e) => setNewUrl(e.target.value)}
-                onBlur={handleUrlBlur}
-                autoFocus
-              />
-              <div className="flex gap-2">
+        {isAdding && (
+          <div className="mb-8 p-4 border border-border rounded-lg bg-card">
+            <div className="space-y-3">
+              <div className="relative">
                 <Input
-                  placeholder={isFetchingTitle ? "Fetching title..." : "Title (optional, auto-fetched)"}
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
+                  placeholder="URL"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  onBlur={() => fetchTitleFromUrl(url)}
+                  autoFocus
+                />
+              </div>
+              <div className="relative">
+                <Input
+                  placeholder="Title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
                   disabled={isFetchingTitle}
                 />
-                {isFetchingTitle && <Loader2 className="h-4 w-4 animate-spin self-center" />}
+                {isFetchingTitle && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  </div>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={handleAddLink} disabled={!title.trim() || !url.trim()}>
+                  Add
+                </Button>
+                <Button variant="outline" onClick={() => { setIsAdding(false); setTitle(""); setUrl(""); }}>
+                  Cancel
+                </Button>
               </div>
             </div>
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" size="sm" onClick={() => { setIsAddingLink(false); setNewUrl(""); setNewTitle(""); }}>
-                Cancel
-              </Button>
-              <Button size="sm" onClick={handleAddLink} disabled={!newUrl.trim() || isFetchingTitle}>
-                Add Link
-              </Button>
-            </div>
-          </Card>
+          </div>
         )}
 
         {/* Links List */}
-        <div className="space-y-2">
-          {topic.links.map((link) => (
-            <Card key={link.id} className="p-3 flex items-center gap-3 group">
-              <div className="w-24 h-16 rounded overflow-hidden bg-muted flex-shrink-0">
-                <img
-                  src={getThumbnailUrl(link)}
-                  alt=""
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = "/placeholder.svg";
-                  }}
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                {editingLinkId === link.id ? (
-                  <div className="flex gap-2">
-                    <Input
-                      value={editTitle}
-                      onChange={(e) => setEditTitle(e.target.value)}
-                      className="h-8"
-                      autoFocus
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") saveEditLink();
-                        if (e.key === "Escape") setEditingLinkId(null);
-                      }}
-                    />
-                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={saveEditLink}>
-                      <Check className="h-4 w-4" />
-                    </Button>
-                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => setEditingLinkId(null)}>
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                    <p className="font-medium text-sm truncate">{link.title || "Untitled"}</p>
+        {topic.links.length === 0 ? (
+          <p className="text-muted-foreground text-center py-12">No resources yet. Add your first link!</p>
+        ) : (
+          <div className="space-y-4">
+            {topic.links.map((link) => (
+              <div
+                key={link.id}
+                className="group flex items-start gap-4 p-4 rounded-lg bg-card border border-border hover:border-primary/50 transition-colors"
+              >
+                {/* Thumbnail */}
+                <a
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-shrink-0 w-40 h-24 rounded overflow-hidden bg-muted"
+                >
+                  <img
+                    src={link.thumbnail_url || getThumbnailUrl(link.url)}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                </a>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  {editingId === link.id ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") saveEdit();
+                          if (e.key === "Escape") cancelEdit();
+                        }}
+                        autoFocus
+                        className="text-lg"
+                      />
+                      <Button size="icon" variant="ghost" onClick={saveEdit}>
+                        <Check className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" onClick={cancelEdit}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
                     <a
                       href={link.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs text-muted-foreground hover:text-primary truncate block flex items-center gap-1"
+                      className="block text-xl font-medium text-foreground hover:text-primary transition-colors truncate"
                     >
-                      {new URL(link.url).hostname}
-                      <ExternalLink className="h-3 w-3" />
+                      {link.title || "Untitled"}
                     </a>
-                  </>
-                )}
-              </div>
-              {editingLinkId !== link.id && (
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => startEditingLink(link)}>
+                  )}
+                  <p className="text-sm text-muted-foreground truncate mt-1">
+                    {(() => {
+                      try {
+                        return new URL(link.url).hostname;
+                      } catch {
+                        return link.url;
+                      }
+                    })()}
+                  </p>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-muted-foreground hover:text-foreground"
+                    onClick={() => startEditing(link)}
+                  >
                     <Pencil className="h-4 w-4" />
                   </Button>
-                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:text-destructive" onClick={() => handleDeleteLink(link.id)}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-muted-foreground hover:text-destructive"
+                    onClick={() => handleDeleteLink(link.id)}
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
-              )}
-            </Card>
-          ))}
-          {topic.links.length === 0 && !isAddingLink && (
-            <p className="text-sm text-muted-foreground text-center py-4">No links yet. Click "Add Link" to get started.</p>
-          )}
-        </div>
-      </div>
-
-      {/* Images Section */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <ImageIcon className="h-5 w-5" />
-            Images
-            {topic.images.length > 0 && (
-              <span className="text-sm font-normal text-muted-foreground">({topic.images.length})</span>
-            )}
-          </h2>
-          <div className="flex gap-2">
-            {topic.images.length > 0 && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    Clear All
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Clear all images?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will remove all {topic.images.length} images from this topic. This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleClearAllImages}>Clear All</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
-            <Button size="sm" onClick={() => setIsAddingImage(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Image
-            </Button>
+              </div>
+            ))}
           </div>
-        </div>
-
-        {/* Add Image Form */}
-        {isAddingImage && (
-          <Card className="p-4 space-y-3">
-            <div className="flex gap-2">
-              <Input
-                placeholder="Paste image URL..."
-                value={newImageUrl}
-                onChange={(e) => setNewImageUrl(e.target.value)}
-                autoFocus
-              />
-              <Button size="sm" onClick={handleAddImage} disabled={!newImageUrl.trim()}>
-                Add
-              </Button>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">or</span>
-              <label className="cursor-pointer">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                  disabled={isUploadingImage}
-                />
-                <Button size="sm" variant="outline" asChild disabled={isUploadingImage}>
-                  <span>
-                    {isUploadingImage ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : (
-                      <Upload className="h-4 w-4 mr-2" />
-                    )}
-                    Upload File
-                  </span>
-                </Button>
-              </label>
-              <Button variant="ghost" size="sm" onClick={() => { setIsAddingImage(false); setNewImageUrl(""); }}>
-                Cancel
-              </Button>
-            </div>
-          </Card>
         )}
-
-        {/* Images Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {topic.images.map((imageUrl, index) => (
-            <div key={index} className="relative group aspect-video rounded-lg overflow-hidden bg-muted">
-              <img
-                src={imageUrl}
-                alt=""
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = "/placeholder.svg";
-                }}
-              />
-              <Button
-                size="sm"
-                variant="destructive"
-                className="absolute top-2 right-2 h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => handleDeleteImage(index)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
-          {topic.images.length === 0 && !isAddingImage && (
-            <p className="text-sm text-muted-foreground text-center py-4 col-span-full">No images yet. Click "Add Image" to get started.</p>
-          )}
-        </div>
       </div>
     </div>
   );
