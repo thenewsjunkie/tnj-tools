@@ -18,11 +18,13 @@ interface SortableResourceCardProps {
   onDelete: () => void;
   getThumbnailUrl: (url: string) => string;
   onRemoveThumbnail?: () => void;
+  onAddToHopper?: () => void;
 }
 
 export const SortableResourceCard = ({
   id,
   onRemoveThumbnail,
+  onAddToHopper,
   ...props
 }: SortableResourceCardProps) => {
   const {
@@ -54,6 +56,7 @@ export const SortableResourceCard = ({
           id={id} 
           {...props} 
           onRemoveThumbnail={onRemoveThumbnail}
+          onAddToHopper={onAddToHopper}
         />
       </div>
     </div>

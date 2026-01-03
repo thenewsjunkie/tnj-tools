@@ -20,6 +20,7 @@ import { Topic, Link, HourBlock } from "@/components/admin/show-prep/types";
 import { v4 as uuidv4 } from "uuid";
 import { AddResourceForm } from "@/components/resources/AddResourceForm";
 import { SortableResourceCard } from "@/components/resources/SortableResourceCard";
+import { useAddToHopper } from "@/hooks/useAddToHopper";
 import {
   DndContext,
   closestCenter,
@@ -41,6 +42,7 @@ const TopicResources = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const addToHopper = useAddToHopper();
 
   const [isAdding, setIsAdding] = useState(false);
   const [url, setUrl] = useState("");
@@ -516,6 +518,12 @@ const TopicResources = () => {
                     onDelete={() => deleteMutation.mutate(link.id)}
                     getThumbnailUrl={getThumbnailUrl}
                     onRemoveThumbnail={link.type !== "image" && link.thumbnail_url ? () => removeThumbnailMutation.mutate(link.id) : undefined}
+                    onAddToHopper={() => addToHopper.mutate({
+                      url: link.url,
+                      title: link.title || undefined,
+                      thumbnailUrl: link.thumbnail_url || undefined,
+                      date: date ? new Date(date) : undefined,
+                    })}
                   />
                 ))}
               </div>
