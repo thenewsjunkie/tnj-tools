@@ -3,13 +3,13 @@ import { format, isToday } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { DndContext, closestCenter, DragEndEvent, DragOverlay, DragStartEvent } from "@dnd-kit/core";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, CalendarOff } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import DateSelector from "./DateSelector";
 import HourCard from "./HourCard";
 import DroppableHour from "./DroppableHour";
 import { HourBlock, Topic, DEFAULT_SHOW_HOURS } from "./types";
-import { isWeekend, getScheduledSegments, ScheduledSegment } from "./scheduledSegments";
+import { getScheduledSegments, ScheduledSegment } from "./scheduledSegments";
 import ScheduledSegmentsManager from "./ScheduledSegmentsManager";
 
 const createEmptyHours = (): HourBlock[] => {
@@ -265,12 +265,6 @@ const ShowPrepNotes = () => {
       {isLoading ? (
         <div className="flex items-center justify-center py-8">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
-      ) : isWeekend(selectedDate) ? (
-        <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-          <CalendarOff className="h-12 w-12 mb-3 opacity-50" />
-          <p className="text-lg font-medium">Show is OFF</p>
-          <p className="text-sm">No show on weekends</p>
         </div>
       ) : (
         <DndContext
