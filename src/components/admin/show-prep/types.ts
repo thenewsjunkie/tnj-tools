@@ -21,6 +21,7 @@ export interface Topic {
   links: Link[];
   images: string[];
   completed?: boolean;
+  tags?: string[];
 }
 
 export interface HourBlock {

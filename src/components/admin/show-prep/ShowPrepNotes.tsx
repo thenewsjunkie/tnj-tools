@@ -219,6 +219,11 @@ const ShowPrepNotes = () => {
     ? hours.flatMap(h => h.topics).find(t => t.id === activeTopicId)
     : null;
 
+  // Extract all unique tags from all topics for autocomplete
+  const allTags = Array.from(
+    new Set(hours.flatMap(h => h.topics.flatMap(t => t.tags || [])))
+  ).sort();
+
   // Check if current time is within an hour block (with 5-minute early start)
   const isCurrentHour = (hour: HourBlock): boolean => {
     if (!isToday(selectedDate)) return false;
@@ -282,6 +287,7 @@ const ShowPrepNotes = () => {
                   onChange={(updated) => handleHourChange(index, updated)}
                   defaultOpen={isCurrentHour(hour)}
                   scheduledSegments={getScheduledSegments(selectedDate, hour.id, scheduledSegments)}
+                  allTags={allTags}
                 />
               </DroppableHour>
             ))}

@@ -3,20 +3,23 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { GripVertical, Trash2, Pencil, Check, CheckCircle2, Circle, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Topic } from "./types";
+import { TagButton } from "./TagInput";
 
 interface TopicCardProps {
   topic: Topic;
   date: string;
   onChange: (topic: Topic) => void;
   onDelete: () => void;
+  allTags?: string[];
 }
 
-const TopicCard = ({ topic, date, onChange, onDelete }: TopicCardProps) => {
+const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardProps) => {
   const navigate = useNavigate();
   const hasContent = topic.title.trim() || topic.links.length > 0 || topic.images.length > 0;
   const [isEditing, setIsEditing] = useState(!hasContent);
@@ -44,6 +47,10 @@ const TopicCard = ({ topic, date, onChange, onDelete }: TopicCardProps) => {
 
   const handleToggleComplete = () => {
     onChange({ ...topic, completed: !topic.completed });
+  };
+
+  const handleTagsChange = (tags: string[]) => {
+    onChange({ ...topic, tags });
   };
 
   const handleOpenResources = () => {
@@ -87,7 +94,27 @@ const TopicCard = ({ topic, date, onChange, onDelete }: TopicCardProps) => {
               )}
             </div>
 
+            {topic.tags && topic.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mr-2">
+                {topic.tags.slice(0, 3).map(tag => (
+                  <Badge key={tag} variant="outline" className="text-[10px] px-1.5 py-0">
+                    {tag}
+                  </Badge>
+                ))}
+                {topic.tags.length > 3 && (
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                    +{topic.tags.length - 3}
+                  </Badge>
+                )}
+              </div>
+            )}
+
             <div className="flex items-center gap-1">
+              <TagButton
+                tags={topic.tags || []}
+                onChange={handleTagsChange}
+                allTags={allTags}
+              />
               <Button
                 size="sm"
                 variant="ghost"
