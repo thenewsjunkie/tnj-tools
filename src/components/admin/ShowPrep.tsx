@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { format, isFriday as checkIsFriday, addDays, isToday } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Trash2, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import ShowPrepNotes from "./show-prep/ShowPrepNotes";
@@ -58,6 +58,7 @@ const ShowPrep = () => {
   const [lastMinuteFrom, setLastMinuteFrom] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isHopperOpen, setIsHopperOpen] = useState(false);
   const hasLoadedRef = useRef(false);
   const { toast } = useToast();
 
@@ -183,112 +184,132 @@ const ShowPrep = () => {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div className="space-y-3 text-base leading-loose">
-        {/* Date Navigation Header */}
-        <div className="flex items-center justify-between mb-2">
-          <Button variant="ghost" size="icon" onClick={() => navigateDay(-1)}>
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <div className="text-center">
-            <p className="text-foreground flex items-center justify-center gap-2">
-              It is <span className="font-semibold">{selectedDateFormatted}</span>
-              {isSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
-            </p>
-            <div className="flex items-center justify-center gap-2">
-              {!isSelectedToday && (
-                <Button variant="link" size="sm" onClick={goToToday} className="text-xs p-0 h-auto">
-                  Go to Today
-                </Button>
-              )}
-            </div>
-          </div>
-          <Button variant="ghost" size="icon" onClick={() => navigateDay(1)}>
-            <ChevronRight className="h-5 w-5" />
-          </Button>
-        </div>
-        
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : (
-          <>
-            {/* Line 2: From topic */}
-            <p className="text-foreground">
-              Lots to get to today from{" "}
-              <AutoSizeInput
-                value={topics.fromTopic}
-                onChange={(value) => handleChange("fromTopic", value)}
-                placeholder="topic..."
-              />
-            </p>
-            
-            {/* Line 3: To topic */}
-            <p className="text-foreground">
-              to{" "}
-              <AutoSizeInput
-                value={topics.toTopic}
-                onChange={(value) => handleChange("toTopic", value)}
-                placeholder="topic..."
-              />
-            </p>
-            
-            {/* Line 4: And topic */}
-            <p className="text-foreground">
-              and{" "}
-              <AutoSizeInput
-                value={topics.andTopic}
-                onChange={(value) => handleChange("andTopic", value)}
-                placeholder="topic..."
-              />
-            </p>
-            
-            {/* Static closing line */}
-            <p className="text-foreground">
-              plus your calls, Dispatches, emails, texts & more.
-            </p>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleClear}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <Trash2 className="h-3 w-3 mr-1" />
-              Clear All
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-3 text-base leading-loose">
+          {/* Date Navigation Header */}
+          <div className="flex items-center justify-between mb-2">
+            <Button variant="ghost" size="icon" onClick={() => navigateDay(-1)}>
+              <ChevronLeft className="h-5 w-5" />
             </Button>
-
-            {/* Friday: Last Minute Message */}
-            {isFriday && (
-              <div className="mt-4 space-y-2">
-                <p className="text-foreground">
-                  Last Minute Message From:{" "}
-                  <AutoSizeInput
-                    value={lastMinuteFrom}
-                    onChange={setLastMinuteFrom}
-                    placeholder="name..."
-                  />
-                </p>
-                {lastMinuteFrom && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleClearLastMinute}
-                    className="text-muted-foreground hover:text-foreground"
-                  >
-                    <Trash2 className="h-3 w-3 mr-1" />
-                    Clear
+            <div className="text-center">
+              <p className="text-foreground flex items-center justify-center gap-2">
+                It is <span className="font-semibold">{selectedDateFormatted}</span>
+                {isSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+              </p>
+              <div className="flex items-center justify-center gap-2">
+                {!isSelectedToday && (
+                  <Button variant="link" size="sm" onClick={goToToday} className="text-xs p-0 h-auto">
+                    Go to Today
                   </Button>
                 )}
               </div>
-            )}
-          </>
-        )}
+            </div>
+            <Button variant="ghost" size="icon" onClick={() => navigateDay(1)}>
+              <ChevronRight className="h-5 w-5" />
+            </Button>
+          </div>
+          
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <>
+              {/* Line 2: From topic */}
+              <p className="text-foreground">
+                Lots to get to today from{" "}
+                <AutoSizeInput
+                  value={topics.fromTopic}
+                  onChange={(value) => handleChange("fromTopic", value)}
+                  placeholder="topic..."
+                />
+              </p>
+              
+              {/* Line 3: To topic */}
+              <p className="text-foreground">
+                to{" "}
+                <AutoSizeInput
+                  value={topics.toTopic}
+                  onChange={(value) => handleChange("toTopic", value)}
+                  placeholder="topic..."
+                />
+              </p>
+              
+              {/* Line 4: And topic */}
+              <p className="text-foreground">
+                and{" "}
+                <AutoSizeInput
+                  value={topics.andTopic}
+                  onChange={(value) => handleChange("andTopic", value)}
+                  placeholder="topic..."
+                />
+              </p>
+              
+              {/* Static closing line */}
+              <p className="text-foreground">
+                plus your calls, Dispatches, emails, texts & more.
+              </p>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClear}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <Trash2 className="h-3 w-3 mr-1" />
+                Clear All
+              </Button>
+
+              {/* Friday: Last Minute Message */}
+              {isFriday && (
+                <div className="mt-4 space-y-2">
+                  <p className="text-foreground">
+                    Last Minute Message From:{" "}
+                    <AutoSizeInput
+                      value={lastMinuteFrom}
+                      onChange={setLastMinuteFrom}
+                      placeholder="name..."
+                    />
+                  </p>
+                  {lastMinuteFrom && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleClearLastMinute}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <Trash2 className="h-3 w-3 mr-1" />
+                      Clear
+                    </Button>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        <div className="md:pl-6 md:border-l border-border">
+          <ShowPrepNotes />
+        </div>
       </div>
 
-      <div className="md:pl-6 md:border-l border-border">
-        <ShowPrepNotes />
+      {/* The Hopper Section */}
+      <div className="w-full border-t border-border pt-4">
+        <Button
+          variant="outline"
+          onClick={() => setIsHopperOpen(!isHopperOpen)}
+          className="w-full justify-between"
+        >
+          <span>{isHopperOpen ? "Close Hopper" : "Open Hopper"}</span>
+          {isHopperOpen ? <ChevronUp className="h-4 w-4 ml-2" /> : <ChevronDown className="h-4 w-4 ml-2" />}
+        </Button>
+        
+        {isHopperOpen && (
+          <div className="mt-4 p-4 bg-muted/50 rounded-lg min-h-[200px]">
+            <p className="text-muted-foreground text-center">The Hopper content goes here</p>
+          </div>
+        )}
       </div>
     </div>
   );
