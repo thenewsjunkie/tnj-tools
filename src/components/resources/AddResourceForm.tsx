@@ -14,6 +14,7 @@ interface AddResourceFormProps {
   isPending?: boolean;
   fetchTitleFromUrl?: (url: string) => Promise<void>;
   isFetchingTitle?: boolean;
+  isCapturingScreenshot?: boolean;
   title: string;
   setTitle: (title: string) => void;
   url: string;
@@ -26,6 +27,7 @@ export const AddResourceForm = ({
   isPending = false,
   fetchTitleFromUrl,
   isFetchingTitle = false,
+  isCapturingScreenshot = false,
   title,
   setTitle,
   url,
@@ -167,7 +169,12 @@ export const AddResourceForm = ({
             type="submit" 
             disabled={isPending || isUploading || !isValid}
           >
-            {isUploading ? (
+            {isCapturingScreenshot ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Capturing screenshot...
+              </>
+            ) : isUploading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Uploading...

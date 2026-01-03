@@ -48,8 +48,10 @@ const Resources = () => {
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [isFetchingTitle, setIsFetchingTitle] = useState(false);
+  const [isCapturingScreenshot, setIsCapturingScreenshot] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
+  const [refreshingThumbnailId, setRefreshingThumbnailId] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -100,19 +102,35 @@ const Resources = () => {
     return `https://image.thum.io/get/width/300/${url}`;
   };
 
+  const captureScreenshot = async (targetUrl: string): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase.functions.invoke("capture-screenshot", {
+        body: { url: targetUrl },
+      });
+      
+      if (error || !data?.success) {
+        console.error("Failed to capture screenshot:", error || data?.error);
+        return null;
+      }
+      
+      return data.thumbnailUrl;
+    } catch (e) {
+      console.error("Screenshot capture error:", e);
+      return null;
+    }
+  };
+
   const addMutation = useMutation({
-    mutationFn: async ({ title, url, type }: { title: string; url: string; type: string }) => {
+    mutationFn: async ({ title, url, type, thumbnailUrl }: { title: string; url: string; type: string; thumbnailUrl?: string }) => {
       const maxOrder = resources.length > 0 
         ? Math.max(...resources.map(r => r.display_order)) 
         : -1;
-
-      const thumbnailUrl = type === "image" ? url : getThumbnailUrl(url);
 
       const { error } = await supabase.from("video_resources").insert({
         title: title.trim(),
         url: url,
         display_order: maxOrder + 1,
-        thumbnail_url: thumbnailUrl,
+        thumbnail_url: thumbnailUrl || null,
         type: type,
       });
       if (error) throw error;
@@ -122,10 +140,38 @@ const Resources = () => {
       setTitle("");
       setUrl("");
       setIsAdding(false);
+      setIsCapturingScreenshot(false);
       toast({ title: "Resource added" });
     },
     onError: () => {
+      setIsCapturingScreenshot(false);
       toast({ title: "Failed to add resource", variant: "destructive" });
+    },
+  });
+
+  const refreshThumbnailMutation = useMutation({
+    mutationFn: async ({ id, url }: { id: string; url: string }) => {
+      const thumbnailUrl = await captureScreenshot(url);
+      
+      if (!thumbnailUrl) {
+        throw new Error("Failed to capture screenshot");
+      }
+      
+      const { error } = await supabase
+        .from("video_resources")
+        .update({ thumbnail_url: thumbnailUrl })
+        .eq("id", id);
+        
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["video-resources"] });
+      setRefreshingThumbnailId(null);
+      toast({ title: "Thumbnail updated" });
+    },
+    onError: () => {
+      setRefreshingThumbnailId(null);
+      toast({ title: "Failed to refresh thumbnail", variant: "destructive" });
     },
   });
 
@@ -202,8 +248,19 @@ const Resources = () => {
     }
   };
 
-  const handleSubmit = (data: { title: string; url: string; type: string }) => {
-    addMutation.mutate(data);
+  const handleSubmit = async (data: { title: string; url: string; type: string }) => {
+    if (data.type === "link") {
+      setIsCapturingScreenshot(true);
+      const thumbnailUrl = await captureScreenshot(data.url);
+      addMutation.mutate({ ...data, thumbnailUrl: thumbnailUrl || undefined });
+    } else {
+      addMutation.mutate({ ...data, thumbnailUrl: data.url });
+    }
+  };
+
+  const handleRefreshThumbnail = (id: string, url: string) => {
+    setRefreshingThumbnailId(id);
+    refreshThumbnailMutation.mutate({ id, url });
   };
 
   const startEditing = (resource: VideoResource) => {
@@ -266,10 +323,11 @@ const Resources = () => {
         {isAdding && (
           <AddResourceForm
             onSubmit={handleSubmit}
-            onCancel={() => { setIsAdding(false); setTitle(""); setUrl(""); }}
-            isPending={addMutation.isPending}
+            onCancel={() => { setIsAdding(false); setTitle(""); setUrl(""); setIsCapturingScreenshot(false); }}
+            isPending={addMutation.isPending || isCapturingScreenshot}
             fetchTitleFromUrl={fetchTitleFromUrl}
             isFetchingTitle={isFetchingTitle}
+            isCapturingScreenshot={isCapturingScreenshot}
             title={title}
             setTitle={setTitle}
             url={url}
@@ -308,6 +366,8 @@ const Resources = () => {
                     onCancelEdit={cancelEdit}
                     onDelete={() => deleteMutation.mutate(resource.id)}
                     getThumbnailUrl={getThumbnailUrl}
+                    onRefreshThumbnail={() => handleRefreshThumbnail(resource.id, resource.url)}
+                    isRefreshingThumbnail={refreshingThumbnailId === resource.id}
                   />
                 ))}
               </div>

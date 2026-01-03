@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Pencil, Trash2, Check, X, Image as ImageIcon } from "lucide-react";
+import { Pencil, Trash2, Check, X, Image as ImageIcon, RefreshCw, Loader2 } from "lucide-react";
 
 interface ResourceCardProps {
   id: string;
@@ -16,6 +16,8 @@ interface ResourceCardProps {
   onCancelEdit: () => void;
   onDelete: () => void;
   getThumbnailUrl: (url: string) => string;
+  onRefreshThumbnail?: () => void;
+  isRefreshingThumbnail?: boolean;
 }
 
 export const ResourceCard = ({
@@ -32,6 +34,8 @@ export const ResourceCard = ({
   onCancelEdit,
   onDelete,
   getThumbnailUrl,
+  onRefreshThumbnail,
+  isRefreshingThumbnail = false,
 }: ResourceCardProps) => {
   const isImage = type === "image";
   
@@ -112,6 +116,22 @@ export const ResourceCard = ({
 
       {/* Actions */}
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        {!isImage && onRefreshThumbnail && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-muted-foreground hover:text-foreground"
+            onClick={onRefreshThumbnail}
+            disabled={isRefreshingThumbnail}
+            title="Refresh thumbnail"
+          >
+            {isRefreshingThumbnail ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="icon"
