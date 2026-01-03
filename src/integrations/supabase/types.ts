@@ -1061,6 +1061,7 @@ export type Database = {
           id: string
           thumbnail_url: string | null
           title: string
+          type: string
           url: string
         }
         Insert: {
@@ -1069,6 +1070,7 @@ export type Database = {
           id?: string
           thumbnail_url?: string | null
           title: string
+          type?: string
           url: string
         }
         Update: {
@@ -1077,6 +1079,7 @@ export type Database = {
           id?: string
           thumbnail_url?: string | null
           title?: string
+          type?: string
           url?: string
         }
         Relationships: []

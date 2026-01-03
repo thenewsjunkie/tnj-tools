@@ -10,6 +10,7 @@ export interface Link {
   url: string;
   title?: string;
   thumbnail_url?: string;
+  type?: 'link' | 'image';
 }
 
 export interface Topic {

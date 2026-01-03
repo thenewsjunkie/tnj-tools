@@ -3,8 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ArrowLeft, Plus, Trash2, Pencil, X, Check, Loader2 } from "lucide-react";
+import { ArrowLeft, Plus, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -19,6 +18,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Topic, Link, HourBlock } from "@/components/admin/show-prep/types";
 import { v4 as uuidv4 } from "uuid";
+import { AddResourceForm } from "@/components/resources/AddResourceForm";
+import { ResourceCard } from "@/components/resources/ResourceCard";
 
 const TopicResources = () => {
   const { date, topicId } = useParams<{ date: string; topicId: string }>();
@@ -88,9 +89,9 @@ const TopicResources = () => {
     }
   };
 
-  // Add link mutation - matches Resources.tsx pattern
+  // Add resource mutation
   const addMutation = useMutation({
-    mutationFn: async ({ title, url }: { title: string; url: string }) => {
+    mutationFn: async ({ title, url, type }: { title: string; url: string; type: string }) => {
       // Re-fetch the latest data to avoid stale state
       const { data: latestData, error: fetchError } = await supabase
         .from("show_prep_notes")
@@ -106,16 +107,12 @@ const TopicResources = () => {
         ? (latestRawData as { hours: HourBlock[] }).hours
         : [];
 
-      let processedUrl = url.trim();
-      if (!processedUrl.startsWith("http://") && !processedUrl.startsWith("https://")) {
-        processedUrl = "https://" + processedUrl;
-      }
-
       const newLink: Link = {
         id: uuidv4(),
-        url: processedUrl,
+        url: url,
         title: title.trim(),
-        thumbnail_url: getThumbnailUrl(processedUrl),
+        thumbnail_url: type === "image" ? url : getThumbnailUrl(url),
+        type: type as "link" | "image",
       };
 
       // Update the topic with the new link
@@ -138,10 +135,10 @@ const TopicResources = () => {
       setTitle("");
       setUrl("");
       setIsAdding(false);
-      toast({ title: "Link added" });
+      toast({ title: "Resource added" });
     },
     onError: () => {
-      toast({ title: "Failed to add link", variant: "destructive" });
+      toast({ title: "Failed to add resource", variant: "destructive" });
     },
   });
 
@@ -220,7 +217,7 @@ const TopicResources = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["show-prep-notes", date] });
-      toast({ title: "Link deleted" });
+      toast({ title: "Resource deleted" });
     },
   });
 
@@ -257,15 +254,12 @@ const TopicResources = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["show-prep-notes", date] });
-      toast({ title: "All links cleared" });
+      toast({ title: "All resources cleared" });
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (title.trim() && url.trim()) {
-      addMutation.mutate({ title, url });
-    }
+  const handleSubmit = (data: { title: string; url: string; type: string }) => {
+    addMutation.mutate(data);
   };
 
   const startEditing = (link: Link) => {
@@ -315,7 +309,7 @@ const TopicResources = () => {
           Back
         </Button>
 
-        {/* Header - matches Resources.tsx exactly */}
+        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-bold text-foreground">{topic.title} - Resources</h1>
           <div className="flex gap-2">
@@ -330,7 +324,7 @@ const TopicResources = () => {
                   <AlertDialogHeader>
                     <AlertDialogTitle>Clear all resources?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will permanently delete all {links.length} resource links. This action cannot be undone.
+                      This will permanently delete all {links.length} resources. This action cannot be undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -348,139 +342,49 @@ const TopicResources = () => {
             {!isAdding && (
               <Button onClick={() => setIsAdding(true)} size="sm">
                 <Plus className="h-4 w-4 mr-2" />
-                Add Link
+                Add Resource
               </Button>
             )}
           </div>
         </div>
 
-        {/* Add Link Form - uses form onSubmit like Resources.tsx */}
+        {/* Add Resource Form */}
         {isAdding && (
-          <form onSubmit={handleSubmit} className="mb-8 p-4 border border-border rounded-lg bg-card">
-            <div className="space-y-3">
-              <div className="relative">
-                <Input
-                  placeholder="URL"
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  onBlur={() => fetchTitleFromUrl(url)}
-                  autoFocus
-                />
-              </div>
-              <div className="relative">
-                <Input
-                  placeholder="Title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  disabled={isFetchingTitle}
-                />
-                {isFetchingTitle && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                  </div>
-                )}
-              </div>
-              <div className="flex gap-2">
-                <Button type="submit" disabled={addMutation.isPending || !title.trim() || !url.trim()}>
-                  Add
-                </Button>
-                <Button type="button" variant="outline" onClick={() => { setIsAdding(false); setTitle(""); setUrl(""); }}>
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          </form>
+          <AddResourceForm
+            onSubmit={handleSubmit}
+            onCancel={() => { setIsAdding(false); setTitle(""); setUrl(""); }}
+            isPending={addMutation.isPending}
+            fetchTitleFromUrl={fetchTitleFromUrl}
+            isFetchingTitle={isFetchingTitle}
+            title={title}
+            setTitle={setTitle}
+            url={url}
+            setUrl={setUrl}
+          />
         )}
 
-        {/* Links List - matches Resources.tsx exactly */}
+        {/* Resources List */}
         {links.length === 0 ? (
-          <p className="text-muted-foreground text-center py-12">No resources yet. Add your first link!</p>
+          <p className="text-muted-foreground text-center py-12">No resources yet. Add your first resource!</p>
         ) : (
           <div className="space-y-4">
             {links.map((link) => (
-              <div
+              <ResourceCard
                 key={link.id}
-                className="group flex items-start gap-4 p-4 rounded-lg bg-card border border-border hover:border-primary/50 transition-colors"
-              >
-                {/* Thumbnail */}
-                <a
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-shrink-0 w-40 h-24 rounded overflow-hidden bg-muted"
-                >
-                  <img
-                    src={link.thumbnail_url || getThumbnailUrl(link.url)}
-                    alt=""
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
-                </a>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  {editingId === link.id ? (
-                    <div className="flex items-center gap-2">
-                      <Input
-                        value={editTitle}
-                        onChange={(e) => setEditTitle(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") saveEdit();
-                          if (e.key === "Escape") cancelEdit();
-                        }}
-                        autoFocus
-                        className="text-lg"
-                      />
-                      <Button size="icon" variant="ghost" onClick={saveEdit}>
-                        <Check className="h-4 w-4" />
-                      </Button>
-                      <Button size="icon" variant="ghost" onClick={cancelEdit}>
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <a
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block text-xl font-medium text-foreground hover:text-primary transition-colors truncate"
-                    >
-                      {link.title || "Untitled"}
-                    </a>
-                  )}
-                  <p className="text-sm text-muted-foreground truncate mt-1">
-                    {(() => {
-                      try {
-                        return new URL(link.url).hostname;
-                      } catch {
-                        return link.url;
-                      }
-                    })()}
-                  </p>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-muted-foreground hover:text-foreground"
-                    onClick={() => startEditing(link)}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-muted-foreground hover:text-destructive"
-                    onClick={() => deleteMutation.mutate(link.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+                id={link.id}
+                title={link.title || "Untitled"}
+                url={link.url}
+                thumbnailUrl={link.thumbnail_url}
+                type={link.type}
+                isEditing={editingId === link.id}
+                editTitle={editTitle}
+                onEditTitleChange={setEditTitle}
+                onStartEdit={() => startEditing(link)}
+                onSaveEdit={saveEdit}
+                onCancelEdit={cancelEdit}
+                onDelete={() => deleteMutation.mutate(link.id)}
+                getThumbnailUrl={getThumbnailUrl}
+              />
             ))}
           </div>
         )}
