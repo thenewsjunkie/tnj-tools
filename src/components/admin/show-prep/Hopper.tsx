@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, Link2, Loader2, GripVertical, X, Unlink, Pencil, Check, FolderPlus, FileText, CalendarArrowDown } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -178,6 +179,7 @@ const GroupedItems = ({
   onRenameGroup,
   selectedIds,
   onSelect,
+  onSelectAll,
 }: {
   groupId: string;
   groupName: string | null;
@@ -188,6 +190,7 @@ const GroupedItems = ({
   onRenameGroup: (id: string, name: string) => void;
   selectedIds: Set<string>;
   onSelect: (id: string, isMulti: boolean) => void;
+  onSelectAll: (itemIds: string[], selected: boolean) => void;
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(groupName || "");
@@ -214,9 +217,19 @@ const GroupedItems = ({
     }
   };
 
+  const allSelected = items.length > 0 && items.every(item => selectedIds.has(item.id));
+  const someSelected = items.some(item => selectedIds.has(item.id));
+
   return (
     <div className="border border-primary/30 rounded-lg p-2 bg-primary/5">
       <div className="flex items-center justify-between mb-2 px-1 gap-2">
+        <Checkbox
+          checked={allSelected}
+          className={someSelected && !allSelected ? "opacity-50" : ""}
+          onCheckedChange={(checked) => {
+            onSelectAll(items.map(i => i.id), !!checked);
+          }}
+        />
         {isEditing ? (
           <div className="flex items-center gap-1 flex-1">
             <Input
@@ -770,6 +783,18 @@ const Hopper = ({ selectedDate }: HopperProps) => {
     });
   };
 
+  const handleSelectAll = (itemIds: string[], selected: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (selected) {
+        itemIds.forEach(id => next.add(id));
+      } else {
+        itemIds.forEach(id => next.delete(id));
+      }
+      return next;
+    });
+  };
+
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
   };
@@ -1034,6 +1059,7 @@ const Hopper = ({ selectedDate }: HopperProps) => {
                     onRenameGroup={(id, name) => renameGroupMutation.mutate({ groupId: id, name })}
                     selectedIds={selectedIds}
                     onSelect={handleSelect}
+                    onSelectAll={handleSelectAll}
                   />
                 );
               })}
