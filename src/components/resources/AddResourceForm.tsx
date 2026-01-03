@@ -12,7 +12,7 @@ interface AddResourceFormProps {
   onSubmit: (data: { title: string; url: string; type: ResourceMode }) => void;
   onCancel: () => void;
   isPending?: boolean;
-  fetchTitleFromUrl?: (url: string) => Promise<void>;
+  fetchTitleFromUrl?: (url: string) => Promise<string | null | void>;
   isFetchingTitle?: boolean;
   isCapturingScreenshot?: boolean;
   title: string;

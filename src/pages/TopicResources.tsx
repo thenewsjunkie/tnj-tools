@@ -48,7 +48,7 @@ const TopicResources = () => {
   const [isFetchingTitle, setIsFetchingTitle] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
-  const [refreshingThumbnailId, setRefreshingThumbnailId] = useState<string | null>(null);
+  
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -87,9 +87,9 @@ const TopicResources = () => {
     return `https://image.thum.io/get/width/300/${url}`;
   };
 
-  // Fetch title from URL
-  const fetchTitleFromUrl = async (inputUrl: string) => {
-    if (!inputUrl.trim()) return;
+  // Fetch title and OG image from URL
+  const fetchTitleFromUrl = async (inputUrl: string): Promise<string | null> => {
+    if (!inputUrl.trim()) return null;
     
     let processedUrl = inputUrl.trim();
     if (!processedUrl.startsWith("http://") && !processedUrl.startsWith("https://")) {
@@ -105,8 +105,12 @@ const TopicResources = () => {
       if (!error && data?.title) {
         setTitle(data.title);
       }
+      
+      // Return the OG image if found
+      return data?.ogImage || null;
     } catch (e) {
-      console.error("Failed to fetch title:", e);
+      console.error("Failed to fetch metadata:", e);
+      return null;
     } finally {
       setIsFetchingTitle(false);
     }
@@ -114,7 +118,7 @@ const TopicResources = () => {
 
   // Add resource mutation
   const addMutation = useMutation({
-    mutationFn: async ({ title, url, type }: { title: string; url: string; type: string }) => {
+    mutationFn: async ({ title, url, type, thumbnailUrl }: { title: string; url: string; type: string; thumbnailUrl?: string | null }) => {
       // Re-fetch the latest data to avoid stale state
       const { data: latestData, error: fetchError } = await supabase
         .from("show_prep_notes")
@@ -134,7 +138,7 @@ const TopicResources = () => {
         id: uuidv4(),
         url: url,
         title: title.trim(),
-        thumbnail_url: type === "image" ? url : getThumbnailUrl(url),
+        thumbnail_url: type === "image" ? url : (thumbnailUrl || null),
         type: type as "link" | "image",
       };
 
@@ -281,20 +285,9 @@ const TopicResources = () => {
     },
   });
 
-  // Refresh thumbnail mutation
-  const refreshThumbnailMutation = useMutation({
-    mutationFn: async ({ id, url }: { id: string; url: string }) => {
-      setRefreshingThumbnailId(id);
-      
-      // Call edge function to capture and store screenshot
-      const { data: screenshotData, error: screenshotError } = await supabase.functions.invoke('capture-screenshot', {
-        body: { url }
-      });
-      
-      if (screenshotError || !screenshotData?.thumbnailUrl) {
-        throw new Error("Failed to capture screenshot");
-      }
-      
+  // Remove thumbnail mutation
+  const removeThumbnailMutation = useMutation({
+    mutationFn: async (linkId: string) => {
       const { data: latestData, error: fetchError } = await supabase
         .from("show_prep_notes")
         .select("*")
@@ -313,7 +306,7 @@ const TopicResources = () => {
         ...hour,
         topics: hour.topics.map(t => 
           t.id === topicId 
-            ? { ...t, links: t.links.map(l => l.id === id ? { ...l, thumbnail_url: screenshotData.thumbnailUrl } : l) }
+            ? { ...t, links: t.links.map(l => l.id === linkId ? { ...l, thumbnail_url: null } : l) }
             : t
         )
       }));
@@ -327,12 +320,10 @@ const TopicResources = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["show-prep-notes", date] });
-      setRefreshingThumbnailId(null);
-      toast({ title: "Thumbnail refreshed" });
+      toast({ title: "Thumbnail removed" });
     },
     onError: () => {
-      setRefreshingThumbnailId(null);
-      toast({ title: "Failed to refresh thumbnail", variant: "destructive" });
+      toast({ title: "Failed to remove thumbnail", variant: "destructive" });
     },
   });
 
@@ -383,8 +374,14 @@ const TopicResources = () => {
     }
   };
 
-  const handleSubmit = (data: { title: string; url: string; type: string }) => {
-    addMutation.mutate(data);
+  const handleSubmit = async (data: { title: string; url: string; type: string }) => {
+    if (data.type === "link") {
+      // Fetch OG image when adding
+      const ogImage = await fetchTitleFromUrl(data.url);
+      addMutation.mutate({ ...data, thumbnailUrl: ogImage });
+    } else {
+      addMutation.mutate({ ...data, thumbnailUrl: data.url });
+    }
   };
 
   const startEditing = (link: Link) => {
@@ -518,8 +515,7 @@ const TopicResources = () => {
                     onCancelEdit={cancelEdit}
                     onDelete={() => deleteMutation.mutate(link.id)}
                     getThumbnailUrl={getThumbnailUrl}
-                    onRefreshThumbnail={() => refreshThumbnailMutation.mutate({ id: link.id, url: link.url })}
-                    isRefreshingThumbnail={refreshingThumbnailId === link.id}
+                    onRemoveThumbnail={link.type !== "image" && link.thumbnail_url ? () => removeThumbnailMutation.mutate(link.id) : undefined}
                   />
                 ))}
               </div>

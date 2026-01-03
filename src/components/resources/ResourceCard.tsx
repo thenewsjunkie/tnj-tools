@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Pencil, Trash2, Check, X, Image as ImageIcon, RefreshCw, Loader2 } from "lucide-react";
+import { Pencil, Trash2, Check, X, Image as ImageIcon, XCircle } from "lucide-react";
 
 interface ResourceCardProps {
   id: string;
@@ -16,8 +16,7 @@ interface ResourceCardProps {
   onCancelEdit: () => void;
   onDelete: () => void;
   getThumbnailUrl: (url: string) => string;
-  onRefreshThumbnail?: () => void;
-  isRefreshingThumbnail?: boolean;
+  onRemoveThumbnail?: () => void;
 }
 
 export const ResourceCard = ({
@@ -34,8 +33,7 @@ export const ResourceCard = ({
   onCancelEdit,
   onDelete,
   getThumbnailUrl,
-  onRefreshThumbnail,
-  isRefreshingThumbnail = false,
+  onRemoveThumbnail,
 }: ResourceCardProps) => {
   const isImage = type === "image";
   
@@ -52,7 +50,9 @@ export const ResourceCard = ({
 
   const thumbnailSrc = isImage 
     ? url 
-    : (thumbnailUrl || getThumbnailUrl(url));
+    : thumbnailUrl;
+
+  const hasThumbnail = !!thumbnailSrc;
 
   return (
     <div className="group flex items-start gap-4 p-4 rounded-lg bg-card border border-border hover:border-primary/50 transition-colors">
@@ -63,18 +63,38 @@ export const ResourceCard = ({
         rel="noopener noreferrer"
         className="flex-shrink-0 w-40 h-24 rounded overflow-hidden bg-muted relative"
       >
-        <img
-          src={thumbnailSrc}
-          alt=""
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            e.currentTarget.style.display = 'none';
-          }}
-        />
+        {hasThumbnail ? (
+          <img
+            src={thumbnailSrc}
+            alt=""
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+            <ImageIcon className="h-8 w-8" />
+          </div>
+        )}
         {isImage && (
           <div className="absolute bottom-1 right-1 p-1 bg-black/60 rounded">
             <ImageIcon className="h-3 w-3 text-white" />
           </div>
+        )}
+        {/* Remove thumbnail button */}
+        {!isImage && hasThumbnail && onRemoveThumbnail && (
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onRemoveThumbnail();
+            }}
+            className="absolute top-1 right-1 p-1 bg-black/60 rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80"
+            title="Remove thumbnail"
+          >
+            <XCircle className="h-4 w-4 text-white" />
+          </button>
         )}
       </a>
 
@@ -116,22 +136,6 @@ export const ResourceCard = ({
 
       {/* Actions */}
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        {!isImage && onRefreshThumbnail && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-muted-foreground hover:text-foreground"
-            onClick={onRefreshThumbnail}
-            disabled={isRefreshingThumbnail}
-            title="Refresh thumbnail"
-          >
-            {isRefreshingThumbnail ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4" />
-            )}
-          </Button>
-        )}
         <Button
           variant="ghost"
           size="icon"
