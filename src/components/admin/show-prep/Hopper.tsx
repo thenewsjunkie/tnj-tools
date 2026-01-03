@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from "react";
-import { format } from "date-fns";
+import { format, addDays } from "date-fns";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Link2, Loader2, GripVertical, X, Unlink, Pencil, Check, FolderPlus, FileText } from "lucide-react";
+import { Plus, Trash2, Link2, Loader2, GripVertical, X, Unlink, Pencil, Check, FolderPlus, FileText, CalendarArrowDown } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -615,6 +615,42 @@ const Hopper = ({ selectedDate }: HopperProps) => {
     },
   });
 
+  // Save selected for tomorrow (move to next day, delete rest)
+  const saveForTomorrowMutation = useMutation({
+    mutationFn: async (keepItemIds: string[]) => {
+      const tomorrowDate = format(addDays(selectedDate, 1), "yyyy-MM-dd");
+      const deleteItemIds = items.filter((i) => !keepItemIds.includes(i.id)).map((i) => i.id);
+
+      // Move selected items to tomorrow
+      if (keepItemIds.length > 0) {
+        const { error: updateError } = await supabase
+          .from("hopper_items")
+          .update({ date: tomorrowDate })
+          .in("id", keepItemIds);
+        if (updateError) throw updateError;
+      }
+
+      // Delete the rest
+      if (deleteItemIds.length > 0) {
+        const { error: deleteError } = await supabase
+          .from("hopper_items")
+          .delete()
+          .in("id", deleteItemIds);
+        if (deleteError) throw deleteError;
+      }
+    },
+    onSuccess: () => {
+      const tomorrowDateKey = format(addDays(selectedDate, 1), "yyyy-MM-dd");
+      queryClient.invalidateQueries({ queryKey: ["hopper-items", dateKey] });
+      queryClient.invalidateQueries({ queryKey: ["hopper-items", tomorrowDateKey] });
+      setSelectedIds(new Set());
+      toast({ title: "Selected items saved for tomorrow, others deleted" });
+    },
+    onError: () => {
+      toast({ title: "Failed to save items", variant: "destructive" });
+    },
+  });
+
   // Ungroup item mutation
   const ungroupMutation = useMutation({
     mutationFn: async (itemId: string) => {
@@ -845,6 +881,38 @@ const Hopper = ({ selectedDate }: HopperProps) => {
             <Link2 className="h-4 w-4 mr-1" />
             Group ({selectedIds.size})
           </Button>
+        )}
+
+        {/* Save for Tomorrow - move selected to next day, delete rest */}
+        {selectedIds.size >= 1 && items.length > 1 && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={saveForTomorrowMutation.isPending}
+              >
+                <CalendarArrowDown className="h-4 w-4 mr-1" />
+                Save for Tomorrow
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Save selected items for tomorrow?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will move {selectedIds.size} selected item{selectedIds.size > 1 ? "s" : ""} to tomorrow and delete the remaining {items.length - selectedIds.size} item{items.length - selectedIds.size !== 1 ? "s" : ""}.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => saveForTomorrowMutation.mutate(Array.from(selectedIds))}
+                >
+                  Save for Tomorrow
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
 
         {/* Item count and clear all */}
