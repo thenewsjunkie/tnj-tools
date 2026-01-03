@@ -7,6 +7,17 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, Link2, Loader2, GripVertical, X, Unlink, Pencil, Check, FolderPlus } from "lucide-react";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   DndContext,
   closestCenter,
   KeyboardSensor,
@@ -690,15 +701,35 @@ const Hopper = ({ selectedDate }: HopperProps) => {
             <span className="text-xs text-muted-foreground">
               {items.length} items
             </span>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive"
-              onClick={() => clearAllMutation.mutate()}
-              disabled={clearAllMutation.isPending}
-            >
-              Clear All
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive"
+                  disabled={clearAllMutation.isPending}
+                >
+                  Clear All
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Clear all hopper items?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete all {items.length} items from the hopper. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => clearAllMutation.mutate()}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Clear All
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         )}
       </div>
