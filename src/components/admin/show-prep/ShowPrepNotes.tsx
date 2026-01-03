@@ -9,7 +9,7 @@ import DateSelector from "./DateSelector";
 import HourCard from "./HourCard";
 import DroppableHour from "./DroppableHour";
 import { HourBlock, Topic, DEFAULT_SHOW_HOURS } from "./types";
-import { getScheduledSegments, ScheduledSegment } from "./scheduledSegments";
+import { isWeekend, getScheduledSegments, ScheduledSegment } from "./scheduledSegments";
 import ScheduledSegmentsManager from "./ScheduledSegmentsManager";
 
 const createEmptyHours = (): HourBlock[] => {
@@ -252,6 +252,11 @@ const ShowPrepNotes = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <DateSelector date={selectedDate} onChange={setSelectedDate} />
+          {isWeekend(selectedDate) && (
+            <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+              Weekend
+            </span>
+          )}
           <ScheduledSegmentsManager />
         </div>
         {isSaving && (
