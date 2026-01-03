@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -16,9 +17,9 @@ interface TopicCardProps {
 }
 
 const TopicCard = ({ topic, date, onChange, onDelete }: TopicCardProps) => {
+  const navigate = useNavigate();
   const hasContent = topic.title.trim() || topic.links.length > 0 || topic.images.length > 0;
   const [isEditing, setIsEditing] = useState(!hasContent);
-
   const {
     attributes,
     listeners,
@@ -46,7 +47,7 @@ const TopicCard = ({ topic, date, onChange, onDelete }: TopicCardProps) => {
   };
 
   const handleOpenResources = () => {
-    window.open(`/topic-resources/${date}/${topic.id}`, "_blank");
+    navigate(`/admin/topic-resources/${date}/${topic.id}`);
   };
 
   const resourceCount = topic.links.length + topic.images.length;

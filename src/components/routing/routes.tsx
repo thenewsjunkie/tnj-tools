@@ -177,8 +177,8 @@ export const router = createBrowserRouter([
         element: <Resources />,
       },
       {
-        path: "topic-resources/:date/:topicId",
-        element: <TopicResources />,
+        path: "admin/topic-resources/:date/:topicId",
+        element: <AdminRoute><TopicResources /></AdminRoute>,
       },
     ]
   }
