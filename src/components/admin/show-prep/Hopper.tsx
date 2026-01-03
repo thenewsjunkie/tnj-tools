@@ -451,11 +451,13 @@ const Hopper = ({ selectedDate }: HopperProps) => {
       title,
       hourId,
       addToResources,
+      removeFromHopper,
       itemIds,
     }: {
       title: string;
       hourId: string;
       addToResources: boolean;
+      removeFromHopper: boolean;
       itemIds: string[];
     }) => {
       const selectedItems = items.filter((i) => itemIds.includes(i.id));
@@ -561,10 +563,20 @@ const Hopper = ({ selectedDate }: HopperProps) => {
         const { error: resourceError } = await supabase.from("video_resources").insert(newResources);
         if (resourceError) throw resourceError;
       }
+
+      // Optionally remove from hopper
+      if (removeFromHopper) {
+        const { error: deleteError } = await supabase
+          .from("hopper_items")
+          .delete()
+          .in("id", itemIds);
+        if (deleteError) throw deleteError;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["show-prep-notes", dateKey] });
       queryClient.invalidateQueries({ queryKey: ["video-resources"] });
+      queryClient.invalidateQueries({ queryKey: ["hopper-items", dateKey] });
       setSelectedIds(new Set());
       setIsCreateTopicDialogOpen(false);
       toast({ title: "Topic created" });

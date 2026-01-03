@@ -27,6 +27,7 @@ interface CreateTopicDialogProps {
     title: string;
     hourId: string;
     addToResources: boolean;
+    removeFromHopper: boolean;
   }) => void;
   itemCount: number;
   isGroup: boolean;
@@ -42,13 +43,15 @@ const CreateTopicDialog = ({
   const [title, setTitle] = useState("");
   const [hourId, setHourId] = useState(DEFAULT_SHOW_HOURS[0].id);
   const [addToResources, setAddToResources] = useState(isGroup);
+  const [removeFromHopper, setRemoveFromHopper] = useState(true);
 
   const handleConfirm = () => {
     if (!title.trim()) return;
-    onConfirm({ title: title.trim(), hourId, addToResources });
+    onConfirm({ title: title.trim(), hourId, addToResources, removeFromHopper });
     setTitle("");
     setHourId(DEFAULT_SHOW_HOURS[0].id);
     setAddToResources(false);
+    setRemoveFromHopper(true);
   };
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -56,6 +59,7 @@ const CreateTopicDialog = ({
       setTitle("");
       setHourId(DEFAULT_SHOW_HOURS[0].id);
       setAddToResources(false);
+      setRemoveFromHopper(true);
     }
     onOpenChange(newOpen);
   };
@@ -111,6 +115,17 @@ const CreateTopicDialog = ({
             />
             <Label htmlFor="add-resources" className="text-sm font-normal cursor-pointer">
               Also add links to Resources page
+            </Label>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="remove-hopper"
+              checked={removeFromHopper}
+              onCheckedChange={(checked) => setRemoveFromHopper(checked === true)}
+            />
+            <Label htmlFor="remove-hopper" className="text-sm font-normal cursor-pointer">
+              Remove from Hopper after creating
             </Label>
           </div>
         </div>
