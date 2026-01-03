@@ -263,8 +263,6 @@ const Hopper = ({ selectedDate }: HopperProps) => {
     })
   );
 
-  const MAX_HOPPER_ITEMS = 50;
-
   // Fetch hopper items for the date
   const { data: items = [], isLoading: isLoadingItems } = useQuery({
     queryKey: ["hopper-items", dateKey],
@@ -273,14 +271,11 @@ const Hopper = ({ selectedDate }: HopperProps) => {
         .from("hopper_items")
         .select("*")
         .eq("date", dateKey)
-        .order("display_order", { ascending: true })
-        .limit(MAX_HOPPER_ITEMS);
+        .order("display_order", { ascending: true });
       if (error) throw error;
       return data as HopperItem[];
     },
   });
-
-  const isAtCapacity = items.length >= MAX_HOPPER_ITEMS;
 
   // Fetch hopper groups for the date
   const { data: groups = [] } = useQuery({
@@ -299,17 +294,10 @@ const Hopper = ({ selectedDate }: HopperProps) => {
   // Add items mutation
   const addMutation = useMutation({
     mutationFn: async (urls: string[]) => {
-      // Limit how many can be added
-      const availableSlots = MAX_HOPPER_ITEMS - items.length;
-      if (availableSlots <= 0) {
-        throw new Error("Hopper is at capacity");
-      }
-      const urlsToAdd = urls.slice(0, availableSlots);
-      
       const maxOrder = items.length > 0 ? Math.max(...items.map((i) => i.display_order)) : -1;
 
       const newItems = await Promise.all(
-        urlsToAdd.map(async (url, index) => {
+        urls.map(async (url, index) => {
           let processedUrl = url.trim();
           if (!processedUrl.startsWith("http://") && !processedUrl.startsWith("https://")) {
             processedUrl = "https://" + processedUrl;
@@ -592,7 +580,6 @@ const Hopper = ({ selectedDate }: HopperProps) => {
           <Button 
             size="sm" 
             onClick={() => setIsAdding(true)}
-            disabled={isAtCapacity}
           >
             <Plus className="h-4 w-4 mr-1" />
             Add Links
@@ -624,12 +611,14 @@ const Hopper = ({ selectedDate }: HopperProps) => {
         )}
 
         {/* Item count indicator */}
-        <span className={`text-xs ml-auto ${isAtCapacity ? 'text-destructive' : 'text-muted-foreground'}`}>
-          {items.length}/{MAX_HOPPER_ITEMS}
-        </span>
+        {items.length > 0 && (
+          <span className="text-xs ml-auto text-muted-foreground">
+            {items.length} items
+          </span>
+        )}
       </div>
 
-      {/* Items list */}
+      {/* Scrollable items list */}
       {isLoadingItems ? (
         <div className="flex items-center justify-center py-8">
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -639,59 +628,61 @@ const Hopper = ({ selectedDate }: HopperProps) => {
           No items in the hopper yet. Add links or use "Add to Hopper" from Resources pages.
         </p>
       ) : (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
-          <div className="space-y-2">
-            {/* Grouped items */}
-            {Array.from(groupedItemsMap.entries()).map(([groupId, groupItems]) => {
-              const group = groups.find((g) => g.id === groupId);
-              return (
-                <GroupedItems
-                  key={groupId}
-                  groupId={groupId}
-                  groupName={group?.name || null}
-                  items={groupItems}
-                  onDeleteItem={(id) => deleteMutation.mutate(id)}
-                  onUngroupItem={(id) => ungroupMutation.mutate(id)}
-                  onDeleteGroup={(id) => deleteGroupMutation.mutate(id)}
-                  onRenameGroup={(id, name) => renameGroupMutation.mutate({ groupId: id, name })}
-                  selectedIds={selectedIds}
-                  onSelect={handleSelect}
-                />
-              );
-            })}
-
-            {/* Ungrouped items */}
-            <SortableContext
-              items={ungroupedItems.map((i) => i.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              <div className="space-y-2">
-                {ungroupedItems.map((item) => (
-                  <SortableHopperItem
-                    key={item.id}
-                    item={item}
-                    onDelete={(id) => deleteMutation.mutate(id)}
-                    isSelected={selectedIds.has(item.id)}
+        <div className="max-h-[400px] overflow-y-auto pr-1">
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="space-y-2">
+              {/* Grouped items */}
+              {Array.from(groupedItemsMap.entries()).map(([groupId, groupItems]) => {
+                const group = groups.find((g) => g.id === groupId);
+                return (
+                  <GroupedItems
+                    key={groupId}
+                    groupId={groupId}
+                    groupName={group?.name || null}
+                    items={groupItems}
+                    onDeleteItem={(id) => deleteMutation.mutate(id)}
+                    onUngroupItem={(id) => ungroupMutation.mutate(id)}
+                    onDeleteGroup={(id) => deleteGroupMutation.mutate(id)}
+                    onRenameGroup={(id, name) => renameGroupMutation.mutate({ groupId: id, name })}
+                    selectedIds={selectedIds}
                     onSelect={handleSelect}
                   />
-                ))}
-              </div>
-            </SortableContext>
-          </div>
+                );
+              })}
 
-          <DragOverlay>
-            {activeId ? (
-              <div className="p-2 rounded-lg bg-card border border-primary shadow-lg">
-                {items.find((i) => i.id === activeId)?.title || "Item"}
-              </div>
-            ) : null}
-          </DragOverlay>
-        </DndContext>
+              {/* Ungrouped items */}
+              <SortableContext
+                items={ungroupedItems.map((i) => i.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-2">
+                  {ungroupedItems.map((item) => (
+                    <SortableHopperItem
+                      key={item.id}
+                      item={item}
+                      onDelete={(id) => deleteMutation.mutate(id)}
+                      isSelected={selectedIds.has(item.id)}
+                      onSelect={handleSelect}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </div>
+
+            <DragOverlay>
+              {activeId ? (
+                <div className="p-2 rounded-lg bg-card border border-primary shadow-lg">
+                  {items.find((i) => i.id === activeId)?.title || "Item"}
+                </div>
+              ) : null}
+            </DragOverlay>
+          </DndContext>
+        </div>
       )}
 
       {selectedIds.size > 0 && (
