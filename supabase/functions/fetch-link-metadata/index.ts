@@ -62,10 +62,38 @@ serve(async (req) => {
         .trim();
     }
 
-    console.log(`Extracted title: ${title}`);
+    // Extract Open Graph image
+    let ogImage = null;
+    
+    // Try og:image first
+    const ogImageMatch = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["'][^>]*>/i) ||
+                         html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["'][^>]*>/i);
+    
+    if (ogImageMatch) {
+      ogImage = ogImageMatch[1];
+    } else {
+      // Try twitter:image as fallback
+      const twitterImageMatch = html.match(/<meta[^>]*name=["']twitter:image["'][^>]*content=["']([^"']+)["'][^>]*>/i) ||
+                                html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']twitter:image["'][^>]*>/i);
+      if (twitterImageMatch) {
+        ogImage = twitterImageMatch[1];
+      }
+    }
+
+    // Make relative URLs absolute
+    if (ogImage && !ogImage.startsWith('http')) {
+      try {
+        const baseUrl = new URL(url);
+        ogImage = new URL(ogImage, baseUrl.origin).href;
+      } catch {
+        ogImage = null;
+      }
+    }
+
+    console.log(`Extracted title: ${title}, ogImage: ${ogImage}`);
 
     return new Response(
-      JSON.stringify({ success: true, title, url }),
+      JSON.stringify({ success: true, title, ogImage, url }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 

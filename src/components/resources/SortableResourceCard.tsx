@@ -17,14 +17,12 @@ interface SortableResourceCardProps {
   onCancelEdit: () => void;
   onDelete: () => void;
   getThumbnailUrl: (url: string) => string;
-  onRefreshThumbnail?: () => void;
-  isRefreshingThumbnail?: boolean;
+  onRemoveThumbnail?: () => void;
 }
 
 export const SortableResourceCard = ({
   id,
-  onRefreshThumbnail,
-  isRefreshingThumbnail,
+  onRemoveThumbnail,
   ...props
 }: SortableResourceCardProps) => {
   const {
@@ -55,8 +53,7 @@ export const SortableResourceCard = ({
         <ResourceCard 
           id={id} 
           {...props} 
-          onRefreshThumbnail={onRefreshThumbnail}
-          isRefreshingThumbnail={isRefreshingThumbnail}
+          onRemoveThumbnail={onRemoveThumbnail}
         />
       </div>
     </div>
