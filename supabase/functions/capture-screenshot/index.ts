@@ -23,8 +23,8 @@ Deno.serve(async (req) => {
 
     console.log("Capturing screenshot for URL:", url);
 
-    // Fetch screenshot from thum.io
-    const thumbUrl = `https://image.thum.io/get/width/600/${encodeURIComponent(url)}`;
+    // Fetch screenshot from thum.io (don't encode URL - thum.io expects raw URL)
+    const thumbUrl = `https://image.thum.io/get/width/600/${url}`;
     console.log("Fetching from thum.io:", thumbUrl);
 
     const imageResponse = await fetch(thumbUrl);
