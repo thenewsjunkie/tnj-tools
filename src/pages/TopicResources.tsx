@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Topic, Link } from "@/components/admin/show-prep/types";
+import { Topic, Link, HourBlock } from "@/components/admin/show-prep/types";
 import { v4 as uuidv4 } from "uuid";
 import { format, parseISO } from "date-fns";
 
@@ -54,20 +54,28 @@ const TopicResources = () => {
     enabled: !!date,
   });
 
-  // Get current topic from the data
-  const topics = (showPrepData?.topics as unknown as Topic[]) || [];
-  const topic = topics.find(t => t.id === topicId);
+  // Get current topic from the data - handle nested hours structure
+  const rawData = showPrepData?.topics as unknown;
+  const hours: HourBlock[] = (rawData && typeof rawData === 'object' && Array.isArray((rawData as { hours?: unknown }).hours))
+    ? (rawData as { hours: HourBlock[] }).hours
+    : [];
+  const allTopics = hours.flatMap(h => h.topics);
+  const topic = allTopics.find(t => t.id === topicId);
 
   // Mutation to update the topic
   const updateMutation = useMutation({
     mutationFn: async (updatedTopic: Topic) => {
-      const updatedTopics = topics.map(t => 
-        t.id === topicId ? updatedTopic : t
-      );
+      // Find which hour contains this topic and update it
+      const updatedHours = hours.map(hour => ({
+        ...hour,
+        topics: hour.topics.map(t => 
+          t.id === topicId ? updatedTopic : t
+        )
+      }));
       
       const { error } = await supabase
         .from("show_prep_notes")
-        .update({ topics: JSON.parse(JSON.stringify(updatedTopics)) })
+        .update({ topics: JSON.parse(JSON.stringify({ hours: updatedHours })) })
         .eq("date", date);
       
       if (error) throw error;
