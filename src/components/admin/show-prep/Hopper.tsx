@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, Link2, Loader2, GripVertical, X, Unlink, Pencil, Check, FolderPlus, FileText, CalendarArrowDown } from "lucide-react";
 import {
@@ -722,9 +723,9 @@ const Hopper = ({ selectedDate }: HopperProps) => {
 
   const handleAddUrls = () => {
     const urls = newUrls
-      .split(/[\n,]/)
+      .split(/\s+/)
       .map((u) => u.trim())
-      .filter((u) => u.length > 0);
+      .filter((u) => u.length > 0 && (u.startsWith('http://') || u.startsWith('https://') || u.includes('.')));
 
     if (urls.length > 0) {
       setIsFetching(true);
@@ -795,11 +796,11 @@ const Hopper = ({ selectedDate }: HopperProps) => {
       <div className="flex gap-2">
         {isAdding ? (
           <div className="flex-1 space-y-2">
-            <Input
+            <Textarea
               value={newUrls}
               onChange={(e) => setNewUrls(e.target.value)}
-              placeholder="Paste URLs (one per line or comma-separated)"
-              className="text-sm"
+              placeholder="Paste URLs (one per line)"
+              className="text-sm min-h-[80px] resize-y"
               autoFocus
             />
             <div className="flex gap-2">
