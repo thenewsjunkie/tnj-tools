@@ -17,10 +17,14 @@ interface SortableResourceCardProps {
   onCancelEdit: () => void;
   onDelete: () => void;
   getThumbnailUrl: (url: string) => string;
+  onRefreshThumbnail?: () => void;
+  isRefreshingThumbnail?: boolean;
 }
 
 export const SortableResourceCard = ({
   id,
+  onRefreshThumbnail,
+  isRefreshingThumbnail,
   ...props
 }: SortableResourceCardProps) => {
   const {
@@ -48,7 +52,12 @@ export const SortableResourceCard = ({
         <GripVertical className="h-5 w-5" />
       </button>
       <div className="flex-1">
-        <ResourceCard id={id} {...props} />
+        <ResourceCard 
+          id={id} 
+          {...props} 
+          onRefreshThumbnail={onRefreshThumbnail}
+          isRefreshingThumbnail={isRefreshingThumbnail}
+        />
       </div>
     </div>
   );
