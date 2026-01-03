@@ -34,6 +34,7 @@ const RealtimeAI = lazy(() => import("@/pages/RealtimeAI"));
 const GreenScreen = lazy(() => import("@/pages/GreenScreen"));
 const Resources = lazy(() => import("@/pages/Resources"));
 const TopicResources = lazy(() => import("@/pages/TopicResources"));
+const TopicArchive = lazy(() => import("@/pages/TopicArchive"));
 
 export const router = createBrowserRouter([
   {
@@ -179,6 +180,10 @@ export const router = createBrowserRouter([
       {
         path: "admin/topic-resources/:date/:topicId",
         element: <AdminRoute><TopicResources /></AdminRoute>,
+      },
+      {
+        path: "admin/topic-archive",
+        element: <AdminRoute><TopicArchive /></AdminRoute>,
       },
     ]
   }
