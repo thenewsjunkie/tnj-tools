@@ -48,6 +48,7 @@ const TopicResources = () => {
   const [isFetchingTitle, setIsFetchingTitle] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
+  const [refreshingThumbnailId, setRefreshingThumbnailId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -280,6 +281,61 @@ const TopicResources = () => {
     },
   });
 
+  // Refresh thumbnail mutation
+  const refreshThumbnailMutation = useMutation({
+    mutationFn: async ({ id, url }: { id: string; url: string }) => {
+      setRefreshingThumbnailId(id);
+      
+      // Call edge function to capture and store screenshot
+      const { data: screenshotData, error: screenshotError } = await supabase.functions.invoke('capture-screenshot', {
+        body: { url }
+      });
+      
+      if (screenshotError || !screenshotData?.thumbnailUrl) {
+        throw new Error("Failed to capture screenshot");
+      }
+      
+      const { data: latestData, error: fetchError } = await supabase
+        .from("show_prep_notes")
+        .select("*")
+        .eq("date", date)
+        .maybeSingle();
+      
+      if (fetchError) throw fetchError;
+      if (!latestData) throw new Error("Show prep notes not found");
+
+      const latestRawData = latestData.topics as unknown;
+      const latestHours: HourBlock[] = (latestRawData && typeof latestRawData === 'object' && Array.isArray((latestRawData as { hours?: unknown }).hours))
+        ? (latestRawData as { hours: HourBlock[] }).hours
+        : [];
+
+      const updatedHours = latestHours.map(hour => ({
+        ...hour,
+        topics: hour.topics.map(t => 
+          t.id === topicId 
+            ? { ...t, links: t.links.map(l => l.id === id ? { ...l, thumbnail_url: screenshotData.thumbnailUrl } : l) }
+            : t
+        )
+      }));
+
+      const { error } = await supabase
+        .from("show_prep_notes")
+        .update({ topics: JSON.parse(JSON.stringify({ hours: updatedHours })) })
+        .eq("date", date);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["show-prep-notes", date] });
+      setRefreshingThumbnailId(null);
+      toast({ title: "Thumbnail refreshed" });
+    },
+    onError: () => {
+      setRefreshingThumbnailId(null);
+      toast({ title: "Failed to refresh thumbnail", variant: "destructive" });
+    },
+  });
+
   // Reorder links mutation
   const reorderMutation = useMutation({
     mutationFn: async (newLinks: Link[]) => {
@@ -462,6 +518,8 @@ const TopicResources = () => {
                     onCancelEdit={cancelEdit}
                     onDelete={() => deleteMutation.mutate(link.id)}
                     getThumbnailUrl={getThumbnailUrl}
+                    onRefreshThumbnail={() => refreshThumbnailMutation.mutate({ id: link.id, url: link.url })}
+                    isRefreshingThumbnail={refreshingThumbnailId === link.id}
                   />
                 ))}
               </div>
