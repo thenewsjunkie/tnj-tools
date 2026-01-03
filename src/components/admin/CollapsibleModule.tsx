@@ -7,6 +7,7 @@ interface CollapsibleModuleProps {
   title: string;
   defaultOpen?: boolean;
   statusBadge?: ReactNode;
+  headerAction?: ReactNode;
   children: ReactNode;
   className?: string;
 }
@@ -16,6 +17,7 @@ const CollapsibleModule = ({
   title,
   defaultOpen = true,
   statusBadge,
+  headerAction,
   children,
   className,
 }: CollapsibleModuleProps) => {
@@ -40,12 +42,15 @@ const CollapsibleModule = ({
           <h3 className="text-sm font-medium text-foreground">{title}</h3>
           {!isOpen && statusBadge}
         </div>
-        <ChevronDown
-          className={cn(
-            "h-4 w-4 text-muted-foreground transition-transform duration-200",
-            isOpen ? "" : "-rotate-90"
-          )}
-        />
+        <div className="flex items-center gap-2">
+          {headerAction}
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 text-muted-foreground transition-transform duration-200",
+              isOpen ? "" : "-rotate-90"
+            )}
+          />
+        </div>
       </button>
       
       <div
