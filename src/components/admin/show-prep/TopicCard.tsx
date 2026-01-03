@@ -94,20 +94,6 @@ const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardP
               )}
             </div>
 
-            {topic.tags && topic.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1 mr-2">
-                {topic.tags.slice(0, 3).map(tag => (
-                  <Badge key={tag} variant="outline" className="text-[10px] px-1.5 py-0">
-                    {tag}
-                  </Badge>
-                ))}
-                {topic.tags.length > 3 && (
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                    +{topic.tags.length - 3}
-                  </Badge>
-                )}
-              </div>
-            )}
 
             <div className="flex items-center gap-1">
               <TagButton
