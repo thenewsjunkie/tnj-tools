@@ -4,7 +4,7 @@ import { Card, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { GripVertical, Trash2, Pencil, Check, CheckCircle2, Circle, Plus } from "lucide-react";
+import { GripVertical, Trash2, Pencil, Check, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -45,9 +45,6 @@ const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardP
     setIsEditing(true);
   };
 
-  const handleToggleComplete = () => {
-    onChange({ ...topic, completed: !topic.completed });
-  };
 
   const handleTagsChange = (tags: string[]) => {
     onChange({ ...topic, tags });
@@ -65,7 +62,7 @@ const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardP
       style={style}
       className={cn(isDragging && "opacity-50")}
     >
-      <Card className={cn("border-border/50", topic.completed && "bg-muted/30 opacity-70")}>
+      <Card className="border-border/50">
         <CardHeader className="py-2 px-3">
           <div className="flex items-center gap-2">
             <div
@@ -85,10 +82,7 @@ const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardP
                   className="h-7 text-sm font-medium border-0 bg-transparent px-0 focus-visible:ring-0"
                 />
               ) : (
-                <span className={cn(
-                  "text-sm font-medium truncate block",
-                  topic.completed && "line-through text-muted-foreground"
-                )}>
+                <span className="text-sm font-medium truncate block">
                   {topic.title || "Untitled Topic"}
                 </span>
               )}
@@ -111,22 +105,6 @@ const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardP
                 <Plus className="h-3.5 w-3.5" />
                 {resourceCount > 0 && (
                   <span className="text-xs ml-1">{resourceCount}</span>
-                )}
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                className={cn(
-                  "h-7 w-7 p-0",
-                  topic.completed ? "text-green-500 hover:text-green-600" : "text-muted-foreground hover:text-foreground"
-                )}
-                onClick={handleToggleComplete}
-                title={topic.completed ? "Mark as incomplete" : "Mark as complete"}
-              >
-                {topic.completed ? (
-                  <CheckCircle2 className="h-4 w-4" />
-                ) : (
-                  <Circle className="h-4 w-4" />
                 )}
               </Button>
               {isEditing ? (
