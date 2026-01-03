@@ -19,6 +19,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   DndContext,
   closestCenter,
   KeyboardSensor,
@@ -686,6 +692,22 @@ const Hopper = ({ selectedDate }: HopperProps) => {
     },
   });
 
+  // Add items to existing group mutation
+  const addToGroupMutation = useMutation({
+    mutationFn: async ({ itemIds, groupId }: { itemIds: string[]; groupId: string }) => {
+      const { error } = await supabase
+        .from("hopper_items")
+        .update({ group_id: groupId })
+        .in("id", itemIds);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["hopper-items", dateKey] });
+      setSelectedIds(new Set());
+      toast({ title: "Items added to group" });
+    },
+  });
+
   // Rename group mutation
   const renameGroupMutation = useMutation({
     mutationFn: async ({ groupId, name }: { groupId: string; name: string }) => {
@@ -875,6 +897,38 @@ const Hopper = ({ selectedDate }: HopperProps) => {
             Group ({selectedIds.size})
           </Button>
         )}
+
+        {/* Add to existing group */}
+        {(() => {
+          const selectedUngroupedItems = Array.from(selectedIds).filter(
+            (id) => items.find((item) => item.id === id)?.group_id === null
+          );
+          const canAddToGroup = selectedUngroupedItems.length > 0 && groups.length > 0;
+          
+          return canAddToGroup ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="outline">
+                  <FolderPlus className="h-4 w-4 mr-1" />
+                  Add to Group
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {groups.map((group) => (
+                  <DropdownMenuItem
+                    key={group.id}
+                    onClick={() => addToGroupMutation.mutate({
+                      itemIds: selectedUngroupedItems,
+                      groupId: group.id,
+                    })}
+                  >
+                    {group.name || `Group (${items.filter(i => i.group_id === group.id).length} items)`}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null;
+        })()}
 
         {/* Save for Tomorrow - move selected to next day, delete rest */}
         {selectedIds.size >= 1 && items.length > 1 && (
