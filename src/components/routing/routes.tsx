@@ -33,6 +33,7 @@ const PollEmbed = lazy(() => import("@/pages/PollEmbed"));
 const RealtimeAI = lazy(() => import("@/pages/RealtimeAI"));
 const GreenScreen = lazy(() => import("@/pages/GreenScreen"));
 const Resources = lazy(() => import("@/pages/Resources"));
+const TopicResources = lazy(() => import("@/pages/TopicResources"));
 
 export const router = createBrowserRouter([
   {
@@ -174,6 +175,10 @@ export const router = createBrowserRouter([
       {
         path: "resources",
         element: <Resources />,
+      },
+      {
+        path: "topic-resources/:date/:topicId",
+        element: <TopicResources />,
       },
     ]
   }

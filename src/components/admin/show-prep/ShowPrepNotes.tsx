@@ -278,6 +278,7 @@ const ShowPrepNotes = () => {
               <DroppableHour key={hour.id} id={hour.id}>
                 <HourCard
                   hour={hour}
+                  date={dateKey}
                   onChange={(updated) => handleHourChange(index, updated)}
                   defaultOpen={isCurrentHour(hour)}
                   scheduledSegments={getScheduledSegments(selectedDate, hour.id, scheduledSegments)}

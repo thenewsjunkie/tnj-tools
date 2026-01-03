@@ -3,23 +3,22 @@ import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, GripVertical, Trash2, Pencil, Check, CheckCircle2, Circle } from "lucide-react";
+import { ChevronDown, GripVertical, Trash2, Pencil, Check, CheckCircle2, Circle, FolderOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import BulletEditor from "./BulletEditor";
-import LinksList from "./LinksList";
-import ImageGallery from "./ImageGallery";
-import { Topic, Bullet } from "./types";
+import { Topic } from "./types";
 import { v4 as uuidv4 } from "uuid";
 
 interface TopicCardProps {
   topic: Topic;
+  date: string;
   onChange: (topic: Topic) => void;
   onDelete: () => void;
 }
 
-const TopicCard = ({ topic, onChange, onDelete }: TopicCardProps) => {
+const TopicCard = ({ topic, date, onChange, onDelete }: TopicCardProps) => {
   const hasContent = topic.title.trim() || topic.bullets.some(b => b.text.trim()) || topic.links.length > 0 || topic.images.length > 0;
   const [isEditing, setIsEditing] = useState(!hasContent);
   const [isOpen, setIsOpen] = useState(!topic.completed);
@@ -68,7 +67,12 @@ const TopicCard = ({ topic, onChange, onDelete }: TopicCardProps) => {
     }
   };
 
+  const handleOpenResources = () => {
+    window.open(`/topic-resources/${date}/${topic.id}`, "_blank");
+  };
+
   const displayBullets = topic.bullets.filter(b => b.text.trim());
+  const resourceCount = topic.links.length + topic.images.length;
 
   return (
     <div
@@ -131,6 +135,18 @@ const TopicCard = ({ topic, onChange, onDelete }: TopicCardProps) => {
                 <Button
                   size="sm"
                   variant="ghost"
+                  className="h-7 px-2 text-muted-foreground hover:text-foreground"
+                  onClick={handleOpenResources}
+                  title="Open Resources"
+                >
+                  <FolderOpen className="h-3.5 w-3.5 mr-1" />
+                  {resourceCount > 0 && (
+                    <span className="text-xs">{resourceCount}</span>
+                  )}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
                   className={cn(
                     "h-7 w-7 p-0",
                     topic.completed ? "text-green-500 hover:text-green-600" : "text-muted-foreground hover:text-foreground"
@@ -178,22 +194,10 @@ const TopicCard = ({ topic, onChange, onDelete }: TopicCardProps) => {
           <CollapsibleContent>
             <CardContent className="pt-0 pb-3 px-3 space-y-3">
               {isEditing ? (
-                <>
-                  <BulletEditor
-                    bullets={topic.bullets}
-                    onChange={(bullets) => onChange({ ...topic, bullets })}
-                  />
-                  <LinksList
-                    links={topic.links}
-                    onChange={(links) => onChange({ ...topic, links })}
-                    isEditing={true}
-                  />
-                  <ImageGallery
-                    images={topic.images}
-                    onChange={(images) => onChange({ ...topic, images })}
-                    isEditing={true}
-                  />
-                </>
+                <BulletEditor
+                  bullets={topic.bullets}
+                  onChange={(bullets) => onChange({ ...topic, bullets })}
+                />
               ) : (
                 <>
                   {/* View mode: Display bullets as formatted list */}
@@ -222,20 +226,6 @@ const TopicCard = ({ topic, onChange, onDelete }: TopicCardProps) => {
                       ))}
                     </div>
                   )}
-                  
-                  {/* View mode: Display links (read-only) */}
-                  <LinksList
-                    links={topic.links}
-                    onChange={(links) => onChange({ ...topic, links })}
-                    isEditing={false}
-                  />
-                  
-                  {/* View mode: Display images (read-only) */}
-                  <ImageGallery
-                    images={topic.images}
-                    onChange={(images) => onChange({ ...topic, images })}
-                    isEditing={false}
-                  />
                 </>
               )}
             </CardContent>
