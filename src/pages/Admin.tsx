@@ -10,6 +10,7 @@ import { AskAI } from "@/components/ai-chat/AskAI";
 import VoiceInterface from "@/components/VoiceInterface";
 import ShowPrep from "@/components/admin/ShowPrep";
 import WeekendEditionSegments from "@/components/admin/WeekendEditionSegments";
+import VideoTools from "@/components/admin/VideoTools";
 import { Badge } from "@/components/ui/badge";
 import { useQueueState } from "@/hooks/useQueueState";
 import { Mic } from "lucide-react";
@@ -77,7 +78,14 @@ const Admin = () => {
           <WeekendEditionSegments />
         </CollapsibleModule>
 
-        {/* Row: Alerts + Ask AI */}
+        {/* Video Tools */}
+        <CollapsibleModule
+          id="video-tools"
+          title="Video Tools"
+          defaultOpen={false}
+        >
+          <VideoTools />
+        </CollapsibleModule>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <CollapsibleModule
             id="alerts"

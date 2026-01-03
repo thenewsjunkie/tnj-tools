@@ -31,6 +31,7 @@ const ManageGifs = lazy(() => import("@/pages/Admin/ManageGifs"));
 const ManagePolls = lazy(() => import("@/pages/Admin/ManagePolls"));
 const PollEmbed = lazy(() => import("@/pages/PollEmbed"));
 const RealtimeAI = lazy(() => import("@/pages/RealtimeAI"));
+const GreenScreen = lazy(() => import("@/pages/GreenScreen"));
 
 export const router = createBrowserRouter([
   {
@@ -164,6 +165,10 @@ export const router = createBrowserRouter([
       {
         path: "realtime-ai",
         element: <RealtimeAI />,
+      },
+      {
+        path: "green-screen",
+        element: <GreenScreen />,
       },
     ]
   }
