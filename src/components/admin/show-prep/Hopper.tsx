@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Link2, Loader2, GripVertical, X, Unlink, Pencil, Check, FolderPlus } from "lucide-react";
+import { Plus, Trash2, Link2, Loader2, GripVertical, X, Unlink, Pencil, Check, FolderPlus, FileText } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +36,9 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { v4 as uuidv4 } from "uuid";
+import CreateTopicDialog from "./CreateTopicDialog";
+import { HourBlock, Topic, Link, Bullet } from "./types";
 
 interface HopperItem {
   id: string;
@@ -266,6 +269,7 @@ const Hopper = ({ selectedDate }: HopperProps) => {
   const [isFetching, setIsFetching] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [isCreateTopicDialogOpen, setIsCreateTopicDialogOpen] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -441,7 +445,134 @@ const Hopper = ({ selectedDate }: HopperProps) => {
     },
   });
 
-  // Group selected items mutation
+  // Create topic mutation
+  const createTopicMutation = useMutation({
+    mutationFn: async ({
+      title,
+      hourId,
+      addToResources,
+      itemIds,
+    }: {
+      title: string;
+      hourId: string;
+      addToResources: boolean;
+      itemIds: string[];
+    }) => {
+      const selectedItems = items.filter((i) => itemIds.includes(i.id));
+      
+      // Convert hopper items to topic links
+      const topicLinks: Link[] = selectedItems.map((item) => ({
+        id: uuidv4(),
+        url: item.url,
+        title: item.title || undefined,
+        thumbnail_url: item.thumbnail_url || undefined,
+        type: "link" as const,
+      }));
+
+      // Create the new topic
+      const newTopic: Topic = {
+        id: uuidv4(),
+        title,
+        display_order: 0,
+        bullets: [{ id: uuidv4(), text: "", indent: 0 }],
+        links: topicLinks,
+        images: [],
+      };
+
+      // Fetch existing show prep notes
+      const { data: existingData, error: fetchError } = await supabase
+        .from("show_prep_notes")
+        .select("*")
+        .eq("date", dateKey)
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+
+      let hours: HourBlock[];
+      let noteId: string | null = existingData?.id || null;
+
+      if (existingData) {
+        // Parse existing hours
+        const rawData = existingData.topics as unknown;
+        if (rawData && typeof rawData === "object" && Array.isArray((rawData as { hours?: unknown }).hours)) {
+          hours = (rawData as { hours: HourBlock[] }).hours;
+        } else {
+          // Legacy format or empty - create default structure
+          hours = [
+            { id: "hour-1", startTime: "11:00 AM", endTime: "12:00 PM", label: "Hour 1", topics: [] },
+            { id: "hour-2", startTime: "12:00 PM", endTime: "1:00 PM", label: "Hour 2", topics: [] },
+            { id: "hour-3", startTime: "1:00 PM", endTime: "2:00 PM", label: "Hour 3", topics: [] },
+            { id: "hour-4", startTime: "2:00 PM", endTime: "3:00 PM", label: "Hour 4", topics: [] },
+          ];
+        }
+      } else {
+        // No existing data - create default structure
+        hours = [
+          { id: "hour-1", startTime: "11:00 AM", endTime: "12:00 PM", label: "Hour 1", topics: [] },
+          { id: "hour-2", startTime: "12:00 PM", endTime: "1:00 PM", label: "Hour 2", topics: [] },
+          { id: "hour-3", startTime: "1:00 PM", endTime: "2:00 PM", label: "Hour 3", topics: [] },
+          { id: "hour-4", startTime: "2:00 PM", endTime: "3:00 PM", label: "Hour 4", topics: [] },
+        ];
+      }
+
+      // Find the target hour and add the topic
+      const updatedHours = hours.map((hour) => {
+        if (hour.id === hourId) {
+          const updatedTopic = { ...newTopic, display_order: hour.topics.length };
+          return { ...hour, topics: [...hour.topics, updatedTopic] };
+        }
+        return hour;
+      });
+
+      // Save to database
+      const hoursJson = JSON.parse(JSON.stringify({ hours: updatedHours }));
+      
+      if (noteId) {
+        const { error: updateError } = await supabase
+          .from("show_prep_notes")
+          .update({ topics: hoursJson })
+          .eq("id", noteId);
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from("show_prep_notes")
+          .insert([{ date: dateKey, topics: hoursJson }]);
+        if (insertError) throw insertError;
+      }
+
+      // Optionally add to Resources
+      if (addToResources) {
+        const { data: existingResources } = await supabase
+          .from("video_resources")
+          .select("display_order")
+          .order("display_order", { ascending: false })
+          .limit(1);
+
+        const maxOrder = existingResources?.[0]?.display_order ?? -1;
+
+        const newResources = selectedItems.map((item, index) => ({
+          title: item.title || "Untitled",
+          url: item.url,
+          thumbnail_url: item.thumbnail_url,
+          display_order: maxOrder + 1 + index,
+          type: "link" as const,
+        }));
+
+        const { error: resourceError } = await supabase.from("video_resources").insert(newResources);
+        if (resourceError) throw resourceError;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["show-prep-notes", dateKey] });
+      queryClient.invalidateQueries({ queryKey: ["video-resources"] });
+      setSelectedIds(new Set());
+      setIsCreateTopicDialogOpen(false);
+      toast({ title: "Topic created" });
+    },
+    onError: () => {
+      toast({ title: "Failed to create topic", variant: "destructive" });
+    },
+  });
   const groupMutation = useMutation({
     mutationFn: async (itemIds: string[]) => {
       // Create a new group
@@ -665,6 +796,15 @@ const Hopper = ({ selectedDate }: HopperProps) => {
             <Button
               size="sm"
               variant="outline"
+              onClick={() => setIsCreateTopicDialogOpen(true)}
+              disabled={createTopicMutation.isPending}
+            >
+              <FileText className="h-4 w-4 mr-1" />
+              Create Topic
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
               onClick={() => addToResourcesMutation.mutate(Array.from(selectedIds))}
               disabled={addToResourcesMutation.isPending}
             >
@@ -806,6 +946,19 @@ const Hopper = ({ selectedDate }: HopperProps) => {
           {selectedIds.size} selected • Ctrl/Cmd+click to multi-select
         </p>
       )}
+
+      <CreateTopicDialog
+        open={isCreateTopicDialogOpen}
+        onOpenChange={setIsCreateTopicDialogOpen}
+        onConfirm={(data) => {
+          createTopicMutation.mutate({
+            ...data,
+            itemIds: Array.from(selectedIds),
+          });
+        }}
+        itemCount={selectedIds.size}
+        isGroup={selectedIds.size > 1}
+      />
     </div>
   );
 };
