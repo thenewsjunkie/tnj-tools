@@ -351,6 +351,22 @@ const Hopper = ({ selectedDate }: HopperProps) => {
     },
   });
 
+  // Bulk delete mutation
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from("hopper_items").delete().in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["hopper-items", dateKey] });
+      setSelectedIds(new Set());
+      toast({ title: "Items deleted" });
+    },
+    onError: () => {
+      toast({ title: "Failed to delete items", variant: "destructive" });
+    },
+  });
+
   // Group selected items mutation
   const groupMutation = useMutation({
     mutationFn: async (itemIds: string[]) => {
@@ -564,6 +580,19 @@ const Hopper = ({ selectedDate }: HopperProps) => {
           <Button size="sm" onClick={() => setIsAdding(true)}>
             <Plus className="h-4 w-4 mr-1" />
             Add Links
+          </Button>
+        )}
+
+        {selectedIds.size >= 1 && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-destructive border-destructive hover:bg-destructive/10"
+            onClick={() => bulkDeleteMutation.mutate(Array.from(selectedIds))}
+            disabled={bulkDeleteMutation.isPending}
+          >
+            <Trash2 className="h-4 w-4 mr-1" />
+            Delete ({selectedIds.size})
           </Button>
         )}
 
