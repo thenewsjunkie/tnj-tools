@@ -48,8 +48,11 @@ export const AddResourceForm = ({
     if (mode === "image" && selectedFile) {
       setIsUploading(true);
       try {
-        // Upload to show_notes_images bucket
-        const fileName = `${Date.now()}-${selectedFile.name}`;
+        // Sanitize filename: replace spaces with underscores, remove special chars
+        const sanitizedName = selectedFile.name
+          .replace(/\s+/g, '_')
+          .replace(/[^a-zA-Z0-9._-]/g, '');
+        const fileName = `${crypto.randomUUID()}-${sanitizedName}`;
         const { data, error } = await supabase.storage
           .from("show_notes_images")
           .upload(fileName, selectedFile);
