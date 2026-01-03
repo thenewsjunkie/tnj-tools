@@ -465,6 +465,66 @@ export type Database = {
         }
         Relationships: []
       }
+      hopper_groups: {
+        Row: {
+          created_at: string
+          date: string
+          display_order: number
+          id: string
+          name: string | null
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          display_order?: number
+          id?: string
+          name?: string | null
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          display_order?: number
+          id?: string
+          name?: string | null
+        }
+        Relationships: []
+      }
+      hopper_items: {
+        Row: {
+          created_at: string
+          date: string
+          display_order: number
+          group_id: string | null
+          id: string
+          thumbnail_url: string | null
+          title: string | null
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          display_order?: number
+          group_id?: string | null
+          id?: string
+          thumbnail_url?: string | null
+          title?: string | null
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          display_order?: number
+          group_id?: string | null
+          id?: string
+          thumbnail_url?: string | null
+          title?: string | null
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
       instructions: {
         Row: {
           content: string

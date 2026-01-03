@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { format, isFriday as checkIsFriday, addDays, isToday } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Trash2, ChevronLeft, ChevronRight, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import Hopper from "./show-prep/Hopper";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import ShowPrepNotes from "./show-prep/ShowPrepNotes";
@@ -307,7 +308,7 @@ const ShowPrep = () => {
         
         {isHopperOpen && (
           <div className="mt-4 p-4 bg-muted/50 rounded-lg min-h-[200px]">
-            <p className="text-muted-foreground text-center">The Hopper content goes here</p>
+            <Hopper selectedDate={selectedDate} />
           </div>
         )}
       </div>
