@@ -19,7 +19,22 @@ import {
 import { Topic, Link, HourBlock } from "@/components/admin/show-prep/types";
 import { v4 as uuidv4 } from "uuid";
 import { AddResourceForm } from "@/components/resources/AddResourceForm";
-import { ResourceCard } from "@/components/resources/ResourceCard";
+import { SortableResourceCard } from "@/components/resources/SortableResourceCard";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 
 const TopicResources = () => {
   const { date, topicId } = useParams<{ date: string; topicId: string }>();
@@ -33,6 +48,13 @@ const TopicResources = () => {
   const [isFetchingTitle, setIsFetchingTitle] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Fetch show prep notes for the date
   const { data: showPrepData, isLoading } = useQuery({
@@ -258,6 +280,53 @@ const TopicResources = () => {
     },
   });
 
+  // Reorder links mutation
+  const reorderMutation = useMutation({
+    mutationFn: async (newLinks: Link[]) => {
+      const { data: latestData, error: fetchError } = await supabase
+        .from("show_prep_notes")
+        .select("*")
+        .eq("date", date)
+        .maybeSingle();
+      
+      if (fetchError) throw fetchError;
+      if (!latestData) throw new Error("Show prep notes not found");
+
+      const latestRawData = latestData.topics as unknown;
+      const latestHours: HourBlock[] = (latestRawData && typeof latestRawData === 'object' && Array.isArray((latestRawData as { hours?: unknown }).hours))
+        ? (latestRawData as { hours: HourBlock[] }).hours
+        : [];
+
+      const updatedHours = latestHours.map(hour => ({
+        ...hour,
+        topics: hour.topics.map(t => 
+          t.id === topicId ? { ...t, links: newLinks } : t
+        )
+      }));
+
+      const { error } = await supabase
+        .from("show_prep_notes")
+        .update({ topics: JSON.parse(JSON.stringify({ hours: updatedHours })) })
+        .eq("date", date);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["show-prep-notes", date] });
+    },
+  });
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = links.findIndex((l) => l.id === active.id);
+      const newIndex = links.findIndex((l) => l.id === over.id);
+      const newLinks = arrayMove(links, oldIndex, newIndex);
+      reorderMutation.mutate(newLinks);
+    }
+  };
+
   const handleSubmit = (data: { title: string; url: string; type: string }) => {
     addMutation.mutate(data);
   };
@@ -367,26 +436,37 @@ const TopicResources = () => {
         {links.length === 0 ? (
           <p className="text-muted-foreground text-center py-12">No resources yet. Add your first resource!</p>
         ) : (
-          <div className="space-y-4">
-            {links.map((link) => (
-              <ResourceCard
-                key={link.id}
-                id={link.id}
-                title={link.title || "Untitled"}
-                url={link.url}
-                thumbnailUrl={link.thumbnail_url}
-                type={link.type}
-                isEditing={editingId === link.id}
-                editTitle={editTitle}
-                onEditTitleChange={setEditTitle}
-                onStartEdit={() => startEditing(link)}
-                onSaveEdit={saveEdit}
-                onCancelEdit={cancelEdit}
-                onDelete={() => deleteMutation.mutate(link.id)}
-                getThumbnailUrl={getThumbnailUrl}
-              />
-            ))}
-          </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={links.map((l) => l.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-4">
+                {links.map((link) => (
+                  <SortableResourceCard
+                    key={link.id}
+                    id={link.id}
+                    title={link.title || "Untitled"}
+                    url={link.url}
+                    thumbnailUrl={link.thumbnail_url}
+                    type={link.type}
+                    isEditing={editingId === link.id}
+                    editTitle={editTitle}
+                    onEditTitleChange={setEditTitle}
+                    onStartEdit={() => startEditing(link)}
+                    onSaveEdit={saveEdit}
+                    onCancelEdit={cancelEdit}
+                    onDelete={() => deleteMutation.mutate(link.id)}
+                    getThumbnailUrl={getThumbnailUrl}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         )}
       </div>
     </div>
