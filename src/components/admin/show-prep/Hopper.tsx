@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Link2, Loader2, GripVertical, X, Unlink } from "lucide-react";
+import { Plus, Trash2, Link2, Loader2, GripVertical, X, Unlink, Pencil, Check } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -154,6 +154,7 @@ const GroupedItems = ({
   onDeleteItem,
   onUngroupItem,
   onDeleteGroup,
+  onRenameGroup,
   selectedIds,
   onSelect,
 }: {
@@ -163,19 +164,66 @@ const GroupedItems = ({
   onDeleteItem: (id: string) => void;
   onUngroupItem: (id: string) => void;
   onDeleteGroup: (id: string) => void;
+  onRenameGroup: (id: string, name: string) => void;
   selectedIds: Set<string>;
   onSelect: (id: string, isMulti: boolean) => void;
 }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState(groupName || "");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  const handleSave = () => {
+    onRenameGroup(groupId, editName.trim());
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSave();
+    } else if (e.key === "Escape") {
+      setEditName(groupName || "");
+      setIsEditing(false);
+    }
+  };
+
   return (
     <div className="border border-primary/30 rounded-lg p-2 bg-primary/5">
-      <div className="flex items-center justify-between mb-2 px-1">
-        <span className="text-xs font-medium text-primary">
-          {groupName || `Group (${items.length} items)`}
-        </span>
+      <div className="flex items-center justify-between mb-2 px-1 gap-2">
+        {isEditing ? (
+          <div className="flex items-center gap-1 flex-1">
+            <Input
+              ref={inputRef}
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onBlur={handleSave}
+              placeholder="Group name..."
+              className="h-6 text-xs py-0"
+            />
+          </div>
+        ) : (
+          <button
+            onClick={() => {
+              setEditName(groupName || "");
+              setIsEditing(true);
+            }}
+            className="text-xs font-medium text-primary hover:text-primary/80 flex items-center gap-1 group"
+          >
+            {groupName || `Group (${items.length} items)`}
+            <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </button>
+        )}
         <Button
           variant="ghost"
           size="icon"
-          className="h-5 w-5 text-muted-foreground hover:text-destructive"
+          className="h-5 w-5 text-muted-foreground hover:text-destructive flex-shrink-0"
           onClick={() => onDeleteGroup(groupId)}
         >
           <X className="h-3 w-3" />
@@ -368,6 +416,20 @@ const Hopper = ({ selectedDate }: HopperProps) => {
     },
   });
 
+  // Rename group mutation
+  const renameGroupMutation = useMutation({
+    mutationFn: async ({ groupId, name }: { groupId: string; name: string }) => {
+      const { error } = await supabase
+        .from("hopper_groups")
+        .update({ name: name || null })
+        .eq("id", groupId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["hopper-groups", dateKey] });
+    },
+  });
+
   // Reorder mutation
   const reorderMutation = useMutation({
     mutationFn: async (newItems: HopperItem[]) => {
@@ -546,6 +608,7 @@ const Hopper = ({ selectedDate }: HopperProps) => {
                   onDeleteItem={(id) => deleteMutation.mutate(id)}
                   onUngroupItem={(id) => ungroupMutation.mutate(id)}
                   onDeleteGroup={(id) => deleteGroupMutation.mutate(id)}
+                  onRenameGroup={(id, name) => renameGroupMutation.mutate({ groupId: id, name })}
                   selectedIds={selectedIds}
                   onSelect={handleSelect}
                 />
