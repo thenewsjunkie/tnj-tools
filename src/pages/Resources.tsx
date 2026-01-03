@@ -16,7 +16,22 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { AddResourceForm } from "@/components/resources/AddResourceForm";
-import { ResourceCard } from "@/components/resources/ResourceCard";
+import { SortableResourceCard } from "@/components/resources/SortableResourceCard";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 
 interface VideoResource {
   id: string;
@@ -37,6 +52,13 @@ const Resources = () => {
   const [editTitle, setEditTitle] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const { data: resources = [], isLoading } = useQuery({
     queryKey: ["video-resources"],
@@ -144,6 +166,42 @@ const Resources = () => {
     },
   });
 
+  const reorderMutation = useMutation({
+    mutationFn: async (newResources: VideoResource[]) => {
+      const updates = newResources.map((resource, index) => ({
+        id: resource.id,
+        title: resource.title,
+        url: resource.url,
+        display_order: index,
+        thumbnail_url: resource.thumbnail_url,
+        type: resource.type,
+      }));
+
+      const { error } = await supabase
+        .from("video_resources")
+        .upsert(updates, { onConflict: "id" });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["video-resources"] });
+    },
+    onError: () => {
+      toast({ title: "Failed to reorder", variant: "destructive" });
+    },
+  });
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = resources.findIndex((r) => r.id === active.id);
+      const newIndex = resources.findIndex((r) => r.id === over.id);
+      const newResources = arrayMove(resources, oldIndex, newIndex);
+      reorderMutation.mutate(newResources);
+    }
+  };
+
   const handleSubmit = (data: { title: string; url: string; type: string }) => {
     addMutation.mutate(data);
   };
@@ -224,26 +282,37 @@ const Resources = () => {
         ) : resources.length === 0 ? (
           <p className="text-muted-foreground text-center py-12">No resources yet. Add your first resource!</p>
         ) : (
-          <div className="space-y-4">
-            {resources.map((resource) => (
-              <ResourceCard
-                key={resource.id}
-                id={resource.id}
-                title={resource.title}
-                url={resource.url}
-                thumbnailUrl={resource.thumbnail_url}
-                type={resource.type as "link" | "image"}
-                isEditing={editingId === resource.id}
-                editTitle={editTitle}
-                onEditTitleChange={setEditTitle}
-                onStartEdit={() => startEditing(resource)}
-                onSaveEdit={saveEdit}
-                onCancelEdit={cancelEdit}
-                onDelete={() => deleteMutation.mutate(resource.id)}
-                getThumbnailUrl={getThumbnailUrl}
-              />
-            ))}
-          </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={resources.map((r) => r.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-4">
+                {resources.map((resource) => (
+                  <SortableResourceCard
+                    key={resource.id}
+                    id={resource.id}
+                    title={resource.title}
+                    url={resource.url}
+                    thumbnailUrl={resource.thumbnail_url}
+                    type={resource.type as "link" | "image"}
+                    isEditing={editingId === resource.id}
+                    editTitle={editTitle}
+                    onEditTitleChange={setEditTitle}
+                    onStartEdit={() => startEditing(resource)}
+                    onSaveEdit={saveEdit}
+                    onCancelEdit={cancelEdit}
+                    onDelete={() => deleteMutation.mutate(resource.id)}
+                    getThumbnailUrl={getThumbnailUrl}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         )}
       </div>
     </div>
