@@ -1054,6 +1054,30 @@ export type Database = {
         }
         Relationships: []
       }
+      video_resources: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          title: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          title: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          title?: string
+          url?: string
+        }
+        Relationships: []
+      }
       weekend_segments: {
         Row: {
           am_segment1: string | null
