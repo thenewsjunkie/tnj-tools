@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { X } from "lucide-react";
+import { X, Maximize } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +21,7 @@ const GreenScreen = () => {
     : "#00FF00";
   
   const [color, setColor] = useState(initialColor);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(false);
   const [hideTimeout, setHideTimeout] = useState<NodeJS.Timeout | null>(null);
 
@@ -35,6 +36,7 @@ const GreenScreen = () => {
     try {
       if (containerRef.current && !document.fullscreenElement) {
         await containerRef.current.requestFullscreen();
+        setIsFullscreen(true);
       }
     } catch (err) {
       console.log("Fullscreen not supported");
@@ -49,11 +51,9 @@ const GreenScreen = () => {
   }, [navigate]);
 
   const handleFullscreenChange = useCallback(() => {
-    // When user exits fullscreen (via Escape), navigate back
-    if (!document.fullscreenElement) {
-      navigate("/admin");
-    }
-  }, [navigate]);
+    // When user exits fullscreen (via Escape), stay on page but show button
+    setIsFullscreen(!!document.fullscreenElement);
+  }, []);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     // Don't handle Escape - let the browser's fullscreen handle it
@@ -69,9 +69,6 @@ const GreenScreen = () => {
   }, [resetHideTimer]);
 
   useEffect(() => {
-    // Enter fullscreen on mount
-    enterFullscreen();
-    
     window.addEventListener("keydown", handleKeyDown);
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     
@@ -80,17 +77,21 @@ const GreenScreen = () => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
       if (hideTimeout) clearTimeout(hideTimeout);
     };
-  }, [handleKeyDown, handleFullscreenChange, enterFullscreen]);
+  }, [handleKeyDown, handleFullscreenChange]);
 
   const handleMouseMove = () => {
-    resetHideTimer();
+    if (isFullscreen) {
+      resetHideTimer();
+    }
   };
 
   const handleClick = () => {
-    if (!showControls) {
-      resetHideTimer();
-    } else {
-      setShowControls(false);
+    if (isFullscreen) {
+      if (!showControls) {
+        resetHideTimer();
+      } else {
+        setShowControls(false);
+      }
     }
   };
 
@@ -101,32 +102,35 @@ const GreenScreen = () => {
       ref={containerRef}
       className={cn(
         "fixed inset-0 z-50 transition-cursor duration-300",
-        showControls ? "cursor-auto" : "cursor-none"
+        isFullscreen && !showControls ? "cursor-none" : "cursor-auto"
       )}
       style={{ backgroundColor: color }}
       onMouseMove={handleMouseMove}
       onClick={handleClick}
     >
-      {/* Controls overlay */}
-      <div
-        className={cn(
-          "absolute inset-x-0 bottom-0 p-6 transition-all duration-300 cursor-auto",
-          showControls ? "opacity-100 translate-y-0" : "opacity-0 translate-y-full pointer-events-none"
-        )}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className={cn(
-          "max-w-2xl mx-auto rounded-lg p-4 backdrop-blur-md",
-          isDark ? "bg-white/20" : "bg-black/20"
-        )}>
-          {/* Color presets */}
-          <div className="flex flex-wrap gap-2 justify-center mb-4">
+      {/* Go Fullscreen button - shown when not in fullscreen */}
+      {!isFullscreen && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-6">
+          <Button
+            size="lg"
+            onClick={enterFullscreen}
+            className="gap-3 text-lg px-8 py-6"
+          >
+            <Maximize className="h-6 w-6" />
+            Go Fullscreen
+          </Button>
+          
+          {/* Color presets when not fullscreen */}
+          <div className="flex gap-2">
             {PRESET_COLORS.map((preset) => (
               <button
                 key={preset.key}
-                onClick={() => setColor(preset.color)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setColor(preset.color);
+                }}
                 className={cn(
-                  "w-12 h-12 rounded-lg border-2 transition-transform hover:scale-110",
+                  "w-10 h-10 rounded-lg border-2 transition-transform hover:scale-110",
                   color === preset.color ? "ring-2 ring-offset-2 ring-white scale-110" : "",
                   preset.color === "#FFFFFF" ? "border-gray-300" : "border-transparent"
                 )}
@@ -134,53 +138,97 @@ const GreenScreen = () => {
                 title={`${preset.label} (${preset.key.toUpperCase()})`}
               />
             ))}
-            
-            {/* Custom color picker */}
-            <label className="relative">
-              <input
-                type="color"
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                className="absolute inset-0 w-12 h-12 opacity-0 cursor-pointer"
-              />
-              <div
-                className="w-12 h-12 rounded-lg border-2 border-dashed border-gray-400 flex items-center justify-center"
-                style={{ 
-                  background: `conic-gradient(red, yellow, lime, aqua, blue, magenta, red)` 
-                }}
-                title="Custom color"
-              >
-                <span className="text-xs font-bold text-white drop-shadow-lg">+</span>
-              </div>
-            </label>
           </div>
+          
+          <p className={cn(
+            "text-sm mt-4",
+            isDark ? "text-white/70" : "text-black/70"
+          )}>
+            Press <kbd className="px-1 py-0.5 rounded bg-white/20">G</kbd>
+            <kbd className="px-1 py-0.5 rounded bg-white/20 ml-1">B</kbd>
+            <kbd className="px-1 py-0.5 rounded bg-white/20 ml-1">M</kbd>
+            <kbd className="px-1 py-0.5 rounded bg-white/20 ml-1">W</kbd>
+            <kbd className="px-1 py-0.5 rounded bg-white/20 ml-1">K</kbd> for colors
+          </p>
+        </div>
+      )}
 
-          {/* Exit button and instructions */}
-          <div className="flex items-center justify-between">
-            <p className={cn(
-              "text-xs",
-              isDark ? "text-white/70" : "text-black/70"
-            )}>
-              Press <kbd className="px-1 py-0.5 rounded bg-white/20">Esc</kbd> to exit • 
-              <kbd className="px-1 py-0.5 rounded bg-white/20 ml-1">G</kbd>
-              <kbd className="px-1 py-0.5 rounded bg-white/20 ml-1">B</kbd>
-              <kbd className="px-1 py-0.5 rounded bg-white/20 ml-1">M</kbd>
-              <kbd className="px-1 py-0.5 rounded bg-white/20 ml-1">W</kbd>
-              <kbd className="px-1 py-0.5 rounded bg-white/20 ml-1">K</kbd> for colors
-            </p>
-            
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleExit}
-              className="gap-2"
-            >
-              <X className="h-4 w-4" />
-              Exit
-            </Button>
+      {/* Fullscreen controls overlay */}
+      {isFullscreen && (
+        <div
+          className={cn(
+            "absolute inset-x-0 bottom-0 p-6 transition-all duration-300 cursor-auto",
+            showControls ? "opacity-100 translate-y-0" : "opacity-0 translate-y-full pointer-events-none"
+          )}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className={cn(
+            "max-w-2xl mx-auto rounded-lg p-4 backdrop-blur-md",
+            isDark ? "bg-white/20" : "bg-black/20"
+          )}>
+            {/* Color presets */}
+            <div className="flex flex-wrap gap-2 justify-center mb-4">
+              {PRESET_COLORS.map((preset) => (
+                <button
+                  key={preset.key}
+                  onClick={() => setColor(preset.color)}
+                  className={cn(
+                    "w-12 h-12 rounded-lg border-2 transition-transform hover:scale-110",
+                    color === preset.color ? "ring-2 ring-offset-2 ring-white scale-110" : "",
+                    preset.color === "#FFFFFF" ? "border-gray-300" : "border-transparent"
+                  )}
+                  style={{ backgroundColor: preset.color }}
+                  title={`${preset.label} (${preset.key.toUpperCase()})`}
+                />
+              ))}
+              
+              {/* Custom color picker */}
+              <label className="relative">
+                <input
+                  type="color"
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  className="absolute inset-0 w-12 h-12 opacity-0 cursor-pointer"
+                />
+                <div
+                  className="w-12 h-12 rounded-lg border-2 border-dashed border-gray-400 flex items-center justify-center"
+                  style={{ 
+                    background: `conic-gradient(red, yellow, lime, aqua, blue, magenta, red)` 
+                  }}
+                  title="Custom color"
+                >
+                  <span className="text-xs font-bold text-white drop-shadow-lg">+</span>
+                </div>
+              </label>
+            </div>
+
+            {/* Exit button and instructions */}
+            <div className="flex items-center justify-between">
+              <p className={cn(
+                "text-xs",
+                isDark ? "text-white/70" : "text-black/70"
+              )}>
+                Press <kbd className="px-1 py-0.5 rounded bg-white/20">Esc</kbd> to exit fullscreen • 
+                <kbd className="px-1 py-0.5 rounded bg-white/20 ml-1">G</kbd>
+                <kbd className="px-1 py-0.5 rounded bg-white/20 ml-1">B</kbd>
+                <kbd className="px-1 py-0.5 rounded bg-white/20 ml-1">M</kbd>
+                <kbd className="px-1 py-0.5 rounded bg-white/20 ml-1">W</kbd>
+                <kbd className="px-1 py-0.5 rounded bg-white/20 ml-1">K</kbd> for colors
+              </p>
+              
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleExit}
+                className="gap-2"
+              >
+                <X className="h-4 w-4" />
+                Exit
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
