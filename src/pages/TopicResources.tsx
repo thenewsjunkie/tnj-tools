@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Plus, Trash2, Pencil, X, Check, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,6 +24,7 @@ const TopicResources = () => {
   const { date, topicId } = useParams<{ date: string; topicId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const [isAdding, setIsAdding] = useState(false);
   const [url, setUrl] = useState("");
@@ -55,37 +56,16 @@ const TopicResources = () => {
     : [];
   const allTopics = hours.flatMap(h => h.topics);
   const topic = allTopics.find(t => t.id === topicId);
+  const links = topic?.links || [];
 
-  // Mutation to update the topic
-  const updateMutation = useMutation({
-    mutationFn: async (updatedTopic: Topic) => {
-      // Find which hour contains this topic and update it
-      const updatedHours = hours.map(hour => ({
-        ...hour,
-        topics: hour.topics.map(t => 
-          t.id === topicId ? updatedTopic : t
-        )
-      }));
-      
-      const { error } = await supabase
-        .from("show_prep_notes")
-        .update({ topics: JSON.parse(JSON.stringify({ hours: updatedHours })) })
-        .eq("date", date);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["show-prep-notes", date] });
-    },
-    onError: (error) => {
-      toast.error("Failed to save changes");
-      console.error(error);
-    },
-  });
+  // Get thumbnail URL for a link
+  const getThumbnailUrl = (url: string) => {
+    return `https://image.thum.io/get/width/300/${url}`;
+  };
 
   // Fetch title from URL
   const fetchTitleFromUrl = async (inputUrl: string) => {
-    if (!inputUrl.trim() || title.trim()) return;
+    if (!inputUrl.trim()) return;
     
     let processedUrl = inputUrl.trim();
     if (!processedUrl.startsWith("http://") && !processedUrl.startsWith("https://")) {
@@ -108,83 +88,200 @@ const TopicResources = () => {
     }
   };
 
-  // Get thumbnail URL for a link
-  const getThumbnailUrl = (url: string) => {
-    return `https://image.thum.io/get/width/300/${url}`;
-  };
+  // Add link mutation - matches Resources.tsx pattern
+  const addMutation = useMutation({
+    mutationFn: async ({ title, url }: { title: string; url: string }) => {
+      // Re-fetch the latest data to avoid stale state
+      const { data: latestData, error: fetchError } = await supabase
+        .from("show_prep_notes")
+        .select("*")
+        .eq("date", date)
+        .maybeSingle();
+      
+      if (fetchError) throw fetchError;
+      if (!latestData) throw new Error("Show prep notes not found");
 
-  // Handle adding a new link
-  const handleAddLink = () => {
-    if (!url.trim() || !title.trim() || !topic) return;
-    
-    let processedUrl = url.trim();
-    if (!processedUrl.startsWith("http://") && !processedUrl.startsWith("https://")) {
-      processedUrl = "https://" + processedUrl;
+      const latestRawData = latestData.topics as unknown;
+      const latestHours: HourBlock[] = (latestRawData && typeof latestRawData === 'object' && Array.isArray((latestRawData as { hours?: unknown }).hours))
+        ? (latestRawData as { hours: HourBlock[] }).hours
+        : [];
+
+      let processedUrl = url.trim();
+      if (!processedUrl.startsWith("http://") && !processedUrl.startsWith("https://")) {
+        processedUrl = "https://" + processedUrl;
+      }
+
+      const newLink: Link = {
+        id: uuidv4(),
+        url: processedUrl,
+        title: title.trim(),
+        thumbnail_url: getThumbnailUrl(processedUrl),
+      };
+
+      // Update the topic with the new link
+      const updatedHours = latestHours.map(hour => ({
+        ...hour,
+        topics: hour.topics.map(t => 
+          t.id === topicId ? { ...t, links: [...t.links, newLink] } : t
+        )
+      }));
+
+      const { error } = await supabase
+        .from("show_prep_notes")
+        .update({ topics: JSON.parse(JSON.stringify({ hours: updatedHours })) })
+        .eq("date", date);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["show-prep-notes", date] });
+      setTitle("");
+      setUrl("");
+      setIsAdding(false);
+      toast({ title: "Link added" });
+    },
+    onError: () => {
+      toast({ title: "Failed to add link", variant: "destructive" });
+    },
+  });
+
+  // Update link title mutation
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, title }: { id: string; title: string }) => {
+      const { data: latestData, error: fetchError } = await supabase
+        .from("show_prep_notes")
+        .select("*")
+        .eq("date", date)
+        .maybeSingle();
+      
+      if (fetchError) throw fetchError;
+      if (!latestData) throw new Error("Show prep notes not found");
+
+      const latestRawData = latestData.topics as unknown;
+      const latestHours: HourBlock[] = (latestRawData && typeof latestRawData === 'object' && Array.isArray((latestRawData as { hours?: unknown }).hours))
+        ? (latestRawData as { hours: HourBlock[] }).hours
+        : [];
+
+      const updatedHours = latestHours.map(hour => ({
+        ...hour,
+        topics: hour.topics.map(t => 
+          t.id === topicId 
+            ? { ...t, links: t.links.map(l => l.id === id ? { ...l, title: title.trim() } : l) }
+            : t
+        )
+      }));
+
+      const { error } = await supabase
+        .from("show_prep_notes")
+        .update({ topics: JSON.parse(JSON.stringify({ hours: updatedHours })) })
+        .eq("date", date);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["show-prep-notes", date] });
+      setEditingId(null);
+      toast({ title: "Title updated" });
+    },
+  });
+
+  // Delete link mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (linkId: string) => {
+      const { data: latestData, error: fetchError } = await supabase
+        .from("show_prep_notes")
+        .select("*")
+        .eq("date", date)
+        .maybeSingle();
+      
+      if (fetchError) throw fetchError;
+      if (!latestData) throw new Error("Show prep notes not found");
+
+      const latestRawData = latestData.topics as unknown;
+      const latestHours: HourBlock[] = (latestRawData && typeof latestRawData === 'object' && Array.isArray((latestRawData as { hours?: unknown }).hours))
+        ? (latestRawData as { hours: HourBlock[] }).hours
+        : [];
+
+      const updatedHours = latestHours.map(hour => ({
+        ...hour,
+        topics: hour.topics.map(t => 
+          t.id === topicId 
+            ? { ...t, links: t.links.filter(l => l.id !== linkId) }
+            : t
+        )
+      }));
+
+      const { error } = await supabase
+        .from("show_prep_notes")
+        .update({ topics: JSON.parse(JSON.stringify({ hours: updatedHours })) })
+        .eq("date", date);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["show-prep-notes", date] });
+      toast({ title: "Link deleted" });
+    },
+  });
+
+  // Clear all links mutation
+  const clearAllMutation = useMutation({
+    mutationFn: async () => {
+      const { data: latestData, error: fetchError } = await supabase
+        .from("show_prep_notes")
+        .select("*")
+        .eq("date", date)
+        .maybeSingle();
+      
+      if (fetchError) throw fetchError;
+      if (!latestData) throw new Error("Show prep notes not found");
+
+      const latestRawData = latestData.topics as unknown;
+      const latestHours: HourBlock[] = (latestRawData && typeof latestRawData === 'object' && Array.isArray((latestRawData as { hours?: unknown }).hours))
+        ? (latestRawData as { hours: HourBlock[] }).hours
+        : [];
+
+      const updatedHours = latestHours.map(hour => ({
+        ...hour,
+        topics: hour.topics.map(t => 
+          t.id === topicId ? { ...t, links: [] } : t
+        )
+      }));
+
+      const { error } = await supabase
+        .from("show_prep_notes")
+        .update({ topics: JSON.parse(JSON.stringify({ hours: updatedHours })) })
+        .eq("date", date);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["show-prep-notes", date] });
+      toast({ title: "All links cleared" });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (title.trim() && url.trim()) {
+      addMutation.mutate({ title, url });
     }
-
-    const newLink: Link = {
-      id: uuidv4(),
-      url: processedUrl,
-      title: title.trim(),
-      thumbnail_url: getThumbnailUrl(processedUrl),
-    };
-    
-    updateMutation.mutate({
-      ...topic,
-      links: [...topic.links, newLink],
-    });
-    
-    setUrl("");
-    setTitle("");
-    setIsAdding(false);
-    toast.success("Link added");
   };
 
-  // Handle editing a link
   const startEditing = (link: Link) => {
     setEditingId(link.id);
     setEditTitle(link.title || "");
   };
 
   const saveEdit = () => {
-    if (!topic || !editingId || !editTitle.trim()) return;
-    
-    updateMutation.mutate({
-      ...topic,
-      links: topic.links.map(l => 
-        l.id === editingId ? { ...l, title: editTitle.trim() } : l
-      ),
-    });
-    
-    setEditingId(null);
-    setEditTitle("");
+    if (editingId && editTitle.trim()) {
+      updateMutation.mutate({ id: editingId, title: editTitle });
+    }
   };
 
   const cancelEdit = () => {
     setEditingId(null);
     setEditTitle("");
-  };
-
-  // Handle deleting a link
-  const handleDeleteLink = (linkId: string) => {
-    if (!topic) return;
-    
-    updateMutation.mutate({
-      ...topic,
-      links: topic.links.filter(l => l.id !== linkId),
-    });
-    toast.success("Link deleted");
-  };
-
-  // Handle clearing all links
-  const handleClearAllLinks = () => {
-    if (!topic) return;
-    
-    updateMutation.mutate({
-      ...topic,
-      links: [],
-    });
-    toast.success("All links cleared");
   };
 
   if (isLoading) {
@@ -213,18 +310,16 @@ const TopicResources = () => {
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-3xl mx-auto">
         {/* Back button */}
-        <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-4">
+        <Button variant="ghost" size="sm" onClick={() => navigate("/admin")} className="mb-4">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
         </Button>
 
-        {/* Header */}
+        {/* Header - matches Resources.tsx exactly */}
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-bold text-foreground">
-            Resources for "{topic.title || "Untitled Topic"}"
-          </h1>
+          <h1 className="text-2xl font-bold text-foreground">Resources</h1>
           <div className="flex gap-2">
-            {topic.links.length > 0 && (
+            {links.length > 0 && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="outline" size="sm" className="text-destructive border-destructive hover:bg-destructive/10">
@@ -235,13 +330,13 @@ const TopicResources = () => {
                   <AlertDialogHeader>
                     <AlertDialogTitle>Clear all resources?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will permanently delete all {topic.links.length} resource links. This action cannot be undone.
+                      This will permanently delete all {links.length} resource links. This action cannot be undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={handleClearAllLinks}
+                      onClick={() => clearAllMutation.mutate()}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
                       Clear All
@@ -259,9 +354,9 @@ const TopicResources = () => {
           </div>
         </div>
 
-        {/* Add Link Form */}
+        {/* Add Link Form - uses form onSubmit like Resources.tsx */}
         {isAdding && (
-          <div className="mb-8 p-4 border border-border rounded-lg bg-card">
+          <form onSubmit={handleSubmit} className="mb-8 p-4 border border-border rounded-lg bg-card">
             <div className="space-y-3">
               <div className="relative">
                 <Input
@@ -286,23 +381,23 @@ const TopicResources = () => {
                 )}
               </div>
               <div className="flex gap-2">
-                <Button onClick={handleAddLink} disabled={!title.trim() || !url.trim()}>
+                <Button type="submit" disabled={addMutation.isPending || !title.trim() || !url.trim()}>
                   Add
                 </Button>
-                <Button variant="outline" onClick={() => { setIsAdding(false); setTitle(""); setUrl(""); }}>
+                <Button type="button" variant="outline" onClick={() => { setIsAdding(false); setTitle(""); setUrl(""); }}>
                   Cancel
                 </Button>
               </div>
             </div>
-          </div>
+          </form>
         )}
 
-        {/* Links List */}
-        {topic.links.length === 0 ? (
+        {/* Links List - matches Resources.tsx exactly */}
+        {links.length === 0 ? (
           <p className="text-muted-foreground text-center py-12">No resources yet. Add your first link!</p>
         ) : (
           <div className="space-y-4">
-            {topic.links.map((link) => (
+            {links.map((link) => (
               <div
                 key={link.id}
                 className="group flex items-start gap-4 p-4 rounded-lg bg-card border border-border hover:border-primary/50 transition-colors"
@@ -380,7 +475,7 @@ const TopicResources = () => {
                     variant="ghost"
                     size="icon"
                     className="text-muted-foreground hover:text-destructive"
-                    onClick={() => handleDeleteLink(link.id)}
+                    onClick={() => deleteMutation.mutate(link.id)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
