@@ -53,39 +53,43 @@ const TopicArchive = () => {
     const topics: FlattenedTopic[] = [];
 
     showPrepNotes.forEach((note) => {
-      const noteTopics = note.topics as unknown;
+      const noteTopics = note.topics as unknown as { hours?: HourBlock[] } | HourBlock[] | null;
       
-      // Handle new format (hours array)
-      if (Array.isArray(noteTopics)) {
-        const hours = noteTopics as HourBlock[];
-        hours.forEach((hour) => {
-          if (hour.topics && Array.isArray(hour.topics)) {
-            hour.topics.forEach((topic: Topic) => {
-              const bulletTexts = topic.bullets?.map((b) => b.text) || [];
-              const linkTitles = topic.links?.map((l) => l.title || l.url) || [];
-              const tagTexts = topic.tags || [];
-
-              topics.push({
-                id: topic.id,
-                date: note.date,
-                title: topic.title,
-                linksCount: topic.links?.length || 0,
-                imagesCount: topic.images?.length || 0,
-                bulletsCount: topic.bullets?.length || 0,
-                bullets: topic.bullets?.slice(0, 3) || [],
-                tags: tagTexts,
-                searchText: [
-                  topic.title,
-                  ...bulletTexts,
-                  ...linkTitles,
-                  ...tagTexts,
-                ].join(" ").toLowerCase(),
-                hourLabel: hour.label,
-              });
-            });
-          }
-        });
+      // Get hours array - handle both { hours: [...] } format and direct array format
+      let hours: HourBlock[] = [];
+      if (noteTopics && typeof noteTopics === 'object' && 'hours' in noteTopics && Array.isArray(noteTopics.hours)) {
+        hours = noteTopics.hours;
+      } else if (Array.isArray(noteTopics)) {
+        hours = noteTopics as HourBlock[];
       }
+
+      hours.forEach((hour) => {
+        if (hour.topics && Array.isArray(hour.topics)) {
+          hour.topics.forEach((topic: Topic) => {
+            const bulletTexts = topic.bullets?.map((b) => b.text) || [];
+            const linkTitles = topic.links?.map((l) => l.title || l.url) || [];
+            const tagTexts = topic.tags || [];
+
+            topics.push({
+              id: topic.id,
+              date: note.date,
+              title: topic.title,
+              linksCount: topic.links?.length || 0,
+              imagesCount: topic.images?.length || 0,
+              bulletsCount: topic.bullets?.length || 0,
+              bullets: topic.bullets?.slice(0, 3) || [],
+              tags: tagTexts,
+              searchText: [
+                topic.title,
+                ...bulletTexts,
+                ...linkTitles,
+                ...tagTexts,
+              ].join(" ").toLowerCase(),
+              hourLabel: hour.label,
+            });
+          });
+        }
+      });
     });
 
     return topics;
