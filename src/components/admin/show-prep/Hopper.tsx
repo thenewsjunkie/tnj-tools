@@ -738,19 +738,11 @@ const Hopper = ({ selectedDate }: HopperProps) => {
   const handleSelect = (id: string, isMulti: boolean) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (isMulti) {
-        if (next.has(id)) {
-          next.delete(id);
-        } else {
-          next.add(id);
-        }
+      // Always toggle - no need for Ctrl/Cmd
+      if (next.has(id)) {
+        next.delete(id);
       } else {
-        if (next.has(id) && next.size === 1) {
-          next.clear();
-        } else {
-          next.clear();
-          next.add(id);
-        }
+        next.add(id);
       }
       return next;
     });
