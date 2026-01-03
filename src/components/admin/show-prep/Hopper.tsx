@@ -829,6 +829,18 @@ const Hopper = ({ selectedDate }: HopperProps) => {
 
   const canGroup = selectedIds.size >= 2;
 
+  // Compute default topic title from group name if all selected items are in the same group
+  const getDefaultTopicTitle = (): string => {
+    if (selectedIds.size === 0) return "";
+    const selectedItems = items.filter(i => selectedIds.has(i.id));
+    const groupIds = new Set(selectedItems.map(i => i.group_id).filter(Boolean));
+    if (groupIds.size === 1) {
+      const groupId = Array.from(groupIds)[0];
+      const group = groups.find(g => g.id === groupId);
+      return group?.name || "";
+    }
+    return "";
+  };
   return (
     <div className="space-y-4">
       {/* Add URL input */}
@@ -1111,6 +1123,7 @@ const Hopper = ({ selectedDate }: HopperProps) => {
         }}
         itemCount={selectedIds.size}
         isGroup={selectedIds.size > 1}
+        defaultTitle={getDefaultTopicTitle()}
       />
     </div>
   );

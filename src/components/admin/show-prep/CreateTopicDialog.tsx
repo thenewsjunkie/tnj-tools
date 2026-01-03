@@ -31,6 +31,7 @@ interface CreateTopicDialogProps {
   }) => void;
   itemCount: number;
   isGroup: boolean;
+  defaultTitle?: string;
 }
 
 const CreateTopicDialog = ({
@@ -39,11 +40,19 @@ const CreateTopicDialog = ({
   onConfirm,
   itemCount,
   isGroup,
+  defaultTitle = "",
 }: CreateTopicDialogProps) => {
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState(defaultTitle);
   const [hourId, setHourId] = useState(DEFAULT_SHOW_HOURS[0].id);
   const [addToResources, setAddToResources] = useState(isGroup);
   const [removeFromHopper, setRemoveFromHopper] = useState(true);
+
+  // Update title when defaultTitle changes (e.g., when dialog opens with a group name)
+  useState(() => {
+    if (open && defaultTitle) {
+      setTitle(defaultTitle);
+    }
+  });
 
   const handleConfirm = () => {
     if (!title.trim()) return;
@@ -60,6 +69,8 @@ const CreateTopicDialog = ({
       setHourId(DEFAULT_SHOW_HOURS[0].id);
       setAddToResources(false);
       setRemoveFromHopper(true);
+    } else if (defaultTitle) {
+      setTitle(defaultTitle);
     }
     onOpenChange(newOpen);
   };
