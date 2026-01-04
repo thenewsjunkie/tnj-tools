@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { GripVertical, Trash2, Pencil, Check, Plus, ExternalLink, Link2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { normalizeUrl } from "@/lib/url";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Topic } from "./types";
@@ -55,7 +56,11 @@ const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardP
 
   const handleOpenLink = () => {
     if (topic.url) {
-      window.open(topic.url, "_blank", "noopener,noreferrer");
+      // Normalize URL at click-time to handle existing data without protocol
+      const normalizedUrl = normalizeUrl(topic.url);
+      if (normalizedUrl) {
+        window.open(normalizedUrl, "_blank", "noopener,noreferrer");
+      }
     }
   };
 

@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, Link2 } from "lucide-react";
 import { Topic } from "./types";
+import { normalizeUrl } from "@/lib/url";
 
 interface AddTopicDialogProps {
   open: boolean;
@@ -29,6 +30,10 @@ const AddTopicDialog = ({ open, onOpenChange, onAdd }: AddTopicDialogProps) => {
     if (!title.trim()) return;
     if (type === "link" && !url.trim()) return;
 
+    // Normalize URL for link types
+    const normalizedUrl = type === "link" ? normalizeUrl(url) : undefined;
+    if (type === "link" && !normalizedUrl) return;
+
     const newTopic: Topic = {
       id: uuidv4(),
       title: title.trim(),
@@ -37,12 +42,14 @@ const AddTopicDialog = ({ open, onOpenChange, onAdd }: AddTopicDialogProps) => {
       links: [],
       images: [],
       type,
-      url: type === "link" ? url.trim() : undefined,
+      url: normalizedUrl,
     };
 
     onAdd(newTopic);
     handleClose();
   };
+
+  const urlError = type === "link" && url.trim() && !normalizeUrl(url);
 
   const handleClose = () => {
     setTitle("");
@@ -51,7 +58,7 @@ const AddTopicDialog = ({ open, onOpenChange, onAdd }: AddTopicDialogProps) => {
     onOpenChange(false);
   };
 
-  const isValid = title.trim() && (type === "topic" || url.trim());
+  const isValid = title.trim() && (type === "topic" || (url.trim() && !urlError));
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -107,7 +114,11 @@ const AddTopicDialog = ({ open, onOpenChange, onAdd }: AddTopicDialogProps) => {
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://..."
                 onKeyDown={(e) => e.key === "Enter" && isValid && handleAdd()}
+                className={urlError ? "border-destructive" : ""}
               />
+              {urlError && (
+                <p className="text-xs text-destructive">Please enter a valid URL</p>
+              )}
             </div>
             <p className="text-xs text-muted-foreground">
               Creates a simple link that opens in a new window when clicked.
