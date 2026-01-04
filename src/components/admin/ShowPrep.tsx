@@ -54,7 +54,16 @@ const AutoSizeInput = ({ value, onChange, placeholder, disabled }: AutoSizeInput
 };
 
 const ShowPrep = () => {
-  const [selectedDate, setSelectedDate] = useState(() => new Date());
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const saved = localStorage.getItem('show-prep-selected-date');
+    if (saved) {
+      const parsed = new Date(saved);
+      if (!isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    }
+    return new Date();
+  });
   const [topics, setTopics] = useState<ShowPrepTopics>({ fromTopic: "", toTopic: "", andTopic: "" });
   const [lastMinuteFrom, setLastMinuteFrom] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -139,6 +148,11 @@ const ShowPrep = () => {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Persist selected date to localStorage
+  useEffect(() => {
+    localStorage.setItem('show-prep-selected-date', selectedDate.toISOString());
+  }, [selectedDate]);
 
   // Debounced save to Supabase - only after initial load is complete
   useEffect(() => {
