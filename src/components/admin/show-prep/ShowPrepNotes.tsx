@@ -28,6 +28,74 @@ const ShowPrepNotes = () => {
 
   const dateKey = format(selectedDate, "yyyy-MM-dd");
 
+  // Helper function to load notes - extracted so it can be called from realtime subscription
+  const loadNotes = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("show_prep_notes")
+        .select("*")
+        .eq("date", dateKey)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setNoteId(data.id);
+        // Handle both new hours format and legacy topics format
+        const rawData = data.topics as unknown;
+        if (rawData && typeof rawData === "object" && Array.isArray((rawData as { hours?: unknown }).hours)) {
+          // New format with hours
+          setHours((rawData as { hours: HourBlock[] }).hours);
+        } else if (Array.isArray(rawData)) {
+          // Legacy format - migrate topics to first hour
+          const migratedHours = createEmptyHours();
+          migratedHours[0].topics = rawData as HourBlock["topics"];
+          setHours(migratedHours);
+        } else {
+          setHours(createEmptyHours());
+        }
+      } else {
+        setNoteId(null);
+        setHours(createEmptyHours());
+      }
+    } catch (error) {
+      console.error("Error loading notes:", error);
+      toast.error("Failed to load notes");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [dateKey]);
+
+  // Load notes when date changes
+  useEffect(() => {
+    loadNotes();
+  }, [loadNotes]);
+
+  // Subscribe to realtime changes for show_prep_notes
+  useEffect(() => {
+    const channel = supabase
+      .channel(`show-prep-notes-${dateKey}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'show_prep_notes',
+          filter: `date=eq.${dateKey}`,
+        },
+        () => {
+          // Reload data when changes occur from other sources
+          loadNotes();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [dateKey, loadNotes]);
+
   // Fetch scheduled segments from database
   const { data: scheduledSegments = [] } = useQuery({
     queryKey: ["scheduled-segments"],
@@ -41,48 +109,6 @@ const ShowPrepNotes = () => {
     },
   });
 
-  // Load notes for selected date
-  useEffect(() => {
-    const loadNotes = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from("show_prep_notes")
-          .select("*")
-          .eq("date", dateKey)
-          .maybeSingle();
-
-        if (error) throw error;
-
-        if (data) {
-          setNoteId(data.id);
-          // Handle both new hours format and legacy topics format
-          const rawData = data.topics as unknown;
-          if (rawData && typeof rawData === "object" && Array.isArray((rawData as { hours?: unknown }).hours)) {
-            // New format with hours
-            setHours((rawData as { hours: HourBlock[] }).hours);
-          } else if (Array.isArray(rawData)) {
-            // Legacy format - migrate topics to first hour
-            const migratedHours = createEmptyHours();
-            migratedHours[0].topics = rawData as HourBlock["topics"];
-            setHours(migratedHours);
-          } else {
-            setHours(createEmptyHours());
-          }
-        } else {
-          setNoteId(null);
-          setHours(createEmptyHours());
-        }
-      } catch (error) {
-        console.error("Error loading notes:", error);
-        toast.error("Failed to load notes");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadNotes();
-  }, [dateKey]);
 
   // Auto-save with debounce
   const saveNotes = useCallback(async (hoursToSave: HourBlock[]) => {

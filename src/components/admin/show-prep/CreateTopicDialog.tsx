@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,11 +48,11 @@ const CreateTopicDialog = ({
   const [removeFromHopper, setRemoveFromHopper] = useState(true);
 
   // Update title when defaultTitle changes (e.g., when dialog opens with a group name)
-  useState(() => {
+  useEffect(() => {
     if (open && defaultTitle) {
       setTitle(defaultTitle);
     }
-  });
+  }, [open, defaultTitle]);
 
   const handleConfirm = () => {
     if (!title.trim()) return;
@@ -105,7 +105,7 @@ const CreateTopicDialog = ({
           <div className="space-y-2">
             <Label htmlFor="hour-select">Add to Hour</Label>
             <Select value={hourId} onValueChange={setHourId}>
-              <SelectTrigger id="hour-select">
+              <SelectTrigger id="hour-select" className="text-foreground">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
