@@ -291,7 +291,7 @@ const ShowPrep = () => {
         </div>
 
         <div className="md:pl-6 md:border-l border-border">
-          <ShowPrepNotes />
+          <ShowPrepNotes selectedDate={selectedDate} onSelectedDateChange={setSelectedDate} />
         </div>
       </div>
 

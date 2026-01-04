@@ -291,6 +291,11 @@ const Hopper = ({ selectedDate }: HopperProps) => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isCreateTopicDialogOpen, setIsCreateTopicDialogOpen] = useState(false);
 
+  // Clear selections when date changes
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [dateKey]);
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
