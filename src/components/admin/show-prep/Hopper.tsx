@@ -326,6 +326,52 @@ const Hopper = ({ selectedDate }: HopperProps) => {
     },
   });
 
+  // Subscribe to realtime changes for hopper_items
+  useEffect(() => {
+    const channel = supabase
+      .channel(`hopper-items-${dateKey}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'hopper_items',
+          filter: `date=eq.${dateKey}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["hopper-items", dateKey] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [dateKey, queryClient]);
+
+  // Subscribe to realtime changes for hopper_groups
+  useEffect(() => {
+    const channel = supabase
+      .channel(`hopper-groups-${dateKey}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'hopper_groups',
+          filter: `date=eq.${dateKey}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["hopper-groups", dateKey] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [dateKey, queryClient]);
+
   // Add items mutation
   const addMutation = useMutation({
     mutationFn: async (urls: string[]) => {
@@ -641,6 +687,12 @@ const Hopper = ({ selectedDate }: HopperProps) => {
       const tomorrowDate = format(addDays(selectedDate, 1), "yyyy-MM-dd");
       const deleteItemIds = items.filter((i) => !keepItemIds.includes(i.id)).map((i) => i.id);
 
+      // Find groups that contain items being kept
+      const groupIdsToMove = new Set<string>();
+      items
+        .filter((i) => keepItemIds.includes(i.id) && i.group_id)
+        .forEach((i) => groupIdsToMove.add(i.group_id!));
+
       // Move selected items to tomorrow
       if (keepItemIds.length > 0) {
         const { error: updateError } = await supabase
@@ -648,6 +700,15 @@ const Hopper = ({ selectedDate }: HopperProps) => {
           .update({ date: tomorrowDate })
           .in("id", keepItemIds);
         if (updateError) throw updateError;
+      }
+
+      // Move groups that have items being moved
+      if (groupIdsToMove.size > 0) {
+        const { error: groupError } = await supabase
+          .from("hopper_groups")
+          .update({ date: tomorrowDate })
+          .in("id", Array.from(groupIdsToMove));
+        if (groupError) throw groupError;
       }
 
       // Delete the rest
@@ -663,6 +724,8 @@ const Hopper = ({ selectedDate }: HopperProps) => {
       const tomorrowDateKey = format(addDays(selectedDate, 1), "yyyy-MM-dd");
       queryClient.invalidateQueries({ queryKey: ["hopper-items", dateKey] });
       queryClient.invalidateQueries({ queryKey: ["hopper-items", tomorrowDateKey] });
+      queryClient.invalidateQueries({ queryKey: ["hopper-groups", dateKey] });
+      queryClient.invalidateQueries({ queryKey: ["hopper-groups", tomorrowDateKey] });
       setSelectedIds(new Set());
       toast({ title: "Selected items saved for tomorrow, others deleted" });
     },
