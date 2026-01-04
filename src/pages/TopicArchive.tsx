@@ -3,23 +3,21 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, subDays, isAfter, isBefore, parseISO } from "date-fns";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Search, Calendar, Link2, Image, List, X } from "lucide-react";
+import { ArrowLeft, Search, Calendar, Link2, X, ExternalLink } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import type { Topic, HourBlock } from "@/components/admin/show-prep/types";
+import type { Topic, HourBlock, Bullet, Link as TopicLink } from "@/components/admin/show-prep/types";
 
 interface FlattenedTopic {
   id: string;
   date: string;
   title: string;
-  linksCount: number;
-  imagesCount: number;
-  bulletsCount: number;
-  bullets: { id: string; text: string }[];
+  bullets: Bullet[];
+  links: TopicLink[];
+  images: string[];
   searchText: string;
   hourLabel: string;
   tags: string[];
@@ -74,10 +72,9 @@ const TopicArchive = () => {
               id: topic.id,
               date: note.date,
               title: topic.title,
-              linksCount: topic.links?.length || 0,
-              imagesCount: topic.images?.length || 0,
-              bulletsCount: topic.bullets?.length || 0,
-              bullets: topic.bullets?.slice(0, 3) || [],
+              bullets: topic.bullets || [],
+              links: topic.links || [],
+              images: topic.images || [],
               tags: tagTexts,
               searchText: [
                 topic.title,
@@ -166,6 +163,8 @@ const TopicArchive = () => {
     });
     return Object.entries(groups).sort(([a], [b]) => b.localeCompare(a));
   }, [filteredTopics]);
+
+  const isFilteringByTag = selectedTags.length > 0;
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-6">
@@ -312,77 +311,114 @@ const TopicArchive = () => {
         )}
 
         {groupedByDate.map(([date, topics]) => (
-          <div key={date} className="space-y-3">
-            <h2 className="text-lg font-semibold text-foreground sticky top-0 bg-background py-2 border-b">
+          <div key={date} className="space-y-1">
+            <h2 className="text-lg font-semibold text-foreground sticky top-0 bg-background py-2 border-b z-10">
               📅 {format(parseISO(date), "EEEE, MMMM d, yyyy")}
             </h2>
-            <div className="grid gap-3">
+            <div className="space-y-0">
               {topics.map((topic) => (
-                <Link
+                <div
                   key={`${date}-${topic.id}`}
-                  to={`/admin/topic-resources/${date}/${topic.id}`}
+                  className="border-l-2 border-primary/30 pl-3 py-2 hover:bg-accent/30 transition-colors"
                 >
-                  <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
-                    <CardHeader className="pb-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="space-y-1.5">
-                          <CardTitle className="text-base font-medium">
-                            {topic.title || "Untitled Topic"}
-                          </CardTitle>
-                          {topic.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1">
-                              {topic.tags.map((tag) => (
-                                <Badge
-                                  key={tag}
-                                  variant="secondary"
-                                  className="text-[10px] px-1.5 py-0"
-                                >
-                                  {tag}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        <Badge variant="secondary" className="shrink-0 text-xs">
-                          {topic.hourLabel}
-                        </Badge>
+                  {/* Topic header with title and tags */}
+                  <div className="flex items-start justify-between gap-2">
+                    <Link
+                      to={`/admin/topic-resources/${date}/${topic.id}`}
+                      className="flex-1 min-w-0"
+                    >
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-sm hover:text-primary transition-colors">
+                          {topic.title || "Untitled Topic"}
+                        </span>
+                        {topic.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {topic.tags.map((tag) => (
+                              <Badge
+                                key={tag}
+                                variant="secondary"
+                                className="text-[10px] px-1.5 py-0"
+                              >
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      {/* Resource counts */}
-                      <div className="flex gap-4 text-sm text-muted-foreground mb-2">
-                        <span className="flex items-center gap-1">
-                          <Link2 className="h-3.5 w-3.5" />
-                          {topic.linksCount} link{topic.linksCount !== 1 ? "s" : ""}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Image className="h-3.5 w-3.5" />
-                          {topic.imagesCount} image{topic.imagesCount !== 1 ? "s" : ""}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <List className="h-3.5 w-3.5" />
-                          {topic.bulletsCount} bullet{topic.bulletsCount !== 1 ? "s" : ""}
-                        </span>
-                      </div>
+                    </Link>
+                    {!isFilteringByTag && (
+                      <Badge variant="outline" className="shrink-0 text-[10px]">
+                        {topic.hourLabel}
+                      </Badge>
+                    )}
+                  </div>
 
-                      {/* Bullet preview */}
-                      {topic.bullets.length > 0 && (
-                        <ul className="text-sm text-muted-foreground space-y-1">
-                          {topic.bullets.map((bullet) => (
-                            <li key={bullet.id} className="truncate">
-                              • {bullet.text}
-                            </li>
-                          ))}
-                          {topic.bulletsCount > 3 && (
-                            <li className="text-xs italic">
-                              +{topic.bulletsCount - 3} more...
-                            </li>
-                          )}
-                        </ul>
-                      )}
-                    </CardContent>
-                  </Card>
-                </Link>
+                  {/* Links */}
+                  {topic.links.length > 0 && (
+                    <div className="mt-1.5 space-y-0.5">
+                      {topic.links.map((link) => {
+                        let displayText = link.title;
+                        if (!displayText) {
+                          try {
+                            displayText = new URL(link.url).hostname;
+                          } catch {
+                            displayText = link.url;
+                          }
+                        }
+                        return (
+                          <a
+                            key={link.id}
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors group"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Link2 className="h-3 w-3 shrink-0" />
+                            <span className="truncate">{displayText}</span>
+                            <ExternalLink className="h-2.5 w-2.5 opacity-0 group-hover:opacity-100 shrink-0" />
+                          </a>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Images */}
+                  {topic.images.length > 0 && (
+                    <div className="flex gap-1 mt-1.5 flex-wrap">
+                      {topic.images.map((img, idx) => (
+                        <a
+                          key={idx}
+                          href={img}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <img
+                            src={img}
+                            alt=""
+                            className="w-10 h-10 object-cover rounded border hover:border-primary transition-colors"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Bullets */}
+                  {topic.bullets.length > 0 && (
+                    <ul className="mt-1.5 text-xs text-muted-foreground space-y-0.5">
+                      {topic.bullets.map((bullet) => (
+                        <li
+                          key={bullet.id}
+                          className="leading-tight"
+                          style={{ paddingLeft: `${(bullet.indent || 0) * 12}px` }}
+                        >
+                          <span className="text-muted-foreground/60">•</span> {bullet.text}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               ))}
             </div>
           </div>
