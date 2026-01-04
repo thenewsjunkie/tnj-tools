@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { format, isToday } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { DndContext, closestCenter, DragEndEvent, DragOverlay, DragStartEvent } from "@dnd-kit/core";
@@ -29,6 +29,7 @@ const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProp
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [noteId, setNoteId] = useState<string | null>(null);
+  const isDraggingRef = useRef(false);
 
   const dateKey = format(selectedDate, "yyyy-MM-dd");
 
@@ -151,7 +152,7 @@ const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProp
 
   // Debounced save
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || isDraggingRef.current) return;
     
     const timeoutId = setTimeout(() => {
       saveNotes(hours);
@@ -169,12 +170,14 @@ const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProp
   };
 
   const handleDragStart = (event: DragStartEvent) => {
+    isDraggingRef.current = true;
     setActiveTopicId(event.active.id as string);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveTopicId(null);
+    isDraggingRef.current = false;
     
     if (!over) return;
 
@@ -210,11 +213,12 @@ const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProp
       if (targetHourIndex === -1) return;
     }
 
-    const newHours = [...hours];
+    // Deep clone to prevent reference sharing issues
+    const newHours: HourBlock[] = JSON.parse(JSON.stringify(hours));
 
     if (sourceHourIndex === targetHourIndex) {
       // Same hour - reorder within the hour
-      const topics = [...newHours[sourceHourIndex].topics];
+      const topics = newHours[sourceHourIndex].topics;
       const oldIndex = topics.findIndex(t => t.id === activeId);
       const newIndex = targetTopicIndex ?? topics.length - 1;
       
@@ -226,16 +230,17 @@ const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProp
         newHours[sourceHourIndex] = { ...newHours[sourceHourIndex], topics };
       }
     } else {
-      // Different hour - move topic
+      // Different hour - move topic (topic is already deep cloned)
       // Remove from source
       const sourceTopics = newHours[sourceHourIndex].topics.filter(t => t.id !== activeId);
       sourceTopics.forEach((t, i) => t.display_order = i);
       newHours[sourceHourIndex] = { ...newHours[sourceHourIndex], topics: sourceTopics };
 
-      // Add to target
-      const targetTopics = [...newHours[targetHourIndex].topics];
+      // Add to target - get the deep cloned version
+      const targetTopics = newHours[targetHourIndex].topics;
       const insertIndex = targetTopicIndex ?? targetTopics.length;
-      const movedTopic: Topic = { ...draggedTopic, display_order: insertIndex };
+      const movedTopic = JSON.parse(JSON.stringify(draggedTopic));
+      movedTopic.display_order = insertIndex;
       targetTopics.splice(insertIndex, 0, movedTopic);
       targetTopics.forEach((t, i) => t.display_order = i);
       newHours[targetHourIndex] = { ...newHours[targetHourIndex], topics: targetTopics };
