@@ -22,6 +22,8 @@ export interface Topic {
   images: string[];
   completed?: boolean;
   tags?: string[];
+  type?: 'topic' | 'link';  // Default is 'topic' for backwards compatibility
+  url?: string;             // Only used when type is 'link'
 }
 
 export interface HourBlock {
