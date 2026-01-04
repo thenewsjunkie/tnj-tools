@@ -3,13 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { GripVertical, Trash2, Pencil, Check, Plus, ExternalLink, Link2 } from "lucide-react";
+import { GripVertical, Trash2, Pencil, Check, Plus, ExternalLink, Link2, Copy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { normalizeUrl } from "@/lib/url";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Topic } from "./types";
 import { TagButton } from "./TagInput";
+import { useToast } from "@/hooks/use-toast";
 
 interface TopicCardProps {
   topic: Topic;
@@ -21,6 +22,7 @@ interface TopicCardProps {
 
 const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardProps) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const isLinkType = topic.type === "link";
   const hasContent = topic.title.trim() || topic.links.length > 0 || topic.images.length > 0 || topic.url;
   const [isEditing, setIsEditing] = useState(!hasContent);
@@ -38,6 +40,9 @@ const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardP
     transition,
   };
 
+  // Compute normalized URL once for link topics
+  const normalizedUrl = isLinkType && topic.url ? normalizeUrl(topic.url) : null;
+
   const handleSave = () => {
     setIsEditing(false);
   };
@@ -54,24 +59,23 @@ const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardP
     navigate(`/admin/topic-resources/${date}/${topic.id}`);
   };
 
-  const handleOpenLink = () => {
-    if (topic.url) {
-      // Normalize URL at click-time to handle existing data without protocol
-      const normalizedUrl = normalizeUrl(topic.url);
-      if (normalizedUrl) {
-        window.open(normalizedUrl, "_blank", "noopener,noreferrer");
-      }
-    }
+  const handleCopyLink = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const urlToCopy = normalizedUrl || topic.url || "";
+    navigator.clipboard.writeText(urlToCopy);
+    toast({ description: "Link copied" });
   };
 
   const resourceCount = topic.links.length + topic.images.length;
 
-  // Extract hostname for display
-  const getHostname = (url: string) => {
+  // Extract hostname for display using normalized URL
+  const getHostname = (url: string | null) => {
+    if (!url) return topic.url || "";
     try {
       return new URL(url).hostname.replace("www.", "");
     } catch {
-      return url;
+      return topic.url || "";
     }
   };
 
@@ -117,13 +121,22 @@ const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardP
               ) : (
                 <div className="min-w-0">
                   {isLinkType ? (
-                    <button
-                      onClick={handleOpenLink}
-                      className="text-sm font-medium truncate block text-left hover:text-primary hover:underline cursor-pointer"
-                      title={topic.url}
-                    >
-                      {topic.title || "Untitled Link"}
-                    </button>
+                    normalizedUrl ? (
+                      <a
+                        href={normalizedUrl}
+                        target="_blank"
+                        rel="noopener"
+                        className="text-sm font-medium truncate block text-left hover:text-primary hover:underline"
+                        title={normalizedUrl}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {topic.title || "Untitled Link"}
+                      </a>
+                    ) : (
+                      <span className="text-sm font-medium truncate block text-muted-foreground">
+                        {topic.title || "Untitled Link"} (invalid URL)
+                      </span>
+                    )
                   ) : (
                     <span className="text-sm font-medium truncate block">
                       {topic.title || "Untitled Topic"}
@@ -131,7 +144,7 @@ const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardP
                   )}
                   {isLinkType && topic.url && (
                     <span className="text-xs text-muted-foreground truncate block">
-                      {getHostname(topic.url)}
+                      {getHostname(normalizedUrl)}
                     </span>
                   )}
                 </div>
@@ -146,15 +159,35 @@ const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardP
               />
               
               {isLinkType ? (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 px-2 text-muted-foreground hover:text-primary"
-                  onClick={handleOpenLink}
-                  title="Open link"
-                >
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </Button>
+                <>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 px-2 text-muted-foreground hover:text-foreground"
+                    onClick={handleCopyLink}
+                    title="Copy link"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                  {normalizedUrl ? (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2 text-muted-foreground hover:text-primary"
+                      asChild
+                    >
+                      <a
+                        href={normalizedUrl}
+                        target="_blank"
+                        rel="noopener"
+                        title="Open link"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    </Button>
+                  ) : null}
+                </>
               ) : (
                 <Button
                   size="sm"
