@@ -3,8 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { GripVertical, Trash2, Pencil, Check, Plus } from "lucide-react";
+import { GripVertical, Trash2, Pencil, Check, Plus, ExternalLink, Link2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -21,7 +20,8 @@ interface TopicCardProps {
 
 const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardProps) => {
   const navigate = useNavigate();
-  const hasContent = topic.title.trim() || topic.links.length > 0 || topic.images.length > 0;
+  const isLinkType = topic.type === "link";
+  const hasContent = topic.title.trim() || topic.links.length > 0 || topic.images.length > 0 || topic.url;
   const [isEditing, setIsEditing] = useState(!hasContent);
   const {
     attributes,
@@ -45,7 +45,6 @@ const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardP
     setIsEditing(true);
   };
 
-
   const handleTagsChange = (tags: string[]) => {
     onChange({ ...topic, tags });
   };
@@ -54,7 +53,22 @@ const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardP
     navigate(`/admin/topic-resources/${date}/${topic.id}`);
   };
 
+  const handleOpenLink = () => {
+    if (topic.url) {
+      window.open(topic.url, "_blank", "noopener,noreferrer");
+    }
+  };
+
   const resourceCount = topic.links.length + topic.images.length;
+
+  // Extract hostname for display
+  const getHostname = (url: string) => {
+    try {
+      return new URL(url).hostname.replace("www.", "");
+    } catch {
+      return url;
+    }
+  };
 
   return (
     <div
@@ -62,7 +76,7 @@ const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardP
       style={style}
       className={cn(isDragging && "opacity-50")}
     >
-      <Card className="border-border/50">
+      <Card className={cn("border-border/50", isLinkType && "border-l-2 border-l-primary/50")}>
         <CardHeader className="py-2 px-3">
           <div className="flex items-center gap-2">
             <div
@@ -73,21 +87,51 @@ const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardP
               <GripVertical className="h-4 w-4 text-muted-foreground" />
             </div>
 
+            {isLinkType && (
+              <Link2 className="h-4 w-4 text-primary shrink-0" />
+            )}
+
             <div className="flex-1 min-w-0">
               {isEditing ? (
-                <Input
-                  value={topic.title}
-                  onChange={(e) => onChange({ ...topic, title: e.target.value })}
-                  placeholder="Topic title..."
-                  className="h-7 text-sm font-medium border-0 bg-transparent px-0 focus-visible:ring-0"
-                />
+                <div className="space-y-2">
+                  <Input
+                    value={topic.title}
+                    onChange={(e) => onChange({ ...topic, title: e.target.value })}
+                    placeholder={isLinkType ? "Link title..." : "Topic title..."}
+                    className="h-7 text-sm font-medium border-0 bg-transparent px-0 focus-visible:ring-0"
+                  />
+                  {isLinkType && (
+                    <Input
+                      value={topic.url || ""}
+                      onChange={(e) => onChange({ ...topic, url: e.target.value })}
+                      placeholder="https://..."
+                      className="h-7 text-xs border-0 bg-transparent px-0 focus-visible:ring-0 text-muted-foreground"
+                    />
+                  )}
+                </div>
               ) : (
-                <span className="text-sm font-medium truncate block">
-                  {topic.title || "Untitled Topic"}
-                </span>
+                <div className="min-w-0">
+                  {isLinkType ? (
+                    <button
+                      onClick={handleOpenLink}
+                      className="text-sm font-medium truncate block text-left hover:text-primary hover:underline cursor-pointer"
+                      title={topic.url}
+                    >
+                      {topic.title || "Untitled Link"}
+                    </button>
+                  ) : (
+                    <span className="text-sm font-medium truncate block">
+                      {topic.title || "Untitled Topic"}
+                    </span>
+                  )}
+                  {isLinkType && topic.url && (
+                    <span className="text-xs text-muted-foreground truncate block">
+                      {getHostname(topic.url)}
+                    </span>
+                  )}
+                </div>
               )}
             </div>
-
 
             <div className="flex items-center gap-1">
               <TagButton
@@ -95,18 +139,32 @@ const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardP
                 onChange={handleTagsChange}
                 allTags={allTags}
               />
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-7 px-2 text-muted-foreground hover:text-foreground"
-                onClick={handleOpenResources}
-                title={resourceCount > 0 ? `Resources (${resourceCount})` : "Add Resources"}
-              >
-                <Plus className="h-3.5 w-3.5" />
-                {resourceCount > 0 && (
-                  <span className="text-xs ml-1">{resourceCount}</span>
-                )}
-              </Button>
+              
+              {isLinkType ? (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 px-2 text-muted-foreground hover:text-primary"
+                  onClick={handleOpenLink}
+                  title="Open link"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 px-2 text-muted-foreground hover:text-foreground"
+                  onClick={handleOpenResources}
+                  title={resourceCount > 0 ? `Resources (${resourceCount})` : "Add Resources"}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  {resourceCount > 0 && (
+                    <span className="text-xs ml-1">{resourceCount}</span>
+                  )}
+                </Button>
+              )}
+              
               {isEditing ? (
                 <Button
                   size="sm"
