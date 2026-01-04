@@ -46,7 +46,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { v4 as uuidv4 } from "uuid";
 import CreateTopicDialog from "./CreateTopicDialog";
-import { HourBlock, Topic, Link, Bullet } from "./types";
+import { HourBlock, Topic, Link, Bullet, DEFAULT_SHOW_HOURS } from "./types";
 
 interface HopperItem {
   id: string;
@@ -656,6 +656,98 @@ const Hopper = ({ selectedDate }: HopperProps) => {
       toast({ title: "Failed to create topic", variant: "destructive" });
     },
   });
+
+  // Add a single link directly to an hour (bypasses CreateTopicDialog)
+  const addLinkToHourMutation = useMutation({
+    mutationFn: async ({
+      item,
+      hourId,
+      removeFromHopper,
+    }: {
+      item: HopperItem;
+      hourId: string;
+      removeFromHopper: boolean;
+    }) => {
+      // Create a Link Topic (type: 'link') - minimal, just the link reference
+      const newTopic: Topic = {
+        id: uuidv4(),
+        title: item.title || "Untitled",
+        display_order: 0,
+        bullets: [],
+        links: [],
+        images: [],
+        type: 'link',
+        url: item.url,
+      };
+
+      // Fetch existing show prep notes
+      const { data: existingData, error: fetchError } = await supabase
+        .from("show_prep_notes")
+        .select("*")
+        .eq("date", dateKey)
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+
+      let hours: HourBlock[];
+      let noteId: string | null = existingData?.id || null;
+
+      if (existingData) {
+        const rawData = existingData.topics as unknown;
+        if (rawData && typeof rawData === "object" && Array.isArray((rawData as { hours?: unknown }).hours)) {
+          hours = (rawData as { hours: HourBlock[] }).hours;
+        } else {
+          hours = DEFAULT_SHOW_HOURS.map(h => ({ ...h, topics: [] }));
+        }
+      } else {
+        hours = DEFAULT_SHOW_HOURS.map(h => ({ ...h, topics: [] }));
+      }
+
+      // Find the target hour and add the topic
+      const updatedHours = hours.map((hour) => {
+        if (hour.id === hourId) {
+          const updatedTopic = { ...newTopic, display_order: hour.topics.length };
+          return { ...hour, topics: [...hour.topics, updatedTopic] };
+        }
+        return hour;
+      });
+
+      // Save to database
+      const hoursJson = JSON.parse(JSON.stringify({ hours: updatedHours }));
+
+      if (noteId) {
+        const { error: updateError } = await supabase
+          .from("show_prep_notes")
+          .update({ topics: hoursJson })
+          .eq("id", noteId);
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from("show_prep_notes")
+          .insert([{ date: dateKey, topics: hoursJson }]);
+        if (insertError) throw insertError;
+      }
+
+      // Remove from hopper
+      if (removeFromHopper) {
+        const { error: deleteError } = await supabase
+          .from("hopper_items")
+          .delete()
+          .eq("id", item.id);
+        if (deleteError) throw deleteError;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["show-prep-notes", dateKey] });
+      queryClient.invalidateQueries({ queryKey: ["hopper-items", dateKey] });
+      setSelectedIds(new Set());
+      toast({ title: "Link added to hour" });
+    },
+    onError: () => {
+      toast({ title: "Failed to add link", variant: "destructive" });
+    },
+  });
+
   const groupMutation = useMutation({
     mutationFn: async (itemIds: string[]) => {
       // Create a new group
@@ -959,38 +1051,75 @@ const Hopper = ({ selectedDate }: HopperProps) => {
           </Button>
         )}
 
-        {selectedIds.size >= 1 && (
-          <>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setIsCreateTopicDialogOpen(true)}
-              disabled={createTopicMutation.isPending}
-            >
-              <FileText className="h-4 w-4 mr-1" />
-              Create Topic
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => addToResourcesMutation.mutate(Array.from(selectedIds))}
-              disabled={addToResourcesMutation.isPending}
-            >
-              <FolderPlus className="h-4 w-4 mr-1" />
-              To Resources
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="text-destructive border-destructive hover:bg-destructive/10"
-              onClick={() => bulkDeleteMutation.mutate(Array.from(selectedIds))}
-              disabled={bulkDeleteMutation.isPending}
-            >
-              <Trash2 className="h-4 w-4 mr-1" />
-              Delete ({selectedIds.size})
-            </Button>
-          </>
-        )}
+        {selectedIds.size >= 1 && (() => {
+          // Check if single ungrouped item is selected
+          const selectedItemsArray = items.filter(i => selectedIds.has(i.id));
+          const isSingleUngroupedItem = selectedIds.size === 1 && selectedItemsArray[0]?.group_id === null;
+          const selectedItem = selectedItemsArray[0];
+
+          return (
+            <>
+              {/* For single ungrouped item - Add directly as link */}
+              {isSingleUngroupedItem && selectedItem && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm" variant="outline" disabled={addLinkToHourMutation.isPending}>
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add to Hour
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    {DEFAULT_SHOW_HOURS.map((hour) => (
+                      <DropdownMenuItem
+                        key={hour.id}
+                        onClick={() => addLinkToHourMutation.mutate({
+                          item: selectedItem,
+                          hourId: hour.id,
+                          removeFromHopper: true,
+                        })}
+                      >
+                        {hour.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+
+              {/* For groups or multiple items - Create Topic */}
+              {!isSingleUngroupedItem && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setIsCreateTopicDialogOpen(true)}
+                  disabled={createTopicMutation.isPending}
+                >
+                  <FileText className="h-4 w-4 mr-1" />
+                  Create Topic
+                </Button>
+              )}
+
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => addToResourcesMutation.mutate(Array.from(selectedIds))}
+                disabled={addToResourcesMutation.isPending}
+              >
+                <FolderPlus className="h-4 w-4 mr-1" />
+                To Resources
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-destructive border-destructive hover:bg-destructive/10"
+                onClick={() => bulkDeleteMutation.mutate(Array.from(selectedIds))}
+                disabled={bulkDeleteMutation.isPending}
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                Delete ({selectedIds.size})
+              </Button>
+            </>
+          );
+        })()}
 
         {canGroup && (
           <Button
