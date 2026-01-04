@@ -109,60 +109,58 @@ const SortableHopperItem = ({
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-2 p-2 rounded-lg bg-card border transition-colors ${
-        isSelected ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"
+      className={`flex items-center gap-1.5 p-1.5 rounded-md bg-card border transition-colors ${
+        isSelected ? "border-primary ring-1 ring-primary/30" : "border-border hover:border-primary/50"
       }`}
       onClick={(e) => onSelect(item.id, e.ctrlKey || e.metaKey)}
     >
-      <div {...attributes} {...listeners} className="cursor-grab">
-        <GripVertical className="h-4 w-4 text-muted-foreground" />
+      <div {...attributes} {...listeners} className="cursor-grab flex-shrink-0">
+        <GripVertical className="h-3 w-3 text-muted-foreground" />
       </div>
       {item.thumbnail_url && (
         <img
           src={item.thumbnail_url}
           alt=""
-          className="w-12 h-8 object-cover rounded flex-shrink-0"
+          className="w-8 h-5 object-cover rounded flex-shrink-0"
           onError={(e) => {
             e.currentTarget.style.display = "none";
           }}
         />
       )}
-      <div className="flex-1 min-w-0">
-        <a
-          href={item.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm font-medium text-foreground hover:text-primary truncate block"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {item.title || "Untitled"}
-        </a>
-        <p className="text-xs text-muted-foreground truncate">{hostname}</p>
-      </div>
-      <div className="flex items-center gap-1">
+      <a
+        href={item.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-xs font-medium text-foreground hover:text-primary truncate flex-1 min-w-0"
+        title={item.title || item.url}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {item.title || "Untitled"}
+      </a>
+      <div className="flex items-center flex-shrink-0">
         {onUngroup && item.group_id && (
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6 text-muted-foreground hover:text-foreground"
+            className="h-5 w-5 text-muted-foreground hover:text-foreground"
             onClick={(e) => {
               e.stopPropagation();
               onUngroup(item.id);
             }}
           >
-            <Unlink className="h-3 w-3" />
+            <Unlink className="h-2.5 w-2.5" />
           </Button>
         )}
         <Button
           variant="ghost"
           size="icon"
-          className="h-6 w-6 text-muted-foreground hover:text-destructive"
+          className="h-5 w-5 text-muted-foreground hover:text-destructive"
           onClick={(e) => {
             e.stopPropagation();
             onDelete(item.id);
           }}
         >
-          <Trash2 className="h-3 w-3" />
+          <Trash2 className="h-2.5 w-2.5" />
         </Button>
       </div>
     </div>
@@ -1278,7 +1276,7 @@ const Hopper = ({ selectedDate }: HopperProps) => {
                 items={ungroupedItems.map((i) => i.id)}
                 strategy={verticalListSortingStrategy}
               >
-                <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-1.5">
                   {ungroupedItems.map((item) => (
                     <SortableHopperItem
                       key={item.id}
