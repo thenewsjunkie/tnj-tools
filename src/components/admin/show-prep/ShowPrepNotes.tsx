@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { format, isToday } from "date-fns";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { DndContext, closestCenter, DragEndEvent, DragOverlay, DragStartEvent } from "@dnd-kit/core";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
@@ -25,81 +25,47 @@ interface ShowPrepNotesProps {
 }
 
 const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProps) => {
-  const [hours, setHours] = useState<HourBlock[]>(createEmptyHours());
-  const [isLoading, setIsLoading] = useState(true);
+  const [localHours, setLocalHours] = useState<HourBlock[]>(createEmptyHours());
   const [isSaving, setIsSaving] = useState(false);
-  const [noteId, setNoteId] = useState<string | null>(null);
   const isDraggingRef = useRef(false);
+  const queryClient = useQueryClient();
 
   const dateKey = format(selectedDate, "yyyy-MM-dd");
 
-  // Helper function to load notes - extracted so it can be called from realtime subscription
-  const loadNotes = useCallback(async () => {
-    setIsLoading(true);
-    try {
+  // Fetch show prep notes using React Query
+  const { data: noteData, isLoading } = useQuery({
+    queryKey: ["show-prep-notes", dateKey],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from("show_prep_notes")
         .select("*")
         .eq("date", dateKey)
         .maybeSingle();
-
       if (error) throw error;
+      return data;
+    },
+  });
 
-      if (data) {
-        setNoteId(data.id);
-        // Handle both new hours format and legacy topics format
-        const rawData = data.topics as unknown;
-        if (rawData && typeof rawData === "object" && Array.isArray((rawData as { hours?: unknown }).hours)) {
-          // New format with hours
-          setHours((rawData as { hours: HourBlock[] }).hours);
-        } else if (Array.isArray(rawData)) {
-          // Legacy format - migrate topics to first hour
-          const migratedHours = createEmptyHours();
-          migratedHours[0].topics = rawData as HourBlock["topics"];
-          setHours(migratedHours);
-        } else {
-          setHours(createEmptyHours());
-        }
+  // Sync query data to local state for editing
+  useEffect(() => {
+    if (noteData) {
+      const rawData = noteData.topics as unknown;
+      if (rawData && typeof rawData === "object" && Array.isArray((rawData as { hours?: unknown }).hours)) {
+        setLocalHours((rawData as { hours: HourBlock[] }).hours);
+      } else if (Array.isArray(rawData)) {
+        const migratedHours = createEmptyHours();
+        migratedHours[0].topics = rawData as HourBlock["topics"];
+        setLocalHours(migratedHours);
       } else {
-        setNoteId(null);
-        setHours(createEmptyHours());
+        setLocalHours(createEmptyHours());
       }
-    } catch (error) {
-      console.error("Error loading notes:", error);
-      toast.error("Failed to load notes");
-    } finally {
-      setIsLoading(false);
+    } else if (noteData === null) {
+      setLocalHours(createEmptyHours());
     }
-  }, [dateKey]);
+  }, [noteData]);
 
-  // Load notes when date changes
-  useEffect(() => {
-    loadNotes();
-  }, [loadNotes]);
-
-  // Subscribe to realtime changes for show_prep_notes
-  useEffect(() => {
-    const channel = supabase
-      .channel(`show-prep-notes-${dateKey}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'show_prep_notes',
-          filter: `date=eq.${dateKey}`,
-        },
-        () => {
-          // Reload data when changes occur from other sources
-          loadNotes();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [dateKey, loadNotes]);
+  const noteId = noteData?.id ?? null;
+  const hours = localHours;
 
   // Fetch scheduled segments from database
   const { data: scheduledSegments = [] } = useQuery({
@@ -133,13 +99,12 @@ const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProp
         const hasContent = hoursToSave.some((h) => h.topics.length > 0);
         if (hasContent) {
           // Create new
-          const { data, error } = await supabase
+          const { error } = await supabase
             .from("show_prep_notes")
-            .insert([{ date: dateKey, topics: hoursJson }])
-            .select("id")
-            .single();
+            .insert([{ date: dateKey, topics: hoursJson }]);
           if (error) throw error;
-          setNoteId(data.id);
+          // Invalidate to refetch with new ID
+          queryClient.invalidateQueries({ queryKey: ["show-prep-notes", dateKey] });
         }
       }
     } catch (error) {
@@ -166,7 +131,7 @@ const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProp
   const handleHourChange = (index: number, updatedHour: HourBlock) => {
     const newHours = [...hours];
     newHours[index] = updatedHour;
-    setHours(newHours);
+    setLocalHours(newHours);
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -246,7 +211,7 @@ const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProp
       newHours[targetHourIndex] = { ...newHours[targetHourIndex], topics: targetTopics };
     }
 
-    setHours(newHours);
+    setLocalHours(newHours);
   };
 
   // Find the currently dragged topic for overlay
