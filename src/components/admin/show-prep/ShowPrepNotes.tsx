@@ -19,8 +19,12 @@ const createEmptyHours = (): HourBlock[] => {
   }));
 };
 
-const ShowPrepNotes = () => {
-  const [selectedDate, setSelectedDate] = useState(new Date());
+interface ShowPrepNotesProps {
+  selectedDate: Date;
+  onSelectedDateChange: (date: Date) => void;
+}
+
+const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProps) => {
   const [hours, setHours] = useState<HourBlock[]>(createEmptyHours());
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -277,7 +281,7 @@ const ShowPrepNotes = () => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <DateSelector date={selectedDate} onChange={setSelectedDate} />
+          <DateSelector date={selectedDate} onChange={onSelectedDateChange} />
           {isWeekend(selectedDate) && (
             <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
               Weekend
