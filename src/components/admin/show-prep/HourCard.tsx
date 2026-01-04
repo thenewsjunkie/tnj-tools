@@ -79,9 +79,9 @@ const HourCard = ({ hour, date, onChange, defaultOpen = false, scheduledSegments
           </CardHeader>
 
           <CollapsibleContent>
-            <CardContent className="p-3 pt-0 space-y-3">
+            <CardContent className="p-2 pt-0 space-y-2">
               {scheduledSegments.length > 0 && (
-                <div className="space-y-1 pb-2 border-b border-border/50">
+                <div className="space-y-0.5 pb-1.5 border-b border-border/50">
                   {scheduledSegments.map((segment, idx) => (
                     <div
                       key={idx}
@@ -96,12 +96,12 @@ const HourCard = ({ hour, date, onChange, defaultOpen = false, scheduledSegments
                 </div>
               )}
               {hour.topics.length === 0 && scheduledSegments.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-4">
+                <p className="text-xs text-muted-foreground text-center py-2">
                   No topics scheduled. Click "Add Topic" to add content for this hour.
                 </p>
               ) : (
                 <SortableContext items={hour.topics.map((t) => t.id)} strategy={verticalListSortingStrategy}>
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     {hour.topics.map((topic, index) => (
                       <TopicCard
                         key={topic.id}
