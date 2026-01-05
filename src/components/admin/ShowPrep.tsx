@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { format, isFriday as checkIsFriday, isMonday as checkIsMonday, addDays, isToday } from "date-fns";
+import { format, isFriday as checkIsFriday, isMonday as checkIsMonday, isTuesday as checkIsTuesday, addDays, isToday } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Trash2, ChevronLeft, ChevronRight, Loader2, ChevronDown, ChevronUp, Printer } from "lucide-react";
 import Hopper from "./show-prep/Hopper";
@@ -80,6 +80,7 @@ const ShowPrep = () => {
   const dateKey = format(selectedDate, "yyyy-MM-dd");
   const isFriday = checkIsFriday(selectedDate);
   const isMonday = checkIsMonday(selectedDate);
+  const isTuesday = checkIsTuesday(selectedDate);
   const isSelectedToday = isToday(selectedDate);
 
   // Handle print button
@@ -344,6 +345,13 @@ const ShowPrep = () => {
                 <Trash2 className="h-3 w-3 mr-1" />
                 Clear All
               </Button>
+
+              {/* Tuesday: Share the Show */}
+              {isTuesday && (
+                <p className="mt-4 text-green-600 dark:text-green-400 font-medium">
+                  It is, friends, a Share the Show Tuesday
+                </p>
+              )}
 
               {/* Monday: Rate My Blank */}
               {isMonday && (
