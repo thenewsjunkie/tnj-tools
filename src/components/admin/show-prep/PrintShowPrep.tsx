@@ -118,24 +118,6 @@ export const generatePrintDocument = (data: PrintData) => {
     }
     .topic-title {
       font-weight: 600;
-      margin-bottom: 4px;
-    }
-    .topic-bullets {
-      margin-left: 16px;
-    }
-    .topic-bullets li {
-      margin: 2px 0;
-    }
-    .topic-links {
-      margin-top: 4px;
-      margin-left: 16px;
-      font-size: 11px;
-      color: #666;
-    }
-    .topic-tags {
-      margin-top: 4px;
-      font-size: 10px;
-      color: #888;
     }
     .hopper-section {
       margin-top: 16px;
@@ -198,7 +180,7 @@ export const generatePrintDocument = (data: PrintData) => {
   <h1>Show Prep for ${dateFormatted}</h1>
   
   <div class="opening-script">
-    <strong>Opening:</strong> It's ${dateConversational}, lots to get to today from <em>${topics.fromTopic || "___"}</em> to <em>${topics.toTopic || "___"}</em> and <em>${topics.andTopic || "___"}</em> plus your calls, Dispatches, emails, texts & more.
+    <strong>Opening:</strong> It's ${dateConversational}, lots to get to today from <em>${topics.fromTopic || "___"}</em> to <em>${topics.toTopic || "___"}</em> and <em>${topics.andTopic || "___"}</em> plus your calls, Dispatches, emails, texts & more. Hey there Sabrina. Hello C-Lane. And hello to YOU. You can join us on the show today - send us a Dispatch at thenewsjunkie.com. You can also watch the show on YouTube and Twitch.tv/thenewsjunkie your messages coming right into the studio in real time.
   </div>
   
   ${isMonday && rateMyBlank ? `<div class="special-segment"><strong>Rate My Blank:</strong> ${rateMyBlank}</div>` : ""}
@@ -220,20 +202,6 @@ export const generatePrintDocument = (data: PrintData) => {
   ${localTopics.length > 0 ? localTopics.map((topic) => `
     <div class="topic">
       <div class="topic-title">${topic.type === "link" ? "🔗 " : ""}${topic.title || "Untitled"}</div>
-      ${topic.type === "link" && topic.url ? `<div class="topic-links">URL: ${topic.url}</div>` : ""}
-      ${topic.bullets && topic.bullets.length > 0 ? `
-        <ul class="topic-bullets">
-          ${topic.bullets.map((b) => `<li>${"&nbsp;".repeat(b.indent * 4)}${b.checked ? "✓ " : ""}${b.text}</li>`).join("")}
-        </ul>
-      ` : ""}
-      ${topic.links && topic.links.length > 0 ? `
-        <div class="topic-links">
-          Links: ${topic.links.map((l) => l.title || l.url).join(", ")}
-        </div>
-      ` : ""}
-      ${topic.tags && topic.tags.length > 0 ? `
-        <div class="topic-tags">Tags: ${topic.tags.join(", ")}</div>
-      ` : ""}
     </div>
   `).join("") : '<div class="empty-state">No topics added yet</div>'}
   
