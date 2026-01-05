@@ -38,6 +38,7 @@ export const generatePrintDocument = (data: PrintData) => {
   } = data;
 
   const dateFormatted = format(selectedDate, "EEEE, MMMM do yyyy");
+  const dateConversational = format(selectedDate, "EEEE MMMM do yyyy");
   const isFriday = checkIsFriday(selectedDate);
   const isMonday = checkIsMonday(selectedDate);
 
@@ -197,7 +198,7 @@ export const generatePrintDocument = (data: PrintData) => {
   <h1>Show Prep for ${dateFormatted}</h1>
   
   <div class="opening-script">
-    <strong>Opening:</strong> Lots to get to today from <em>${topics.fromTopic || "___"}</em> to <em>${topics.toTopic || "___"}</em> and <em>${topics.andTopic || "___"}</em> plus your calls, Dispatches, emails, texts & more.
+    <strong>Opening:</strong> It's ${dateConversational}, lots to get to today from <em>${topics.fromTopic || "___"}</em> to <em>${topics.toTopic || "___"}</em> and <em>${topics.andTopic || "___"}</em> plus your calls, Dispatches, emails, texts & more.
   </div>
   
   ${isMonday && rateMyBlank ? `<div class="special-segment"><strong>Rate My Blank:</strong> ${rateMyBlank}</div>` : ""}
