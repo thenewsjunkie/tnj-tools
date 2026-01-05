@@ -1,15 +1,16 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Link as LinkIcon, Image as ImageIcon } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2, Link as LinkIcon, Image as ImageIcon, List } from "lucide-react";
 import { ResourceDropzone } from "./ResourceDropzone";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
-type ResourceMode = "link" | "image";
+type ResourceMode = "link" | "image" | "bulk";
 
 interface AddResourceFormProps {
-  onSubmit: (data: { title: string; url: string; type: ResourceMode }) => void;
+  onSubmit: (data: { title: string; url: string; type: "link" | "image" }) => void;
   onCancel: () => void;
   isPending?: boolean;
   fetchTitleFromUrl?: (url: string) => Promise<string | null | void>;
@@ -19,6 +20,8 @@ interface AddResourceFormProps {
   setTitle: (title: string) => void;
   url: string;
   setUrl: (url: string) => void;
+  onBulkSubmit?: (urls: string[]) => void;
+  isBulkAdding?: boolean;
 }
 
 export const AddResourceForm = ({
@@ -32,10 +35,13 @@ export const AddResourceForm = ({
   setTitle,
   url,
   setUrl,
+  onBulkSubmit,
+  isBulkAdding = false,
 }: AddResourceFormProps) => {
   const [mode, setMode] = useState<ResourceMode>("link");
   const [isUploading, setIsUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [bulkUrls, setBulkUrls] = useState("");
 
   const handleFileSelect = async (file: File) => {
     setSelectedFile(file);
@@ -46,6 +52,19 @@ export const AddResourceForm = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (mode === "bulk" && onBulkSubmit) {
+      // Parse bulk URLs - split by newlines or spaces, filter empty
+      const urls = bulkUrls
+        .split(/[\n\r\s]+/)
+        .map(u => u.trim())
+        .filter(u => u.length > 0);
+      
+      if (urls.length > 0) {
+        onBulkSubmit(urls);
+      }
+      return;
+    }
 
     if (mode === "image" && selectedFile) {
       setIsUploading(true);
@@ -86,9 +105,11 @@ export const AddResourceForm = ({
     }
   };
 
-  const isValid = mode === "image" 
-    ? selectedFile && title.trim() 
-    : title.trim() && url.trim();
+  const isValid = mode === "bulk"
+    ? bulkUrls.trim().length > 0
+    : mode === "image" 
+      ? selectedFile && title.trim() 
+      : title.trim() && url.trim();
 
   return (
     <form onSubmit={handleSubmit} className="mb-8 p-4 border border-border rounded-lg bg-card">
@@ -106,6 +127,19 @@ export const AddResourceForm = ({
         >
           <LinkIcon className="h-4 w-4" />
           Link
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("bulk")}
+          className={cn(
+            "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+            mode === "bulk" 
+              ? "bg-background text-foreground shadow-sm" 
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <List className="h-4 w-4" />
+          Bulk
         </button>
         <button
           type="button"
@@ -148,6 +182,14 @@ export const AddResourceForm = ({
               )}
             </div>
           </>
+        ) : mode === "bulk" ? (
+          <Textarea
+            placeholder="Paste URLs (one per line)"
+            value={bulkUrls}
+            onChange={(e) => setBulkUrls(e.target.value)}
+            className="min-h-[150px] font-mono text-sm"
+            autoFocus
+          />
         ) : (
           <>
             <ResourceDropzone 
@@ -167,9 +209,14 @@ export const AddResourceForm = ({
         <div className="flex gap-2">
           <Button 
             type="submit" 
-            disabled={isPending || isUploading || !isValid}
+            disabled={isPending || isUploading || isBulkAdding || !isValid}
           >
-            {isCapturingScreenshot ? (
+            {isBulkAdding ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Adding...
+              </>
+            ) : isCapturingScreenshot ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Capturing screenshot...
@@ -188,6 +235,7 @@ export const AddResourceForm = ({
             variant="outline" 
             onClick={() => {
               setSelectedFile(null);
+              setBulkUrls("");
               onCancel();
             }}
           >

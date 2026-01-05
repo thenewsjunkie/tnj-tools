@@ -169,6 +169,79 @@ const TopicResources = () => {
     },
   });
 
+  // Bulk add resources mutation
+  const addBulkMutation = useMutation({
+    mutationFn: async (urls: string[]) => {
+      // Re-fetch the latest data to avoid stale state
+      const { data: latestData, error: fetchError } = await supabase
+        .from("show_prep_notes")
+        .select("*")
+        .eq("date", date)
+        .maybeSingle();
+      
+      if (fetchError) throw fetchError;
+      if (!latestData) throw new Error("Show prep notes not found");
+
+      const latestRawData = latestData.topics as unknown;
+      const latestHours: HourBlock[] = (latestRawData && typeof latestRawData === 'object' && Array.isArray((latestRawData as { hours?: unknown }).hours))
+        ? (latestRawData as { hours: HourBlock[] }).hours
+        : [];
+
+      // Fetch metadata for all URLs in parallel
+      const newLinks: Link[] = await Promise.all(
+        urls.map(async (rawUrl) => {
+          let processedUrl = rawUrl.trim();
+          if (!processedUrl.startsWith("http://") && !processedUrl.startsWith("https://")) {
+            processedUrl = "https://" + processedUrl;
+          }
+
+          let fetchedTitle: string | null = null;
+          let thumbnailUrl: string | null = null;
+          try {
+            const { data } = await supabase.functions.invoke("fetch-link-metadata", {
+              body: { url: processedUrl },
+            });
+            fetchedTitle = data?.title || null;
+            thumbnailUrl = data?.ogImage || null;
+          } catch (e) {
+            console.error("Failed to fetch metadata:", e);
+          }
+
+          return {
+            id: uuidv4(),
+            url: processedUrl,
+            title: fetchedTitle || processedUrl,
+            thumbnail_url: thumbnailUrl,
+            type: "link" as const,
+          };
+        })
+      );
+
+      // Update the topic with all new links
+      const updatedHours = latestHours.map(hour => ({
+        ...hour,
+        topics: hour.topics.map(t => 
+          t.id === topicId ? { ...t, links: [...t.links, ...newLinks] } : t
+        )
+      }));
+
+      const { error } = await supabase
+        .from("show_prep_notes")
+        .update({ topics: JSON.parse(JSON.stringify({ hours: updatedHours })) })
+        .eq("date", date);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["show-prep-notes", date] });
+      setIsAdding(false);
+      toast({ title: "Resources added" });
+    },
+    onError: () => {
+      toast({ title: "Failed to add resources", variant: "destructive" });
+    },
+  });
+
   // Update link title mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, title }: { id: string; title: string }) => {
@@ -482,6 +555,8 @@ const TopicResources = () => {
             setTitle={setTitle}
             url={url}
             setUrl={setUrl}
+            onBulkSubmit={(urls) => addBulkMutation.mutate(urls)}
+            isBulkAdding={addBulkMutation.isPending}
           />
         )}
 
