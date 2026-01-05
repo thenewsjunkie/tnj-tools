@@ -141,11 +141,6 @@ export const generatePrintDocument = (data: PrintData) => {
     .hopper-item-title {
       font-weight: 500;
     }
-    .hopper-item-url {
-      color: #666;
-      font-size: 10px;
-      word-break: break-all;
-    }
     .notes-section {
       margin-top: 24px;
       page-break-inside: avoid;
@@ -218,20 +213,15 @@ export const generatePrintDocument = (data: PrintData) => {
         ${items.map((item) => `
           <div class="hopper-item">
             <div class="hopper-item-title">${item.title || "Untitled"}</div>
-            <div class="hopper-item-url">${item.url}</div>
           </div>
         `).join("")}
       </div>
     ` : "").join("")}
-    ${ungroupedHopperItems.length > 0 ? `
-      <h3>Ungrouped Items</h3>
-      ${ungroupedHopperItems.map((item) => `
-        <div class="hopper-item">
-          <div class="hopper-item-title">${item.title || "Untitled"}</div>
-          <div class="hopper-item-url">${item.url}</div>
-        </div>
-      `).join("")}
-    ` : ""}
+    ${ungroupedHopperItems.map((item) => `
+      <div class="hopper-item">
+        <div class="hopper-item-title">${item.title || "Untitled"}</div>
+      </div>
+    `).join("")}
   </div>
   
   <div class="notes-section">
