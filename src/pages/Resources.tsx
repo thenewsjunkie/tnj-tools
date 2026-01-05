@@ -132,6 +132,54 @@ const Resources = () => {
     },
   });
 
+  const addBulkMutation = useMutation({
+    mutationFn: async (urls: string[]) => {
+      const maxOrder = resources.length > 0 
+        ? Math.max(...resources.map(r => r.display_order)) 
+        : -1;
+
+      const newResources = await Promise.all(
+        urls.map(async (rawUrl, index) => {
+          let processedUrl = rawUrl.trim();
+          if (!processedUrl.startsWith("http://") && !processedUrl.startsWith("https://")) {
+            processedUrl = "https://" + processedUrl;
+          }
+
+          let fetchedTitle: string | null = null;
+          let thumbnailUrl: string | null = null;
+          try {
+            const { data } = await supabase.functions.invoke("fetch-link-metadata", {
+              body: { url: processedUrl },
+            });
+            fetchedTitle = data?.title || null;
+            thumbnailUrl = data?.ogImage || null;
+          } catch (e) {
+            console.error("Failed to fetch metadata:", e);
+          }
+
+          return {
+            title: fetchedTitle || processedUrl,
+            url: processedUrl,
+            thumbnail_url: thumbnailUrl,
+            display_order: maxOrder + 1 + index,
+            type: "link",
+          };
+        })
+      );
+
+      const { error } = await supabase.from("video_resources").insert(newResources);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["video-resources"] });
+      setIsAdding(false);
+      toast({ title: "Resources added" });
+    },
+    onError: () => {
+      toast({ title: "Failed to add resources", variant: "destructive" });
+    },
+  });
+
   const removeThumbnailMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -301,6 +349,8 @@ const Resources = () => {
             setTitle={setTitle}
             url={url}
             setUrl={setUrl}
+            onBulkSubmit={(urls) => addBulkMutation.mutate(urls)}
+            isBulkAdding={addBulkMutation.isPending}
           />
         )}
 
