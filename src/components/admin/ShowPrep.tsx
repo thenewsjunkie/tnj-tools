@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { format, isFriday as checkIsFriday, addDays, isToday } from "date-fns";
+import { format, isFriday as checkIsFriday, isMonday as checkIsMonday, addDays, isToday } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Trash2, ChevronLeft, ChevronRight, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import Hopper from "./show-prep/Hopper";
@@ -66,6 +66,7 @@ const ShowPrep = () => {
   });
   const [topics, setTopics] = useState<ShowPrepTopics>({ fromTopic: "", toTopic: "", andTopic: "" });
   const [lastMinuteFrom, setLastMinuteFrom] = useState("");
+  const [rateMyBlank, setRateMyBlank] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isHopperOpen, setIsHopperOpen] = useState(false);
@@ -75,6 +76,7 @@ const ShowPrep = () => {
   const selectedDateFormatted = format(selectedDate, "EEEE, MMMM do yyyy");
   const dateKey = format(selectedDate, "yyyy-MM-dd");
   const isFriday = checkIsFriday(selectedDate);
+  const isMonday = checkIsMonday(selectedDate);
   const isSelectedToday = isToday(selectedDate);
 
   // Load data from Supabase
@@ -84,7 +86,7 @@ const ShowPrep = () => {
     try {
       const { data, error } = await supabase
         .from("show_prep_notes")
-        .select("from_topic, to_topic, and_topic, last_minute_from")
+        .select("from_topic, to_topic, and_topic, last_minute_from, rate_my_blank")
         .eq("date", dateKey)
         .maybeSingle();
 
@@ -97,6 +99,7 @@ const ShowPrep = () => {
           andTopic: data.and_topic || "",
         });
         setLastMinuteFrom(data.last_minute_from || "");
+        setRateMyBlank(data.rate_my_blank || "");
       } else {
         // Check localStorage for migration
         const localTopicsKey = `show-prep-topics-${dateKey}`;
@@ -127,6 +130,7 @@ const ShowPrep = () => {
         } else {
           setTopics({ fromTopic: "", toTopic: "", andTopic: "" });
           setLastMinuteFrom("");
+          setRateMyBlank("");
         }
       }
     } catch (error) {
@@ -167,6 +171,7 @@ const ShowPrep = () => {
           to_topic: topics.toTopic || null,
           and_topic: topics.andTopic || null,
           last_minute_from: lastMinuteFrom || null,
+          rate_my_blank: rateMyBlank || null,
         }, { onConflict: "date" });
       } catch (error) {
         console.error("Error saving topics:", error);
@@ -176,7 +181,7 @@ const ShowPrep = () => {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [topics, lastMinuteFrom, dateKey, isLoading]);
+  }, [topics, lastMinuteFrom, rateMyBlank, dateKey, isLoading]);
 
   const navigateDay = (offset: number) => {
     setSelectedDate(prev => addDays(prev, offset));
@@ -196,6 +201,10 @@ const ShowPrep = () => {
 
   const handleClearLastMinute = () => {
     setLastMinuteFrom("");
+  };
+
+  const handleClearRateMyBlank = () => {
+    setRateMyBlank("");
   };
 
   return (
@@ -275,6 +284,31 @@ const ShowPrep = () => {
                 <Trash2 className="h-3 w-3 mr-1" />
                 Clear All
               </Button>
+
+              {/* Monday: Rate My Blank */}
+              {isMonday && (
+                <div className="mt-4 space-y-2">
+                  <p className="text-foreground">
+                    Rate My Blank:{" "}
+                    <AutoSizeInput
+                      value={rateMyBlank}
+                      onChange={setRateMyBlank}
+                      placeholder="blank..."
+                    />
+                  </p>
+                  {rateMyBlank && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleClearRateMyBlank}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <Trash2 className="h-3 w-3 mr-1" />
+                      Clear
+                    </Button>
+                  )}
+                </div>
+              )}
 
               {/* Friday: Last Minute Message */}
               {isFriday && (
