@@ -50,6 +50,7 @@ const Resources = () => {
   const [isFetchingTitle, setIsFetchingTitle] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
+  const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number } | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -138,34 +139,38 @@ const Resources = () => {
         ? Math.max(...resources.map(r => r.display_order)) 
         : -1;
 
-      const newResources = await Promise.all(
-        urls.map(async (rawUrl, index) => {
-          let processedUrl = rawUrl.trim();
-          if (!processedUrl.startsWith("http://") && !processedUrl.startsWith("https://")) {
-            processedUrl = "https://" + processedUrl;
-          }
+      setBulkProgress({ current: 0, total: urls.length });
 
-          let fetchedTitle: string | null = null;
-          let thumbnailUrl: string | null = null;
-          try {
-            const { data } = await supabase.functions.invoke("fetch-link-metadata", {
-              body: { url: processedUrl },
-            });
-            fetchedTitle = data?.title || null;
-            thumbnailUrl = data?.ogImage || null;
-          } catch (e) {
-            console.error("Failed to fetch metadata:", e);
-          }
+      const newResources = [];
+      for (let i = 0; i < urls.length; i++) {
+        const rawUrl = urls[i];
+        let processedUrl = rawUrl.trim();
+        if (!processedUrl.startsWith("http://") && !processedUrl.startsWith("https://")) {
+          processedUrl = "https://" + processedUrl;
+        }
 
-          return {
-            title: fetchedTitle || processedUrl,
-            url: processedUrl,
-            thumbnail_url: thumbnailUrl,
-            display_order: maxOrder + 1 + index,
-            type: "link",
-          };
-        })
-      );
+        let fetchedTitle: string | null = null;
+        let thumbnailUrl: string | null = null;
+        try {
+          const { data } = await supabase.functions.invoke("fetch-link-metadata", {
+            body: { url: processedUrl },
+          });
+          fetchedTitle = data?.title || null;
+          thumbnailUrl = data?.ogImage || null;
+        } catch (e) {
+          console.error("Failed to fetch metadata:", e);
+        }
+
+        newResources.push({
+          title: fetchedTitle || processedUrl,
+          url: processedUrl,
+          thumbnail_url: thumbnailUrl,
+          display_order: maxOrder + 1 + i,
+          type: "link",
+        });
+
+        setBulkProgress({ current: i + 1, total: urls.length });
+      }
 
       const { error } = await supabase.from("video_resources").insert(newResources);
       if (error) throw error;
@@ -173,9 +178,11 @@ const Resources = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["video-resources"] });
       setIsAdding(false);
+      setBulkProgress(null);
       toast({ title: "Resources added" });
     },
     onError: () => {
+      setBulkProgress(null);
       toast({ title: "Failed to add resources", variant: "destructive" });
     },
   });
@@ -351,6 +358,7 @@ const Resources = () => {
             setUrl={setUrl}
             onBulkSubmit={(urls) => addBulkMutation.mutate(urls)}
             isBulkAdding={addBulkMutation.isPending}
+            bulkProgress={bulkProgress}
           />
         )}
 

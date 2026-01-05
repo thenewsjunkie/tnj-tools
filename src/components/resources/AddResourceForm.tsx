@@ -22,6 +22,7 @@ interface AddResourceFormProps {
   setUrl: (url: string) => void;
   onBulkSubmit?: (urls: string[]) => void;
   isBulkAdding?: boolean;
+  bulkProgress?: { current: number; total: number } | null;
 }
 
 export const AddResourceForm = ({
@@ -37,6 +38,7 @@ export const AddResourceForm = ({
   setUrl,
   onBulkSubmit,
   isBulkAdding = false,
+  bulkProgress = null,
 }: AddResourceFormProps) => {
   const [mode, setMode] = useState<ResourceMode>("link");
   const [isUploading, setIsUploading] = useState(false);
@@ -211,10 +213,10 @@ export const AddResourceForm = ({
             type="submit" 
             disabled={isPending || isUploading || isBulkAdding || !isValid}
           >
-            {isBulkAdding ? (
+          {isBulkAdding ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Adding...
+                {bulkProgress ? `Adding ${bulkProgress.current}/${bulkProgress.total}...` : "Adding..."}
               </>
             ) : isCapturingScreenshot ? (
               <>
