@@ -1,4 +1,4 @@
-import { format, isFriday as checkIsFriday, isMonday as checkIsMonday } from "date-fns";
+import { format, isFriday as checkIsFriday, isMonday as checkIsMonday, isTuesday as checkIsTuesday } from "date-fns";
 import { Topic } from "./types";
 import { ScheduledSegment } from "./scheduledSegments";
 
@@ -41,6 +41,7 @@ export const generatePrintDocument = (data: PrintData) => {
   const dateConversational = format(selectedDate, "EEEE MMMM do yyyy");
   const isFriday = checkIsFriday(selectedDate);
   const isMonday = checkIsMonday(selectedDate);
+  const isTuesday = checkIsTuesday(selectedDate);
 
   // Group hopper items by group
   const groupedHopperItems = hopperGroups.map((group) => ({
@@ -184,6 +185,7 @@ export const generatePrintDocument = (data: PrintData) => {
   </div>
   
   ${isMonday && rateMyBlank ? `<div class="special-segment"><strong>Rate My Blank:</strong> ${rateMyBlank}</div>` : ""}
+  ${isTuesday ? `<div class="special-segment"><strong>It is, friends, a Share the Show Tuesday</strong></div>` : ""}
   ${isFriday && lastMinuteFrom ? `<div class="special-segment"><strong>Last Minute Message From:</strong> ${lastMinuteFrom}</div>` : ""}
   
   ${scheduledSegments.length > 0 ? `
