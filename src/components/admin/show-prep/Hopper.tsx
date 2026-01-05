@@ -1311,7 +1311,7 @@ const Hopper = ({ selectedDate }: HopperProps) => {
           No items in the hopper yet. Add links or use "Add to Hopper" from Resources pages.
         </p>
       ) : (
-        <div className="max-h-[400px] overflow-y-auto pr-1">
+        <div className="max-h-[900px] overflow-y-auto pr-1">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
