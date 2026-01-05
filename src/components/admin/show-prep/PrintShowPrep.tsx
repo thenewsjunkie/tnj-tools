@@ -141,22 +141,6 @@ export const generatePrintDocument = (data: PrintData) => {
     .hopper-item-title {
       font-weight: 500;
     }
-    .notes-section {
-      margin-top: 24px;
-      page-break-inside: avoid;
-    }
-    .notes-section h2 {
-      margin-bottom: 12px;
-    }
-    .notes-lines {
-      border: 1px solid #ccc;
-      min-height: 200px;
-      padding: 8px;
-    }
-    .notes-line {
-      border-bottom: 1px solid #e0e0e0;
-      height: 24px;
-    }
     .empty-state {
       color: #999;
       font-style: italic;
@@ -165,9 +149,6 @@ export const generatePrintDocument = (data: PrintData) => {
     @media print {
       body {
         padding: 0;
-      }
-      .notes-section {
-        page-break-before: auto;
       }
     }
   </style>
@@ -224,12 +205,6 @@ export const generatePrintDocument = (data: PrintData) => {
     `).join("")}
   </div>
   
-  <div class="notes-section">
-    <h2>Notes</h2>
-    <div class="notes-lines">
-      ${Array(12).fill('<div class="notes-line"></div>').join("")}
-    </div>
-  </div>
 </body>
 </html>
   `;
