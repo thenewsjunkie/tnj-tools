@@ -5,6 +5,59 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+function isTwitterUrl(url: string): boolean {
+  try {
+    const parsedUrl = new URL(url);
+    const host = parsedUrl.hostname.toLowerCase();
+    return (host === 'twitter.com' || host === 'www.twitter.com' || 
+            host === 'x.com' || host === 'www.x.com') &&
+           parsedUrl.pathname.includes('/status/');
+  } catch {
+    return false;
+  }
+}
+
+async function fetchTweetMetadata(url: string): Promise<{ title: string | null; ogImage: string | null }> {
+  const oembedUrl = `https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}&omit_script=1`;
+  
+  console.log(`Fetching tweet via oEmbed: ${oembedUrl}`);
+  
+  const response = await fetch(oembedUrl);
+  if (!response.ok) {
+    console.log(`oEmbed failed with status: ${response.status}`);
+    return { title: null, ogImage: null };
+  }
+  
+  const data = await response.json();
+  console.log(`oEmbed response:`, JSON.stringify(data));
+  
+  // Extract tweet text from the HTML blockquote
+  let tweetText = null;
+  if (data.html) {
+    const match = data.html.match(/<p[^>]*>([^<]+)<\/p>/);
+    if (match) {
+      tweetText = match[1]
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/\n/g, ' ')
+        .trim();
+    }
+  }
+  
+  // Build a title with author name if available
+  const author = data.author_name || 'Tweet';
+  const title = tweetText 
+    ? `${author}: "${tweetText.substring(0, 120)}${tweetText.length > 120 ? '...' : ''}"`
+    : author;
+  
+  console.log(`Extracted tweet title: ${title}`);
+  
+  return { title, ogImage: null };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -21,6 +74,16 @@ serve(async (req) => {
     }
 
     console.log(`Fetching metadata for: ${url}`);
+
+    // Check if this is a Twitter/X URL
+    if (isTwitterUrl(url)) {
+      console.log('Detected Twitter URL, using oEmbed API');
+      const tweetData = await fetchTweetMetadata(url);
+      return new Response(
+        JSON.stringify({ success: true, ...tweetData, url }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Fetch the page with a timeout
     const controller = new AbortController();
