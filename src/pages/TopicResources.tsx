@@ -73,12 +73,25 @@ const TopicResources = () => {
     enabled: !!date,
   });
 
-  // Get current topic from the data - handle nested hours structure
+  // Get current topic from the data - handle both data structures
   const rawData = showPrepData?.topics as unknown;
-  const hours: HourBlock[] = (rawData && typeof rawData === 'object' && Array.isArray((rawData as { hours?: unknown }).hours))
-    ? (rawData as { hours: HourBlock[] }).hours
-    : [];
-  const allTopics = hours.flatMap(h => h.topics);
+  
+  // Handle both data structures:
+  // 1. New structure: { hours: HourBlock[] }
+  // 2. Legacy/current structure: { topics: Topic[] }
+  let allTopics: Topic[] = [];
+  
+  if (rawData && typeof rawData === 'object') {
+    if (Array.isArray((rawData as { hours?: unknown }).hours)) {
+      // New structure with hours
+      const hours: HourBlock[] = (rawData as { hours: HourBlock[] }).hours;
+      allTopics = hours.flatMap(h => h.topics);
+    } else if (Array.isArray((rawData as { topics?: unknown }).topics)) {
+      // Legacy flat topics structure
+      allTopics = (rawData as { topics: Topic[] }).topics;
+    }
+  }
+  
   const topic = allTopics.find(t => t.id === topicId);
   const links = topic?.links || [];
 
@@ -130,9 +143,20 @@ const TopicResources = () => {
       if (!latestData) throw new Error("Show prep notes not found");
 
       const latestRawData = latestData.topics as unknown;
-      const latestHours: HourBlock[] = (latestRawData && typeof latestRawData === 'object' && Array.isArray((latestRawData as { hours?: unknown }).hours))
-        ? (latestRawData as { hours: HourBlock[] }).hours
-        : [];
+      
+      // Handle both data structures
+      let isHoursStructure = false;
+      let latestTopics: Topic[] = [];
+      
+      if (latestRawData && typeof latestRawData === 'object') {
+        if (Array.isArray((latestRawData as { hours?: unknown }).hours)) {
+          isHoursStructure = true;
+          const latestHours: HourBlock[] = (latestRawData as { hours: HourBlock[] }).hours;
+          latestTopics = latestHours.flatMap(h => h.topics);
+        } else if (Array.isArray((latestRawData as { topics?: unknown }).topics)) {
+          latestTopics = (latestRawData as { topics: Topic[] }).topics;
+        }
+      }
 
       const newLink: Link = {
         id: uuidv4(),
@@ -142,17 +166,26 @@ const TopicResources = () => {
         type: type as "link" | "image",
       };
 
-      // Update the topic with the new link
-      const updatedHours = latestHours.map(hour => ({
-        ...hour,
-        topics: hour.topics.map(t => 
+      let updatedTopics: unknown;
+      if (isHoursStructure) {
+        const latestHours: HourBlock[] = (latestRawData as { hours: HourBlock[] }).hours;
+        const updatedHours = latestHours.map(hour => ({
+          ...hour,
+          topics: hour.topics.map(t => 
+            t.id === topicId ? { ...t, links: [...t.links, newLink] } : t
+          )
+        }));
+        updatedTopics = { hours: updatedHours };
+      } else {
+        const updatedTopicsList = latestTopics.map(t => 
           t.id === topicId ? { ...t, links: [...t.links, newLink] } : t
-        )
-      }));
+        );
+        updatedTopics = { topics: updatedTopicsList };
+      }
 
       const { error } = await supabase
         .from("show_prep_notes")
-        .update({ topics: JSON.parse(JSON.stringify({ hours: updatedHours })) })
+        .update({ topics: JSON.parse(JSON.stringify(updatedTopics)) })
         .eq("date", date);
       
       if (error) throw error;
@@ -169,24 +202,63 @@ const TopicResources = () => {
     },
   });
 
+  // Helper to parse topic data and update it
+  const parseAndUpdateTopics = async (
+    updateFn: (topics: Topic[]) => Topic[]
+  ) => {
+    const { data: latestData, error: fetchError } = await supabase
+      .from("show_prep_notes")
+      .select("*")
+      .eq("date", date)
+      .maybeSingle();
+    
+    if (fetchError) throw fetchError;
+    if (!latestData) throw new Error("Show prep notes not found");
+
+    const latestRawData = latestData.topics as unknown;
+    
+    let isHoursStructure = false;
+    let latestTopics: Topic[] = [];
+    
+    if (latestRawData && typeof latestRawData === 'object') {
+      if (Array.isArray((latestRawData as { hours?: unknown }).hours)) {
+        isHoursStructure = true;
+        const latestHours: HourBlock[] = (latestRawData as { hours: HourBlock[] }).hours;
+        latestTopics = latestHours.flatMap(h => h.topics);
+      } else if (Array.isArray((latestRawData as { topics?: unknown }).topics)) {
+        latestTopics = (latestRawData as { topics: Topic[] }).topics;
+      }
+    }
+
+    const updatedTopicsList = updateFn(latestTopics);
+
+    let updatedTopics: unknown;
+    if (isHoursStructure) {
+      const latestHours: HourBlock[] = (latestRawData as { hours: HourBlock[] }).hours;
+      // Rebuild hours structure with updated topics
+      const updatedHours = latestHours.map(hour => ({
+        ...hour,
+        topics: hour.topics.map(t => {
+          const updated = updatedTopicsList.find(ut => ut.id === t.id);
+          return updated || t;
+        })
+      }));
+      updatedTopics = { hours: updatedHours };
+    } else {
+      updatedTopics = { topics: updatedTopicsList };
+    }
+
+    const { error } = await supabase
+      .from("show_prep_notes")
+      .update({ topics: JSON.parse(JSON.stringify(updatedTopics)) })
+      .eq("date", date);
+    
+    if (error) throw error;
+  };
+
   // Bulk add resources mutation
   const addBulkMutation = useMutation({
     mutationFn: async (urls: string[]) => {
-      // Re-fetch the latest data to avoid stale state
-      const { data: latestData, error: fetchError } = await supabase
-        .from("show_prep_notes")
-        .select("*")
-        .eq("date", date)
-        .maybeSingle();
-      
-      if (fetchError) throw fetchError;
-      if (!latestData) throw new Error("Show prep notes not found");
-
-      const latestRawData = latestData.topics as unknown;
-      const latestHours: HourBlock[] = (latestRawData && typeof latestRawData === 'object' && Array.isArray((latestRawData as { hours?: unknown }).hours))
-        ? (latestRawData as { hours: HourBlock[] }).hours
-        : [];
-
       setBulkProgress({ current: 0, total: urls.length });
 
       // Fetch metadata for all URLs sequentially to track progress
@@ -221,20 +293,11 @@ const TopicResources = () => {
         setBulkProgress({ current: i + 1, total: urls.length });
       }
 
-      // Update the topic with all new links
-      const updatedHours = latestHours.map(hour => ({
-        ...hour,
-        topics: hour.topics.map(t => 
+      await parseAndUpdateTopics((topics) =>
+        topics.map(t =>
           t.id === topicId ? { ...t, links: [...t.links, ...newLinks] } : t
         )
-      }));
-
-      const { error } = await supabase
-        .from("show_prep_notes")
-        .update({ topics: JSON.parse(JSON.stringify({ hours: updatedHours })) })
-        .eq("date", date);
-      
-      if (error) throw error;
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["show-prep-notes", date] });
@@ -251,35 +314,13 @@ const TopicResources = () => {
   // Update link title mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, title }: { id: string; title: string }) => {
-      const { data: latestData, error: fetchError } = await supabase
-        .from("show_prep_notes")
-        .select("*")
-        .eq("date", date)
-        .maybeSingle();
-      
-      if (fetchError) throw fetchError;
-      if (!latestData) throw new Error("Show prep notes not found");
-
-      const latestRawData = latestData.topics as unknown;
-      const latestHours: HourBlock[] = (latestRawData && typeof latestRawData === 'object' && Array.isArray((latestRawData as { hours?: unknown }).hours))
-        ? (latestRawData as { hours: HourBlock[] }).hours
-        : [];
-
-      const updatedHours = latestHours.map(hour => ({
-        ...hour,
-        topics: hour.topics.map(t => 
-          t.id === topicId 
+      await parseAndUpdateTopics((topics) =>
+        topics.map(t =>
+          t.id === topicId
             ? { ...t, links: t.links.map(l => l.id === id ? { ...l, title: title.trim() } : l) }
             : t
         )
-      }));
-
-      const { error } = await supabase
-        .from("show_prep_notes")
-        .update({ topics: JSON.parse(JSON.stringify({ hours: updatedHours })) })
-        .eq("date", date);
-      
-      if (error) throw error;
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["show-prep-notes", date] });
@@ -291,35 +332,13 @@ const TopicResources = () => {
   // Delete link mutation
   const deleteMutation = useMutation({
     mutationFn: async (linkId: string) => {
-      const { data: latestData, error: fetchError } = await supabase
-        .from("show_prep_notes")
-        .select("*")
-        .eq("date", date)
-        .maybeSingle();
-      
-      if (fetchError) throw fetchError;
-      if (!latestData) throw new Error("Show prep notes not found");
-
-      const latestRawData = latestData.topics as unknown;
-      const latestHours: HourBlock[] = (latestRawData && typeof latestRawData === 'object' && Array.isArray((latestRawData as { hours?: unknown }).hours))
-        ? (latestRawData as { hours: HourBlock[] }).hours
-        : [];
-
-      const updatedHours = latestHours.map(hour => ({
-        ...hour,
-        topics: hour.topics.map(t => 
-          t.id === topicId 
+      await parseAndUpdateTopics((topics) =>
+        topics.map(t =>
+          t.id === topicId
             ? { ...t, links: t.links.filter(l => l.id !== linkId) }
             : t
         )
-      }));
-
-      const { error } = await supabase
-        .from("show_prep_notes")
-        .update({ topics: JSON.parse(JSON.stringify({ hours: updatedHours })) })
-        .eq("date", date);
-      
-      if (error) throw error;
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["show-prep-notes", date] });
@@ -330,33 +349,11 @@ const TopicResources = () => {
   // Clear all links mutation
   const clearAllMutation = useMutation({
     mutationFn: async () => {
-      const { data: latestData, error: fetchError } = await supabase
-        .from("show_prep_notes")
-        .select("*")
-        .eq("date", date)
-        .maybeSingle();
-      
-      if (fetchError) throw fetchError;
-      if (!latestData) throw new Error("Show prep notes not found");
-
-      const latestRawData = latestData.topics as unknown;
-      const latestHours: HourBlock[] = (latestRawData && typeof latestRawData === 'object' && Array.isArray((latestRawData as { hours?: unknown }).hours))
-        ? (latestRawData as { hours: HourBlock[] }).hours
-        : [];
-
-      const updatedHours = latestHours.map(hour => ({
-        ...hour,
-        topics: hour.topics.map(t => 
+      await parseAndUpdateTopics((topics) =>
+        topics.map(t =>
           t.id === topicId ? { ...t, links: [] } : t
         )
-      }));
-
-      const { error } = await supabase
-        .from("show_prep_notes")
-        .update({ topics: JSON.parse(JSON.stringify({ hours: updatedHours })) })
-        .eq("date", date);
-      
-      if (error) throw error;
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["show-prep-notes", date] });
@@ -367,35 +364,13 @@ const TopicResources = () => {
   // Remove thumbnail mutation
   const removeThumbnailMutation = useMutation({
     mutationFn: async (linkId: string) => {
-      const { data: latestData, error: fetchError } = await supabase
-        .from("show_prep_notes")
-        .select("*")
-        .eq("date", date)
-        .maybeSingle();
-      
-      if (fetchError) throw fetchError;
-      if (!latestData) throw new Error("Show prep notes not found");
-
-      const latestRawData = latestData.topics as unknown;
-      const latestHours: HourBlock[] = (latestRawData && typeof latestRawData === 'object' && Array.isArray((latestRawData as { hours?: unknown }).hours))
-        ? (latestRawData as { hours: HourBlock[] }).hours
-        : [];
-
-      const updatedHours = latestHours.map(hour => ({
-        ...hour,
-        topics: hour.topics.map(t => 
-          t.id === topicId 
+      await parseAndUpdateTopics((topics) =>
+        topics.map(t =>
+          t.id === topicId
             ? { ...t, links: t.links.map(l => l.id === linkId ? { ...l, thumbnail_url: null } : l) }
             : t
         )
-      }));
-
-      const { error } = await supabase
-        .from("show_prep_notes")
-        .update({ topics: JSON.parse(JSON.stringify({ hours: updatedHours })) })
-        .eq("date", date);
-      
-      if (error) throw error;
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["show-prep-notes", date] });
@@ -409,33 +384,11 @@ const TopicResources = () => {
   // Reorder links mutation
   const reorderMutation = useMutation({
     mutationFn: async (newLinks: Link[]) => {
-      const { data: latestData, error: fetchError } = await supabase
-        .from("show_prep_notes")
-        .select("*")
-        .eq("date", date)
-        .maybeSingle();
-      
-      if (fetchError) throw fetchError;
-      if (!latestData) throw new Error("Show prep notes not found");
-
-      const latestRawData = latestData.topics as unknown;
-      const latestHours: HourBlock[] = (latestRawData && typeof latestRawData === 'object' && Array.isArray((latestRawData as { hours?: unknown }).hours))
-        ? (latestRawData as { hours: HourBlock[] }).hours
-        : [];
-
-      const updatedHours = latestHours.map(hour => ({
-        ...hour,
-        topics: hour.topics.map(t => 
+      await parseAndUpdateTopics((topics) =>
+        topics.map(t =>
           t.id === topicId ? { ...t, links: newLinks } : t
         )
-      }));
-
-      const { error } = await supabase
-        .from("show_prep_notes")
-        .update({ topics: JSON.parse(JSON.stringify({ hours: updatedHours })) })
-        .eq("date", date);
-      
-      if (error) throw error;
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["show-prep-notes", date] });

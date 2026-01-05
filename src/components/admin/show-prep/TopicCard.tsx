@@ -55,7 +55,7 @@ const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardP
   };
 
   const handleOpenResources = () => {
-    navigate(`/admin/topic-resources/${date}/${topic.id}`);
+    window.open(`/admin/topic-resources/${date}/${topic.id}`, '_blank');
   };
 
   const handleCopyLink = (e: React.MouseEvent) => {
