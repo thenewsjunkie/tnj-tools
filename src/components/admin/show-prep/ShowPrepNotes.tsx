@@ -1,23 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { format, isToday } from "date-fns";
+import { format } from "date-fns";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { DndContext, closestCenter, DragEndEvent, DragOverlay, DragStartEvent } from "@dnd-kit/core";
+import { arrayMove } from "@dnd-kit/sortable";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import DateSelector from "./DateSelector";
-import HourCard from "./HourCard";
-import DroppableHour from "./DroppableHour";
-import { HourBlock, Topic, DEFAULT_SHOW_HOURS } from "./types";
-import { isWeekend, getScheduledSegments, ScheduledSegment } from "./scheduledSegments";
+import TopicList from "./TopicList";
+import { HourBlock, Topic } from "./types";
+import { isWeekend, getAllScheduledSegments, ScheduledSegment } from "./scheduledSegments";
 import ScheduledSegmentsManager from "./ScheduledSegmentsManager";
-
-const createEmptyHours = (): HourBlock[] => {
-  return DEFAULT_SHOW_HOURS.map((hour) => ({
-    ...hour,
-    topics: [],
-  }));
-};
 
 interface ShowPrepNotesProps {
   selectedDate: Date;
@@ -25,7 +18,7 @@ interface ShowPrepNotesProps {
 }
 
 const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProps) => {
-  const [localHours, setLocalHours] = useState<HourBlock[]>(createEmptyHours());
+  const [localTopics, setLocalTopics] = useState<Topic[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const isDraggingRef = useRef(false);
   const queryClient = useQueryClient();
@@ -47,25 +40,40 @@ const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProp
   });
 
   // Sync query data to local state for editing
+  // Handles migration from old hour-based format to flat topic list
   useEffect(() => {
     if (noteData) {
       const rawData = noteData.topics as unknown;
-      if (rawData && typeof rawData === "object" && Array.isArray((rawData as { hours?: unknown }).hours)) {
-        setLocalHours((rawData as { hours: HourBlock[] }).hours);
-      } else if (Array.isArray(rawData)) {
-        const migratedHours = createEmptyHours();
-        migratedHours[0].topics = rawData as HourBlock["topics"];
-        setLocalHours(migratedHours);
+      
+      if (rawData && typeof rawData === "object") {
+        // Check for new flat format: { topics: [...] }
+        if (Array.isArray((rawData as { topics?: unknown }).topics)) {
+          setLocalTopics((rawData as { topics: Topic[] }).topics);
+        }
+        // Check for old hour-based format: { hours: [...] }
+        else if (Array.isArray((rawData as { hours?: unknown }).hours)) {
+          // Migrate: flatten all topics from all hours
+          const hours = (rawData as { hours: HourBlock[] }).hours;
+          const flattenedTopics = hours.flatMap(h => h.topics);
+          // Re-assign display orders
+          flattenedTopics.forEach((t, i) => t.display_order = i);
+          setLocalTopics(flattenedTopics);
+        }
+        // Legacy: raw array of topics
+        else if (Array.isArray(rawData)) {
+          setLocalTopics(rawData as Topic[]);
+        } else {
+          setLocalTopics([]);
+        }
       } else {
-        setLocalHours(createEmptyHours());
+        setLocalTopics([]);
       }
     } else if (noteData === null) {
-      setLocalHours(createEmptyHours());
+      setLocalTopics([]);
     }
   }, [noteData]);
 
   const noteId = noteData?.id ?? null;
-  const hours = localHours;
 
   // Fetch scheduled segments from database
   const { data: scheduledSegments = [] } = useQuery({
@@ -80,28 +88,27 @@ const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProp
     },
   });
 
-
   // Auto-save with debounce
-  const saveNotes = useCallback(async (hoursToSave: HourBlock[]) => {
+  const saveNotes = useCallback(async (topicsToSave: Topic[]) => {
     setIsSaving(true);
     try {
-      const hoursJson = JSON.parse(JSON.stringify({ hours: hoursToSave }));
+      const topicsJson = JSON.parse(JSON.stringify({ topics: topicsToSave }));
       
       if (noteId) {
         // Update existing
         const { error } = await supabase
           .from("show_prep_notes")
-          .update({ topics: hoursJson })
+          .update({ topics: topicsJson })
           .eq("id", noteId);
         if (error) throw error;
       } else {
         // Check if there's any content to save
-        const hasContent = hoursToSave.some((h) => h.topics.length > 0);
+        const hasContent = topicsToSave.length > 0;
         if (hasContent) {
           // Create new
           const { error } = await supabase
             .from("show_prep_notes")
-            .insert([{ date: dateKey, topics: hoursJson }]);
+            .insert([{ date: dateKey, topics: topicsJson }]);
           if (error) throw error;
           // Invalidate to refetch with new ID
           queryClient.invalidateQueries({ queryKey: ["show-prep-notes", dateKey] });
@@ -113,25 +120,23 @@ const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProp
     } finally {
       setIsSaving(false);
     }
-  }, [noteId, dateKey]);
+  }, [noteId, dateKey, queryClient]);
 
   // Debounced save
   useEffect(() => {
     if (isLoading || isDraggingRef.current) return;
     
     const timeoutId = setTimeout(() => {
-      saveNotes(hours);
+      saveNotes(localTopics);
     }, 1000);
 
     return () => clearTimeout(timeoutId);
-  }, [hours, isLoading, saveNotes]);
+  }, [localTopics, isLoading, saveNotes]);
 
   const [activeTopicId, setActiveTopicId] = useState<string | null>(null);
 
-  const handleHourChange = (index: number, updatedHour: HourBlock) => {
-    const newHours = [...hours];
-    newHours[index] = updatedHour;
-    setLocalHours(newHours);
+  const handleTopicsChange = (newTopics: Topic[]) => {
+    setLocalTopics(newTopics);
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -144,108 +149,34 @@ const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProp
     setActiveTopicId(null);
     isDraggingRef.current = false;
     
-    if (!over) return;
+    if (!over || active.id === over.id) return;
 
     const activeId = active.id as string;
     const overId = over.id as string;
 
-    // Find which hour contains the dragged topic
-    const sourceHourIndex = hours.findIndex(h => 
-      h.topics.some(t => t.id === activeId)
-    );
-    if (sourceHourIndex === -1) return;
+    const oldIndex = localTopics.findIndex(t => t.id === activeId);
+    const newIndex = localTopics.findIndex(t => t.id === overId);
 
-    const sourceHour = hours[sourceHourIndex];
-    const draggedTopic = sourceHour.topics.find(t => t.id === activeId);
-    if (!draggedTopic) return;
-
-    // Check if dropped on an hour (droppable zone) or on another topic
-    let targetHourIndex: number;
-    let targetTopicIndex: number | null = null;
-
-    // First check if over is a topic ID
-    const overTopicHourIndex = hours.findIndex(h => 
-      h.topics.some(t => t.id === overId)
-    );
-
-    if (overTopicHourIndex !== -1) {
-      // Dropped on a topic
-      targetHourIndex = overTopicHourIndex;
-      targetTopicIndex = hours[targetHourIndex].topics.findIndex(t => t.id === overId);
-    } else {
-      // Dropped on a droppable hour zone
-      targetHourIndex = hours.findIndex(h => h.id === overId);
-      if (targetHourIndex === -1) return;
+    if (oldIndex !== -1 && newIndex !== -1) {
+      const reordered = arrayMove(localTopics, oldIndex, newIndex);
+      // Update display orders
+      reordered.forEach((t, i) => t.display_order = i);
+      setLocalTopics(reordered);
     }
-
-    // Deep clone to prevent reference sharing issues
-    const newHours: HourBlock[] = JSON.parse(JSON.stringify(hours));
-
-    if (sourceHourIndex === targetHourIndex) {
-      // Same hour - reorder within the hour
-      const topics = newHours[sourceHourIndex].topics;
-      const oldIndex = topics.findIndex(t => t.id === activeId);
-      const newIndex = targetTopicIndex ?? topics.length - 1;
-      
-      if (oldIndex !== newIndex) {
-        const [removed] = topics.splice(oldIndex, 1);
-        topics.splice(newIndex, 0, removed);
-        // Update display orders
-        topics.forEach((t, i) => t.display_order = i);
-        newHours[sourceHourIndex] = { ...newHours[sourceHourIndex], topics };
-      }
-    } else {
-      // Different hour - move topic (topic is already deep cloned)
-      // Remove from source
-      const sourceTopics = newHours[sourceHourIndex].topics.filter(t => t.id !== activeId);
-      sourceTopics.forEach((t, i) => t.display_order = i);
-      newHours[sourceHourIndex] = { ...newHours[sourceHourIndex], topics: sourceTopics };
-
-      // Add to target - get the deep cloned version
-      const targetTopics = newHours[targetHourIndex].topics;
-      const insertIndex = targetTopicIndex ?? targetTopics.length;
-      const movedTopic = JSON.parse(JSON.stringify(draggedTopic));
-      movedTopic.display_order = insertIndex;
-      targetTopics.splice(insertIndex, 0, movedTopic);
-      targetTopics.forEach((t, i) => t.display_order = i);
-      newHours[targetHourIndex] = { ...newHours[targetHourIndex], topics: targetTopics };
-    }
-
-    setLocalHours(newHours);
   };
 
   // Find the currently dragged topic for overlay
   const activeTopic = activeTopicId 
-    ? hours.flatMap(h => h.topics).find(t => t.id === activeTopicId)
+    ? localTopics.find(t => t.id === activeTopicId)
     : null;
 
   // Extract all unique tags from all topics for autocomplete
   const allTags = Array.from(
-    new Set(hours.flatMap(h => h.topics.flatMap(t => t.tags || [])))
+    new Set(localTopics.flatMap(t => t.tags || []))
   ).sort();
 
-  // Check if current time is within an hour block (with 5-minute early start)
-  const isCurrentHour = (hour: HourBlock): boolean => {
-    if (!isToday(selectedDate)) return false;
-
-    const now = new Date();
-    const currentMinutes = now.getHours() * 60 + now.getMinutes();
-
-    // Parse "11:00 AM" format to minutes since midnight
-    const parseTimeToMinutes = (timeStr: string) => {
-      const [time, period] = timeStr.split(" ");
-      let [hours, mins] = time.split(":").map(Number);
-      if (period === "PM" && hours !== 12) hours += 12;
-      if (period === "AM" && hours === 12) hours = 0;
-      return hours * 60 + mins;
-    };
-
-    const startMinutes = parseTimeToMinutes(hour.startTime);
-    const endMinutes = parseTimeToMinutes(hour.endTime);
-
-    // Expand if within 5 minutes before start OR during the hour
-    return currentMinutes >= startMinutes - 5 && currentMinutes < endMinutes;
-  };
+  // Get all scheduled segments for today (not filtered by hour)
+  const daySegments = getAllScheduledSegments(selectedDate, scheduledSegments);
 
   return (
     <div className="space-y-4">
@@ -277,20 +208,13 @@ const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProp
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          <div className="space-y-2">
-            {hours.map((hour, index) => (
-              <DroppableHour key={hour.id} id={hour.id}>
-                <HourCard
-                  hour={hour}
-                  date={dateKey}
-                  onChange={(updated) => handleHourChange(index, updated)}
-                  defaultOpen={isCurrentHour(hour)}
-                  scheduledSegments={getScheduledSegments(selectedDate, hour.id, scheduledSegments)}
-                  allTags={allTags}
-                />
-              </DroppableHour>
-            ))}
-          </div>
+          <TopicList
+            topics={localTopics}
+            date={dateKey}
+            onChange={handleTopicsChange}
+            scheduledSegments={daySegments}
+            allTags={allTags}
+          />
           <DragOverlay>
             {activeTopic ? (
               <div className="bg-card border rounded-lg p-3 shadow-lg opacity-90">

@@ -42,7 +42,7 @@ export interface ShowPrepNotesData {
   updated_at: string;
 }
 
-// Default show hours (11 AM - 3 PM)
+// Legacy: Default show hours (11 AM - 3 PM) - kept for migration only
 export const DEFAULT_SHOW_HOURS: Omit<HourBlock, "topics">[] = [
   { id: "hour-1", startTime: "11:00 AM", endTime: "12:00 PM", label: "Hour 1" },
   { id: "hour-2", startTime: "12:00 PM", endTime: "1:00 PM", label: "Hour 2" },
