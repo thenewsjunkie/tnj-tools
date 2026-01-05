@@ -1,11 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { format, isFriday as checkIsFriday, isMonday as checkIsMonday, addDays, isToday } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Trash2, ChevronLeft, ChevronRight, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight, Loader2, ChevronDown, ChevronUp, Printer } from "lucide-react";
 import Hopper from "./show-prep/Hopper";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import ShowPrepNotes from "./show-prep/ShowPrepNotes";
+import { generatePrintDocument } from "./show-prep/PrintShowPrep";
+import { getAllScheduledSegments, ScheduledSegment } from "./show-prep/scheduledSegments";
+import { Topic } from "./show-prep/types";
 
 interface ShowPrepTopics {
   fromTopic: string;
@@ -78,6 +81,54 @@ const ShowPrep = () => {
   const isFriday = checkIsFriday(selectedDate);
   const isMonday = checkIsMonday(selectedDate);
   const isSelectedToday = isToday(selectedDate);
+
+  // Handle print button
+  const handlePrint = async () => {
+    try {
+      // Fetch all required data for printing
+      const [notesResult, hopperItemsResult, hopperGroupsResult, segmentsResult] = await Promise.all([
+        supabase.from("show_prep_notes").select("topics").eq("date", dateKey).maybeSingle(),
+        supabase.from("hopper_items").select("id, url, title, group_id").eq("date", dateKey).order("display_order"),
+        supabase.from("hopper_groups").select("id, name").eq("date", dateKey).order("display_order"),
+        supabase.from("scheduled_segments").select("*").eq("is_active", true),
+      ]);
+
+      // Parse topics from notes
+      let localTopics: Topic[] = [];
+      if (notesResult.data?.topics) {
+        const rawData = notesResult.data.topics as unknown;
+        if (rawData && typeof rawData === "object") {
+          if (Array.isArray((rawData as { topics?: unknown }).topics)) {
+            localTopics = (rawData as { topics: Topic[] }).topics;
+          } else if (Array.isArray(rawData)) {
+            localTopics = rawData as Topic[];
+          }
+        }
+      }
+
+      // Get scheduled segments for this day
+      const allSegments = (segmentsResult.data || []) as ScheduledSegment[];
+      const daySegments = getAllScheduledSegments(selectedDate, allSegments);
+
+      generatePrintDocument({
+        selectedDate,
+        topics,
+        lastMinuteFrom,
+        rateMyBlank,
+        localTopics,
+        scheduledSegments: daySegments,
+        hopperItems: hopperItemsResult.data || [],
+        hopperGroups: hopperGroupsResult.data || [],
+      });
+    } catch (error) {
+      console.error("Error preparing print data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to prepare print document",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Load data from Supabase
   const loadData = useCallback(async () => {
@@ -220,6 +271,15 @@ const ShowPrep = () => {
               <p className="text-foreground flex items-center justify-center gap-2">
                 It is <span className="font-semibold">{selectedDateFormatted}</span>
                 {isSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={handlePrint}
+                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                  title="Print show prep"
+                >
+                  <Printer className="h-4 w-4" />
+                </Button>
               </p>
               <div className="flex items-center justify-center gap-2">
                 {!isSelectedToday && (
