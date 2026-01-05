@@ -348,7 +348,7 @@ const ShowPrep = () => {
 
               {/* Tuesday: Share the Show */}
               {isTuesday && (
-                <p className="mt-4 text-green-600 dark:text-green-400 font-medium">
+                <p className="mt-4 text-foreground font-medium">
                   It is, friends, a Share the Show Tuesday
                 </p>
               )}
