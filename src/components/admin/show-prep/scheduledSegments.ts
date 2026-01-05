@@ -40,3 +40,17 @@ export const getScheduledSegments = (
     return parseTime(a.time) - parseTime(b.time);
   });
 };
+
+// Get all scheduled segments for a day (not filtered by hour)
+export const getAllScheduledSegments = (
+  date: Date,
+  allSegments: ScheduledSegment[]
+): ScheduledSegment[] => {
+  if (isWeekend(date)) return [];
+
+  const dayOfWeek = getDay(date);
+
+  return allSegments.filter(
+    (s) => s.is_active && s.days.includes(dayOfWeek)
+  );
+};
