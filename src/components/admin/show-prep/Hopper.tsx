@@ -73,15 +73,20 @@ const SortableHopperItem = ({
   item,
   onDelete,
   onUngroup,
+  onUpdateTitle,
   isSelected,
   onSelect,
 }: {
   item: HopperItem;
   onDelete: (id: string) => void;
   onUngroup?: (id: string) => void;
+  onUpdateTitle?: (id: string, title: string) => void;
   isSelected: boolean;
   onSelect: (id: string, isMulti: boolean) => void;
 }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(item.title || "");
+
   const {
     attributes,
     listeners,
@@ -97,13 +102,12 @@ const SortableHopperItem = ({
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const hostname = (() => {
-    try {
-      return new URL(item.url).hostname;
-    } catch {
-      return item.url;
+  const handleSaveTitle = () => {
+    if (onUpdateTitle) {
+      onUpdateTitle(item.id, editTitle.trim());
     }
-  })();
+    setIsEditing(false);
+  };
 
   return (
     <div
@@ -127,16 +131,63 @@ const SortableHopperItem = ({
           }}
         />
       )}
-      <a
-        href={item.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-xs font-medium text-foreground hover:text-primary truncate flex-1 min-w-0"
-        title={item.title || item.url}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {item.title || "Untitled"}
-      </a>
+      {isEditing ? (
+        <div className="flex-1 min-w-0 flex items-center gap-1">
+          <Input
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+            className="h-5 text-xs py-0 px-1 flex-1"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleSaveTitle();
+              } else if (e.key === "Escape") {
+                setEditTitle(item.title || "");
+                setIsEditing(false);
+              }
+            }}
+            onClick={(e) => e.stopPropagation()}
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-5 w-5 text-primary"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleSaveTitle();
+            }}
+          >
+            <Check className="h-2.5 w-2.5" />
+          </Button>
+        </div>
+      ) : (
+        <>
+          <a
+            href={item.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs font-medium text-foreground hover:text-primary truncate flex-1 min-w-0"
+            title={item.title || item.url}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {item.title || "Untitled"}
+          </a>
+          {onUpdateTitle && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5 text-muted-foreground hover:text-foreground"
+              onClick={(e) => {
+                e.stopPropagation();
+                setEditTitle(item.title || "");
+                setIsEditing(true);
+              }}
+            >
+              <Pencil className="h-2.5 w-2.5" />
+            </Button>
+          )}
+        </>
+      )}
       <div className="flex items-center flex-shrink-0">
         {onUngroup && item.group_id && (
           <Button
@@ -173,6 +224,7 @@ const GroupedItems = ({
   items,
   onDeleteItem,
   onUngroupItem,
+  onUpdateItemTitle,
   onDeleteGroup,
   onRenameGroup,
   selectedIds,
@@ -184,6 +236,7 @@ const GroupedItems = ({
   items: HopperItem[];
   onDeleteItem: (id: string) => void;
   onUngroupItem: (id: string) => void;
+  onUpdateItemTitle: (id: string, title: string) => void;
   onDeleteGroup: (id: string) => void;
   onRenameGroup: (id: string, name: string) => void;
   selectedIds: Set<string>;
@@ -268,6 +321,7 @@ const GroupedItems = ({
             item={item}
             onDelete={onDeleteItem}
             onUngroup={onUngroupItem}
+            onUpdateTitle={onUpdateItemTitle}
             isSelected={selectedIds.has(item.id)}
             onSelect={onSelect}
           />
@@ -428,6 +482,20 @@ const Hopper = ({ selectedDate }: HopperProps) => {
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("hopper_items").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["hopper-items", dateKey] });
+    },
+  });
+
+  // Update item title mutation
+  const updateItemTitleMutation = useMutation({
+    mutationFn: async ({ itemId, title }: { itemId: string; title: string }) => {
+      const { error } = await supabase
+        .from("hopper_items")
+        .update({ title: title || null })
+        .eq("id", itemId);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -1262,6 +1330,7 @@ const Hopper = ({ selectedDate }: HopperProps) => {
                     items={groupItems}
                     onDeleteItem={(id) => deleteMutation.mutate(id)}
                     onUngroupItem={(id) => ungroupMutation.mutate(id)}
+                    onUpdateItemTitle={(id, title) => updateItemTitleMutation.mutate({ itemId: id, title })}
                     onDeleteGroup={(id) => deleteGroupMutation.mutate(id)}
                     onRenameGroup={(id, name) => renameGroupMutation.mutate({ groupId: id, name })}
                     selectedIds={selectedIds}
@@ -1282,6 +1351,7 @@ const Hopper = ({ selectedDate }: HopperProps) => {
                       key={item.id}
                       item={item}
                       onDelete={(id) => deleteMutation.mutate(id)}
+                      onUpdateTitle={(id, title) => updateItemTitleMutation.mutate({ itemId: id, title })}
                       isSelected={selectedIds.has(item.id)}
                       onSelect={handleSelect}
                     />
