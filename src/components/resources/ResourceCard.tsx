@@ -58,14 +58,14 @@ export const ResourceCard = ({
 
   return (
     <div className="group flex items-start gap-4 p-4 rounded-lg bg-card border border-border hover:border-primary/50 transition-colors">
-      {/* Thumbnail */}
-      <a
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex-shrink-0 w-40 h-24 rounded overflow-hidden bg-muted relative"
-      >
-        {hasThumbnail ? (
+      {/* Thumbnail - only show for images or when thumbnail exists */}
+      {(isImage || hasThumbnail) && (
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex-shrink-0 w-40 h-24 rounded overflow-hidden bg-muted relative"
+        >
           <img
             src={thumbnailSrc}
             alt=""
@@ -74,31 +74,27 @@ export const ResourceCard = ({
               e.currentTarget.style.display = 'none';
             }}
           />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-            <ImageIcon className="h-8 w-8" />
-          </div>
-        )}
-        {isImage && (
-          <div className="absolute bottom-1 right-1 p-1 bg-black/60 rounded">
-            <ImageIcon className="h-3 w-3 text-white" />
-          </div>
-        )}
-        {/* Remove thumbnail button */}
-        {!isImage && hasThumbnail && onRemoveThumbnail && (
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onRemoveThumbnail();
-            }}
-            className="absolute top-1 right-1 p-1 bg-black/60 rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80"
-            title="Remove thumbnail"
-          >
-            <XCircle className="h-4 w-4 text-white" />
-          </button>
-        )}
-      </a>
+          {isImage && (
+            <div className="absolute bottom-1 right-1 p-1 bg-black/60 rounded">
+              <ImageIcon className="h-3 w-3 text-white" />
+            </div>
+          )}
+          {/* Remove thumbnail button */}
+          {!isImage && hasThumbnail && onRemoveThumbnail && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onRemoveThumbnail();
+              }}
+              className="absolute top-1 right-1 p-1 bg-black/60 rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80"
+              title="Remove thumbnail"
+            >
+              <XCircle className="h-4 w-4 text-white" />
+            </button>
+          )}
+        </a>
+      )}
 
       {/* Content */}
       <div className="flex-1 min-w-0">
