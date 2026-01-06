@@ -496,6 +496,7 @@ export type Database = {
           display_order: number
           group_id: string | null
           id: string
+          is_starred: boolean
           thumbnail_url: string | null
           title: string | null
           updated_at: string
@@ -507,6 +508,7 @@ export type Database = {
           display_order?: number
           group_id?: string | null
           id?: string
+          is_starred?: boolean
           thumbnail_url?: string | null
           title?: string | null
           updated_at?: string
@@ -518,6 +520,7 @@ export type Database = {
           display_order?: number
           group_id?: string | null
           id?: string
+          is_starred?: boolean
           thumbnail_url?: string | null
           title?: string | null
           updated_at?: string

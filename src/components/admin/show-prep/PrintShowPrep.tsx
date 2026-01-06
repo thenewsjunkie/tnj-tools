@@ -7,6 +7,7 @@ interface HopperItem {
   url: string;
   title: string | null;
   group_id: string | null;
+  is_starred: boolean;
 }
 
 interface HopperGroup {
@@ -155,6 +156,15 @@ export const generatePrintDocument = (data: PrintData) => {
       padding: 1px 0;
       font-size: 10px;
     }
+    .hopper-item.starred {
+      font-weight: 700;
+      border-left: 3px solid #000;
+      padding-left: 4px;
+      background: #e0e0e0;
+    }
+    .hopper-item.starred::before {
+      content: "★ ";
+    }
     .hopper-item-title {
       font-weight: 500;
     }
@@ -213,14 +223,14 @@ export const generatePrintDocument = (data: PrintData) => {
         <div class="hopper-group">
           <div class="hopper-group-name">${group.name || "Unnamed Group"}</div>
           ${items.map((item) => `
-            <div class="hopper-item">
+            <div class="hopper-item${item.is_starred ? ' starred' : ''}">
               <span class="hopper-item-title">${item.title || "Untitled"}</span>
             </div>
           `).join("")}
         </div>
       ` : "").join("")}
       ${ungroupedHopperItems.map((item) => `
-        <div class="hopper-item">
+        <div class="hopper-item${item.is_starred ? ' starred' : ''}">
           <span class="hopper-item-title">${item.title || "Untitled"}</span>
         </div>
       `).join("")}
