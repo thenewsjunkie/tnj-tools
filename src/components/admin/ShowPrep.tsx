@@ -89,7 +89,7 @@ const ShowPrep = () => {
       // Fetch all required data for printing
       const [notesResult, hopperItemsResult, hopperGroupsResult, segmentsResult] = await Promise.all([
         supabase.from("show_prep_notes").select("topics").eq("date", dateKey).maybeSingle(),
-        supabase.from("hopper_items").select("id, url, title, group_id").eq("date", dateKey).order("display_order"),
+        supabase.from("hopper_items").select("id, url, title, group_id, is_starred").eq("date", dateKey).order("display_order"),
         supabase.from("hopper_groups").select("id, name").eq("date", dateKey).order("display_order"),
         supabase.from("scheduled_segments").select("*").eq("is_active", true),
       ]);

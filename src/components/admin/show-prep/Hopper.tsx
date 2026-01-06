@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Link2, Loader2, GripVertical, X, Unlink, Pencil, Check, FolderPlus, FileText, CalendarArrowDown } from "lucide-react";
+import { Plus, Trash2, Link2, Loader2, GripVertical, X, Unlink, Pencil, Check, FolderPlus, FileText, CalendarArrowDown, Star } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
@@ -56,6 +56,7 @@ interface HopperItem {
   thumbnail_url: string | null;
   group_id: string | null;
   display_order: number;
+  is_starred: boolean;
 }
 
 interface HopperGroup {
@@ -74,6 +75,7 @@ const SortableHopperItem = ({
   onDelete,
   onUngroup,
   onUpdateTitle,
+  onToggleStar,
   isSelected,
   onSelect,
 }: {
@@ -81,6 +83,7 @@ const SortableHopperItem = ({
   onDelete: (id: string) => void;
   onUngroup?: (id: string) => void;
   onUpdateTitle?: (id: string, title: string) => void;
+  onToggleStar?: (id: string) => void;
   isSelected: boolean;
   onSelect: (id: string, isMulti: boolean) => void;
 }) => {
@@ -115,12 +118,25 @@ const SortableHopperItem = ({
       style={style}
       className={`flex items-center gap-1.5 p-1.5 rounded-md bg-card border transition-colors ${
         isSelected ? "border-primary ring-1 ring-primary/30" : "border-border hover:border-primary/50"
-      }`}
+      } ${item.is_starred ? "bg-yellow-500/10" : ""}`}
       onClick={(e) => onSelect(item.id, e.ctrlKey || e.metaKey)}
     >
       <div {...attributes} {...listeners} className="cursor-grab flex-shrink-0">
         <GripVertical className="h-3 w-3 text-muted-foreground" />
       </div>
+      {onToggleStar && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className={`h-5 w-5 flex-shrink-0 ${item.is_starred ? "text-yellow-500" : "text-muted-foreground hover:text-yellow-500"}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleStar(item.id);
+          }}
+        >
+          <Star className={`h-3 w-3 ${item.is_starred ? "fill-current" : ""}`} />
+        </Button>
+      )}
       {item.thumbnail_url && (
         <img
           src={item.thumbnail_url}
@@ -225,6 +241,7 @@ const GroupedItems = ({
   onDeleteItem,
   onUngroupItem,
   onUpdateItemTitle,
+  onToggleItemStar,
   onDeleteGroup,
   onRenameGroup,
   selectedIds,
@@ -237,6 +254,7 @@ const GroupedItems = ({
   onDeleteItem: (id: string) => void;
   onUngroupItem: (id: string) => void;
   onUpdateItemTitle: (id: string, title: string) => void;
+  onToggleItemStar: (id: string) => void;
   onDeleteGroup: (id: string) => void;
   onRenameGroup: (id: string, name: string) => void;
   selectedIds: Set<string>;
@@ -322,6 +340,7 @@ const GroupedItems = ({
             onDelete={onDeleteItem}
             onUngroup={onUngroupItem}
             onUpdateTitle={onUpdateItemTitle}
+            onToggleStar={onToggleItemStar}
             isSelected={selectedIds.has(item.id)}
             onSelect={onSelect}
           />
@@ -496,6 +515,22 @@ const Hopper = ({ selectedDate }: HopperProps) => {
         .from("hopper_items")
         .update({ title: title || null })
         .eq("id", itemId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["hopper-items", dateKey] });
+    },
+  });
+
+  // Toggle star mutation
+  const toggleStarMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const item = items.find((i) => i.id === id);
+      if (!item) return;
+      const { error } = await supabase
+        .from("hopper_items")
+        .update({ is_starred: !item.is_starred })
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -1331,6 +1366,7 @@ const Hopper = ({ selectedDate }: HopperProps) => {
                     onDeleteItem={(id) => deleteMutation.mutate(id)}
                     onUngroupItem={(id) => ungroupMutation.mutate(id)}
                     onUpdateItemTitle={(id, title) => updateItemTitleMutation.mutate({ itemId: id, title })}
+                    onToggleItemStar={(id) => toggleStarMutation.mutate(id)}
                     onDeleteGroup={(id) => deleteGroupMutation.mutate(id)}
                     onRenameGroup={(id, name) => renameGroupMutation.mutate({ groupId: id, name })}
                     selectedIds={selectedIds}
@@ -1352,6 +1388,7 @@ const Hopper = ({ selectedDate }: HopperProps) => {
                       item={item}
                       onDelete={(id) => deleteMutation.mutate(id)}
                       onUpdateTitle={(id, title) => updateItemTitleMutation.mutate({ itemId: id, title })}
+                      onToggleStar={(id) => toggleStarMutation.mutate(id)}
                       isSelected={selectedIds.has(item.id)}
                       onSelect={handleSelect}
                     />
