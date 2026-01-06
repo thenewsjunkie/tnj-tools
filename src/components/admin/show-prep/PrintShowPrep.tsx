@@ -175,7 +175,7 @@ export const generatePrintDocument = (data: PrintData) => {
   <h1>Show Prep - ${dateFormatted}</h1>
   
   <div class="opening-script">
-    <strong>Opening:</strong> It's ${dateConversational}, from <em>${topics.fromTopic || "___"}</em> to <em>${topics.toTopic || "___"}</em> and <em>${topics.andTopic || "___"}</em> plus calls, Dispatches, emails, texts & more.
+    <strong>Opening:</strong> Hey there, Sabrina! It's ${dateConversational}, from <em>${topics.fromTopic || "___"}</em> to <em>${topics.toTopic || "___"}</em> and <em>${topics.andTopic || "___"}</em> plus calls, Dispatches, emails, texts & more.
   </div>
   
   ${isMonday && rateMyBlank ? `<div class="special-segment"><strong>Rate My Blank:</strong> ${rateMyBlank}</div>` : ""}
