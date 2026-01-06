@@ -63,80 +63,97 @@ export const generatePrintDocument = (data: PrintData) => {
     }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      font-size: 12px;
-      line-height: 1.4;
+      font-size: 11px;
+      line-height: 1.3;
       color: #1a1a1a;
-      padding: 20px;
+      padding: 12px;
       max-width: 800px;
       margin: 0 auto;
     }
     h1 {
-      font-size: 18px;
-      margin-bottom: 16px;
-      padding-bottom: 8px;
+      font-size: 16px;
+      margin-bottom: 8px;
+      padding-bottom: 4px;
       border-bottom: 2px solid #333;
     }
     h2 {
-      font-size: 14px;
-      margin: 16px 0 8px 0;
-      padding-bottom: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      margin: 0 0 4px 0;
+      padding-bottom: 2px;
       border-bottom: 1px solid #ccc;
       color: #333;
     }
-    h3 {
-      font-size: 12px;
-      margin: 12px 0 6px 0;
-      color: #555;
-    }
     .opening-script {
       background: #f5f5f5;
-      padding: 12px;
+      padding: 6px 8px;
       border-radius: 4px;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
+      font-size: 10px;
     }
     .special-segment {
       background: #e8f4e8;
-      padding: 8px 12px;
+      padding: 4px 8px;
       border-radius: 4px;
-      margin: 6px 0;
+      margin: 4px 0;
+      font-size: 10px;
+    }
+    .two-column {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .topics-column {
+      flex: 3;
+    }
+    .segments-column {
+      flex: 2;
     }
     .scheduled-segment {
       display: flex;
-      gap: 8px;
-      padding: 4px 0;
+      gap: 6px;
+      padding: 2px 0;
       border-bottom: 1px dashed #ddd;
+      font-size: 10px;
     }
     .scheduled-segment .time {
       font-weight: 600;
       color: #666;
-      min-width: 60px;
+      min-width: 50px;
     }
     .topic {
-      margin: 8px 0;
-      padding: 8px;
+      margin: 3px 0;
+      padding: 3px 6px;
       background: #fafafa;
-      border-left: 3px solid #333;
+      border-left: 2px solid #333;
+      font-size: 10px;
     }
     .topic-title {
-      font-weight: 600;
+      font-weight: 500;
     }
     .hopper-section {
-      margin-top: 16px;
+      margin-top: 8px;
+    }
+    .hopper-content {
+      columns: 2;
+      column-gap: 12px;
     }
     .hopper-group {
-      margin: 8px 0;
-      padding: 8px;
+      margin: 4px 0;
+      padding: 4px 6px;
       background: #f0f8ff;
-      border-radius: 4px;
+      border-radius: 3px;
+      break-inside: avoid;
     }
     .hopper-group-name {
       font-weight: 600;
-      margin-bottom: 4px;
+      font-size: 10px;
+      margin-bottom: 2px;
       color: #336;
     }
     .hopper-item {
-      padding: 2px 0;
-      font-size: 11px;
+      padding: 1px 0;
+      font-size: 10px;
     }
     .hopper-item-title {
       font-weight: 500;
@@ -144,65 +161,70 @@ export const generatePrintDocument = (data: PrintData) => {
     .empty-state {
       color: #999;
       font-style: italic;
-      padding: 8px 0;
+      padding: 4px 0;
+      font-size: 10px;
     }
     @media print {
       body {
-        padding: 0;
+        padding: 8px;
       }
     }
   </style>
 </head>
 <body>
-  <h1>Show Prep for ${dateFormatted}</h1>
+  <h1>Show Prep - ${dateFormatted}</h1>
   
   <div class="opening-script">
-    <strong>Opening:</strong> It's ${dateConversational}, lots to get to today from <em>${topics.fromTopic || "___"}</em> to <em>${topics.toTopic || "___"}</em> and <em>${topics.andTopic || "___"}</em> plus your calls, Dispatches, emails, texts & more. Hey there Sabrina. Hello C-Lane. And hello to YOU. You can join us on the show today - send us a Dispatch at thenewsjunkie.com. You can also watch the show on YouTube and Twitch.tv/thenewsjunkie your messages coming right into the studio in real time.
+    <strong>Opening:</strong> It's ${dateConversational}, from <em>${topics.fromTopic || "___"}</em> to <em>${topics.toTopic || "___"}</em> and <em>${topics.andTopic || "___"}</em> plus calls, Dispatches, emails, texts & more.
   </div>
   
   ${isMonday && rateMyBlank ? `<div class="special-segment"><strong>Rate My Blank:</strong> ${rateMyBlank}</div>` : ""}
-  ${isTuesday ? `<div class="special-segment"><strong>It is, friends, a Share the Show Tuesday</strong></div>` : ""}
-  ${isFriday && lastMinuteFrom ? `<div class="special-segment"><strong>Last Minute Message From:</strong> ${lastMinuteFrom}</div>` : ""}
+  ${isTuesday ? `<div class="special-segment"><strong>Share the Show Tuesday</strong></div>` : ""}
+  ${isFriday && lastMinuteFrom ? `<div class="special-segment"><strong>Last Minute From:</strong> ${lastMinuteFrom}</div>` : ""}
   
-  ${scheduledSegments.length > 0 ? `
-  <h2>Scheduled Segments</h2>
-  <div>
-    ${scheduledSegments.map((seg) => `
-      <div class="scheduled-segment">
-        <span class="time">${seg.time}</span>
-        <span>${seg.name}</span>
-      </div>
-    `).join("")}
-  </div>
-  ` : ""}
-  
-  <h2>Topics</h2>
-  ${localTopics.length > 0 ? localTopics.map((topic) => `
-    <div class="topic">
-      <div class="topic-title">${topic.type === "link" ? "🔗 " : ""}${topic.title || "Untitled"}</div>
+  <div class="two-column">
+    <div class="topics-column">
+      <h2>Topics</h2>
+      ${localTopics.length > 0 ? localTopics.map((topic) => `
+        <div class="topic">
+          <span class="topic-title">${topic.type === "link" ? "🔗 " : ""}${topic.title || "Untitled"}</span>
+        </div>
+      `).join("") : '<div class="empty-state">No topics</div>'}
     </div>
-  `).join("") : '<div class="empty-state">No topics added yet</div>'}
+    
+    <div class="segments-column">
+      <h2>Scheduled</h2>
+      ${scheduledSegments.length > 0 ? scheduledSegments.map((seg) => `
+        <div class="scheduled-segment">
+          <span class="time">${seg.time}</span>
+          <span>${seg.name}</span>
+        </div>
+      `).join("") : '<div class="empty-state">None</div>'}
+    </div>
+  </div>
   
   <div class="hopper-section">
     <h2>Hopper</h2>
-    ${groupedHopperItems.length === 0 && ungroupedHopperItems.length === 0 
-      ? '<div class="empty-state">No items in hopper</div>' 
-      : ""}
-    ${groupedHopperItems.map(({ group, items }) => items.length > 0 ? `
-      <div class="hopper-group">
-        <div class="hopper-group-name">${group.name || "Unnamed Group"}</div>
-        ${items.map((item) => `
-          <div class="hopper-item">
-            <div class="hopper-item-title">${item.title || "Untitled"}</div>
-          </div>
-        `).join("")}
-      </div>
-    ` : "").join("")}
-    ${ungroupedHopperItems.map((item) => `
-      <div class="hopper-item">
-        <div class="hopper-item-title">${item.title || "Untitled"}</div>
-      </div>
-    `).join("")}
+    <div class="hopper-content">
+      ${groupedHopperItems.length === 0 && ungroupedHopperItems.length === 0 
+        ? '<div class="empty-state">No items in hopper</div>' 
+        : ""}
+      ${groupedHopperItems.map(({ group, items }) => items.length > 0 ? `
+        <div class="hopper-group">
+          <div class="hopper-group-name">${group.name || "Unnamed Group"}</div>
+          ${items.map((item) => `
+            <div class="hopper-item">
+              <span class="hopper-item-title">${item.title || "Untitled"}</span>
+            </div>
+          `).join("")}
+        </div>
+      ` : "").join("")}
+      ${ungroupedHopperItems.map((item) => `
+        <div class="hopper-item">
+          <span class="hopper-item-title">${item.title || "Untitled"}</span>
+        </div>
+      `).join("")}
+    </div>
   </div>
   
 </body>
