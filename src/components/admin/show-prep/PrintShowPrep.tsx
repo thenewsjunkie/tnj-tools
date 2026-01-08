@@ -64,45 +64,45 @@ export const generatePrintDocument = (data: PrintData) => {
     }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      font-size: 11px;
-      line-height: 1.3;
+      font-size: 14px;
+      line-height: 1.4;
       color: #1a1a1a;
-      padding: 12px;
+      padding: 16px;
       max-width: 800px;
       margin: 0 auto;
     }
     h1 {
-      font-size: 16px;
-      margin-bottom: 8px;
-      padding-bottom: 4px;
+      font-size: 20px;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
       border-bottom: 2px solid #333;
     }
     h2 {
-      font-size: 11px;
+      font-size: 14px;
       font-weight: 600;
-      margin: 0 0 4px 0;
-      padding-bottom: 2px;
+      margin: 0 0 6px 0;
+      padding-bottom: 3px;
       border-bottom: 1px solid #ccc;
       color: #333;
     }
     .opening-script {
       background: #f5f5f5;
-      padding: 6px 8px;
+      padding: 8px 10px;
       border-radius: 4px;
-      margin-bottom: 8px;
-      font-size: 10px;
+      margin-bottom: 10px;
+      font-size: 13px;
     }
     .special-segment {
       background: #e8f4e8;
-      padding: 4px 8px;
+      padding: 6px 10px;
       border-radius: 4px;
-      margin: 4px 0;
-      font-size: 10px;
+      margin: 6px 0;
+      font-size: 13px;
     }
     .two-column {
       display: flex;
-      gap: 12px;
-      margin-bottom: 8px;
+      gap: 16px;
+      margin-bottom: 10px;
     }
     .topics-column {
       flex: 3;
@@ -112,62 +112,62 @@ export const generatePrintDocument = (data: PrintData) => {
     }
     .scheduled-segment {
       display: flex;
-      gap: 6px;
-      padding: 2px 0;
+      gap: 8px;
+      padding: 4px 0;
       border-bottom: 1px dashed #ddd;
-      font-size: 10px;
+      font-size: 13px;
     }
     .scheduled-segment .time {
       font-weight: 600;
       color: #666;
-      min-width: 50px;
+      min-width: 55px;
     }
     .topic {
-      margin: 3px 0;
-      padding: 3px 6px;
+      margin: 4px 0;
+      padding: 5px 8px;
       background: #fafafa;
-      border-left: 2px solid #333;
-      font-size: 10px;
+      border-left: 3px solid #333;
+      font-size: 13px;
     }
     .topic-title {
       font-weight: 500;
     }
     .topic-take {
       font-style: italic;
-      font-size: 9px;
-      margin-top: 2px;
-      padding-left: 8px;
+      font-size: 12px;
+      margin-top: 3px;
+      padding-left: 10px;
       border-left: 2px solid #666;
       color: #444;
     }
     .hopper-section {
-      margin-top: 8px;
+      margin-top: 10px;
     }
     .hopper-content {
       columns: 2;
-      column-gap: 12px;
+      column-gap: 16px;
     }
     .hopper-group {
-      margin: 4px 0;
-      padding: 4px 6px;
+      margin: 5px 0;
+      padding: 6px 8px;
       background: #f0f8ff;
-      border-radius: 3px;
+      border-radius: 4px;
       break-inside: avoid;
     }
     .hopper-group-name {
       font-weight: 600;
-      font-size: 10px;
-      margin-bottom: 2px;
+      font-size: 13px;
+      margin-bottom: 3px;
       color: #336;
     }
     .hopper-item {
-      padding: 1px 0;
-      font-size: 10px;
+      padding: 2px 0;
+      font-size: 13px;
     }
     .hopper-item.starred {
       font-weight: 700;
       border-left: 3px solid #000;
-      padding-left: 4px;
+      padding-left: 6px;
       background: #e0e0e0;
     }
     .hopper-item.starred::before {
@@ -179,12 +179,12 @@ export const generatePrintDocument = (data: PrintData) => {
     .empty-state {
       color: #999;
       font-style: italic;
-      padding: 4px 0;
-      font-size: 10px;
+      padding: 6px 0;
+      font-size: 13px;
     }
     @media print {
       body {
-        padding: 8px;
+        padding: 12px;
       }
     }
   </style>
