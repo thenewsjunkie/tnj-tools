@@ -1,0 +1,2 @@
+[functions.fetch-reddit-post]
+verify_jwt = false
