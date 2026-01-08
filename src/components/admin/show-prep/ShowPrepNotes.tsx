@@ -212,7 +212,6 @@ const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProp
             topics={localTopics}
             date={dateKey}
             onChange={handleTopicsChange}
-            scheduledSegments={daySegments}
             allTags={allTags}
           />
           <DragOverlay>
