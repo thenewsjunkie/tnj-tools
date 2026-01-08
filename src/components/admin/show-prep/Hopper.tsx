@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Link2, Loader2, GripVertical, X, Unlink, Pencil, Check, FolderPlus, FileText, CalendarArrowDown, Star } from "lucide-react";
+import { Plus, Trash2, Link2, Loader2, GripVertical, X, Unlink, Pencil, Check, FolderPlus, FileText, CalendarArrowDown, Star, Youtube, Twitter, Facebook, Instagram } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
@@ -70,6 +70,30 @@ interface HopperProps {
   selectedDate: Date;
 }
 
+// Helper to detect URL source and return appropriate icon info
+const getUrlSourceIcon = (url: string) => {
+  const lowerUrl = url.toLowerCase();
+  if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) {
+    return { Icon: Youtube, color: 'text-red-500' };
+  }
+  if (lowerUrl.includes('twitter.com') || lowerUrl.includes('x.com')) {
+    return { Icon: Twitter, color: 'text-sky-500' };
+  }
+  if (lowerUrl.includes('reddit.com')) {
+    return { Icon: Link2, color: 'text-orange-500' };
+  }
+  if (lowerUrl.includes('instagram.com')) {
+    return { Icon: Instagram, color: 'text-pink-500' };
+  }
+  if (lowerUrl.includes('tiktok.com')) {
+    return { Icon: Link2, color: 'text-foreground' };
+  }
+  if (lowerUrl.includes('facebook.com')) {
+    return { Icon: Facebook, color: 'text-blue-600' };
+  }
+  return { Icon: Link2, color: 'text-muted-foreground' };
+};
+
 const SortableHopperItem = ({
   item,
   onDelete,
@@ -112,36 +136,40 @@ const SortableHopperItem = ({
     setIsEditing(false);
   };
 
+  const sourceIcon = getUrlSourceIcon(item.url);
+  const SourceIcon = sourceIcon.Icon;
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-1.5 p-1.5 rounded-md bg-card border transition-colors ${
+      className={`flex items-center gap-2 p-2.5 rounded-md bg-card border transition-colors ${
         isSelected ? "border-primary ring-1 ring-primary/30" : "border-border hover:border-primary/50"
       } ${item.is_starred ? "bg-yellow-500/10" : ""}`}
       onClick={(e) => onSelect(item.id, e.ctrlKey || e.metaKey)}
     >
       <div {...attributes} {...listeners} className="cursor-grab flex-shrink-0">
-        <GripVertical className="h-3 w-3 text-muted-foreground" />
+        <GripVertical className="h-4 w-4 text-muted-foreground" />
       </div>
       {onToggleStar && (
         <Button
           variant="ghost"
           size="icon"
-          className={`h-5 w-5 flex-shrink-0 ${item.is_starred ? "text-yellow-500" : "text-muted-foreground hover:text-yellow-500"}`}
+          className={`h-6 w-6 flex-shrink-0 ${item.is_starred ? "text-yellow-500" : "text-muted-foreground hover:text-yellow-500"}`}
           onClick={(e) => {
             e.stopPropagation();
             onToggleStar(item.id);
           }}
         >
-          <Star className={`h-3 w-3 ${item.is_starred ? "fill-current" : ""}`} />
+          <Star className={`h-4 w-4 ${item.is_starred ? "fill-current" : ""}`} />
         </Button>
       )}
+      <SourceIcon className={`h-4 w-4 flex-shrink-0 ${sourceIcon.color}`} />
       {item.thumbnail_url && (
         <img
           src={item.thumbnail_url}
           alt=""
-          className="w-8 h-5 object-cover rounded flex-shrink-0"
+          className="w-12 h-8 object-cover rounded flex-shrink-0"
           onError={(e) => {
             e.currentTarget.style.display = "none";
           }}
@@ -182,7 +210,7 @@ const SortableHopperItem = ({
             href={item.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs font-medium text-foreground hover:text-primary truncate flex-1 min-w-0"
+            className="text-sm font-medium text-foreground hover:text-primary truncate flex-1 min-w-0"
             title={item.title || item.url}
             onClick={(e) => e.stopPropagation()}
           >
@@ -192,14 +220,14 @@ const SortableHopperItem = ({
             <Button
               variant="ghost"
               size="icon"
-              className="h-5 w-5 text-muted-foreground hover:text-foreground"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground"
               onClick={(e) => {
                 e.stopPropagation();
                 setEditTitle(item.title || "");
                 setIsEditing(true);
               }}
             >
-              <Pencil className="h-2.5 w-2.5" />
+              <Pencil className="h-3 w-3" />
             </Button>
           )}
         </>
@@ -209,25 +237,25 @@ const SortableHopperItem = ({
           <Button
             variant="ghost"
             size="icon"
-            className="h-5 w-5 text-muted-foreground hover:text-foreground"
+            className="h-6 w-6 text-muted-foreground hover:text-foreground"
             onClick={(e) => {
               e.stopPropagation();
               onUngroup(item.id);
             }}
           >
-            <Unlink className="h-2.5 w-2.5" />
+            <Unlink className="h-3 w-3" />
           </Button>
         )}
         <Button
           variant="ghost"
           size="icon"
-          className="h-5 w-5 text-muted-foreground hover:text-destructive"
+          className="h-6 w-6 text-muted-foreground hover:text-destructive"
           onClick={(e) => {
             e.stopPropagation();
             onDelete(item.id);
           }}
         >
-          <Trash2 className="h-2.5 w-2.5" />
+          <Trash2 className="h-3 w-3" />
         </Button>
       </div>
     </div>
