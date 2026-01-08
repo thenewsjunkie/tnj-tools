@@ -1006,6 +1006,90 @@ export type Database = {
         }
         Relationships: []
       }
+      til_entries: {
+        Row: {
+          created_at: string | null
+          date: string
+          id: string
+          story1_description: string | null
+          story1_title: string | null
+          story1_url: string | null
+          story2_description: string | null
+          story2_title: string | null
+          story2_url: string | null
+          story3_description: string | null
+          story3_title: string | null
+          story3_url: string | null
+          story4_description: string | null
+          story4_title: string | null
+          story4_url: string | null
+          story5_description: string | null
+          story5_title: string | null
+          story5_url: string | null
+          story6_description: string | null
+          story6_title: string | null
+          story6_url: string | null
+          story7_description: string | null
+          story7_title: string | null
+          story7_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          id?: string
+          story1_description?: string | null
+          story1_title?: string | null
+          story1_url?: string | null
+          story2_description?: string | null
+          story2_title?: string | null
+          story2_url?: string | null
+          story3_description?: string | null
+          story3_title?: string | null
+          story3_url?: string | null
+          story4_description?: string | null
+          story4_title?: string | null
+          story4_url?: string | null
+          story5_description?: string | null
+          story5_title?: string | null
+          story5_url?: string | null
+          story6_description?: string | null
+          story6_title?: string | null
+          story6_url?: string | null
+          story7_description?: string | null
+          story7_title?: string | null
+          story7_url?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          story1_description?: string | null
+          story1_title?: string | null
+          story1_url?: string | null
+          story2_description?: string | null
+          story2_title?: string | null
+          story2_url?: string | null
+          story3_description?: string | null
+          story3_title?: string | null
+          story3_url?: string | null
+          story4_description?: string | null
+          story4_title?: string | null
+          story4_url?: string | null
+          story5_description?: string | null
+          story5_title?: string | null
+          story5_url?: string | null
+          story6_description?: string | null
+          story6_title?: string | null
+          story6_url?: string | null
+          story7_description?: string | null
+          story7_title?: string | null
+          story7_url?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       tnj_gifs: {
         Row: {
           created_at: string
