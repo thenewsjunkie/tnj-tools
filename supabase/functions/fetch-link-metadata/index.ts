@@ -47,15 +47,21 @@ async function fetchTweetMetadata(url: string): Promise<{ title: string | null; 
   // Extract tweet text from the HTML blockquote
   let tweetText = null;
   if (data.html) {
-    const match = data.html.match(/<p[^>]*>([^<]+)<\/p>/);
+    // Use [\s\S]*? to capture everything inside <p> tags including nested <a> tags
+    const match = data.html.match(/<p[^>]*>([\s\S]*?)<\/p>/);
     if (match) {
       tweetText = match[1]
+        // Strip HTML tags (links, mentions, hashtags)
+        .replace(/<[^>]*>/g, '')
+        // Decode HTML entities
         .replace(/&amp;/g, '&')
         .replace(/&lt;/g, '<')
         .replace(/&gt;/g, '>')
         .replace(/&quot;/g, '"')
         .replace(/&#39;/g, "'")
-        .replace(/\n/g, ' ')
+        .replace(/&mdash;/g, '—')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/\s+/g, ' ')  // Normalize whitespace
         .trim();
     }
   }
