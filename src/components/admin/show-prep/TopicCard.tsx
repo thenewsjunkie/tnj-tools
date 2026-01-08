@@ -267,7 +267,7 @@ const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardP
         {!isEditing && hasTake && (
           <div className="flex items-start gap-1.5 ml-5 pl-2 border-l-2 border-orange-300">
             <Flame className="h-3 w-3 text-orange-500 shrink-0 mt-0.5" />
-            <span className="text-xs text-muted-foreground italic line-clamp-2">
+            <span className="text-xs text-muted-foreground italic">
               {topic.take}
             </span>
           </div>
