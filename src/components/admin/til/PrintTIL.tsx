@@ -52,9 +52,6 @@ export const generateTILPrintDocument = (data: TILEntry, date: Date) => {
         ${story.title}${story.hasAudio ? ' <span class="audio-tag">(Audio)</span>' : ''}
       </div>
       <div class="story-description">${story.description}</div>
-      <div class="image-placeholder">
-        <span>Image</span>
-      </div>
     </div>
   `).join("\n");
 
@@ -76,7 +73,7 @@ export const generateTILPrintDocument = (data: TILEntry, date: Date) => {
       font-size: 12pt;
       line-height: 1.5;
       margin: 0;
-      padding: 0;
+      padding: 0.5in;
       color: #000;
     }
     .header {
@@ -115,17 +112,6 @@ export const generateTILPrintDocument = (data: TILEntry, date: Date) => {
       margin-bottom: 12px;
       text-align: justify;
     }
-    .image-placeholder {
-      width: 100%;
-      height: 120px;
-      border: 1px dashed #999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #999;
-      font-style: italic;
-      background: #f9f9f9;
-    }
     .page-break {
       page-break-before: always;
     }
@@ -138,7 +124,7 @@ export const generateTILPrintDocument = (data: TILEntry, date: Date) => {
 </head>
 <body>
   <div class="header">
-    <div class="header-title">NEWS ${dayName} ${formattedDate} | Today I Learned</div>
+    <div class="header-title">${dayName} ${formattedDate} | Today I Learned</div>
     <div class="header-subtitle">r/todayilearned</div>
   </div>
   
