@@ -110,9 +110,10 @@ const TodayILearned = () => {
     onSuccess: (savedEntry) => {
       setIsDirty(false);
       // Update localData with the saved entry (includes id for new records)
-      // No need to invalidate query - we already have the correct data from the save response
       if (savedEntry) {
         setLocalData(savedEntry);
+        // Also update the query cache so dbData stays in sync and the sync effect won't overwrite
+        queryClient.setQueryData(["til-entry", dateStr], savedEntry);
       }
     },
     onError: (error) => {
