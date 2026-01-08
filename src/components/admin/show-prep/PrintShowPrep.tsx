@@ -26,6 +26,29 @@ interface PrintData {
   hopperGroups: HopperGroup[];
 }
 
+const getUrlSourceForPrint = (url: string): { icon: string; cssClass: string } => {
+  const lowerUrl = url.toLowerCase();
+  if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) {
+    return { icon: '▶', cssClass: 'youtube' };
+  }
+  if (lowerUrl.includes('twitter.com') || lowerUrl.includes('x.com')) {
+    return { icon: '𝕏', cssClass: 'twitter' };
+  }
+  if (lowerUrl.includes('reddit.com')) {
+    return { icon: 'R', cssClass: 'reddit' };
+  }
+  if (lowerUrl.includes('instagram.com')) {
+    return { icon: '◉', cssClass: 'instagram' };
+  }
+  if (lowerUrl.includes('tiktok.com')) {
+    return { icon: '♪', cssClass: 'tiktok' };
+  }
+  if (lowerUrl.includes('facebook.com')) {
+    return { icon: 'f', cssClass: 'facebook' };
+  }
+  return { icon: '🔗', cssClass: 'default' };
+};
+
 export const generatePrintDocument = (data: PrintData) => {
   const {
     selectedDate,
@@ -167,12 +190,6 @@ export const generatePrintDocument = (data: PrintData) => {
       border-bottom: 1px solid #e0e0e0;
       position: relative;
     }
-    .hopper-item::before {
-      content: "•";
-      position: absolute;
-      left: 0;
-      color: #666;
-    }
     .hopper-item.starred {
       font-weight: 700;
       border-left: 3px solid #000;
@@ -181,10 +198,29 @@ export const generatePrintDocument = (data: PrintData) => {
     }
     .hopper-item.starred::before {
       content: "★ ";
+      margin-right: 4px;
     }
     .hopper-item-title {
       font-weight: 500;
     }
+    .hopper-source-icon {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      background: #333;
+      color: #fff;
+      padding: 1px 4px;
+      border-radius: 3px;
+      margin-right: 5px;
+      min-width: 16px;
+      text-align: center;
+    }
+    .hopper-source-icon.youtube { background: #c00; }
+    .hopper-source-icon.twitter { background: #1da1f2; }
+    .hopper-source-icon.reddit { background: #ff4500; }
+    .hopper-source-icon.instagram { background: #e1306c; }
+    .hopper-source-icon.tiktok { background: #000; }
+    .hopper-source-icon.facebook { background: #1877f2; }
     .empty-state {
       color: #999;
       font-style: italic;
@@ -240,18 +276,24 @@ export const generatePrintDocument = (data: PrintData) => {
       ${groupedHopperItems.map(({ group, items }) => items.length > 0 ? `
         <div class="hopper-group">
           <div class="hopper-group-name">${group.name || "Unnamed Group"}</div>
-          ${items.map((item) => `
+          ${items.map((item) => {
+            const source = getUrlSourceForPrint(item.url);
+            return `
             <div class="hopper-item${item.is_starred ? ' starred' : ''}">
+              <span class="hopper-source-icon ${source.cssClass}">${source.icon}</span>
               <span class="hopper-item-title">${item.title || "Untitled"}</span>
             </div>
-          `).join("")}
+          `}).join("")}
         </div>
       ` : "").join("")}
-      ${ungroupedHopperItems.map((item) => `
+      ${ungroupedHopperItems.map((item) => {
+        const source = getUrlSourceForPrint(item.url);
+        return `
         <div class="hopper-item${item.is_starred ? ' starred' : ''}">
+          <span class="hopper-source-icon ${source.cssClass}">${source.icon}</span>
           <span class="hopper-item-title">${item.title || "Untitled"}</span>
         </div>
-      `).join("")}
+      `}).join("")}
     </div>
   </div>
   
