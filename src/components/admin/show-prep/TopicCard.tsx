@@ -178,6 +178,16 @@ const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardP
                   <p className="text-xs text-muted-foreground">
                     Your perspective that makes this topic interesting
                   </p>
+                  <div className="flex justify-end pt-1">
+                    <Button
+                      size="sm"
+                      onClick={() => setTakeOpen(false)}
+                      className="gap-1.5"
+                    >
+                      <Check className="h-3.5 w-3.5" />
+                      Save
+                    </Button>
+                  </div>
                 </div>
               </PopoverContent>
             </Popover>
