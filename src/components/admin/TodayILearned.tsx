@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { format, addDays, subDays } from "date-fns";
+import { format, addDays, subDays, getDay } from "date-fns";
 import { ChevronLeft, ChevronRight, Printer, Volume2, Loader2, Link as LinkIcon, X, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -155,6 +155,25 @@ const TodayILearned = () => {
     toast.success(`Cleared story ${storyNum}`);
   }, []);
 
+  const getNextWeekday = useCallback((date: Date): Date => {
+    let next = addDays(date, 1);
+    const dayOfWeek = getDay(next);
+    
+    // If Saturday (6), skip to Monday (+2 days)
+    if (dayOfWeek === 6) return addDays(next, 2);
+    // If Sunday (0), skip to Monday (+1 day)
+    if (dayOfWeek === 0) return addDays(next, 1);
+    
+    return next;
+  }, []);
+
+  const getNextWeekdayLabel = useCallback((): string => {
+    const dayOfWeek = getDay(currentDate);
+    // Friday is 5, so next weekday is Monday
+    if (dayOfWeek === 5) return "Monday";
+    return "Tomorrow";
+  }, [currentDate]);
+
   const moveStoryToTomorrow = useCallback(async (storyNum: number) => {
     if (!localData) return;
     
@@ -167,24 +186,26 @@ const TodayILearned = () => {
       return;
     }
     
-    const tomorrowDate = format(addDays(currentDate, 1), "yyyy-MM-dd");
+    const nextWeekday = getNextWeekday(currentDate);
+    const targetDate = format(nextWeekday, "yyyy-MM-dd");
+    const targetDayName = format(nextWeekday, "EEEE");
     
     try {
-      // Fetch tomorrow's entry
-      const { data: tomorrowData } = await supabase
+      // Fetch target day's entry
+      const { data: targetData } = await supabase
         .from("til_entries")
         .select("*")
-        .eq("date", tomorrowDate)
+        .eq("date", targetDate)
         .maybeSingle();
       
-      const tomorrowEntry = tomorrowData || emptyEntry(tomorrowDate);
+      const targetEntry = targetData || emptyEntry(targetDate);
       
-      // Find first empty slot in tomorrow's entry
+      // Find first empty slot in target entry
       let emptySlot: number | null = null;
       for (let i = 1; i <= 7; i++) {
-        const slotTitle = tomorrowEntry[`story${i}_title` as keyof TILEntry];
-        const slotUrl = tomorrowEntry[`story${i}_url` as keyof TILEntry];
-        const slotDesc = tomorrowEntry[`story${i}_description` as keyof TILEntry];
+        const slotTitle = targetEntry[`story${i}_title` as keyof TILEntry];
+        const slotUrl = targetEntry[`story${i}_url` as keyof TILEntry];
+        const slotDesc = targetEntry[`story${i}_description` as keyof TILEntry];
         if (!slotTitle && !slotUrl && !slotDesc) {
           emptySlot = i;
           break;
@@ -192,37 +213,37 @@ const TodayILearned = () => {
       }
       
       if (!emptySlot) {
-        toast.error("Tomorrow's entry is full");
+        toast.error(`${targetDayName}'s entry is full`);
         return;
       }
       
-      // Update tomorrow's entry with the story
-      const updatedTomorrow = {
-        ...tomorrowEntry,
+      // Update target entry with the story
+      const updatedTarget = {
+        ...targetEntry,
         [`story${emptySlot}_url`]: url,
         [`story${emptySlot}_title`]: title,
         [`story${emptySlot}_description`]: description,
       };
       
-      // Save tomorrow's entry
-      if (tomorrowData?.id) {
-        const { id, ...rest } = updatedTomorrow;
-        await supabase.from("til_entries").update(rest).eq("id", tomorrowData.id);
+      // Save target entry
+      if (targetData?.id) {
+        const { id, ...rest } = updatedTarget;
+        await supabase.from("til_entries").update(rest).eq("id", targetData.id);
       } else {
-        await supabase.from("til_entries").insert(updatedTomorrow);
+        await supabase.from("til_entries").insert(updatedTarget);
       }
       
       // Clear the story from today
       clearStory(storyNum);
       
-      // Invalidate tomorrow's query cache
-      queryClient.invalidateQueries({ queryKey: ["til-entry", tomorrowDate] });
+      // Invalidate target day's query cache
+      queryClient.invalidateQueries({ queryKey: ["til-entry", targetDate] });
       
-      toast.success(`Moved to tomorrow (slot ${emptySlot})`);
+      toast.success(`Moved to ${targetDayName} (slot ${emptySlot})`);
     } catch (error: any) {
       toast.error("Failed to move story: " + error.message);
     }
-  }, [localData, currentDate, clearStory, queryClient]);
+  }, [localData, currentDate, clearStory, queryClient, getNextWeekday]);
 
   const fetchRedditPost = async (storyNum: number, url: string) => {
     if (!url) return;
@@ -360,7 +381,7 @@ const TodayILearned = () => {
                       title="Move to tomorrow"
                     >
                       <ArrowRight className="h-3 w-3 mr-1" />
-                      Tomorrow
+                      {getNextWeekdayLabel()}
                     </Button>
                     <Button
                       variant="ghost"
