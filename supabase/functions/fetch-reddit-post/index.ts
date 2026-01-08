@@ -23,6 +23,10 @@ serve(async (req) => {
     // Normalize Reddit URL and append .json
     let jsonUrl = url.trim();
     
+    // Use old.reddit.com which is more lenient with API requests
+    jsonUrl = jsonUrl.replace("www.reddit.com", "old.reddit.com");
+    jsonUrl = jsonUrl.replace("reddit.com", "old.reddit.com");
+    
     // Remove trailing slash
     if (jsonUrl.endsWith("/")) {
       jsonUrl = jsonUrl.slice(0, -1);
@@ -40,7 +44,8 @@ serve(async (req) => {
 
     const response = await fetch(jsonUrl, {
       headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; TILBot/1.0)",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/json",
       },
     });
 
