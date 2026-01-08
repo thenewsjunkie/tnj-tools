@@ -53,6 +53,7 @@ const TodayILearned = () => {
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [localData, setLocalData] = useState<TILEntry | null>(null);
   const [fetchingStory, setFetchingStory] = useState<number | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
   const queryClient = useQueryClient();
   
   const dateStr = format(currentDate, "yyyy-MM-dd");
@@ -71,16 +72,23 @@ const TodayILearned = () => {
     },
   });
 
+  // Reset dirty flag when changing dates
   useEffect(() => {
+    setIsDirty(false);
+  }, [dateStr]);
+
+  // Sync from DB only when not dirty (no pending local changes)
+  useEffect(() => {
+    if (isDirty) return;
     if (dbData) {
       setLocalData(dbData);
     } else if (!isLoading) {
       setLocalData(emptyEntry(dateStr));
     }
-  }, [dbData, dateStr, isLoading]);
+  }, [dbData, dateStr, isLoading, isDirty]);
 
   const saveMutation = useMutation({
-    mutationFn: async (entry: TILEntry) => {
+    mutationFn: async (entry: TILEntry): Promise<TILEntry> => {
       const { id, ...rest } = entry;
       if (id) {
         const { error } = await supabase
@@ -88,14 +96,23 @@ const TodayILearned = () => {
           .update(rest)
           .eq("id", id);
         if (error) throw error;
+        return entry;
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from("til_entries")
-          .insert(rest);
+          .insert(rest)
+          .select()
+          .single();
         if (error) throw error;
+        return data as TILEntry;
       }
     },
-    onSuccess: () => {
+    onSuccess: (savedEntry) => {
+      setIsDirty(false);
+      // Update localData with the saved entry (includes id for new records)
+      if (savedEntry) {
+        setLocalData(savedEntry);
+      }
       queryClient.invalidateQueries({ queryKey: ["til-entry", dateStr] });
     },
     onError: (error) => {
@@ -113,6 +130,7 @@ const TodayILearned = () => {
   }, [localData]);
 
   const updateStory = useCallback((storyNum: number, field: "url" | "title" | "description", value: string) => {
+    setIsDirty(true);
     setLocalData(prev => {
       if (!prev) return prev;
       return {
@@ -139,6 +157,7 @@ const TodayILearned = () => {
       }
       
       const { title, description } = response.data;
+      setIsDirty(true);
       setLocalData(prev => {
         if (!prev) return prev;
         return {
