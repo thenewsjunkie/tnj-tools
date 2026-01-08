@@ -133,6 +133,11 @@ const TodayILearned = () => {
       
       if (response.error) throw response.error;
       
+      // Check for error in the response data
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
+      
       const { title, description } = response.data;
       setLocalData(prev => {
         if (!prev) return prev;
@@ -142,9 +147,16 @@ const TodayILearned = () => {
           [`story${storyNum}_description`]: description || prev[`story${storyNum}_description` as keyof TILEntry],
         };
       });
-      toast.success(`Fetched story ${storyNum}`);
+      
+      if (title && !description) {
+        toast.success(`Fetched title for story ${storyNum} (no description available)`);
+      } else {
+        toast.success(`Fetched story ${storyNum}`);
+      }
     } catch (error: any) {
-      toast.error("Failed to fetch: " + error.message);
+      const msg = error.message || "Unknown error";
+      toast.error(msg, { duration: 5000 });
+      console.error("Reddit fetch error:", msg);
     } finally {
       setFetchingStory(null);
     }
