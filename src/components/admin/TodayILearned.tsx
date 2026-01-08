@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { format, addDays, subDays } from "date-fns";
-import { ChevronLeft, ChevronRight, Printer, Volume2, Loader2, Link as LinkIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Printer, Volume2, Loader2, Link as LinkIcon, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -140,6 +140,20 @@ const TodayILearned = () => {
     });
   }, []);
 
+  const clearStory = useCallback((storyNum: number) => {
+    setIsDirty(true);
+    setLocalData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        [`story${storyNum}_url`]: null,
+        [`story${storyNum}_title`]: null,
+        [`story${storyNum}_description`]: null,
+      };
+    });
+    toast.success(`Cleared story ${storyNum}`);
+  }, []);
+
   const fetchRedditPost = async (storyNum: number, url: string) => {
     if (!url) return;
     
@@ -254,15 +268,28 @@ const TodayILearned = () => {
               key={num}
               className="border border-border rounded-lg p-3 bg-card/50"
             >
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-sm font-medium text-muted-foreground">
-                  Story {num}
-                </span>
-                {isAudio && (
-                  <Badge variant="outline" className="text-xs gap-1">
-                    <Volume2 className="h-3 w-3" />
-                    Audio
-                  </Badge>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-muted-foreground">
+                    Story {num}
+                  </span>
+                  {isAudio && (
+                    <Badge variant="outline" className="text-xs gap-1">
+                      <Volume2 className="h-3 w-3" />
+                      Audio
+                    </Badge>
+                  )}
+                </div>
+                {(url || title || description) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => clearStory(num)}
+                    className="h-6 px-2 text-muted-foreground hover:text-destructive"
+                  >
+                    <X className="h-3 w-3 mr-1" />
+                    Clear
+                  </Button>
                 )}
               </div>
               
