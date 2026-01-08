@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { format, addDays, subDays } from "date-fns";
-import { ChevronLeft, ChevronRight, Printer, Volume2, Loader2, Link as LinkIcon, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Printer, Volume2, Loader2, Link as LinkIcon, X, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -155,6 +155,75 @@ const TodayILearned = () => {
     toast.success(`Cleared story ${storyNum}`);
   }, []);
 
+  const moveStoryToTomorrow = useCallback(async (storyNum: number) => {
+    if (!localData) return;
+    
+    const url = localData[`story${storyNum}_url` as keyof TILEntry] as string | null;
+    const title = localData[`story${storyNum}_title` as keyof TILEntry] as string | null;
+    const description = localData[`story${storyNum}_description` as keyof TILEntry] as string | null;
+    
+    if (!url && !title && !description) {
+      toast.error("Story is empty");
+      return;
+    }
+    
+    const tomorrowDate = format(addDays(currentDate, 1), "yyyy-MM-dd");
+    
+    try {
+      // Fetch tomorrow's entry
+      const { data: tomorrowData } = await supabase
+        .from("til_entries")
+        .select("*")
+        .eq("date", tomorrowDate)
+        .maybeSingle();
+      
+      const tomorrowEntry = tomorrowData || emptyEntry(tomorrowDate);
+      
+      // Find first empty slot in tomorrow's entry
+      let emptySlot: number | null = null;
+      for (let i = 1; i <= 7; i++) {
+        const slotTitle = tomorrowEntry[`story${i}_title` as keyof TILEntry];
+        const slotUrl = tomorrowEntry[`story${i}_url` as keyof TILEntry];
+        const slotDesc = tomorrowEntry[`story${i}_description` as keyof TILEntry];
+        if (!slotTitle && !slotUrl && !slotDesc) {
+          emptySlot = i;
+          break;
+        }
+      }
+      
+      if (!emptySlot) {
+        toast.error("Tomorrow's entry is full");
+        return;
+      }
+      
+      // Update tomorrow's entry with the story
+      const updatedTomorrow = {
+        ...tomorrowEntry,
+        [`story${emptySlot}_url`]: url,
+        [`story${emptySlot}_title`]: title,
+        [`story${emptySlot}_description`]: description,
+      };
+      
+      // Save tomorrow's entry
+      if (tomorrowData?.id) {
+        const { id, ...rest } = updatedTomorrow;
+        await supabase.from("til_entries").update(rest).eq("id", tomorrowData.id);
+      } else {
+        await supabase.from("til_entries").insert(updatedTomorrow);
+      }
+      
+      // Clear the story from today
+      clearStory(storyNum);
+      
+      // Invalidate tomorrow's query cache
+      queryClient.invalidateQueries({ queryKey: ["til-entry", tomorrowDate] });
+      
+      toast.success(`Moved to tomorrow (slot ${emptySlot})`);
+    } catch (error: any) {
+      toast.error("Failed to move story: " + error.message);
+    }
+  }, [localData, currentDate, clearStory, queryClient]);
+
   const fetchRedditPost = async (storyNum: number, url: string) => {
     if (!url) return;
     
@@ -282,15 +351,27 @@ const TodayILearned = () => {
                   )}
                 </div>
                 {(url || title || description) && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => clearStory(num)}
-                    className="h-6 px-2 text-muted-foreground hover:text-destructive"
-                  >
-                    <X className="h-3 w-3 mr-1" />
-                    Clear
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => moveStoryToTomorrow(num)}
+                      className="h-6 px-2 text-muted-foreground hover:text-primary"
+                      title="Move to tomorrow"
+                    >
+                      <ArrowRight className="h-3 w-3 mr-1" />
+                      Tomorrow
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => clearStory(num)}
+                      className="h-6 px-2 text-muted-foreground hover:text-destructive"
+                    >
+                      <X className="h-3 w-3 mr-1" />
+                      Clear
+                    </Button>
+                  </div>
                 )}
               </div>
               
