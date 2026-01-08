@@ -26,11 +26,11 @@ async function generateDescription(title: string): Promise<string> {
         messages: [
           { 
             role: 'system', 
-            content: 'You are a helpful assistant that writes brief, informative descriptions for "Today I Learned" facts. Write 1-2 sentences that expand on the TIL title with interesting context or additional details. Be factual and engaging. Do not start with "TIL" or repeat the title.' 
+            content: 'You are a helpful assistant that writes informative descriptions for "Today I Learned" facts. Write 3-4 sentences that expand on the TIL title with interesting context, historical background, or additional fascinating details. Be factual and engaging. Do not start with "TIL" or repeat the title.' 
           },
-          { role: 'user', content: `Write a brief description for this TIL: ${title}` }
+          { role: 'user', content: `Write a description for this TIL: ${title}` }
         ],
-        max_tokens: 150,
+        max_tokens: 300,
         temperature: 0.7,
       }),
     });
