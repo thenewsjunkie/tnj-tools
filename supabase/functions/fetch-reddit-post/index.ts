@@ -20,25 +20,27 @@ serve(async (req) => {
       );
     }
 
-    // Normalize Reddit URL and append .json
-    let jsonUrl = url.trim();
+    // Parse and normalize the Reddit URL properly to avoid double-replacement bugs
+    const parsedUrl = new URL(url.trim());
     
-    // Use old.reddit.com which is more lenient with API requests
-    jsonUrl = jsonUrl.replace("www.reddit.com", "old.reddit.com");
-    jsonUrl = jsonUrl.replace("reddit.com", "old.reddit.com");
-    
-    // Remove trailing slash
-    if (jsonUrl.endsWith("/")) {
-      jsonUrl = jsonUrl.slice(0, -1);
+    // Normalize hostname to old.reddit.com (more lenient with API requests)
+    if (parsedUrl.hostname === "www.reddit.com" || 
+        parsedUrl.hostname === "reddit.com" || 
+        parsedUrl.hostname === "m.reddit.com") {
+      parsedUrl.hostname = "old.reddit.com";
     }
     
-    // Remove existing .json if present
-    if (jsonUrl.endsWith(".json")) {
-      jsonUrl = jsonUrl.slice(0, -5);
+    // Clean up pathname - remove trailing slash and existing .json
+    let pathname = parsedUrl.pathname;
+    if (pathname.endsWith("/")) {
+      pathname = pathname.slice(0, -1);
+    }
+    if (pathname.endsWith(".json")) {
+      pathname = pathname.slice(0, -5);
     }
     
-    // Add .json to get the API response
-    jsonUrl = jsonUrl + ".json";
+    // Build final URL with .json suffix
+    const jsonUrl = `${parsedUrl.origin}${pathname}.json`;
 
     console.log("Fetching Reddit URL:", jsonUrl);
 
