@@ -161,9 +161,17 @@ export const generatePrintDocument = (data: PrintData) => {
       color: #336;
     }
     .hopper-item {
-      padding: 2px 0;
+      padding: 4px 0 4px 12px;
       font-size: 13px;
       break-inside: avoid;
+      border-bottom: 1px solid #e0e0e0;
+      position: relative;
+    }
+    .hopper-item::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: #666;
     }
     .hopper-item.starred {
       font-weight: 700;
