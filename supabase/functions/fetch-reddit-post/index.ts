@@ -5,6 +5,47 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+
+// Generate a description using AI when selftext is empty
+async function generateDescription(title: string): Promise<string> {
+  if (!openAIApiKey) {
+    console.log("No OpenAI API key, skipping AI description");
+    return "";
+  }
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          { 
+            role: 'system', 
+            content: 'You are a helpful assistant that writes brief, informative descriptions for "Today I Learned" facts. Write 1-2 sentences that expand on the TIL title with interesting context or additional details. Be factual and engaging. Do not start with "TIL" or repeat the title.' 
+          },
+          { role: 'user', content: `Write a brief description for this TIL: ${title}` }
+        ],
+        max_tokens: 150,
+        temperature: 0.7,
+      }),
+    });
+
+    const data = await response.json();
+    if (data.choices?.[0]?.message?.content) {
+      return data.choices[0].message.content.trim();
+    }
+  } catch (err) {
+    console.error("AI description generation failed:", err);
+  }
+  
+  return "";
+}
+
 // Try to fetch from a URL with proper headers
 async function tryFetch(url: string): Promise<Response> {
   return fetch(url, {
@@ -86,8 +127,14 @@ serve(async (req) => {
             }
 
             let description = postData.selftext || "";
-            if (!description && postData.url && !postData.url.includes("reddit.com")) {
-              description = `Source: ${postData.url}`;
+            
+            // If no selftext, generate description using AI
+            if (!description && title) {
+              console.log("No selftext, generating AI description...");
+              description = await generateDescription(title);
+              if (description) {
+                console.log("AI generated description:", description.substring(0, 50));
+              }
             }
 
             // Decode HTML entities
