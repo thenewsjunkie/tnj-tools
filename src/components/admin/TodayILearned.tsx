@@ -310,6 +310,7 @@ const TodayILearned = () => {
   }
 
   const filledCount = getFilledCount();
+  const isWeekend = getDay(currentDate) === 0 || getDay(currentDate) === 6;
 
   return (
     <div className="space-y-4">
@@ -335,111 +336,119 @@ const TodayILearned = () => {
           </Button>
         </div>
         
-        <div className="flex items-center gap-3">
-          <Badge variant={filledCount === 7 ? "default" : "secondary"}>
-            {filledCount}/7 stories
-          </Badge>
-          <Button onClick={handlePrint} size="sm" variant="outline">
-            <Printer className="h-4 w-4 mr-2" />
-            Print
-          </Button>
-        </div>
+        {!isWeekend && (
+          <div className="flex items-center gap-3">
+            <Badge variant={filledCount === 7 ? "default" : "secondary"}>
+              {filledCount}/7 stories
+            </Badge>
+            <Button onClick={handlePrint} size="sm" variant="outline">
+              <Printer className="h-4 w-4 mr-2" />
+              Print
+            </Button>
+          </div>
+        )}
       </div>
 
-      {/* Story inputs */}
-      <div className="space-y-3">
-        {[1, 2, 3, 4, 5, 6, 7].map((num) => {
-          const isAudio = AUDIO_STORIES.includes(num);
-          const url = localData[`story${num}_url` as keyof TILEntry] as string || "";
-          const title = localData[`story${num}_title` as keyof TILEntry] as string || "";
-          const description = localData[`story${num}_description` as keyof TILEntry] as string || "";
-          
-          return (
-            <div
-              key={num}
-              className="border border-border rounded-lg p-3 bg-card/50"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-muted-foreground">
-                    Story {num}
-                  </span>
-                  {isAudio && (
-                    <Badge variant="outline" className="text-xs gap-1">
-                      <Volume2 className="h-3 w-3" />
-                      Audio
-                    </Badge>
+      {isWeekend ? (
+        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+          <span className="text-lg font-medium">No Show Today</span>
+          <span className="text-sm mt-1">TIL entries are only available on weekdays</span>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {[1, 2, 3, 4, 5, 6, 7].map((num) => {
+            const isAudio = AUDIO_STORIES.includes(num);
+            const url = localData[`story${num}_url` as keyof TILEntry] as string || "";
+            const title = localData[`story${num}_title` as keyof TILEntry] as string || "";
+            const description = localData[`story${num}_description` as keyof TILEntry] as string || "";
+            
+            return (
+              <div
+                key={num}
+                className="border border-border rounded-lg p-3 bg-card/50"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-muted-foreground">
+                      Story {num}
+                    </span>
+                    {isAudio && (
+                      <Badge variant="outline" className="text-xs gap-1">
+                        <Volume2 className="h-3 w-3" />
+                        Audio
+                      </Badge>
+                    )}
+                  </div>
+                  {(url || title || description) && (
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => moveStoryToTomorrow(num)}
+                        className="h-6 px-2 text-muted-foreground hover:text-primary"
+                        title="Move to tomorrow"
+                      >
+                        <ArrowRight className="h-3 w-3 mr-1" />
+                        {getNextWeekdayLabel()}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => clearStory(num)}
+                        className="h-6 px-2 text-muted-foreground hover:text-destructive"
+                      >
+                        <X className="h-3 w-3 mr-1" />
+                        Clear
+                      </Button>
+                    </div>
                   )}
                 </div>
-                {(url || title || description) && (
-                  <div className="flex items-center gap-1">
+                
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <LinkIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Reddit URL"
+                        value={url}
+                        onChange={(e) => updateStory(num, "url", e.target.value)}
+                        className="pl-8 text-sm"
+                      />
+                    </div>
                     <Button
-                      variant="ghost"
+                      variant="secondary"
                       size="sm"
-                      onClick={() => moveStoryToTomorrow(num)}
-                      className="h-6 px-2 text-muted-foreground hover:text-primary"
-                      title="Move to tomorrow"
+                      onClick={() => fetchRedditPost(num, url)}
+                      disabled={!url || fetchingStory === num}
                     >
-                      <ArrowRight className="h-3 w-3 mr-1" />
-                      {getNextWeekdayLabel()}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => clearStory(num)}
-                      className="h-6 px-2 text-muted-foreground hover:text-destructive"
-                    >
-                      <X className="h-3 w-3 mr-1" />
-                      Clear
+                      {fetchingStory === num ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        "Fetch"
+                      )}
                     </Button>
                   </div>
-                )}
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <LinkIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Reddit URL"
-                      value={url}
-                      onChange={(e) => updateStory(num, "url", e.target.value)}
-                      className="pl-8 text-sm"
-                    />
-                  </div>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => fetchRedditPost(num, url)}
-                    disabled={!url || fetchingStory === num}
-                  >
-                    {fetchingStory === num ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      "Fetch"
-                    )}
-                  </Button>
+                  
+                  <Input
+                    placeholder="Title"
+                    value={title}
+                    onChange={(e) => updateStory(num, "title", e.target.value)}
+                    className="text-sm"
+                  />
+                  
+                  <Textarea
+                    placeholder="Description"
+                    value={description}
+                    onChange={(e) => updateStory(num, "description", e.target.value)}
+                    className="text-sm min-h-[60px] resize-none"
+                    rows={2}
+                  />
                 </div>
-                
-                <Input
-                  placeholder="Title"
-                  value={title}
-                  onChange={(e) => updateStory(num, "title", e.target.value)}
-                  className="text-sm"
-                />
-                
-                <Textarea
-                  placeholder="Description"
-                  value={description}
-                  onChange={(e) => updateStory(num, "description", e.target.value)}
-                  className="text-sm min-h-[60px] resize-none"
-                  rows={2}
-                />
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
