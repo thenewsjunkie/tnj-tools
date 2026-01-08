@@ -17,6 +17,19 @@ function isTwitterUrl(url: string): boolean {
   }
 }
 
+function isYouTubeUrl(url: string): boolean {
+  try {
+    const parsedUrl = new URL(url);
+    const host = parsedUrl.hostname.toLowerCase();
+    return (
+      host === 'youtube.com' || host === 'www.youtube.com' ||
+      host === 'youtu.be' || host === 'm.youtube.com'
+    );
+  } catch {
+    return false;
+  }
+}
+
 async function fetchTweetMetadata(url: string): Promise<{ title: string | null; ogImage: string | null }> {
   const oembedUrl = `https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}&omit_script=1`;
   
@@ -58,6 +71,35 @@ async function fetchTweetMetadata(url: string): Promise<{ title: string | null; 
   return { title, ogImage: null };
 }
 
+async function fetchYouTubeMetadata(url: string): Promise<{ title: string | null; ogImage: string | null }> {
+  const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
+  
+  console.log(`Fetching YouTube video via oEmbed: ${oembedUrl}`);
+  
+  const response = await fetch(oembedUrl);
+  if (!response.ok) {
+    console.log(`YouTube oEmbed failed with status: ${response.status}`);
+    return { title: null, ogImage: null };
+  }
+  
+  const data = await response.json();
+  console.log(`YouTube oEmbed response:`, JSON.stringify(data));
+  
+  // Format: "ChannelName: Video Title"
+  const author = data.author_name || 'YouTube';
+  const videoTitle = data.title || '';
+  const title = videoTitle 
+    ? `${author}: ${videoTitle}`
+    : author;
+  
+  // YouTube oEmbed provides thumbnail_url
+  const ogImage = data.thumbnail_url || null;
+  
+  console.log(`Extracted YouTube title: ${title}, thumbnail: ${ogImage}`);
+  
+  return { title, ogImage };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -81,6 +123,16 @@ serve(async (req) => {
       const tweetData = await fetchTweetMetadata(url);
       return new Response(
         JSON.stringify({ success: true, ...tweetData, url }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check if this is a YouTube URL
+    if (isYouTubeUrl(url)) {
+      console.log('Detected YouTube URL, using oEmbed API');
+      const youtubeData = await fetchYouTubeMetadata(url);
+      return new Response(
+        JSON.stringify({ success: true, ...youtubeData, url }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
