@@ -46,8 +46,8 @@ export const generateTILPrintDocument = (data: TILEntry, date: Date) => {
     }
   }
 
-  const storiesHtml = stories.map((story, idx) => `
-    <div class="story ${idx > 0 && idx % 2 === 0 ? 'page-break' : ''}">
+  const storiesHtml = stories.map((story) => `
+    <div class="story">
       <div class="story-title">
         ${story.title}${story.hasAudio ? ' <span class="audio-tag">(Audio)</span>' : ''}
       </div>
@@ -70,36 +70,31 @@ export const generateTILPrintDocument = (data: TILEntry, date: Date) => {
     }
     body {
       font-family: Georgia, 'Times New Roman', serif;
-      font-size: 12pt;
-      line-height: 1.5;
+      font-size: 10pt;
+      line-height: 1.4;
       margin: 0;
-      padding: 0.5in;
+      padding: 0.4in;
       color: #000;
     }
     .header {
       text-align: center;
-      margin-bottom: 24px;
+      margin-bottom: 12px;
       border-bottom: 2px solid #000;
-      padding-bottom: 12px;
+      padding-bottom: 8px;
     }
     .header-title {
-      font-size: 18pt;
+      font-size: 14pt;
       font-weight: bold;
       letter-spacing: 2px;
     }
-    .header-subtitle {
-      font-size: 11pt;
-      color: #444;
-      margin-top: 4px;
-    }
     .story {
-      margin-bottom: 28px;
+      margin-bottom: 14px;
     }
     .story-title {
-      font-size: 13pt;
+      font-size: 11pt;
       font-weight: bold;
-      margin-bottom: 8px;
-      line-height: 1.4;
+      margin-bottom: 4px;
+      line-height: 1.3;
     }
     .audio-tag {
       font-weight: normal;
@@ -107,25 +102,15 @@ export const generateTILPrintDocument = (data: TILEntry, date: Date) => {
       color: #666;
     }
     .story-description {
-      font-size: 11pt;
-      line-height: 1.6;
-      margin-bottom: 12px;
+      font-size: 10pt;
+      line-height: 1.4;
       text-align: justify;
-    }
-    .page-break {
-      page-break-before: always;
-    }
-    @media print {
-      .page-break {
-        page-break-before: always;
-      }
     }
   </style>
 </head>
 <body>
   <div class="header">
     <div class="header-title">${dayName} ${formattedDate} | Today I Learned</div>
-    <div class="header-subtitle">r/todayilearned</div>
   </div>
   
   ${storiesHtml}
