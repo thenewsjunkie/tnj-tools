@@ -132,6 +132,14 @@ export const generatePrintDocument = (data: PrintData) => {
     .topic-title {
       font-weight: 500;
     }
+    .topic-take {
+      font-style: italic;
+      font-size: 9px;
+      margin-top: 2px;
+      padding-left: 8px;
+      border-left: 2px solid #666;
+      color: #444;
+    }
     .hopper-section {
       margin-top: 8px;
     }
@@ -198,6 +206,7 @@ export const generatePrintDocument = (data: PrintData) => {
       ${localTopics.length > 0 ? localTopics.map((topic) => `
         <div class="topic">
           <span class="topic-title">${topic.type === "link" ? "🔗 " : ""}${topic.title || "Untitled"}</span>
+          ${topic.take ? `<div class="topic-take">🔥 ${topic.take}</div>` : ""}
         </div>
       `).join("") : '<div class="empty-state">No topics</div>'}
     </div>

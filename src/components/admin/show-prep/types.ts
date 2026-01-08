@@ -24,6 +24,7 @@ export interface Topic {
   tags?: string[];
   type?: 'topic' | 'link';  // Default is 'topic' for backwards compatibility
   url?: string;             // Only used when type is 'link'
+  take?: string;            // Your unique angle/perspective on the topic
 }
 
 export interface HourBlock {
