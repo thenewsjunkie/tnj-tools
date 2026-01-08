@@ -110,10 +110,10 @@ const TodayILearned = () => {
     onSuccess: (savedEntry) => {
       setIsDirty(false);
       // Update localData with the saved entry (includes id for new records)
+      // No need to invalidate query - we already have the correct data from the save response
       if (savedEntry) {
         setLocalData(savedEntry);
       }
-      queryClient.invalidateQueries({ queryKey: ["til-entry", dateStr] });
     },
     onError: (error) => {
       toast.error("Failed to save: " + error.message);
