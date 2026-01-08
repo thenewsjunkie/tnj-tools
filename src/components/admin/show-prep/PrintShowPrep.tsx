@@ -221,6 +221,23 @@ export const generatePrintDocument = (data: PrintData) => {
     .hopper-source-icon.instagram { background: #e1306c; }
     .hopper-source-icon.tiktok { background: #000; }
     .hopper-source-icon.facebook { background: #1877f2; }
+    .main-character-field {
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      border-radius: 4px;
+      padding: 8px 12px;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+    .main-character-field strong {
+      margin-right: 8px;
+    }
+    .main-character-line {
+      display: inline-block;
+      border-bottom: 1px solid #333;
+      min-width: 350px;
+      height: 18px;
+    }
     .empty-state {
       color: #999;
       font-style: italic;
@@ -244,6 +261,11 @@ export const generatePrintDocument = (data: PrintData) => {
   ${isMonday && rateMyBlank ? `<div class="special-segment"><strong>Rate My Blank:</strong> ${rateMyBlank}</div>` : ""}
   ${isTuesday ? `<div class="special-segment"><strong>Share the Show Tuesday</strong></div>` : ""}
   ${isFriday && lastMinuteFrom ? `<div class="special-segment"><strong>Last Minute From:</strong> ${lastMinuteFrom}</div>` : ""}
+  
+  <div class="main-character-field">
+    <strong>Today's Main Character:</strong>
+    <span class="main-character-line"></span>
+  </div>
   
   <div class="two-column">
     <div class="topics-column">
