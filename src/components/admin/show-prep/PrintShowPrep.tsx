@@ -163,6 +163,7 @@ export const generatePrintDocument = (data: PrintData) => {
     .hopper-item {
       padding: 2px 0;
       font-size: 13px;
+      break-inside: avoid;
     }
     .hopper-item.starred {
       font-weight: 700;
