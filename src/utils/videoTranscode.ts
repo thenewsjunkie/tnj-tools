@@ -19,6 +19,13 @@ export interface VideoTranscodeProgress {
 
 // Load FFmpeg singleton
 async function loadFFmpeg(onProgress?: (progress: VideoTranscodeProgress) => void): Promise<FFmpeg> {
+  // Check if SharedArrayBuffer is available (requires cross-origin isolation)
+  if (typeof SharedArrayBuffer === "undefined") {
+    throw new Error(
+      "Video processing requires SharedArrayBuffer. Please reload the page or try a different browser."
+    );
+  }
+
   if (ffmpeg) return ffmpeg;
   if (loadPromise) return loadPromise;
 
@@ -27,7 +34,8 @@ async function loadFFmpeg(onProgress?: (progress: VideoTranscodeProgress) => voi
     
     const ff = new FFmpeg();
     
-    const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm";
+    // Use jsdelivr instead of unpkg for better CORS handling
+    const baseURL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm";
     
     await ff.load({
       coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),

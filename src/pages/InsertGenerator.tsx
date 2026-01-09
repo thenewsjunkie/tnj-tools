@@ -160,6 +160,14 @@ const InsertGenerator = () => {
   const handleDownloadVideo = async () => {
     if (!mediaUrl) return;
 
+    // Check for SharedArrayBuffer support upfront
+    if (typeof SharedArrayBuffer === "undefined") {
+      toast.error("Video export requires a page reload", {
+        description: "Please refresh this page and try again.",
+      });
+      return;
+    }
+
     setIsExportingVideo(true);
     setExportProgress("Loading...");
 
@@ -189,7 +197,9 @@ const InsertGenerator = () => {
       });
     } catch (error) {
       console.error("Video export failed:", error);
-      toast.error("Failed to export video");
+      toast.error("Failed to export video", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
     } finally {
       setIsExportingVideo(false);
       setExportProgress("");
