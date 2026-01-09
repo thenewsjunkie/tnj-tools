@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download, RotateCcw, ArrowLeft } from "lucide-react";
+import { Download, RotateCcw, ArrowLeft, Upload, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -18,6 +19,7 @@ import {
 type LayoutStyle = "standard" | "localNews" | "breakingNews" | "compact";
 type ColorScheme = "red" | "blue" | "purple" | "green" | "orange" | "studioDark" | "woodGrain" | "custom";
 type OutputSize = "compact" | "standard" | "tall";
+type GradientDirection = "diagonal" | "horizontal" | "vertical";
 
 // Helper function to adjust hex colors for gradients
 const adjustColor = (hex: string, amount: number): string => {
@@ -26,6 +28,51 @@ const adjustColor = (hex: string, amount: number): string => {
   const g = Math.max(0, Math.min(255, parseInt(cleanHex.slice(2, 4), 16) + amount));
   const b = Math.max(0, Math.min(255, parseInt(cleanHex.slice(4, 6), 16) + amount));
   return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+};
+
+// Helper to get gradient angle based on direction
+const getGradientAngle = (direction: GradientDirection): string => {
+  switch (direction) {
+    case "horizontal": return "90deg";
+    case "vertical": return "180deg";
+    case "diagonal":
+    default: return "135deg";
+  }
+};
+
+// Professional multi-layer text shadow for broadcast quality
+const getBroadcastTextShadow = (intensity: "strong" | "medium" | "light" = "strong"): string => {
+  const shadows = {
+    strong: `
+      0 1px 0 rgba(0,0,0,0.4),
+      0 2px 4px rgba(0,0,0,0.5),
+      0 4px 8px rgba(0,0,0,0.3),
+      0 0 20px rgba(0,0,0,0.2)
+    `,
+    medium: `
+      0 1px 2px rgba(0,0,0,0.4),
+      0 2px 4px rgba(0,0,0,0.3),
+      0 0 12px rgba(0,0,0,0.15)
+    `,
+    light: `
+      0 1px 2px rgba(0,0,0,0.3),
+      0 0 8px rgba(0,0,0,0.1)
+    `
+  };
+  return shadows[intensity];
+};
+
+// Bar bevel styles for 3D depth
+const getBarBevel = (position: "top" | "bottom" | "both" = "both"): React.CSSProperties => {
+  const topShadow = "inset 0 1px 0 rgba(255,255,255,0.1)";
+  const bottomShadow = "inset 0 -1px 0 rgba(0,0,0,0.3)";
+  
+  switch (position) {
+    case "top": return { boxShadow: topShadow };
+    case "bottom": return { boxShadow: bottomShadow };
+    case "both":
+    default: return { boxShadow: `${topShadow}, ${bottomShadow}` };
+  }
 };
 
 // Preset color schemes (custom is handled dynamically)
@@ -82,9 +129,12 @@ const sizeHeights: Record<OutputSize, number> = {
 
 // Output dimensions - single source of truth
 const OUTPUT_WIDTH = 1920;
+// Safe zone padding (5% from left edge for broadcast safety)
+const SAFE_ZONE_LEFT = 96; // ~5% of 1920
 
 const LowerThirdGenerator = () => {
   const previewRef = useRef<HTMLDivElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   
   const [layoutStyle, setLayoutStyle] = useState<LayoutStyle>("compact");
@@ -102,17 +152,56 @@ const LowerThirdGenerator = () => {
   const [customAccent, setCustomAccent] = useState("#d4a855");
   const [customPrimary, setCustomPrimary] = useState("#2d2d2d");
   const [customSecondary, setCustomSecondary] = useState("#0d0d0d");
+  
+  // Broadcast quality options
+  const [gradientDirection, setGradientDirection] = useState<GradientDirection>("horizontal");
+  const [enableTextStroke, setEnableTextStroke] = useState(false);
+  const [enableBarBevels, setEnableBarBevels] = useState(true);
+  const [logoUrl, setLogoUrl] = useState<string>("");
+
+  // Build gradient with selected direction
+  const buildGradient = (baseColor: string, direction: GradientDirection): string => {
+    const angle = getGradientAngle(direction);
+    return `linear-gradient(${angle}, ${adjustColor(baseColor, -20)} 0%, ${baseColor} 50%, ${adjustColor(baseColor, 20)} 100%)`;
+  };
 
   // Compute colors - handle custom scheme dynamically
   const colors = colorScheme === "custom"
     ? {
-        primary: `linear-gradient(135deg, ${adjustColor(customPrimary, -20)} 0%, ${customPrimary} 50%, ${adjustColor(customPrimary, 20)} 100%)`,
+        primary: buildGradient(customPrimary, gradientDirection),
         secondary: customSecondary,
         accent: customAccent,
         solid: customPrimary,
       }
-    : colorSchemes[colorScheme];
+    : {
+        ...colorSchemes[colorScheme],
+        primary: colorSchemes[colorScheme].primary.replace("135deg", getGradientAngle(gradientDirection)),
+      };
   const outputHeight = sizeHeights[outputSize];
+  
+  // Text stroke style for high contrast
+  const textStrokeStyle: React.CSSProperties = enableTextStroke 
+    ? { WebkitTextStroke: "1px rgba(0,0,0,0.5)" } 
+    : {};
+
+  // Handle logo upload
+  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setLogoUrl(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeLogo = () => {
+    setLogoUrl("");
+    if (logoInputRef.current) {
+      logoInputRef.current.value = "";
+    }
+  };
 
   const handleDownload = async () => {
     if (!previewRef.current) return;
@@ -158,7 +247,32 @@ const LowerThirdGenerator = () => {
     setCustomAccent("#d4a855");
     setCustomPrimary("#2d2d2d");
     setCustomSecondary("#0d0d0d");
+    setGradientDirection("horizontal");
+    setEnableTextStroke(false);
+    setEnableBarBevels(true);
+    setLogoUrl("");
     toast.success("Reset to defaults");
+  };
+
+  // Logo component for reuse across layouts
+  const LogoDisplay = ({ size = 48 }: { size?: number }) => {
+    if (!logoUrl) return null;
+    return (
+      <div 
+        className="shrink-0 flex items-center justify-center mr-4"
+        style={{ 
+          width: size, 
+          height: size,
+          filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.3))"
+        }}
+      >
+        <img 
+          src={logoUrl} 
+          alt="Logo" 
+          className="max-w-full max-h-full object-contain"
+        />
+      </div>
+    );
   };
 
   const renderStandardLayout = () => (
@@ -169,16 +283,21 @@ const LowerThirdGenerator = () => {
         style={{
           background: colors.primary,
           padding: "20px 28px",
+          paddingLeft: `${SAFE_ZONE_LEFT}px`,
           borderLeft: `6px solid ${colors.accent}`,
+          ...(enableBarBevels ? getBarBevel("both") : {}),
         }}
       >
+        <LogoDisplay size={52} />
         <div className="flex-1 min-w-0">
           <h1
             className="font-extrabold text-white leading-tight tracking-tight truncate"
             style={{
               fontSize: "clamp(18px, 4vw, 36px)",
-              textShadow: "2px 2px 4px rgba(0,0,0,0.5)",
+              textShadow: getBroadcastTextShadow("strong"),
               fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+              letterSpacing: "0.02em",
+              ...textStrokeStyle,
             }}
           >
             {headline1 || "HEADLINE TEXT"}
@@ -188,8 +307,10 @@ const LowerThirdGenerator = () => {
               className="text-white/90 font-medium truncate"
               style={{
                 fontSize: "clamp(12px, 2vw, 20px)",
-                textShadow: "1px 1px 2px rgba(0,0,0,0.5)",
+                textShadow: getBroadcastTextShadow("medium"),
                 fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+                letterSpacing: "0.03em",
+                ...textStrokeStyle,
               }}
             >
               {headline2}
@@ -204,6 +325,8 @@ const LowerThirdGenerator = () => {
         style={{
           background: colors.secondary,
           padding: "10px 28px",
+          paddingLeft: `${SAFE_ZONE_LEFT}px`,
+          ...(enableBarBevels ? getBarBevel("bottom") : {}),
         }}
       >
         <div
@@ -211,6 +334,8 @@ const LowerThirdGenerator = () => {
           style={{
             fontSize: "clamp(10px, 1.8vw, 16px)",
             fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+            textShadow: getBroadcastTextShadow("light"),
+            letterSpacing: "0.05em",
           }}
         >
           {showName}
@@ -229,6 +354,8 @@ const LowerThirdGenerator = () => {
             fontSize: "clamp(10px, 1.8vw, 16px)",
             color: colors.accent,
             fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+            textShadow: getBroadcastTextShadow("light"),
+            letterSpacing: "0.08em",
           }}
         >
           {websiteUrl}
@@ -240,19 +367,21 @@ const LowerThirdGenerator = () => {
   const renderLocalNewsLayout = () => (
     <div className="absolute inset-0 flex flex-col justify-end" style={{ overflow: 'visible' }}>
       {/* Small Tag Above */}
-      <div className="flex">
+      <div className="flex" style={{ paddingLeft: `${SAFE_ZONE_LEFT}px` }}>
         <div
           style={{
             background: colors.accent,
             padding: "6px 16px",
             fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+            ...(enableBarBevels ? getBarBevel("top") : {}),
           }}
         >
           <span
             className="font-bold text-white tracking-wide"
             style={{
               fontSize: "clamp(10px, 1.5vw, 14px)",
-              textShadow: "1px 1px 2px rgba(0,0,0,0.3)",
+              textShadow: getBroadcastTextShadow("medium"),
+              letterSpacing: "0.1em",
             }}
           >
             {tagText || "NEW AT 5PM"}
@@ -266,15 +395,20 @@ const LowerThirdGenerator = () => {
         style={{
           background: colors.solid,
           padding: "20px 28px",
+          paddingLeft: `${SAFE_ZONE_LEFT}px`,
+          ...(enableBarBevels ? getBarBevel("both") : {}),
         }}
       >
+        <LogoDisplay size={52} />
         <div className="flex-1 min-w-0">
           <h1
             className="font-extrabold text-white leading-tight tracking-tight truncate"
             style={{
               fontSize: "clamp(18px, 4vw, 36px)",
-              textShadow: "2px 2px 4px rgba(0,0,0,0.5)",
+              textShadow: getBroadcastTextShadow("strong"),
               fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+              letterSpacing: "0.02em",
+              ...textStrokeStyle,
             }}
           >
             {headline1 || "HEADLINE TEXT"}
@@ -284,8 +418,10 @@ const LowerThirdGenerator = () => {
               className="text-white/90 font-medium truncate"
               style={{
                 fontSize: "clamp(12px, 2vw, 20px)",
-                textShadow: "1px 1px 2px rgba(0,0,0,0.5)",
+                textShadow: getBroadcastTextShadow("medium"),
                 fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+                letterSpacing: "0.03em",
+                ...textStrokeStyle,
               }}
             >
               {headline2}
@@ -300,6 +436,8 @@ const LowerThirdGenerator = () => {
         style={{
           background: colors.secondary,
           padding: "10px 28px",
+          paddingLeft: `${SAFE_ZONE_LEFT}px`,
+          ...(enableBarBevels ? getBarBevel("bottom") : {}),
         }}
       >
         <div
@@ -307,6 +445,8 @@ const LowerThirdGenerator = () => {
           style={{
             fontSize: "clamp(10px, 1.8vw, 16px)",
             fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+            textShadow: getBroadcastTextShadow("light"),
+            letterSpacing: "0.05em",
           }}
         >
           {showName}
@@ -317,6 +457,8 @@ const LowerThirdGenerator = () => {
             fontSize: "clamp(10px, 1.8vw, 16px)",
             color: colors.accent,
             fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+            textShadow: getBroadcastTextShadow("light"),
+            letterSpacing: "0.08em",
           }}
         >
           {websiteUrl}
@@ -327,7 +469,7 @@ const LowerThirdGenerator = () => {
 
   const renderBreakingNewsLayout = () => (
     <div className="absolute inset-0 flex flex-col justify-end" style={{ overflow: 'visible' }}>
-      <div className="flex">
+      <div className="flex" style={{ paddingLeft: `${SAFE_ZONE_LEFT - 96}px` }}>
         {/* Label Box on Left */}
         <div
           className="flex items-center justify-center shrink-0"
@@ -335,14 +477,23 @@ const LowerThirdGenerator = () => {
             background: colors.accent,
             padding: "20px 24px",
             minWidth: "180px",
+            marginLeft: `${SAFE_ZONE_LEFT}px`,
+            ...(enableBarBevels ? getBarBevel("both") : {}),
           }}
         >
+          {logoUrl && (
+            <div className="mr-3">
+              <LogoDisplay size={40} />
+            </div>
+          )}
           <span
             className="font-black text-white tracking-wider text-center leading-tight"
             style={{
               fontSize: "clamp(14px, 2.5vw, 22px)",
-              textShadow: "2px 2px 4px rgba(0,0,0,0.3)",
+              textShadow: getBroadcastTextShadow("strong"),
               fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+              letterSpacing: "0.1em",
+              ...textStrokeStyle,
             }}
           >
             {labelText || "BREAKING NEWS"}
@@ -357,6 +508,7 @@ const LowerThirdGenerator = () => {
             style={{
               background: colors.solid,
               padding: "16px 28px",
+              ...(enableBarBevels ? getBarBevel("both") : {}),
             }}
           >
             <div className="flex-1 min-w-0">
@@ -364,8 +516,10 @@ const LowerThirdGenerator = () => {
                 className="font-extrabold text-white leading-tight tracking-tight truncate"
                 style={{
                   fontSize: "clamp(16px, 3.5vw, 32px)",
-                  textShadow: "2px 2px 4px rgba(0,0,0,0.5)",
+                  textShadow: getBroadcastTextShadow("strong"),
                   fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+                  letterSpacing: "0.02em",
+                  ...textStrokeStyle,
                 }}
               >
                 {headline1 || "HEADLINE TEXT"}
@@ -375,8 +529,10 @@ const LowerThirdGenerator = () => {
                   className="text-white/90 font-medium truncate mt-1"
                   style={{
                     fontSize: "clamp(11px, 1.8vw, 18px)",
-                    textShadow: "1px 1px 2px rgba(0,0,0,0.5)",
+                    textShadow: getBroadcastTextShadow("medium"),
                     fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+                    letterSpacing: "0.03em",
+                    ...textStrokeStyle,
                   }}
                 >
                   {headline2}
@@ -391,6 +547,7 @@ const LowerThirdGenerator = () => {
             style={{
               background: colors.secondary,
               padding: "10px 28px",
+              ...(enableBarBevels ? getBarBevel("bottom") : {}),
             }}
           >
             <div
@@ -398,6 +555,8 @@ const LowerThirdGenerator = () => {
               style={{
                 fontSize: "clamp(10px, 1.8vw, 16px)",
                 fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+                textShadow: getBroadcastTextShadow("light"),
+                letterSpacing: "0.05em",
               }}
             >
               {showName}
@@ -408,6 +567,8 @@ const LowerThirdGenerator = () => {
                 fontSize: "clamp(10px, 1.8vw, 16px)",
                 color: colors.accent,
                 fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+                textShadow: getBroadcastTextShadow("light"),
+                letterSpacing: "0.08em",
               }}
             >
               {websiteUrl}
@@ -425,16 +586,21 @@ const LowerThirdGenerator = () => {
         style={{
           background: `${colors.secondary}e6`,
           borderLeft: `4px solid ${colors.accent}`,
+          marginLeft: `${SAFE_ZONE_LEFT - 20}px`,
+          ...(enableBarBevels ? getBarBevel("both") : {}),
         }}
       >
+        <LogoDisplay size={36} />
         {/* Main Content */}
         <div className="flex-1 py-3 px-5">
           <h1
             className="font-bold text-white leading-tight tracking-tight truncate"
             style={{
               fontSize: "clamp(14px, 3vw, 28px)",
-              textShadow: "1px 1px 3px rgba(0,0,0,0.6)",
+              textShadow: getBroadcastTextShadow("medium"),
               fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+              letterSpacing: "0.02em",
+              ...textStrokeStyle,
             }}
           >
             {headline1 || "HEADLINE TEXT"}
@@ -446,6 +612,7 @@ const LowerThirdGenerator = () => {
                 style={{
                   fontSize: "clamp(10px, 1.5vw, 14px)",
                   fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+                  textShadow: getBroadcastTextShadow("light"),
                 }}
               >
                 {headline2}
@@ -458,6 +625,8 @@ const LowerThirdGenerator = () => {
                 fontSize: "clamp(9px, 1.3vw, 12px)",
                 color: colors.accent,
                 fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+                textShadow: getBroadcastTextShadow("light"),
+                letterSpacing: "0.05em",
               }}
             >
               {showName}
@@ -471,6 +640,8 @@ const LowerThirdGenerator = () => {
                     fontSize: "clamp(9px, 1.3vw, 12px)",
                     color: colors.accent,
                     fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+                    textShadow: getBroadcastTextShadow("light"),
+                    letterSpacing: "0.05em",
                   }}
                 >
                   {websiteUrl}
@@ -761,6 +932,83 @@ const LowerThirdGenerator = () => {
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* Broadcast Quality Options */}
+              <div className="space-y-3 pt-3 border-t">
+                <Label className="text-sm font-semibold">Broadcast Options</Label>
+                
+                {/* Logo Upload */}
+                <div className="space-y-2">
+                  <Label className="text-xs">Logo (optional)</Label>
+                  <div className="flex gap-2">
+                    <input
+                      ref={logoInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                      id="logo-upload"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => logoInputRef.current?.click()}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      {logoUrl ? "Change Logo" : "Upload Logo"}
+                    </Button>
+                    {logoUrl && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={removeLogo}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                  {logoUrl && (
+                    <div className="flex items-center gap-2 p-2 bg-muted/50 rounded">
+                      <img src={logoUrl} alt="Logo preview" className="h-8 w-8 object-contain" />
+                      <span className="text-xs text-muted-foreground">Logo uploaded</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Gradient Direction */}
+                <div className="space-y-2">
+                  <Label className="text-xs">Gradient Direction</Label>
+                  <Select value={gradientDirection} onValueChange={(v) => setGradientDirection(v as GradientDirection)}>
+                    <SelectTrigger className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="horizontal">Horizontal (→)</SelectItem>
+                      <SelectItem value="vertical">Vertical (↓)</SelectItem>
+                      <SelectItem value="diagonal">Diagonal (↘)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Toggle Options */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Bar Bevels (3D depth)</Label>
+                    <Switch
+                      checked={enableBarBevels}
+                      onCheckedChange={setEnableBarBevels}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Text Stroke (high contrast)</Label>
+                    <Switch
+                      checked={enableTextStroke}
+                      onCheckedChange={setEnableTextStroke}
+                    />
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
