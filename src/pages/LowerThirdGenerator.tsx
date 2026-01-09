@@ -16,10 +16,20 @@ import {
 } from "@/components/ui/select";
 
 type LayoutStyle = "standard" | "localNews" | "breakingNews" | "compact";
-type ColorScheme = "red" | "blue" | "purple" | "green" | "orange" | "studioDark" | "woodGrain";
+type ColorScheme = "red" | "blue" | "purple" | "green" | "orange" | "studioDark" | "woodGrain" | "custom";
 type OutputSize = "compact" | "standard" | "tall";
 
-const colorSchemes: Record<ColorScheme, { primary: string; secondary: string; accent: string; solid: string }> = {
+// Helper function to adjust hex colors for gradients
+const adjustColor = (hex: string, amount: number): string => {
+  const cleanHex = hex.replace('#', '');
+  const r = Math.max(0, Math.min(255, parseInt(cleanHex.slice(0, 2), 16) + amount));
+  const g = Math.max(0, Math.min(255, parseInt(cleanHex.slice(2, 4), 16) + amount));
+  const b = Math.max(0, Math.min(255, parseInt(cleanHex.slice(4, 6), 16) + amount));
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+};
+
+// Preset color schemes (custom is handled dynamically)
+const colorSchemes: Record<Exclude<ColorScheme, "custom">, { primary: string; secondary: string; accent: string; solid: string }> = {
   red: {
     primary: "linear-gradient(135deg, #8B0000 0%, #B22222 50%, #DC143C 100%)",
     secondary: "#1a1a1a",
@@ -87,8 +97,21 @@ const LowerThirdGenerator = () => {
   const [colorScheme, setColorScheme] = useState<ColorScheme>("studioDark");
   const [tagText, setTagText] = useState("NEW AT 5PM");
   const [labelText, setLabelText] = useState("BREAKING NEWS");
+  
+  // Custom color states
+  const [customAccent, setCustomAccent] = useState("#d4a855");
+  const [customPrimary, setCustomPrimary] = useState("#2d2d2d");
+  const [customSecondary, setCustomSecondary] = useState("#0d0d0d");
 
-  const colors = colorSchemes[colorScheme];
+  // Compute colors - handle custom scheme dynamically
+  const colors = colorScheme === "custom"
+    ? {
+        primary: `linear-gradient(135deg, ${adjustColor(customPrimary, -20)} 0%, ${customPrimary} 50%, ${adjustColor(customPrimary, 20)} 100%)`,
+        secondary: customSecondary,
+        accent: customAccent,
+        solid: customPrimary,
+      }
+    : colorSchemes[colorScheme];
   const outputHeight = sizeHeights[outputSize];
 
   const handleDownload = async () => {
@@ -132,6 +155,9 @@ const LowerThirdGenerator = () => {
     setColorScheme("studioDark");
     setTagText("NEW AT 5PM");
     setLabelText("BREAKING NEWS");
+    setCustomAccent("#d4a855");
+    setCustomPrimary("#2d2d2d");
+    setCustomSecondary("#0d0d0d");
     toast.success("Reset to defaults");
   };
 
@@ -670,8 +696,71 @@ const LowerThirdGenerator = () => {
                         <span>Wood Grain (Studio Match)</span>
                       </div>
                     </SelectItem>
+                    <SelectItem value="custom">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 rounded border border-dashed border-muted-foreground" style={{ background: customAccent }} />
+                        <span>Custom Colors</span>
+                      </div>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
+
+                {/* Custom Color Inputs */}
+                {colorScheme === "custom" && (
+                  <div className="space-y-3 mt-3 p-3 border rounded-lg bg-muted/50">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Accent Color (stripe/highlights)</Label>
+                      <div className="flex gap-2">
+                        <Input 
+                          type="color" 
+                          value={customAccent} 
+                          onChange={(e) => setCustomAccent(e.target.value)}
+                          className="w-12 h-9 p-1 cursor-pointer"
+                        />
+                        <Input 
+                          value={customAccent} 
+                          onChange={(e) => setCustomAccent(e.target.value)}
+                          placeholder="#d4a855"
+                          className="flex-1 font-mono text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Primary Bar Color</Label>
+                      <div className="flex gap-2">
+                        <Input 
+                          type="color" 
+                          value={customPrimary} 
+                          onChange={(e) => setCustomPrimary(e.target.value)}
+                          className="w-12 h-9 p-1 cursor-pointer"
+                        />
+                        <Input 
+                          value={customPrimary} 
+                          onChange={(e) => setCustomPrimary(e.target.value)}
+                          placeholder="#2d2d2d"
+                          className="flex-1 font-mono text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Secondary Bar Color</Label>
+                      <div className="flex gap-2">
+                        <Input 
+                          type="color" 
+                          value={customSecondary} 
+                          onChange={(e) => setCustomSecondary(e.target.value)}
+                          className="w-12 h-9 p-1 cursor-pointer"
+                        />
+                        <Input 
+                          value={customSecondary} 
+                          onChange={(e) => setCustomSecondary(e.target.value)}
+                          placeholder="#0d0d0d"
+                          className="flex-1 font-mono text-sm"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
