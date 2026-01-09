@@ -59,7 +59,7 @@ const colorSchemes: Record<ColorScheme, { primary: string; secondary: string; ac
 };
 
 const sizeHeights: Record<OutputSize, number> = {
-  compact: 160,
+  compact: 180,
   standard: 260,
   tall: 340,
 };
@@ -75,9 +75,9 @@ const LowerThirdGenerator = () => {
   const [outputSize, setOutputSize] = useState<OutputSize>("compact");
   const [headline1, setHeadline1] = useState("BREAKING NEWS HEADLINE");
   const [headline2, setHeadline2] = useState("Second line of the headline goes here");
-  const [showName, setShowName] = useState("THE NEWS JUNCTION");
+  const [showName, setShowName] = useState("THE NEWS JUNKIE");
   const [handle, setHandle] = useState("@TNJSHOW");
-  const [websiteUrl, setWebsiteUrl] = useState("THENEWSJUNCTION.COM");
+  const [websiteUrl, setWebsiteUrl] = useState("THENEWSJUNKIE.COM");
   const [colorScheme, setColorScheme] = useState<ColorScheme>("studioDark");
   const [tagText, setTagText] = useState("NEW AT 5PM");
   const [labelText, setLabelText] = useState("BREAKING NEWS");
@@ -120,9 +120,9 @@ const LowerThirdGenerator = () => {
     setOutputSize("compact");
     setHeadline1("BREAKING NEWS HEADLINE");
     setHeadline2("Second line of the headline goes here");
-    setShowName("THE NEWS JUNCTION");
+    setShowName("THE NEWS JUNKIE");
     setHandle("@TNJSHOW");
-    setWebsiteUrl("THENEWSJUNCTION.COM");
+    setWebsiteUrl("THENEWSJUNKIE.COM");
     setColorScheme("studioDark");
     setTagText("NEW AT 5PM");
     setLabelText("BREAKING NEWS");
