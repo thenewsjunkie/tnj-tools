@@ -640,20 +640,27 @@ const InsertGenerator = () => {
               </Button>
 
               {mediaType === "video" && videoDuration > 0 && (
-                <Button
-                  className="w-full"
-                  variant="secondary"
-                  onClick={handleDownloadVideo}
-                  disabled={isExportingVideo}
-                >
-                  <Film className="h-4 w-4 mr-2" />
-                  {isExportingVideo ? exportProgress : "Download Video (WebM)"}
-                </Button>
+                <div className="space-y-2">
+                  {typeof SharedArrayBuffer === "undefined" && (
+                    <p className="text-xs text-amber-500">
+                      ⚠️ Video export requires running locally with dev server
+                    </p>
+                  )}
+                  <Button
+                    className="w-full"
+                    variant="secondary"
+                    onClick={handleDownloadVideo}
+                    disabled={isExportingVideo || typeof SharedArrayBuffer === "undefined"}
+                  >
+                    <Film className="h-4 w-4 mr-2" />
+                    {isExportingVideo ? exportProgress : "Download Video (WebM)"}
+                  </Button>
+                </div>
               )}
 
               <p className="text-xs text-muted-foreground">
                 {mediaType === "video" && videoDuration > 0
-                  ? "Video exports as WebM with border, no audio"
+                  ? "PNG export always works. Video export requires local dev server."
                   : "Exports with transparent background"}
               </p>
             </div>
