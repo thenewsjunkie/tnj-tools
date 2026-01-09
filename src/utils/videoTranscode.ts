@@ -2,6 +2,8 @@ import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile, toBlobURL } from "@ffmpeg/util";
 
 let ffmpeg: FFmpeg | null = null;
+let ffmpegLoaded = false;
+let ffmpegLoading = false;
 let loadPromise: Promise<FFmpeg> | null = null;
 
 export interface VideoTranscodeOptions {
@@ -17,33 +19,63 @@ export interface VideoTranscodeProgress {
   progress?: number;
 }
 
-// Load FFmpeg singleton
+// Load FFmpeg singleton (matches audioTranscode.ts pattern)
 async function loadFFmpeg(onProgress?: (progress: VideoTranscodeProgress) => void): Promise<FFmpeg> {
-  // Check if SharedArrayBuffer is available (requires cross-origin isolation)
-  if (typeof SharedArrayBuffer === "undefined") {
-    throw new Error(
-      "Video processing requires SharedArrayBuffer. Please reload the page or try a different browser."
-    );
+  // Already loaded
+  if (ffmpegLoaded && ffmpeg) {
+    return ffmpeg;
   }
-
-  if (ffmpeg) return ffmpeg;
-  if (loadPromise) return loadPromise;
-
+  
+  // Loading in progress - wait for it
+  if (ffmpegLoading && loadPromise) {
+    return loadPromise;
+  }
+  
+  ffmpegLoading = true;
+  
   loadPromise = (async () => {
-    onProgress?.({ status: "loading", message: "Loading video processor..." });
-    
-    const ff = new FFmpeg();
-    
-    // Use jsdelivr instead of unpkg for better CORS handling
-    const baseURL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm";
-    
-    await ff.load({
-      coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
-      wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm"),
-    });
-    
-    ffmpeg = ff;
-    return ff;
+    try {
+      onProgress?.({ status: "loading", message: "Loading video processor..." });
+      
+      console.log('[FFmpeg Video] Starting load...');
+      const ff = new FFmpeg();
+      
+      // Use jsDelivr CDN with matching version (0.12.10) - same as audioTranscode.ts
+      const baseURL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm";
+      
+      console.log('[FFmpeg Video] Fetching core.js...');
+      const coreURL = await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript");
+      
+      console.log('[FFmpeg Video] Fetching core.wasm...');
+      const wasmURL = await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm");
+      
+      console.log('[FFmpeg Video] Fetching worker.js...');
+      const workerURL = await toBlobURL(`${baseURL}/ffmpeg-core.worker.js`, "text/javascript");
+      
+      console.log('[FFmpeg Video] Loading FFmpeg with worker...');
+      
+      // Add timeout for load operation (30 seconds)
+      const loadPromiseWithTimeout = Promise.race([
+        ff.load({ coreURL, wasmURL, workerURL }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('FFMPEG_LOAD_TIMEOUT')), 30000)
+        )
+      ]);
+      
+      await loadPromiseWithTimeout;
+      
+      console.log('[FFmpeg Video] Loaded successfully');
+      ffmpeg = ff;
+      ffmpegLoaded = true;
+      return ff;
+    } catch (error) {
+      console.error('[FFmpeg Video] Load failed:', error);
+      ffmpegLoaded = false;
+      ffmpegLoading = false;
+      ffmpeg = null;
+      loadPromise = null;
+      throw error;
+    }
   })();
 
   return loadPromise;
@@ -99,9 +131,11 @@ export async function transcodeVideoWithBorder(
     );
   }
   
-  // Output settings for WebM with VP9
+  // Output settings for WebM with VP9 and alpha support
   args.push(
     "-c:v", "libvpx-vp9",
+    "-pix_fmt", "yuva420p", // Enable alpha channel
+    "-auto-alt-ref", "0", // Required for alpha in VP9
     "-b:v", "2M",
     "-an", // No audio
     "-f", "webm",
@@ -110,6 +144,7 @@ export async function transcodeVideoWithBorder(
   
   onProgress?.({ status: "processing", message: "Encoding video...", progress: 40 });
   
+  console.log('[FFmpeg Video] Executing:', args.join(' '));
   await ff.exec(args);
   
   onProgress?.({ status: "processing", message: "Finalizing...", progress: 80 });
@@ -123,16 +158,11 @@ export async function transcodeVideoWithBorder(
   
   onProgress?.({ status: "done", message: "Complete!", progress: 100 });
   
-  // Convert FileData to Blob - handle both string and Uint8Array cases
-  if (typeof data === "string") {
-    // If string, encode to bytes
-    const encoder = new TextEncoder();
-    return new Blob([encoder.encode(data)], { type: "video/webm" });
-  }
-  // data is Uint8Array - create new ArrayBuffer to avoid SharedArrayBuffer issues
-  const buffer = new ArrayBuffer(data.byteLength);
-  new Uint8Array(buffer).set(data);
-  return new Blob([buffer], { type: "video/webm" });
+  // Safely copy to a new ArrayBuffer to avoid SharedArrayBuffer issues
+  const uint8 = data as Uint8Array;
+  const copy = new Uint8Array(uint8.length);
+  copy.set(uint8);
+  return new Blob([copy.buffer as ArrayBuffer], { type: "video/webm" });
 }
 
 // Get video duration from a blob
