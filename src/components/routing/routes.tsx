@@ -36,6 +36,7 @@ const Resources = lazy(() => import("@/pages/Resources"));
 const TopicResources = lazy(() => import("@/pages/TopicResources"));
 const TopicArchive = lazy(() => import("@/pages/TopicArchive"));
 const LowerThirdGenerator = lazy(() => import("@/pages/LowerThirdGenerator"));
+const InsertGenerator = lazy(() => import("@/pages/InsertGenerator"));
 
 export const router = createBrowserRouter([
   {
@@ -181,6 +182,10 @@ export const router = createBrowserRouter([
       {
         path: "lower-third-generator",
         element: <LowerThirdGenerator />,
+      },
+      {
+        path: "insert-generator",
+        element: <InsertGenerator />,
       },
       {
         path: "admin/topic-resources/:date/:topicId",
