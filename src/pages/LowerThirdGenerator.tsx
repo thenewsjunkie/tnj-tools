@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 
 type LayoutStyle = "standard" | "localNews" | "breakingNews" | "compact";
-type ColorScheme = "red" | "blue" | "purple" | "green" | "orange" | "studioDark";
+type ColorScheme = "red" | "blue" | "purple" | "green" | "orange" | "studioDark" | "woodGrain";
 type OutputSize = "compact" | "standard" | "tall";
 
 const colorSchemes: Record<ColorScheme, { primary: string; secondary: string; accent: string; solid: string }> = {
@@ -55,6 +55,12 @@ const colorSchemes: Record<ColorScheme, { primary: string; secondary: string; ac
     secondary: "#0d0d0d",
     accent: "#d4a855",
     solid: "#1f1f1f",
+  },
+  woodGrain: {
+    primary: "linear-gradient(135deg, #2c2418 0%, #3d3225 50%, #4a3d2e 100%)",
+    secondary: "#1c1812",
+    accent: "#8b7355",
+    solid: "#3d3225",
   },
 };
 
@@ -656,6 +662,12 @@ const LowerThirdGenerator = () => {
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 rounded bg-orange-600" />
                         <span>Orange (Alert Style)</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="woodGrain">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 rounded" style={{ background: "linear-gradient(135deg, #2c2418, #8b7355)" }} />
+                        <span>Wood Grain (Studio Match)</span>
                       </div>
                     </SelectItem>
                   </SelectContent>
