@@ -1,4 +1,4 @@
-import { Monitor, Link } from "lucide-react";
+import { Monitor, Link, Tv } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const VideoTools = () => {
@@ -8,6 +8,10 @@ const VideoTools = () => {
 
   const openResources = () => {
     window.open("/resources", "_blank");
+  };
+
+  const openLowerThirdGenerator = () => {
+    window.open("/lower-third-generator", "_blank");
   };
 
   return (
@@ -27,6 +31,14 @@ const VideoTools = () => {
       >
         <Link className="h-8 w-8 text-primary" />
         <span className="text-sm font-medium">Resources</span>
+      </Button>
+      <Button
+        variant="outline"
+        className="h-24 flex flex-col gap-2 bg-destructive/10 border-destructive/30 hover:bg-destructive/20 hover:border-destructive/50"
+        onClick={openLowerThirdGenerator}
+      >
+        <Tv className="h-8 w-8 text-destructive" />
+        <span className="text-sm font-medium">Lower Third</span>
       </Button>
     </div>
   );

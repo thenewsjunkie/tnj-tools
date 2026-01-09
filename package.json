@@ -57,6 +57,7 @@
     "date-fns-tz": "^3.2.0",
     "embla-carousel-react": "^8.3.0",
     "gpt-engineer": "^0.0.5",
+    "html-to-image": "^1.11.13",
     "input-otp": "^1.2.4",
     "jszip": "^3.10.1",
     "livekit-client": "^2.7.3",
