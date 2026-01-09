@@ -62,7 +62,7 @@ const LowerThirdGenerator = () => {
         backgroundColor: "transparent",
         pixelRatio: 2,
         width: 1920,
-        height: 200,
+        height: 250,
         style: {
           transform: "scale(1)",
           transformOrigin: "top left",
@@ -242,26 +242,21 @@ const LowerThirdGenerator = () => {
                   style={{
                     width: "100%",
                     maxWidth: "960px",
-                    aspectRatio: "1920 / 200",
+                    aspectRatio: "1920 / 250",
                     margin: "0 auto",
                   }}
                 >
                   {/* Main Content Container */}
-                  <div className="absolute inset-0 flex flex-col justify-end">
+                  <div className="absolute inset-0 flex flex-col justify-end" style={{ overflow: 'visible' }}>
                     {/* Headline Bar */}
                     <div
-                      className="flex items-center"
+                      className="flex items-center relative"
                       style={{
                         background: colors.primary,
-                        padding: "12px 24px",
+                        padding: "16px 24px",
                         borderLeft: `6px solid ${colors.accent}`,
                       }}
                     >
-                      {/* Left accent stripe */}
-                      <div
-                        className="absolute left-0 top-0 bottom-0 w-1.5"
-                        style={{ background: colors.accent }}
-                      />
                       
                       <div className="flex-1 min-w-0">
                         <h1
