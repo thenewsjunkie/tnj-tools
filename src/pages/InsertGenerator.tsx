@@ -147,40 +147,37 @@ const InsertGenerator = () => {
     setIsDownloadingFrame(true);
     
     try {
-      // Clone the frame element
-      const original = previewRef.current;
-      const clone = original.cloneNode(true) as HTMLElement;
+      // Find the media element inside the frame
+      const mediaElement = previewRef.current.querySelector('img, video');
+      const placeholderElement = previewRef.current.querySelector('.flex.items-center.justify-center');
       
-      // Find and clear the media content, leaving just the border/effects
-      const mediaChild = clone.querySelector('img, video');
-      if (mediaChild) {
-        // Replace media with a transparent placeholder
-        const placeholder = document.createElement('div');
-        placeholder.style.width = '100%';
-        placeholder.style.height = '100%';
-        placeholder.style.background = 'transparent';
-        mediaChild.parentNode?.replaceChild(placeholder, mediaChild);
-      } else {
-        // If no media, clear any placeholder content
-        const placeholder = clone.querySelector('div');
-        if (placeholder) {
-          placeholder.innerHTML = '';
-          placeholder.style.background = 'transparent';
-        }
+      // Store original visibility
+      let originalMediaDisplay = '';
+      let originalPlaceholderDisplay = '';
+      
+      // Temporarily hide media content
+      if (mediaElement) {
+        originalMediaDisplay = (mediaElement as HTMLElement).style.display;
+        (mediaElement as HTMLElement).style.display = 'none';
+      }
+      if (placeholderElement) {
+        originalPlaceholderDisplay = (placeholderElement as HTMLElement).style.display;
+        (placeholderElement as HTMLElement).style.display = 'none';
       }
       
-      // Temporarily append to body for rendering (off-screen)
-      clone.style.position = 'absolute';
-      clone.style.left = '-9999px';
-      clone.style.top = '0';
-      document.body.appendChild(clone);
-      
-      const dataUrl = await toPng(clone, {
+      // Capture the frame with transparent center
+      const dataUrl = await toPng(previewRef.current, {
         backgroundColor: undefined,
         pixelRatio: 2,
       });
       
-      document.body.removeChild(clone);
+      // Restore original visibility
+      if (mediaElement) {
+        (mediaElement as HTMLElement).style.display = originalMediaDisplay;
+      }
+      if (placeholderElement) {
+        (placeholderElement as HTMLElement).style.display = originalPlaceholderDisplay;
+      }
       
       // Download
       const link = document.createElement('a');
