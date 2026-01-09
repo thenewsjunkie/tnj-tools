@@ -15,28 +15,39 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-type ColorScheme = "red" | "blue" | "purple" | "green";
+type LayoutStyle = "standard" | "localNews" | "breakingNews";
+type ColorScheme = "red" | "blue" | "purple" | "green" | "orange";
 
-const colorSchemes: Record<ColorScheme, { primary: string; secondary: string; accent: string }> = {
+const colorSchemes: Record<ColorScheme, { primary: string; secondary: string; accent: string; solid: string }> = {
   red: {
     primary: "linear-gradient(135deg, #8B0000 0%, #B22222 50%, #DC143C 100%)",
     secondary: "#1a1a1a",
     accent: "#DC143C",
+    solid: "#B22222",
   },
   blue: {
     primary: "linear-gradient(135deg, #0a2463 0%, #1e3a8a 50%, #1d4ed8 100%)",
     secondary: "#0f172a",
     accent: "#3b82f6",
+    solid: "#1e3a8a",
   },
   purple: {
     primary: "linear-gradient(135deg, #4c1d95 0%, #6d28d9 50%, #7c3aed 100%)",
     secondary: "#1e1b4b",
     accent: "#8b5cf6",
+    solid: "#6d28d9",
   },
   green: {
     primary: "linear-gradient(135deg, #064e3b 0%, #047857 50%, #10b981 100%)",
     secondary: "#022c22",
     accent: "#34d399",
+    solid: "#047857",
+  },
+  orange: {
+    primary: "linear-gradient(135deg, #c2410c 0%, #ea580c 50%, #f97316 100%)",
+    secondary: "#1a1a1a",
+    accent: "#f97316",
+    solid: "#ea580c",
   },
 };
 
@@ -48,12 +59,15 @@ const LowerThirdGenerator = () => {
   const previewRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   
+  const [layoutStyle, setLayoutStyle] = useState<LayoutStyle>("standard");
   const [headline1, setHeadline1] = useState("BREAKING NEWS HEADLINE");
   const [headline2, setHeadline2] = useState("Second line of the headline goes here");
   const [showName, setShowName] = useState("THE NEWS JUNCTION");
   const [handle, setHandle] = useState("@TNJSHOW");
   const [websiteUrl, setWebsiteUrl] = useState("THENEWSJUNCTION.COM");
   const [colorScheme, setColorScheme] = useState<ColorScheme>("red");
+  const [tagText, setTagText] = useState("NEW AT 5PM");
+  const [labelText, setLabelText] = useState("BREAKING NEWS");
 
   const colors = colorSchemes[colorScheme];
 
@@ -74,7 +88,7 @@ const LowerThirdGenerator = () => {
       });
       
       const link = document.createElement("a");
-      link.download = `lower-third-${Date.now()}.png`;
+      link.download = `lower-third-${layoutStyle}-${Date.now()}.png`;
       link.href = dataUrl;
       link.click();
       
@@ -88,14 +102,274 @@ const LowerThirdGenerator = () => {
   };
 
   const handleReset = () => {
+    setLayoutStyle("standard");
     setHeadline1("BREAKING NEWS HEADLINE");
     setHeadline2("Second line of the headline goes here");
     setShowName("THE NEWS JUNCTION");
     setHandle("@TNJSHOW");
     setWebsiteUrl("THENEWSJUNCTION.COM");
     setColorScheme("red");
+    setTagText("NEW AT 5PM");
+    setLabelText("BREAKING NEWS");
     toast.success("Reset to defaults");
   };
+
+  const renderStandardLayout = () => (
+    <div className="absolute inset-0 flex flex-col justify-end" style={{ overflow: 'visible' }}>
+      {/* Headline Bar */}
+      <div
+        className="flex items-center relative"
+        style={{
+          background: colors.primary,
+          padding: "20px 28px",
+          borderLeft: `6px solid ${colors.accent}`,
+        }}
+      >
+        <div className="flex-1 min-w-0">
+          <h1
+            className="font-extrabold text-white leading-tight tracking-tight truncate"
+            style={{
+              fontSize: "clamp(18px, 4vw, 36px)",
+              textShadow: "2px 2px 4px rgba(0,0,0,0.5)",
+              fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+            }}
+          >
+            {headline1 || "HEADLINE TEXT"}
+          </h1>
+          {headline2 && (
+            <p
+              className="text-white/90 font-medium truncate"
+              style={{
+                fontSize: "clamp(12px, 2vw, 20px)",
+                textShadow: "1px 1px 2px rgba(0,0,0,0.5)",
+                fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+              }}
+            >
+              {headline2}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Secondary Bar */}
+      <div
+        className="flex items-center justify-between"
+        style={{
+          background: colors.secondary,
+          padding: "10px 28px",
+        }}
+      >
+        <div
+          className="font-bold text-white tracking-wide"
+          style={{
+            fontSize: "clamp(10px, 1.8vw, 16px)",
+            fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+          }}
+        >
+          {showName}
+          {handle && (
+            <span
+              className="ml-3 font-normal"
+              style={{ color: colors.accent }}
+            >
+              {handle}
+            </span>
+          )}
+        </div>
+        <div
+          className="font-bold tracking-wider"
+          style={{
+            fontSize: "clamp(10px, 1.8vw, 16px)",
+            color: colors.accent,
+            fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+          }}
+        >
+          {websiteUrl}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderLocalNewsLayout = () => (
+    <div className="absolute inset-0 flex flex-col justify-end" style={{ overflow: 'visible' }}>
+      {/* Small Tag Above */}
+      <div className="flex">
+        <div
+          style={{
+            background: colors.accent,
+            padding: "6px 16px",
+            fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+          }}
+        >
+          <span
+            className="font-bold text-white tracking-wide"
+            style={{
+              fontSize: "clamp(10px, 1.5vw, 14px)",
+              textShadow: "1px 1px 2px rgba(0,0,0,0.3)",
+            }}
+          >
+            {tagText || "NEW AT 5PM"}
+          </span>
+        </div>
+      </div>
+
+      {/* Main Headline Bar - Solid Color */}
+      <div
+        className="flex items-center"
+        style={{
+          background: colors.solid,
+          padding: "20px 28px",
+        }}
+      >
+        <div className="flex-1 min-w-0">
+          <h1
+            className="font-extrabold text-white leading-tight tracking-tight truncate"
+            style={{
+              fontSize: "clamp(18px, 4vw, 36px)",
+              textShadow: "2px 2px 4px rgba(0,0,0,0.5)",
+              fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+            }}
+          >
+            {headline1 || "HEADLINE TEXT"}
+          </h1>
+          {headline2 && (
+            <p
+              className="text-white/90 font-medium truncate"
+              style={{
+                fontSize: "clamp(12px, 2vw, 20px)",
+                textShadow: "1px 1px 2px rgba(0,0,0,0.5)",
+                fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+              }}
+            >
+              {headline2}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Secondary Bar */}
+      <div
+        className="flex items-center justify-between"
+        style={{
+          background: colors.secondary,
+          padding: "10px 28px",
+        }}
+      >
+        <div
+          className="font-bold text-white tracking-wide"
+          style={{
+            fontSize: "clamp(10px, 1.8vw, 16px)",
+            fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+          }}
+        >
+          {showName}
+        </div>
+        <div
+          className="font-bold tracking-wider"
+          style={{
+            fontSize: "clamp(10px, 1.8vw, 16px)",
+            color: colors.accent,
+            fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+          }}
+        >
+          {websiteUrl}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderBreakingNewsLayout = () => (
+    <div className="absolute inset-0 flex flex-col justify-end" style={{ overflow: 'visible' }}>
+      <div className="flex">
+        {/* Label Box on Left */}
+        <div
+          className="flex items-center justify-center shrink-0"
+          style={{
+            background: colors.accent,
+            padding: "20px 24px",
+            minWidth: "180px",
+          }}
+        >
+          <span
+            className="font-black text-white tracking-wider text-center leading-tight"
+            style={{
+              fontSize: "clamp(14px, 2.5vw, 22px)",
+              textShadow: "2px 2px 4px rgba(0,0,0,0.3)",
+              fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+            }}
+          >
+            {labelText || "BREAKING NEWS"}
+          </span>
+        </div>
+
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col">
+          {/* Headline Area */}
+          <div
+            className="flex-1 flex items-center"
+            style={{
+              background: colors.solid,
+              padding: "16px 28px",
+            }}
+          >
+            <div className="flex-1 min-w-0">
+              <h1
+                className="font-extrabold text-white leading-tight tracking-tight truncate"
+                style={{
+                  fontSize: "clamp(16px, 3.5vw, 32px)",
+                  textShadow: "2px 2px 4px rgba(0,0,0,0.5)",
+                  fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+                }}
+              >
+                {headline1 || "HEADLINE TEXT"}
+              </h1>
+              {headline2 && (
+                <p
+                  className="text-white/90 font-medium truncate mt-1"
+                  style={{
+                    fontSize: "clamp(11px, 1.8vw, 18px)",
+                    textShadow: "1px 1px 2px rgba(0,0,0,0.5)",
+                    fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+                  }}
+                >
+                  {headline2}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Secondary Bar */}
+          <div
+            className="flex items-center justify-between"
+            style={{
+              background: colors.secondary,
+              padding: "10px 28px",
+            }}
+          >
+            <div
+              className="font-bold text-white tracking-wide"
+              style={{
+                fontSize: "clamp(10px, 1.8vw, 16px)",
+                fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+              }}
+            >
+              {showName}
+            </div>
+            <div
+              className="font-bold tracking-wider"
+              style={{
+                fontSize: "clamp(10px, 1.8vw, 16px)",
+                color: colors.accent,
+                fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+              }}
+            >
+              {websiteUrl}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -134,6 +408,55 @@ const LowerThirdGenerator = () => {
               <CardTitle className="text-lg">Edit Content</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Layout Style Selector */}
+              <div className="space-y-2">
+                <Label>Layout Style</Label>
+                <Select value={layoutStyle} onValueChange={(v) => setLayoutStyle(v as LayoutStyle)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="standard">
+                      <span>Standard (Gradient Bar)</span>
+                    </SelectItem>
+                    <SelectItem value="localNews">
+                      <span>Local News (Tag + Solid)</span>
+                    </SelectItem>
+                    <SelectItem value="breakingNews">
+                      <span>Breaking News (Label Box)</span>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Conditional Tag Text for Local News */}
+              {layoutStyle === "localNews" && (
+                <div className="space-y-2">
+                  <Label htmlFor="tagText">Tag Text</Label>
+                  <Input
+                    id="tagText"
+                    value={tagText}
+                    onChange={(e) => setTagText(e.target.value.toUpperCase())}
+                    placeholder="NEW AT 5PM"
+                    className="font-bold"
+                  />
+                </div>
+              )}
+
+              {/* Conditional Label Text for Breaking News */}
+              {layoutStyle === "breakingNews" && (
+                <div className="space-y-2">
+                  <Label htmlFor="labelText">Label Text</Label>
+                  <Input
+                    id="labelText"
+                    value={labelText}
+                    onChange={(e) => setLabelText(e.target.value.toUpperCase())}
+                    placeholder="BREAKING NEWS"
+                    className="font-bold"
+                  />
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="headline1">Headline Line 1</Label>
                 <Input
@@ -165,15 +488,17 @@ const LowerThirdGenerator = () => {
                     placeholder="SHOW NAME"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="handle">Handle</Label>
-                  <Input
-                    id="handle"
-                    value={handle}
-                    onChange={(e) => setHandle(e.target.value.toUpperCase())}
-                    placeholder="@HANDLE"
-                  />
-                </div>
+                {layoutStyle === "standard" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="handle">Handle</Label>
+                    <Input
+                      id="handle"
+                      value={handle}
+                      onChange={(e) => setHandle(e.target.value.toUpperCase())}
+                      placeholder="@HANDLE"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -217,6 +542,12 @@ const LowerThirdGenerator = () => {
                         <span>Green (Eco Style)</span>
                       </div>
                     </SelectItem>
+                    <SelectItem value="orange">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 rounded bg-orange-600" />
+                        <span>Orange (Alert Style)</span>
+                      </div>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -250,81 +581,9 @@ const LowerThirdGenerator = () => {
                     margin: "0 auto",
                   }}
                 >
-                  {/* Main Content Container */}
-                  <div className="absolute inset-0 flex flex-col justify-end" style={{ overflow: 'visible' }}>
-                    {/* Headline Bar */}
-                    <div
-                      className="flex items-center relative"
-                      style={{
-                        background: colors.primary,
-                        padding: "20px 28px",
-                        borderLeft: `6px solid ${colors.accent}`,
-                      }}
-                    >
-                      
-                      <div className="flex-1 min-w-0">
-                        <h1
-                          className="font-extrabold text-white leading-tight tracking-tight truncate"
-                          style={{
-                            fontSize: "clamp(18px, 4vw, 36px)",
-                            textShadow: "2px 2px 4px rgba(0,0,0,0.5)",
-                            fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
-                          }}
-                        >
-                          {headline1 || "HEADLINE TEXT"}
-                        </h1>
-                        {headline2 && (
-                          <p
-                            className="text-white/90 font-medium truncate"
-                            style={{
-                              fontSize: "clamp(12px, 2vw, 20px)",
-                              textShadow: "1px 1px 2px rgba(0,0,0,0.5)",
-                              fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
-                            }}
-                          >
-                            {headline2}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Secondary Bar */}
-                    <div
-                      className="flex items-center justify-between"
-                      style={{
-                        background: colors.secondary,
-                        padding: "10px 28px",
-                      }}
-                    >
-                      <div
-                        className="font-bold text-white tracking-wide"
-                        style={{
-                          fontSize: "clamp(10px, 1.8vw, 16px)",
-                          fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
-                        }}
-                      >
-                        {showName}
-                        {handle && (
-                          <span
-                            className="ml-3 font-normal"
-                            style={{ color: colors.accent }}
-                          >
-                            {handle}
-                          </span>
-                        )}
-                      </div>
-                      <div
-                        className="font-bold tracking-wider"
-                        style={{
-                          fontSize: "clamp(10px, 1.8vw, 16px)",
-                          color: colors.accent,
-                          fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
-                        }}
-                      >
-                        {websiteUrl}
-                      </div>
-                    </div>
-                  </div>
+                  {layoutStyle === "standard" && renderStandardLayout()}
+                  {layoutStyle === "localNews" && renderLocalNewsLayout()}
+                  {layoutStyle === "breakingNews" && renderBreakingNewsLayout()}
                 </div>
               </div>
 
@@ -345,8 +604,8 @@ const LowerThirdGenerator = () => {
                   <span className="text-primary font-bold">1</span>
                 </div>
                 <div>
-                  <p className="font-medium">Edit your content</p>
-                  <p className="text-muted-foreground">Fill in your headline and show details</p>
+                  <p className="font-medium">Choose your layout</p>
+                  <p className="text-muted-foreground">Select a layout style that fits your broadcast</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -354,8 +613,8 @@ const LowerThirdGenerator = () => {
                   <span className="text-primary font-bold">2</span>
                 </div>
                 <div>
-                  <p className="font-medium">Choose your style</p>
-                  <p className="text-muted-foreground">Select a color scheme that matches your brand</p>
+                  <p className="font-medium">Edit your content</p>
+                  <p className="text-muted-foreground">Fill in headlines and pick your color scheme</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
