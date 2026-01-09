@@ -1,4 +1,4 @@
-import { Monitor, Link, Tv } from "lucide-react";
+import { Monitor, Link, Tv, PictureInPicture2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const VideoTools = () => {
@@ -12,6 +12,10 @@ const VideoTools = () => {
 
   const openLowerThirdGenerator = () => {
     window.open("/lower-third-generator", "_blank");
+  };
+
+  const openInsertGenerator = () => {
+    window.open("/insert-generator", "_blank");
   };
 
   return (
@@ -39,6 +43,14 @@ const VideoTools = () => {
       >
         <Tv className="h-8 w-8 text-destructive" />
         <span className="text-sm font-medium">Lower Third</span>
+      </Button>
+      <Button
+        variant="outline"
+        className="h-24 flex flex-col gap-2 bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 hover:border-blue-500/50"
+        onClick={openInsertGenerator}
+      >
+        <PictureInPicture2 className="h-8 w-8 text-blue-500" />
+        <span className="text-sm font-medium">Insert</span>
       </Button>
     </div>
   );
