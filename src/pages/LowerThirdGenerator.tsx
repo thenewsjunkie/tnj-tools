@@ -8,6 +8,7 @@ import { Download, RotateCcw, ArrowLeft, Upload, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import {
   Select,
   SelectContent,
@@ -159,6 +160,9 @@ const LowerThirdGenerator = () => {
   const [enableBarBevels, setEnableBarBevels] = useState(true);
   const [logoUrl, setLogoUrl] = useState<string>("");
   const [logoHasBackground, setLogoHasBackground] = useState(true);
+  const [logoSize, setLogoSize] = useState(48);
+  const [logoOffsetX, setLogoOffsetX] = useState(0);
+  const [logoOffsetY, setLogoOffsetY] = useState(0);
 
   // Build gradient with selected direction
   const buildGradient = (baseColor: string, direction: GradientDirection): string => {
@@ -253,19 +257,25 @@ const LowerThirdGenerator = () => {
     setEnableBarBevels(true);
     setLogoUrl("");
     setLogoHasBackground(true);
+    setLogoSize(48);
+    setLogoOffsetX(0);
+    setLogoOffsetY(0);
     toast.success("Reset to defaults");
   };
 
   // Logo component for reuse across layouts - position-neutral (spacing controlled by caller)
-  const LogoDisplay = ({ size = 48, className = "", style = {} }: { size?: number; className?: string; style?: React.CSSProperties }) => {
+  const LogoDisplay = ({ sizeMultiplier = 1, className = "", style = {} }: { sizeMultiplier?: number; className?: string; style?: React.CSSProperties }) => {
     if (!logoUrl) return null;
     
+    const effectiveSize = Math.round(logoSize * sizeMultiplier);
+    
     const containerStyle: React.CSSProperties = {
-      width: logoHasBackground ? size + 16 : size,
-      height: logoHasBackground ? size + 8 : size,
+      width: logoHasBackground ? effectiveSize + 16 : effectiveSize,
+      height: logoHasBackground ? effectiveSize + 8 : effectiveSize,
       background: logoHasBackground ? `${colors.solid}ee` : 'transparent',
       borderRadius: logoHasBackground ? 4 : 0,
       filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.5))",
+      transform: `translate(${logoOffsetX}px, ${logoOffsetY}px)`,
       ...style
     };
 
@@ -275,7 +285,7 @@ const LowerThirdGenerator = () => {
           src={logoUrl} 
           alt="Logo" 
           className="max-w-full max-h-full object-contain"
-          style={{ maxWidth: size, maxHeight: size }}
+          style={{ maxWidth: effectiveSize, maxHeight: effectiveSize }}
         />
       </div>
     );
@@ -294,7 +304,7 @@ const LowerThirdGenerator = () => {
           ...(enableBarBevels ? getBarBevel("both") : {}),
         }}
       >
-        <LogoDisplay size={52} className="mr-4" />
+        <LogoDisplay sizeMultiplier={1.1} className="mr-4" />
         <div className="flex-1 min-w-0">
           <h1
             className="font-extrabold text-white leading-tight tracking-tight truncate"
@@ -405,7 +415,7 @@ const LowerThirdGenerator = () => {
           ...(enableBarBevels ? getBarBevel("both") : {}),
         }}
       >
-        <LogoDisplay size={52} />
+        <LogoDisplay sizeMultiplier={1.1} className="mr-4" />
         <div className="flex-1 min-w-0">
           <h1
             className="font-extrabold text-white leading-tight tracking-tight truncate"
@@ -487,7 +497,7 @@ const LowerThirdGenerator = () => {
             ...(enableBarBevels ? getBarBevel("both") : {}),
           }}
         >
-          <LogoDisplay size={40} className="mr-3" />
+          <LogoDisplay sizeMultiplier={0.85} className="mr-3" />
           <span
             className="font-black text-white tracking-wider text-center leading-tight"
             style={{
@@ -593,7 +603,7 @@ const LowerThirdGenerator = () => {
           ...(enableBarBevels ? getBarBevel("both") : {}),
         }}
       >
-        <LogoDisplay size={36} className="mr-3" />
+        <LogoDisplay sizeMultiplier={0.75} className="mr-3" />
         {/* Main Content */}
         <div className="flex-1 py-3 px-5">
           <h1
@@ -1012,13 +1022,60 @@ const LowerThirdGenerator = () => {
                     />
                   </div>
                   {logoUrl && (
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs">Logo Background Box</Label>
-                      <Switch
-                        checked={logoHasBackground}
-                        onCheckedChange={setLogoHasBackground}
-                      />
-                    </div>
+                    <>
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs">Logo Background Box</Label>
+                        <Switch
+                          checked={logoHasBackground}
+                          onCheckedChange={setLogoHasBackground}
+                        />
+                      </div>
+                      
+                      {/* Logo Size Slider */}
+                      <div className="space-y-1">
+                        <div className="flex justify-between">
+                          <Label className="text-xs">Logo Size</Label>
+                          <span className="text-xs text-muted-foreground">{logoSize}px</span>
+                        </div>
+                        <Slider
+                          value={[logoSize]}
+                          onValueChange={(v) => setLogoSize(v[0])}
+                          min={24}
+                          max={80}
+                          step={2}
+                        />
+                      </div>
+                      
+                      {/* Horizontal Offset Slider */}
+                      <div className="space-y-1">
+                        <div className="flex justify-between">
+                          <Label className="text-xs">Horizontal Offset</Label>
+                          <span className="text-xs text-muted-foreground">{logoOffsetX}px</span>
+                        </div>
+                        <Slider
+                          value={[logoOffsetX]}
+                          onValueChange={(v) => setLogoOffsetX(v[0])}
+                          min={-30}
+                          max={30}
+                          step={1}
+                        />
+                      </div>
+                      
+                      {/* Vertical Offset Slider */}
+                      <div className="space-y-1">
+                        <div className="flex justify-between">
+                          <Label className="text-xs">Vertical Offset</Label>
+                          <span className="text-xs text-muted-foreground">{logoOffsetY}px</span>
+                        </div>
+                        <Slider
+                          value={[logoOffsetY]}
+                          onValueChange={(v) => setLogoOffsetY(v[0])}
+                          min={-20}
+                          max={20}
+                          step={1}
+                        />
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
