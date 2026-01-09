@@ -256,22 +256,21 @@ const LowerThirdGenerator = () => {
     toast.success("Reset to defaults");
   };
 
-  // Logo component for reuse across layouts
-  const LogoDisplay = ({ size = 48 }: { size?: number }) => {
+  // Logo component for reuse across layouts - position-neutral (spacing controlled by caller)
+  const LogoDisplay = ({ size = 48, className = "", style = {} }: { size?: number; className?: string; style?: React.CSSProperties }) => {
     if (!logoUrl) return null;
     
     const containerStyle: React.CSSProperties = {
       width: logoHasBackground ? size + 16 : size,
       height: logoHasBackground ? size + 8 : size,
-      marginLeft: 12,
-      marginRight: logoHasBackground ? 12 : 8,
       background: logoHasBackground ? `${colors.solid}ee` : 'transparent',
       borderRadius: logoHasBackground ? 4 : 0,
-      filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.5))"
+      filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.5))",
+      ...style
     };
 
     return (
-      <div className="shrink-0 flex items-center justify-center" style={containerStyle}>
+      <div className={`shrink-0 flex items-center justify-center ${className}`} style={containerStyle}>
         <img 
           src={logoUrl} 
           alt="Logo" 
@@ -295,7 +294,7 @@ const LowerThirdGenerator = () => {
           ...(enableBarBevels ? getBarBevel("both") : {}),
         }}
       >
-        <LogoDisplay size={52} />
+        <LogoDisplay size={52} className="mr-4" />
         <div className="flex-1 min-w-0">
           <h1
             className="font-extrabold text-white leading-tight tracking-tight truncate"
@@ -488,11 +487,7 @@ const LowerThirdGenerator = () => {
             ...(enableBarBevels ? getBarBevel("both") : {}),
           }}
         >
-          {logoUrl && (
-            <div className="mr-3">
-              <LogoDisplay size={40} />
-            </div>
-          )}
+          <LogoDisplay size={40} className="mr-3" />
           <span
             className="font-black text-white tracking-wider text-center leading-tight"
             style={{
@@ -594,10 +589,11 @@ const LowerThirdGenerator = () => {
           background: `${colors.secondary}e6`,
           borderLeft: `4px solid ${colors.accent}`,
           marginLeft: `${SAFE_ZONE_LEFT - 20}px`,
+          paddingLeft: 12,
           ...(enableBarBevels ? getBarBevel("both") : {}),
         }}
       >
-        <LogoDisplay size={36} />
+        <LogoDisplay size={36} className="mr-3" />
         {/* Main Content */}
         <div className="flex-1 py-3 px-5">
           <h1
