@@ -40,6 +40,10 @@ const colorSchemes: Record<ColorScheme, { primary: string; secondary: string; ac
   },
 };
 
+// Output dimensions - single source of truth
+const OUTPUT_WIDTH = 1920;
+const OUTPUT_HEIGHT = 340;
+
 const LowerThirdGenerator = () => {
   const previewRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -61,8 +65,8 @@ const LowerThirdGenerator = () => {
       const dataUrl = await toPng(previewRef.current, {
         backgroundColor: "transparent",
         pixelRatio: 2,
-        width: 1920,
-        height: 250,
+        width: OUTPUT_WIDTH,
+        height: OUTPUT_HEIGHT,
         style: {
           transform: "scale(1)",
           transformOrigin: "top left",
@@ -242,7 +246,7 @@ const LowerThirdGenerator = () => {
                   style={{
                     width: "100%",
                     maxWidth: "960px",
-                    aspectRatio: "1920 / 250",
+                    aspectRatio: `${OUTPUT_WIDTH} / ${OUTPUT_HEIGHT}`,
                     margin: "0 auto",
                   }}
                 >
@@ -253,7 +257,7 @@ const LowerThirdGenerator = () => {
                       className="flex items-center relative"
                       style={{
                         background: colors.primary,
-                        padding: "16px 24px",
+                        padding: "20px 28px",
                         borderLeft: `6px solid ${colors.accent}`,
                       }}
                     >
@@ -289,7 +293,7 @@ const LowerThirdGenerator = () => {
                       className="flex items-center justify-between"
                       style={{
                         background: colors.secondary,
-                        padding: "8px 24px",
+                        padding: "10px 28px",
                       }}
                     >
                       <div
