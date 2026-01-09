@@ -158,6 +158,7 @@ const LowerThirdGenerator = () => {
   const [enableTextStroke, setEnableTextStroke] = useState(false);
   const [enableBarBevels, setEnableBarBevels] = useState(true);
   const [logoUrl, setLogoUrl] = useState<string>("");
+  const [logoHasBackground, setLogoHasBackground] = useState(true);
 
   // Build gradient with selected direction
   const buildGradient = (baseColor: string, direction: GradientDirection): string => {
@@ -251,25 +252,31 @@ const LowerThirdGenerator = () => {
     setEnableTextStroke(false);
     setEnableBarBevels(true);
     setLogoUrl("");
+    setLogoHasBackground(true);
     toast.success("Reset to defaults");
   };
 
   // Logo component for reuse across layouts
   const LogoDisplay = ({ size = 48 }: { size?: number }) => {
     if (!logoUrl) return null;
+    
+    const containerStyle: React.CSSProperties = {
+      width: logoHasBackground ? size + 16 : size,
+      height: logoHasBackground ? size + 8 : size,
+      marginLeft: 12,
+      marginRight: logoHasBackground ? 12 : 8,
+      background: logoHasBackground ? `${colors.solid}ee` : 'transparent',
+      borderRadius: logoHasBackground ? 4 : 0,
+      filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.5))"
+    };
+
     return (
-      <div 
-        className="shrink-0 flex items-center justify-center mr-4"
-        style={{ 
-          width: size, 
-          height: size,
-          filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.3))"
-        }}
-      >
+      <div className="shrink-0 flex items-center justify-center" style={containerStyle}>
         <img 
           src={logoUrl} 
           alt="Logo" 
           className="max-w-full max-h-full object-contain"
+          style={{ maxWidth: size, maxHeight: size }}
         />
       </div>
     );
@@ -1008,6 +1015,15 @@ const LowerThirdGenerator = () => {
                       onCheckedChange={setEnableTextStroke}
                     />
                   </div>
+                  {logoUrl && (
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs">Logo Background Box</Label>
+                      <Switch
+                        checked={logoHasBackground}
+                        onCheckedChange={setLogoHasBackground}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
