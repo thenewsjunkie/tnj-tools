@@ -15,8 +15,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-type LayoutStyle = "standard" | "localNews" | "breakingNews";
-type ColorScheme = "red" | "blue" | "purple" | "green" | "orange";
+type LayoutStyle = "standard" | "localNews" | "breakingNews" | "compact";
+type ColorScheme = "red" | "blue" | "purple" | "green" | "orange" | "studioDark";
+type OutputSize = "compact" | "standard" | "tall";
 
 const colorSchemes: Record<ColorScheme, { primary: string; secondary: string; accent: string; solid: string }> = {
   red: {
@@ -49,27 +50,40 @@ const colorSchemes: Record<ColorScheme, { primary: string; secondary: string; ac
     accent: "#f97316",
     solid: "#ea580c",
   },
+  studioDark: {
+    primary: "linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #3a3a3a 100%)",
+    secondary: "#0d0d0d",
+    accent: "#d4a855",
+    solid: "#1f1f1f",
+  },
+};
+
+const sizeHeights: Record<OutputSize, number> = {
+  compact: 160,
+  standard: 260,
+  tall: 340,
 };
 
 // Output dimensions - single source of truth
 const OUTPUT_WIDTH = 1920;
-const OUTPUT_HEIGHT = 340;
 
 const LowerThirdGenerator = () => {
   const previewRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   
-  const [layoutStyle, setLayoutStyle] = useState<LayoutStyle>("standard");
+  const [layoutStyle, setLayoutStyle] = useState<LayoutStyle>("compact");
+  const [outputSize, setOutputSize] = useState<OutputSize>("compact");
   const [headline1, setHeadline1] = useState("BREAKING NEWS HEADLINE");
   const [headline2, setHeadline2] = useState("Second line of the headline goes here");
   const [showName, setShowName] = useState("THE NEWS JUNCTION");
   const [handle, setHandle] = useState("@TNJSHOW");
   const [websiteUrl, setWebsiteUrl] = useState("THENEWSJUNCTION.COM");
-  const [colorScheme, setColorScheme] = useState<ColorScheme>("red");
+  const [colorScheme, setColorScheme] = useState<ColorScheme>("studioDark");
   const [tagText, setTagText] = useState("NEW AT 5PM");
   const [labelText, setLabelText] = useState("BREAKING NEWS");
 
   const colors = colorSchemes[colorScheme];
+  const outputHeight = sizeHeights[outputSize];
 
   const handleDownload = async () => {
     if (!previewRef.current) return;
@@ -80,7 +94,7 @@ const LowerThirdGenerator = () => {
         backgroundColor: "transparent",
         pixelRatio: 2,
         width: OUTPUT_WIDTH,
-        height: OUTPUT_HEIGHT,
+        height: outputHeight,
         style: {
           transform: "scale(1)",
           transformOrigin: "top left",
@@ -102,13 +116,14 @@ const LowerThirdGenerator = () => {
   };
 
   const handleReset = () => {
-    setLayoutStyle("standard");
+    setLayoutStyle("compact");
+    setOutputSize("compact");
     setHeadline1("BREAKING NEWS HEADLINE");
     setHeadline2("Second line of the headline goes here");
     setShowName("THE NEWS JUNCTION");
     setHandle("@TNJSHOW");
     setWebsiteUrl("THENEWSJUNCTION.COM");
-    setColorScheme("red");
+    setColorScheme("studioDark");
     setTagText("NEW AT 5PM");
     setLabelText("BREAKING NEWS");
     toast.success("Reset to defaults");
@@ -371,6 +386,71 @@ const LowerThirdGenerator = () => {
     </div>
   );
 
+  const renderCompactLayout = () => (
+    <div className="absolute inset-0 flex flex-col justify-end" style={{ overflow: 'visible' }}>
+      <div
+        className="flex items-center"
+        style={{
+          background: `${colors.secondary}e6`,
+          borderLeft: `4px solid ${colors.accent}`,
+        }}
+      >
+        {/* Main Content */}
+        <div className="flex-1 py-3 px-5">
+          <h1
+            className="font-bold text-white leading-tight tracking-tight truncate"
+            style={{
+              fontSize: "clamp(14px, 3vw, 28px)",
+              textShadow: "1px 1px 3px rgba(0,0,0,0.6)",
+              fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+            }}
+          >
+            {headline1 || "HEADLINE TEXT"}
+          </h1>
+          <div className="flex items-center gap-3 mt-1">
+            {headline2 && (
+              <span
+                className="text-white/80 font-normal truncate"
+                style={{
+                  fontSize: "clamp(10px, 1.5vw, 14px)",
+                  fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+                }}
+              >
+                {headline2}
+              </span>
+            )}
+            <span className="text-white/40">•</span>
+            <span
+              className="font-semibold shrink-0"
+              style={{
+                fontSize: "clamp(9px, 1.3vw, 12px)",
+                color: colors.accent,
+                fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+              }}
+            >
+              {showName}
+            </span>
+            {websiteUrl && (
+              <>
+                <span className="text-white/40">•</span>
+                <span
+                  className="font-medium shrink-0"
+                  style={{
+                    fontSize: "clamp(9px, 1.3vw, 12px)",
+                    color: colors.accent,
+                    fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
+                  }}
+                >
+                  {websiteUrl}
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -408,6 +488,27 @@ const LowerThirdGenerator = () => {
               <CardTitle className="text-lg">Edit Content</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Output Size Selector */}
+              <div className="space-y-2">
+                <Label>Output Size</Label>
+                <Select value={outputSize} onValueChange={(v) => setOutputSize(v as OutputSize)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="compact">
+                      <span>Compact (160px)</span>
+                    </SelectItem>
+                    <SelectItem value="standard">
+                      <span>Standard (260px)</span>
+                    </SelectItem>
+                    <SelectItem value="tall">
+                      <span>Tall (340px)</span>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* Layout Style Selector */}
               <div className="space-y-2">
                 <Label>Layout Style</Label>
@@ -416,6 +517,9 @@ const LowerThirdGenerator = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="compact">
+                      <span>Compact (Minimal)</span>
+                    </SelectItem>
                     <SelectItem value="standard">
                       <span>Standard (Gradient Bar)</span>
                     </SelectItem>
@@ -518,6 +622,12 @@ const LowerThirdGenerator = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="studioDark">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 rounded" style={{ background: "linear-gradient(135deg, #1a1a1a, #d4a855)" }} />
+                        <span>Studio Dark (Amber)</span>
+                      </div>
+                    </SelectItem>
                     <SelectItem value="red">
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 rounded bg-red-600" />
@@ -577,10 +687,11 @@ const LowerThirdGenerator = () => {
                   style={{
                     width: "100%",
                     maxWidth: "960px",
-                    aspectRatio: `${OUTPUT_WIDTH} / ${OUTPUT_HEIGHT}`,
+                    aspectRatio: `${OUTPUT_WIDTH} / ${outputHeight}`,
                     margin: "0 auto",
                   }}
                 >
+                  {layoutStyle === "compact" && renderCompactLayout()}
                   {layoutStyle === "standard" && renderStandardLayout()}
                   {layoutStyle === "localNews" && renderLocalNewsLayout()}
                   {layoutStyle === "breakingNews" && renderBreakingNewsLayout()}
