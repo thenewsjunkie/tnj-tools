@@ -1,9 +1,8 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toPng } from "html-to-image";
 import { toast } from "sonner";
-import { ArrowLeft, Upload, X, Download, RotateCcw, Film, Play, Pause } from "lucide-react";
-import { transcodeVideoWithBorder, formatTime, VideoTranscodeProgress } from "@/utils/videoTranscode";
+import { ArrowLeft, Upload, X, Download, RotateCcw, Frame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -73,17 +72,9 @@ const InsertGenerator = () => {
   const [shadowIntensity, setShadowIntensity] = useState("medium");
   const [innerGlow, setInnerGlow] = useState(false);
 
-  // Video trimming state
-  const [videoDuration, setVideoDuration] = useState(0);
-  const [trimStart, setTrimStart] = useState(0);
-  const [trimEnd, setTrimEnd] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-
   // Export state
   const [isDownloading, setIsDownloading] = useState(false);
-  const [isExportingVideo, setIsExportingVideo] = useState(false);
-  const [exportProgress, setExportProgress] = useState("");
+  const [isDownloadingFrame, setIsDownloadingFrame] = useState(false);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -108,101 +99,8 @@ const InsertGenerator = () => {
       URL.revokeObjectURL(mediaUrl);
     }
     setMediaUrl("");
-    setVideoDuration(0);
-    setTrimStart(0);
-    setTrimEnd(0);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
-    }
-  };
-
-  // Handle video metadata loaded
-  const handleVideoLoaded = () => {
-    if (videoRef.current) {
-      const duration = videoRef.current.duration;
-      setVideoDuration(duration);
-      setTrimEnd(duration);
-    }
-  };
-
-  // Preview trimmed selection
-  const handlePreviewSelection = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-        setIsPlaying(false);
-      } else {
-        videoRef.current.currentTime = trimStart;
-        videoRef.current.play();
-        setIsPlaying(true);
-      }
-    }
-  };
-
-  // Stop video at trim end
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || mediaType !== "video") return;
-
-    const handleTimeUpdate = () => {
-      if (video.currentTime >= trimEnd) {
-        video.pause();
-        video.currentTime = trimStart;
-        setIsPlaying(false);
-      }
-    };
-
-    video.addEventListener("timeupdate", handleTimeUpdate);
-    return () => video.removeEventListener("timeupdate", handleTimeUpdate);
-  }, [trimStart, trimEnd, mediaType]);
-
-  // Video export handler
-  const handleDownloadVideo = async () => {
-    if (!mediaUrl) return;
-
-    // Check for SharedArrayBuffer support upfront
-    if (typeof SharedArrayBuffer === "undefined") {
-      toast.error("Video export requires a page reload", {
-        description: "Please refresh this page and try again.",
-      });
-      return;
-    }
-
-    setIsExportingVideo(true);
-    setExportProgress("Loading...");
-
-    try {
-      const response = await fetch(mediaUrl);
-      const videoBlob = await response.blob();
-
-      await transcodeVideoWithBorder(
-        videoBlob,
-        {
-          startTime: trimStart,
-          endTime: trimEnd,
-          borderSize,
-          borderColor,
-        },
-        (progress: VideoTranscodeProgress) => {
-          setExportProgress(progress.message);
-        }
-      ).then((outputBlob) => {
-        const url = URL.createObjectURL(outputBlob);
-        const link = document.createElement("a");
-        link.download = `insert-video-${Date.now()}.webm`;
-        link.href = url;
-        link.click();
-        URL.revokeObjectURL(url);
-        toast.success("Video exported!");
-      });
-    } catch (error) {
-      console.error("Video export failed:", error);
-      toast.error("Failed to export video", {
-        description: error instanceof Error ? error.message : "Unknown error",
-      });
-    } finally {
-      setIsExportingVideo(false);
-      setExportProgress("");
     }
   };
 
@@ -221,6 +119,7 @@ const InsertGenerator = () => {
     toast.success("Reset to defaults");
   };
 
+  // Download with media (full composite)
   const handleDownload = async () => {
     if (!previewRef.current) return;
     setIsDownloading(true);
@@ -239,6 +138,62 @@ const InsertGenerator = () => {
       toast.error("Failed to download");
     } finally {
       setIsDownloading(false);
+    }
+  };
+
+  // Download frame only (transparent center for compositing in Resolve/Premiere)
+  const handleDownloadFrameOnly = async () => {
+    if (!previewRef.current) return;
+    setIsDownloadingFrame(true);
+    
+    try {
+      // Clone the frame element
+      const original = previewRef.current;
+      const clone = original.cloneNode(true) as HTMLElement;
+      
+      // Find and clear the media content, leaving just the border/effects
+      const mediaChild = clone.querySelector('img, video');
+      if (mediaChild) {
+        // Replace media with a transparent placeholder
+        const placeholder = document.createElement('div');
+        placeholder.style.width = '100%';
+        placeholder.style.height = '100%';
+        placeholder.style.background = 'transparent';
+        mediaChild.parentNode?.replaceChild(placeholder, mediaChild);
+      } else {
+        // If no media, clear any placeholder content
+        const placeholder = clone.querySelector('div');
+        if (placeholder) {
+          placeholder.innerHTML = '';
+          placeholder.style.background = 'transparent';
+        }
+      }
+      
+      // Temporarily append to body for rendering (off-screen)
+      clone.style.position = 'absolute';
+      clone.style.left = '-9999px';
+      clone.style.top = '0';
+      document.body.appendChild(clone);
+      
+      const dataUrl = await toPng(clone, {
+        backgroundColor: undefined,
+        pixelRatio: 2,
+      });
+      
+      document.body.removeChild(clone);
+      
+      // Download
+      const link = document.createElement('a');
+      link.download = `frame-overlay-${Date.now()}.png`;
+      link.href = dataUrl;
+      link.click();
+      
+      toast.success("Frame overlay downloaded!");
+    } catch (error) {
+      console.error("Frame download error:", error);
+      toast.error("Failed to download frame");
+    } finally {
+      setIsDownloadingFrame(false);
     }
   };
 
@@ -301,13 +256,13 @@ const InsertGenerator = () => {
                   {mediaUrl ? (
                     mediaType === "video" ? (
                       <video
-                        ref={videoRef}
                         src={mediaUrl}
                         className="w-full h-full"
                         style={{ objectFit }}
                         muted
                         playsInline
-                        onLoadedMetadata={handleVideoLoaded}
+                        loop
+                        autoPlay
                       />
                     ) : (
                       <img
@@ -389,85 +344,9 @@ const InsertGenerator = () => {
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                Supports images (jpg, png, webp, gif) and videos (mp4, webm, mov)
+                Supports images and videos for preview
               </p>
             </div>
-
-            {/* Video Trimming - only shown when video is uploaded */}
-            {mediaType === "video" && videoDuration > 0 && (
-              <div className="bg-card rounded-lg border border-border p-4 space-y-4">
-                <Label className="text-sm font-semibold">Video Trimming</Label>
-                
-                <div className="text-xs text-muted-foreground">
-                  Duration: {formatTime(videoDuration)}
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <Label className="text-xs">Start Time</Label>
-                    <span className="text-xs text-muted-foreground">{formatTime(trimStart)}</span>
-                  </div>
-                  <Slider
-                    value={[trimStart]}
-                    onValueChange={(v) => {
-                      const newStart = v[0];
-                      setTrimStart(newStart);
-                      if (newStart >= trimEnd) {
-                        setTrimEnd(Math.min(newStart + 0.1, videoDuration));
-                      }
-                    }}
-                    min={0}
-                    max={videoDuration}
-                    step={0.1}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <Label className="text-xs">End Time</Label>
-                    <span className="text-xs text-muted-foreground">{formatTime(trimEnd)}</span>
-                  </div>
-                  <Slider
-                    value={[trimEnd]}
-                    onValueChange={(v) => {
-                      const newEnd = v[0];
-                      setTrimEnd(newEnd);
-                      if (newEnd <= trimStart) {
-                        setTrimStart(Math.max(newEnd - 0.1, 0));
-                      }
-                    }}
-                    min={0}
-                    max={videoDuration}
-                    step={0.1}
-                  />
-                </div>
-
-                <div className="pt-2 border-t border-border">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">
-                      Selected: {formatTime(trimEnd - trimStart)}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handlePreviewSelection}
-                    >
-                      {isPlaying ? (
-                        <>
-                          <Pause className="h-3 w-3 mr-1" />
-                          Pause
-                        </>
-                      ) : (
-                        <>
-                          <Play className="h-3 w-3 mr-1" />
-                          Preview
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* Frame Settings */}
             <div className="bg-card rounded-lg border border-border p-4 space-y-4">
@@ -632,29 +511,25 @@ const InsertGenerator = () => {
               
               <Button
                 className="w-full"
+                onClick={handleDownloadFrameOnly}
+                disabled={isDownloadingFrame}
+              >
+                <Frame className="h-4 w-4 mr-2" />
+                {isDownloadingFrame ? "Downloading..." : "Download Frame Only (PNG)"}
+              </Button>
+              
+              <Button
+                className="w-full"
+                variant="secondary"
                 onClick={handleDownload}
-                disabled={isDownloading}
+                disabled={isDownloading || !mediaUrl}
               >
                 <Download className="h-4 w-4 mr-2" />
-                {isDownloading ? "Downloading..." : "Download PNG"}
+                {isDownloading ? "Downloading..." : "Download with Media (PNG)"}
               </Button>
 
-              {mediaType === "video" && videoDuration > 0 && (
-                <Button
-                  className="w-full"
-                  variant="secondary"
-                  onClick={handleDownloadVideo}
-                  disabled={isExportingVideo}
-                >
-                  <Film className="h-4 w-4 mr-2" />
-                  {isExportingVideo ? exportProgress : "Download Video (WebM)"}
-                </Button>
-              )}
-
               <p className="text-xs text-muted-foreground">
-                {mediaType === "video" && videoDuration > 0
-                  ? "Video export runs in-browser (may take a while for longer clips)"
-                  : "Exports with transparent background"}
+                Frame Only: Layer your video behind this in Resolve/Premiere
               </p>
             </div>
           </div>
