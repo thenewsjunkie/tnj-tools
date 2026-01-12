@@ -26,29 +26,6 @@ interface PrintData {
   hopperGroups: HopperGroup[];
 }
 
-const getUrlSourceForPrint = (url: string): { icon: string; cssClass: string } => {
-  const lowerUrl = url.toLowerCase();
-  if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) {
-    return { icon: '▶', cssClass: 'youtube' };
-  }
-  if (lowerUrl.includes('twitter.com') || lowerUrl.includes('x.com')) {
-    return { icon: '𝕏', cssClass: 'twitter' };
-  }
-  if (lowerUrl.includes('reddit.com')) {
-    return { icon: 'R', cssClass: 'reddit' };
-  }
-  if (lowerUrl.includes('instagram.com')) {
-    return { icon: '◉', cssClass: 'instagram' };
-  }
-  if (lowerUrl.includes('tiktok.com')) {
-    return { icon: '♪', cssClass: 'tiktok' };
-  }
-  if (lowerUrl.includes('facebook.com')) {
-    return { icon: 'f', cssClass: 'facebook' };
-  }
-  return { icon: '🔗', cssClass: 'default' };
-};
-
 export const generatePrintDocument = (data: PrintData) => {
   const {
     selectedDate,
@@ -57,8 +34,6 @@ export const generatePrintDocument = (data: PrintData) => {
     rateMyBlank,
     localTopics,
     scheduledSegments,
-    hopperItems,
-    hopperGroups,
   } = data;
 
   const dateFormatted = format(selectedDate, "EEEE, MMMM do yyyy");
@@ -66,13 +41,6 @@ export const generatePrintDocument = (data: PrintData) => {
   const isFriday = checkIsFriday(selectedDate);
   const isMonday = checkIsMonday(selectedDate);
   const isTuesday = checkIsTuesday(selectedDate);
-
-  // Group hopper items by group
-  const groupedHopperItems = hopperGroups.map((group) => ({
-    group,
-    items: hopperItems.filter((item) => item.group_id === group.id),
-  }));
-  const ungroupedHopperItems = hopperItems.filter((item) => !item.group_id);
 
   const html = `
 <!DOCTYPE html>
@@ -163,64 +131,6 @@ export const generatePrintDocument = (data: PrintData) => {
       border-left: 2px solid #666;
       color: #444;
     }
-    .hopper-section {
-      margin-top: 10px;
-    }
-    .hopper-content {
-      columns: 2;
-      column-gap: 16px;
-    }
-    .hopper-group {
-      margin: 5px 0;
-      padding: 6px 8px;
-      background: #f0f8ff;
-      border-radius: 4px;
-      break-inside: avoid;
-    }
-    .hopper-group-name {
-      font-weight: 600;
-      font-size: 13px;
-      margin-bottom: 3px;
-      color: #336;
-    }
-    .hopper-item {
-      padding: 4px 0 4px 12px;
-      font-size: 13px;
-      break-inside: avoid;
-      border-bottom: 1px solid #e0e0e0;
-      position: relative;
-    }
-    .hopper-item.starred {
-      font-weight: 700;
-      border-left: 3px solid #000;
-      padding-left: 6px;
-      background: #e0e0e0;
-    }
-    .hopper-item.starred::before {
-      content: "★ ";
-      margin-right: 4px;
-    }
-    .hopper-item-title {
-      font-weight: 500;
-    }
-    .hopper-source-icon {
-      display: inline-block;
-      font-size: 10px;
-      font-weight: 700;
-      background: #333;
-      color: #fff;
-      padding: 1px 4px;
-      border-radius: 3px;
-      margin-right: 5px;
-      min-width: 16px;
-      text-align: center;
-    }
-    .hopper-source-icon.youtube { background: #c00; }
-    .hopper-source-icon.twitter { background: #1da1f2; }
-    .hopper-source-icon.reddit { background: #ff4500; }
-    .hopper-source-icon.instagram { background: #e1306c; }
-    .hopper-source-icon.tiktok { background: #000; }
-    .hopper-source-icon.facebook { background: #1877f2; }
     .main-character-field {
       background: #fff3cd;
       border: 2px solid #ffc107;
@@ -286,36 +196,6 @@ export const generatePrintDocument = (data: PrintData) => {
           <span>${seg.name}</span>
         </div>
       `).join("") : '<div class="empty-state">None</div>'}
-    </div>
-  </div>
-  
-  <div class="hopper-section">
-    <h2>Hopper</h2>
-    <div class="hopper-content">
-      ${groupedHopperItems.length === 0 && ungroupedHopperItems.length === 0 
-        ? '<div class="empty-state">No items in hopper</div>' 
-        : ""}
-      ${groupedHopperItems.map(({ group, items }) => items.length > 0 ? `
-        <div class="hopper-group">
-          <div class="hopper-group-name">${group.name || "Unnamed Group"}</div>
-          ${items.map((item) => {
-            const source = getUrlSourceForPrint(item.url);
-            return `
-            <div class="hopper-item${item.is_starred ? ' starred' : ''}">
-              <span class="hopper-source-icon ${source.cssClass}">${source.icon}</span>
-              <span class="hopper-item-title">${item.title || "Untitled"}</span>
-            </div>
-          `}).join("")}
-        </div>
-      ` : "").join("")}
-      ${ungroupedHopperItems.map((item) => {
-        const source = getUrlSourceForPrint(item.url);
-        return `
-        <div class="hopper-item${item.is_starred ? ' starred' : ''}">
-          <span class="hopper-source-icon ${source.cssClass}">${source.icon}</span>
-          <span class="hopper-item-title">${item.title || "Untitled"}</span>
-        </div>
-      `}).join("")}
     </div>
   </div>
   
