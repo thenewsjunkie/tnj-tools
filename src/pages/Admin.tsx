@@ -10,7 +10,6 @@ import TNJLinks from "@/components/TNJLinks";
 import { AskAI } from "@/components/ai-chat/AskAI";
 import VoiceInterface from "@/components/VoiceInterface";
 import ShowPrep from "@/components/admin/ShowPrep";
-import TodayILearned from "@/components/admin/TodayILearned";
 import WeekendEditionSegments from "@/components/admin/WeekendEditionSegments";
 import VideoTools from "@/components/admin/VideoTools";
 import { Badge } from "@/components/ui/badge";
@@ -82,15 +81,6 @@ const Admin = () => {
           }
         >
           <ShowPrep />
-        </CollapsibleModule>
-
-        {/* Today I Learned */}
-        <CollapsibleModule
-          id="today-i-learned"
-          title="Today I Learned"
-          defaultOpen={false}
-        >
-          <TodayILearned />
         </CollapsibleModule>
 
         {/* Weekend Edition Segments */}
