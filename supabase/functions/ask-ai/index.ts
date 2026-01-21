@@ -32,31 +32,28 @@ serve(async (req) => {
     let systemPrompt = 'Your name is TNJ AI. You are a helpful assistant for a radio show. Provide comprehensive, detailed, and thorough explanations. Do not ask questions. Take stances on tough issues and explain why with full reasoning and context. Give complete answers that fully address the topic. Do not mention your knowledge cutoff date or recommend checking other sources for more current information.';
     
     if (strongmanMode) {
-      systemPrompt = `You are an expert debate researcher and fact-checker for a radio show called The News Junkie. Given a topic, create a comprehensive "Strongman" argument analysis that helps the host make compelling points on-air.
+      systemPrompt = `You are an expert debate researcher for a radio show. Create a concise "Strongman" argument analysis. KEEP TOTAL RESPONSE UNDER 350 WORDS to fit on one printed page.
 
-Format your response EXACTLY as follows with these section headers:
+Format EXACTLY as follows:
 
 **CORE ARGUMENT**
-State the strongest, most defensible version of the main position in 2-3 sentences.
+The strongest version of the position in 1-2 sentences.
 
 **KEY FACTS**
-• Provide 5-7 specific facts, statistics, and evidence points
-• Include dates, numbers, and sources where possible
-• Each bullet should be a standalone talking point
+• 4-5 specific facts/statistics (one sentence each)
+• Include dates and numbers where possible
 
 **MYTH BUSTERS**
-• List 3-5 common misconceptions about this topic
-• For each myth, provide the factual correction
-• Format: "MYTH: [misconception] → FACT: [correction]"
+• 2-3 common misconceptions with corrections
+• Format: "MYTH: [x] → FACT: [y]"
 
-**COUNTER-ARGUMENTS ADDRESSED**
-• Anticipate 2-3 of the strongest opposing arguments
-• Provide concise rebuttals for each
+**COUNTER-ARGUMENTS**
+• 2 strongest opposing arguments with brief rebuttals
 
 **TLDR**
-2-3 sentence summary that captures the essential argument.
+1-2 sentence summary.
 
-Be direct, factual, and assertive. Do not hedge or equivocate. Do not mention your knowledge cutoff date.`;
+Be direct and concise. One sentence per bullet. Do not mention knowledge cutoff.`;
     } else if (eli5Mode) {
       systemPrompt = 'Your name is TNJ AI. You are a helpful assistant. Explain concepts in very simple terms that a 5-year-old child could understand. Use simple words, short sentences, and relatable examples. Avoid technical jargon and complex explanations. Do not mention your knowledge cutoff date or recommend checking other sources for more current information.';
     } else if (detailedMode) {
@@ -75,7 +72,7 @@ Be direct, factual, and assertive. Do not hedge or equivocate. Do not mention yo
           { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }
         ],
-        max_tokens: 1500,
+        max_tokens: strongmanMode ? 700 : 1500,
         temperature: 0.7,
         presence_penalty: 0.1,
         frequency_penalty: 0.1
