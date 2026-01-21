@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { BicepsFlexed, Loader2, Printer, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -11,6 +11,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Textarea } from "@/components/ui/textarea";
 import { printStrongman } from "./PrintStrongman";
 
 interface StrongmanButtonProps {
@@ -22,24 +23,36 @@ export const StrongmanButton = ({ topic, onChange }: StrongmanButtonProps) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [argumentInput, setArgumentInput] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
   
   const hasStrongman = !!topic.strongman?.content;
 
+  // Pre-fill with existing prompt or topic title when opening
+  useEffect(() => {
+    if (isOpen && !hasStrongman) {
+      // Default to topic title + take for new generation
+      const defaultPrompt = topic.take 
+        ? `${topic.title}\n\nMy angle: ${topic.take}`
+        : topic.title;
+      setArgumentInput(defaultPrompt);
+    } else if (isOpen && hasStrongman && isEditing) {
+      // Pre-fill with the previous prompt when regenerating
+      setArgumentInput(topic.strongman?.prompt || topic.title);
+    }
+  }, [isOpen, hasStrongman, isEditing, topic.title, topic.take, topic.strongman?.prompt]);
+
   const generateStrongman = async () => {
-    if (!topic.title.trim()) {
-      toast({ description: "Topic needs a title first", variant: "destructive" });
+    if (!argumentInput.trim()) {
+      toast({ description: "Enter an argument to strongman", variant: "destructive" });
       return;
     }
 
     setIsLoading(true);
     try {
-      const prompt = topic.take 
-        ? `Topic: ${topic.title}\n\nMy angle/take on this: ${topic.take}`
-        : `Topic: ${topic.title}`;
-
       const { data, error } = await supabase.functions.invoke("ask-ai", {
         body: {
-          prompt,
+          prompt: argumentInput,
           strongmanMode: true,
           model: "gpt-4o"
         }
@@ -49,10 +62,12 @@ export const StrongmanButton = ({ topic, onChange }: StrongmanButtonProps) => {
 
       const strongman: Strongman = {
         content: data.response,
-        generatedAt: new Date().toISOString()
+        generatedAt: new Date().toISOString(),
+        prompt: argumentInput
       };
 
       onChange(strongman);
+      setIsEditing(false);
       toast({ description: "Strongman argument generated!" });
     } catch (error) {
       console.error("Error generating strongman:", error);
@@ -63,6 +78,11 @@ export const StrongmanButton = ({ topic, onChange }: StrongmanButtonProps) => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleRegenerate = () => {
+    setIsEditing(true);
+    setArgumentInput(topic.strongman?.prompt || topic.title);
   };
 
   const handlePrint = () => {
@@ -100,7 +120,7 @@ export const StrongmanButton = ({ topic, onChange }: StrongmanButtonProps) => {
               <BicepsFlexed className="h-4 w-4 text-blue-500" />
               Strongman Argument
             </div>
-            {hasStrongman && (
+            {hasStrongman && !isEditing && (
               <div className="flex items-center gap-1">
                 <Button
                   size="sm"
@@ -115,7 +135,7 @@ export const StrongmanButton = ({ topic, onChange }: StrongmanButtonProps) => {
                   size="sm"
                   variant="ghost"
                   className="h-7 px-2"
-                  onClick={generateStrongman}
+                  onClick={handleRegenerate}
                   disabled={isLoading}
                   title="Regenerate"
                 >
@@ -125,7 +145,7 @@ export const StrongmanButton = ({ topic, onChange }: StrongmanButtonProps) => {
             )}
           </div>
           
-          {hasStrongman ? (
+          {hasStrongman && !isEditing ? (
             <>
               <ScrollArea className="h-[300px] rounded-md border p-3">
                 <div className="prose prose-sm dark:prose-invert max-w-none">
@@ -134,32 +154,56 @@ export const StrongmanButton = ({ topic, onChange }: StrongmanButtonProps) => {
                   </div>
                 </div>
               </ScrollArea>
+              {topic.strongman?.prompt && (
+                <p className="text-xs text-muted-foreground italic">
+                  Argument: "{topic.strongman.prompt.length > 50 
+                    ? topic.strongman.prompt.substring(0, 50) + "..." 
+                    : topic.strongman.prompt}"
+                </p>
+              )}
               <p className="text-xs text-muted-foreground">
                 Generated {new Date(topic.strongman!.generatedAt).toLocaleString()}
               </p>
             </>
           ) : (
-            <div className="text-center py-4">
-              <p className="text-sm text-muted-foreground mb-3">
-                Generate a comprehensive argument analysis with facts and myth-busters
-              </p>
-              <Button
-                onClick={generateStrongman}
-                disabled={isLoading || !topic.title.trim()}
-                className="gap-2"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <BicepsFlexed className="h-4 w-4" />
-                    Generate Strongman
-                  </>
+            <div className="space-y-3">
+              <Textarea
+                placeholder="Enter the argument you want to strengthen..."
+                value={argumentInput}
+                onChange={(e) => setArgumentInput(e.target.value)}
+                className="min-h-[100px] text-sm"
+                disabled={isLoading}
+              />
+              <div className="flex gap-2">
+                {isEditing && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsEditing(false)}
+                    disabled={isLoading}
+                  >
+                    Cancel
+                  </Button>
                 )}
-              </Button>
+                <Button
+                  onClick={generateStrongman}
+                  disabled={isLoading || !argumentInput.trim()}
+                  className="gap-2 flex-1"
+                  size="sm"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <BicepsFlexed className="h-4 w-4" />
+                      {isEditing ? "Regenerate" : "Generate Strongman"}
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           )}
         </div>

@@ -16,6 +16,7 @@ export interface Link {
 export interface Strongman {
   content: string;
   generatedAt: string;
+  prompt?: string;  // The argument that was strongmanned
 }
 
 export interface Topic {
