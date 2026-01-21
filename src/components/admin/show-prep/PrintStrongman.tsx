@@ -21,7 +21,9 @@ export const printStrongman = (topic: Topic) => {
   // Convert markdown-style formatting to HTML
   const formatContent = (content: string) => {
     return content
-      // Bold text
+      // Bold text with hot takes styling
+      .replace(/\*\*(🔥 HOT TAKES)\*\*/g, '<h3 class="hot-takes">$1</h3>')
+      // Regular bold text
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       // Numbered lists
       .replace(/^(\d+)\.\s+(.*)$/gm, '<li class="numbered">$2</li>')
@@ -94,6 +96,14 @@ export const printStrongman = (topic: Topic) => {
           font-weight: 600;
           color: #1e40af;
           margin: 10px 0 4px 0;
+          border-left: 2px solid #3b82f6;
+          padding-left: 6px;
+        }
+        
+        .content h3.hot-takes {
+          color: #ea580c;
+          border-left-color: #f97316;
+          margin-top: 12px;
           border-left: 2px solid #3b82f6;
           padding-left: 6px;
         }
