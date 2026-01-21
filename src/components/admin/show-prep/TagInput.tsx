@@ -108,9 +108,22 @@ interface TagButtonProps {
   tags: string[];
   onChange: (tags: string[]) => void;
   allTags?: string[];
+  minimal?: boolean;
 }
 
-export const TagButton = ({ tags, onChange, allTags }: TagButtonProps) => {
+export const TagButton = ({ tags, onChange, allTags, minimal }: TagButtonProps) => {
+  if (minimal) {
+    return (
+      <div className="p-2">
+        <div className="flex items-center gap-2 text-sm font-medium mb-2">
+          <span>#</span>
+          Tags
+        </div>
+        <TagInput tags={tags} onChange={onChange} allTags={allTags} />
+      </div>
+    );
+  }
+
   return (
     <Popover>
       <PopoverTrigger asChild>

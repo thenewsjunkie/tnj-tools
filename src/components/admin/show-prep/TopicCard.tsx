@@ -3,19 +3,26 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { GripVertical, Trash2, Pencil, Check, Plus, ExternalLink, Link2, Copy, Flame } from "lucide-react";
+import { GripVertical, Trash2, Pencil, Check, Plus, ExternalLink, Link2, Copy, Flame, MoreHorizontal, Hash } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { normalizeUrl } from "@/lib/url";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Topic } from "./types";
 import { TagButton } from "./TagInput";
+import { StrongmanButton } from "./StrongmanButton";
 import { useToast } from "@/hooks/use-toast";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface TopicCardProps {
   topic: Topic;
@@ -147,6 +154,11 @@ const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardP
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
+            <StrongmanButton
+              topic={topic}
+              onChange={(strongman) => onChange({ ...topic, strongman })}
+            />
+
             <Popover open={takeOpen} onOpenChange={setTakeOpen}>
               <PopoverTrigger asChild>
                 <Button
@@ -191,12 +203,6 @@ const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardP
                 </div>
               </PopoverContent>
             </Popover>
-
-            <TagButton
-              tags={topic.tags || []}
-              onChange={handleTagsChange}
-              allTags={allTags}
-            />
             
             {isLinkType ? (
               <>
@@ -262,6 +268,29 @@ const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardP
                 <Pencil className="h-3.5 w-3.5" />
               </Button>
             )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 w-6 p-0"
+                >
+                  <MoreHorizontal className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem className="p-0">
+                  <div className="w-full" onClick={(e) => e.stopPropagation()}>
+                    <TagButton
+                      tags={topic.tags || []}
+                      onChange={handleTagsChange}
+                      allTags={allTags}
+                      minimal
+                    />
+                  </div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button
               size="sm"
               variant="ghost"

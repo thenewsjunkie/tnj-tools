@@ -13,6 +13,11 @@ export interface Link {
   type?: 'link' | 'image';
 }
 
+export interface Strongman {
+  content: string;
+  generatedAt: string;
+}
+
 export interface Topic {
   id: string;
   title: string;
@@ -25,6 +30,7 @@ export interface Topic {
   type?: 'topic' | 'link';  // Default is 'topic' for backwards compatibility
   url?: string;             // Only used when type is 'link'
   take?: string;            // Your unique angle/perspective on the topic
+  strongman?: Strongman;    // AI-generated argument analysis
 }
 
 export interface HourBlock {
