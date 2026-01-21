@@ -43,7 +43,7 @@ export const printStrongman = (topic: Topic) => {
       <style>
         @page {
           size: letter;
-          margin: 0.75in;
+          margin: 0.5in;
         }
         
         * {
@@ -52,8 +52,8 @@ export const printStrongman = (topic: Topic) => {
         
         body {
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-          font-size: 11pt;
-          line-height: 1.5;
+          font-size: 10pt;
+          line-height: 1.3;
           color: #1a1a1a;
           max-width: 100%;
           margin: 0;
@@ -61,45 +61,45 @@ export const printStrongman = (topic: Topic) => {
         }
         
         .header {
-          border-bottom: 3px solid #3b82f6;
-          padding-bottom: 12px;
-          margin-bottom: 20px;
+          border-bottom: 2px solid #3b82f6;
+          padding-bottom: 8px;
+          margin-bottom: 12px;
         }
         
         .header h1 {
-          font-size: 18pt;
+          font-size: 14pt;
           font-weight: 700;
-          margin: 0 0 4px 0;
+          margin: 0 0 2px 0;
           color: #1e40af;
         }
         
         .header .subtitle {
-          font-size: 10pt;
+          font-size: 9pt;
           color: #6b7280;
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 6px;
         }
         
         .header .subtitle .icon {
-          font-size: 14pt;
+          font-size: 12pt;
         }
         
         .content {
-          font-size: 11pt;
+          font-size: 10pt;
         }
         
         .content h3 {
-          font-size: 12pt;
+          font-size: 11pt;
           font-weight: 600;
           color: #1e40af;
-          margin: 16px 0 8px 0;
-          border-left: 3px solid #3b82f6;
-          padding-left: 8px;
+          margin: 10px 0 4px 0;
+          border-left: 2px solid #3b82f6;
+          padding-left: 6px;
         }
         
         .content p {
-          margin: 8px 0;
+          margin: 4px 0;
         }
         
         .content strong {
@@ -108,25 +108,25 @@ export const printStrongman = (topic: Topic) => {
         }
         
         .content li {
-          margin: 6px 0;
-          padding-left: 4px;
+          margin: 3px 0;
+          padding-left: 2px;
         }
         
         .content li.numbered {
           list-style-type: decimal;
-          margin-left: 20px;
+          margin-left: 16px;
         }
         
         .content li.bullet {
           list-style-type: disc;
-          margin-left: 20px;
+          margin-left: 16px;
         }
         
         .footer {
-          margin-top: 24px;
-          padding-top: 12px;
+          margin-top: 12px;
+          padding-top: 8px;
           border-top: 1px solid #e5e7eb;
-          font-size: 9pt;
+          font-size: 8pt;
           color: #9ca3af;
           display: flex;
           justify-content: space-between;
