@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Dumbbell, Loader2, Printer, RefreshCw } from "lucide-react";
+import { BicepsFlexed, Loader2, Printer, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Topic, Strongman } from "./types";
 import { useToast } from "@/hooks/use-toast";
@@ -89,7 +89,7 @@ export const StrongmanButton = ({ topic, onChange }: StrongmanButtonProps) => {
           {isLoading ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : (
-            <Dumbbell className={cn("h-3.5 w-3.5", hasStrongman && "fill-current")} />
+            <BicepsFlexed className={cn("h-3.5 w-3.5", hasStrongman && "fill-current")} />
           )}
         </Button>
       </PopoverTrigger>
@@ -97,7 +97,7 @@ export const StrongmanButton = ({ topic, onChange }: StrongmanButtonProps) => {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm font-medium">
-              <Dumbbell className="h-4 w-4 text-blue-500" />
+              <BicepsFlexed className="h-4 w-4 text-blue-500" />
               Strongman Argument
             </div>
             {hasStrongman && (
@@ -155,7 +155,7 @@ export const StrongmanButton = ({ topic, onChange }: StrongmanButtonProps) => {
                   </>
                 ) : (
                   <>
-                    <Dumbbell className="h-4 w-4" />
+                    <BicepsFlexed className="h-4 w-4" />
                     Generate Strongman
                   </>
                 )}
