@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { format, isFriday as checkIsFriday, isMonday as checkIsMonday, isTuesday as checkIsTuesday, addDays, isToday } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Trash2, ChevronLeft, ChevronRight, Loader2, ChevronDown, ChevronUp, Printer } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Trash2, ChevronLeft, ChevronRight, Loader2, ChevronDown, ChevronUp, Printer, Video } from "lucide-react";
 import Hopper from "./show-prep/Hopper";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -70,6 +71,7 @@ const ShowPrep = () => {
   const [topics, setTopics] = useState<ShowPrepTopics>({ fromTopic: "", toTopic: "", andTopic: "" });
   const [lastMinuteFrom, setLastMinuteFrom] = useState("");
   const [rateMyBlank, setRateMyBlank] = useState("");
+  const [potentialVideos, setPotentialVideos] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isHopperOpen, setIsHopperOpen] = useState(false);
@@ -116,6 +118,7 @@ const ShowPrep = () => {
         topics,
         lastMinuteFrom,
         rateMyBlank,
+        potentialVideos,
         localTopics,
         scheduledSegments: daySegments,
         hopperItems: hopperItemsResult.data || [],
@@ -138,7 +141,7 @@ const ShowPrep = () => {
     try {
       const { data, error } = await supabase
         .from("show_prep_notes")
-        .select("from_topic, to_topic, and_topic, last_minute_from, rate_my_blank")
+        .select("from_topic, to_topic, and_topic, last_minute_from, rate_my_blank, potential_videos")
         .eq("date", dateKey)
         .maybeSingle();
 
@@ -152,6 +155,7 @@ const ShowPrep = () => {
         });
         setLastMinuteFrom(data.last_minute_from || "");
         setRateMyBlank(data.rate_my_blank || "");
+        setPotentialVideos(data.potential_videos || "");
       } else {
         // Check localStorage for migration
         const localTopicsKey = `show-prep-topics-${dateKey}`;
@@ -183,6 +187,7 @@ const ShowPrep = () => {
           setTopics({ fromTopic: "", toTopic: "", andTopic: "" });
           setLastMinuteFrom("");
           setRateMyBlank("");
+          setPotentialVideos("");
         }
       }
     } catch (error) {
@@ -224,6 +229,7 @@ const ShowPrep = () => {
           and_topic: topics.andTopic || null,
           last_minute_from: lastMinuteFrom || null,
           rate_my_blank: rateMyBlank || null,
+          potential_videos: potentialVideos || null,
         }, { onConflict: "date" });
       } catch (error) {
         console.error("Error saving topics:", error);
@@ -233,7 +239,7 @@ const ShowPrep = () => {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [topics, lastMinuteFrom, rateMyBlank, dateKey, isLoading]);
+  }, [topics, lastMinuteFrom, rateMyBlank, potentialVideos, dateKey, isLoading]);
 
   const navigateDay = (offset: number) => {
     setSelectedDate(prev => addDays(prev, offset));
@@ -257,6 +263,10 @@ const ShowPrep = () => {
 
   const handleClearRateMyBlank = () => {
     setRateMyBlank("");
+  };
+
+  const handleClearPotentialVideos = () => {
+    setPotentialVideos("");
   };
 
   return (
@@ -402,6 +412,31 @@ const ShowPrep = () => {
                   )}
                 </div>
               )}
+
+              {/* Potential Videos Section */}
+              <div className="mt-6 space-y-2">
+                <div className="flex items-center gap-2 text-foreground font-medium">
+                  <Video className="h-4 w-4 text-violet-500" />
+                  <span>Potential Videos</span>
+                </div>
+                <Textarea
+                  value={potentialVideos}
+                  onChange={(e) => setPotentialVideos(e.target.value)}
+                  placeholder="Add video ideas (one per line)..."
+                  className="min-h-[80px] text-sm"
+                />
+                {potentialVideos && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleClearPotentialVideos}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <Trash2 className="h-3 w-3 mr-1" />
+                    Clear
+                  </Button>
+                )}
+              </div>
             </>
           )}
         </div>
