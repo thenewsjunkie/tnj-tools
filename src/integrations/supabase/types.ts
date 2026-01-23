@@ -915,6 +915,7 @@ export type Database = {
           from_topic: string | null
           id: string
           last_minute_from: string | null
+          potential_videos: string | null
           rate_my_blank: string | null
           to_topic: string | null
           topics: Json
@@ -927,6 +928,7 @@ export type Database = {
           from_topic?: string | null
           id?: string
           last_minute_from?: string | null
+          potential_videos?: string | null
           rate_my_blank?: string | null
           to_topic?: string | null
           topics?: Json
@@ -939,6 +941,7 @@ export type Database = {
           from_topic?: string | null
           id?: string
           last_minute_from?: string | null
+          potential_videos?: string | null
           rate_my_blank?: string | null
           to_topic?: string | null
           topics?: Json

@@ -20,6 +20,7 @@ interface PrintData {
   topics: { fromTopic: string; toTopic: string; andTopic: string };
   lastMinuteFrom: string;
   rateMyBlank: string;
+  potentialVideos: string;
   localTopics: Topic[];
   scheduledSegments: ScheduledSegment[];
   hopperItems: HopperItem[];
@@ -32,6 +33,7 @@ export const generatePrintDocument = (data: PrintData) => {
     topics,
     lastMinuteFrom,
     rateMyBlank,
+    potentialVideos,
     localTopics,
     scheduledSegments,
   } = data;
@@ -154,6 +156,27 @@ export const generatePrintDocument = (data: PrintData) => {
       padding: 6px 0;
       font-size: 13px;
     }
+    .potential-videos {
+      background: #f3e8ff;
+      border: 1px solid #c4b5fd;
+      border-radius: 4px;
+      padding: 8px 12px;
+      margin-top: 12px;
+      font-size: 13px;
+    }
+    .potential-videos h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin: 0 0 6px 0;
+      color: #7c3aed;
+    }
+    .potential-videos ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+    .potential-videos li {
+      margin: 3px 0;
+    }
     @media print {
       body {
         padding: 12px;
@@ -198,6 +221,15 @@ export const generatePrintDocument = (data: PrintData) => {
       `).join("") : '<div class="empty-state">None</div>'}
     </div>
   </div>
+  
+  ${potentialVideos ? `
+  <div class="potential-videos">
+    <h3>🎬 Potential Videos</h3>
+    <ul>
+      ${potentialVideos.split('\n').filter(line => line.trim()).map(line => `<li>${line.trim()}</li>`).join('')}
+    </ul>
+  </div>
+  ` : ''}
   
 </body>
 </html>
