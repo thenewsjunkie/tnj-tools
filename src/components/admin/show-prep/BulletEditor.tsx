@@ -22,6 +22,7 @@ const BulletEditor = ({ bullets, onChange }: BulletEditorProps) => {
   }, [bullets.length]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>, index: number) => {
+    e.stopPropagation(); // Prevent bubbling to Popover
     const bullet = bullets[index];
 
     if (e.key === "Enter") {
@@ -108,6 +109,14 @@ const BulletEditor = ({ bullets, onChange }: BulletEditorProps) => {
           />
         </div>
       ))}
+      
+      <button
+        onClick={addBullet}
+        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-1 mt-1"
+      >
+        <Plus className="h-3 w-3" />
+        Add point
+      </button>
     </div>
   );
 };
