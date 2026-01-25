@@ -2,19 +2,6 @@ import { format, isFriday as checkIsFriday, isMonday as checkIsMonday, isTuesday
 import { Topic } from "./types";
 import { ScheduledSegment } from "./scheduledSegments";
 
-interface HopperItem {
-  id: string;
-  url: string;
-  title: string | null;
-  group_id: string | null;
-  is_starred: boolean;
-}
-
-interface HopperGroup {
-  id: string;
-  name: string | null;
-}
-
 interface PrintData {
   selectedDate: Date;
   topics: { fromTopic: string; toTopic: string; andTopic: string };
@@ -23,8 +10,6 @@ interface PrintData {
   potentialVideos: string;
   localTopics: Topic[];
   scheduledSegments: ScheduledSegment[];
-  hopperItems: HopperItem[];
-  hopperGroups: HopperGroup[];
 }
 
 export const generatePrintDocument = (data: PrintData) => {
