@@ -91,13 +91,14 @@ const LinkableNotepad = ({ value, onChange, placeholder }: LinkableNotepadProps)
 
   if (isEditing) {
     return (
-      <Textarea
+      <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onBlur={() => setIsEditing(false)}
         placeholder={placeholder}
-        className="min-h-[300px] resize-y font-mono text-sm bg-background"
         autoFocus
+        className="w-full h-full min-h-[400px] p-4 text-sm leading-relaxed bg-background text-foreground resize-none border-0 focus:outline-none focus:ring-0"
+        style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
       />
     );
   }
@@ -105,7 +106,8 @@ const LinkableNotepad = ({ value, onChange, placeholder }: LinkableNotepadProps)
   return (
     <div
       onClick={() => setIsEditing(true)}
-      className="min-h-[300px] p-3 font-mono text-sm bg-background border border-input rounded-md cursor-text whitespace-pre-wrap break-words"
+      className="w-full min-h-[400px] p-4 text-sm leading-relaxed bg-background text-foreground cursor-text whitespace-pre-wrap break-words"
+      style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
     >
       {value ? renderWithLinks(value) : (
         <span className="text-muted-foreground">{placeholder}</span>
@@ -505,28 +507,29 @@ const ShowPrep = () => {
 
       {/* Notepad Section */}
       <div className="w-full border-t border-border pt-4">
-        <Button
-          variant="outline"
+        <button
           onClick={() => setIsNotepadOpen(!isNotepadOpen)}
-          className="w-full justify-between"
+          className="w-full flex items-center justify-between px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors"
         >
-          <span className="flex items-center gap-2">
+          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
             <StickyNote className="h-4 w-4" />
-            {isNotepadOpen ? "Close Notepad" : "Open Notepad"}
-          </span>
-          {isNotepadOpen ? <ChevronUp className="h-4 w-4 ml-2" /> : <ChevronDown className="h-4 w-4 ml-2" />}
-        </Button>
+            <span>Notepad</span>
+            {notepad.trim() && (
+              <span className="text-xs text-muted-foreground font-normal">
+                ({notepad.trim().split(/\s+/).length} words)
+              </span>
+            )}
+          </div>
+          {isNotepadOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+        </button>
         
         {isNotepadOpen && (
-          <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+          <div className="border border-t-0 border-border bg-background shadow-sm">
             <LinkableNotepad
               value={notepad}
               onChange={setNotepad}
-              placeholder="Quick notes for the show..."
+              placeholder="Start typing your notes..."
             />
-            <div className="text-xs text-muted-foreground text-right mt-2">
-              {notepad.trim() ? notepad.trim().split(/\s+/).length : 0} words
-            </div>
           </div>
         )}
       </div>
