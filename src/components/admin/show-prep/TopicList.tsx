@@ -11,10 +11,9 @@ interface TopicListProps {
   topics: Topic[];
   date: string;
   onChange: (topics: Topic[]) => void;
-  allTags: string[];
 }
 
-const TopicList = ({ topics, date, onChange, allTags }: TopicListProps) => {
+const TopicList = ({ topics, date, onChange }: TopicListProps) => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   const handleAddTopic = (newTopic: Topic) => {
@@ -70,7 +69,6 @@ const TopicList = ({ topics, date, onChange, allTags }: TopicListProps) => {
                     date={date}
                     onChange={(updated) => handleTopicChange(index, updated)}
                     onDelete={() => handleTopicDelete(index)}
-                    allTags={allTags}
                   />
                 ))}
               </div>

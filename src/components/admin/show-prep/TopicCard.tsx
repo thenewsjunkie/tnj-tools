@@ -2,13 +2,12 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { GripVertical, Trash2, Pencil, Check, ExternalLink, Link2, Copy, Flame, MoreHorizontal, List } from "lucide-react";
+import { GripVertical, Trash2, Pencil, Check, ExternalLink, Link2, Copy, Flame, List } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { normalizeUrl } from "@/lib/url";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Topic, Bullet } from "./types";
-import { TagButton } from "./TagInput";
 import { StrongmanButton } from "./StrongmanButton";
 import BulletEditor from "./BulletEditor";
 import { useToast } from "@/hooks/use-toast";
@@ -17,22 +16,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 interface TopicCardProps {
   topic: Topic;
   date: string;
   onChange: (topic: Topic) => void;
   onDelete: () => void;
-  allTags?: string[];
 }
 
-const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardProps) => {
+const TopicCard = ({ topic, date, onChange, onDelete }: TopicCardProps) => {
   const { toast } = useToast();
   const isLinkType = topic.type === "link";
   const hasContent = topic.title.trim() || topic.links.length > 0 || topic.images.length > 0 || topic.url;
@@ -62,10 +54,6 @@ const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardP
 
   const handleEdit = () => {
     setIsEditing(true);
-  };
-
-  const handleTagsChange = (tags: string[]) => {
-    onChange({ ...topic, tags });
   };
 
   const handleBulletsChange = (bullets: Bullet[]) => {
@@ -295,29 +283,6 @@ const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardP
                 <Pencil className="h-3.5 w-3.5" />
               </Button>
             )}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-6 w-6 p-0"
-                >
-                  <MoreHorizontal className="h-3.5 w-3.5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem className="p-0">
-                  <div className="w-full" onClick={(e) => e.stopPropagation()}>
-                    <TagButton
-                      tags={topic.tags || []}
-                      onChange={handleTagsChange}
-                      allTags={allTags}
-                      minimal
-                    />
-                  </div>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
             <Button
               size="sm"
               variant="ghost"
