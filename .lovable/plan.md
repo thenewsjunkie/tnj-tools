@@ -1,141 +1,158 @@
 
-## Plan: Replace Internal Polls with Strawpoll.com Integration
+## Plan: Create "Latest Strawpoll" Dynamic Embed Page
 
 ### Overview
-Replace the existing internal polling system with Strawpoll.com integration. This will allow you to create polls directly on Strawpoll from the admin interface, automatically get embed codes, and leverage Strawpoll's robust voting features (IP-based duplicate detection, better UI, etc.).
+Create a special embed page at `/poll/latest` that automatically displays the Strawpoll embed for whichever poll is currently marked as "active" in your database. This way you can embed one URL on any website, and it will always show the current poll without needing to update the embed code.
 
 ---
 
-### 1. Add Strawpoll API Key Secret
+### 1. Update PollEmbed Page to Handle Strawpoll
 
-**Requirement:** You'll need to generate an API key from your Strawpoll account:
-1. Log into strawpoll.com
-2. Go to Account Settings → API
-3. Generate a new API key
+**File: `src/pages/PollEmbed.tsx`**
 
-The secret will be stored securely in Supabase and used by the Edge Function.
+When `id === 'latest'`, the page will:
+1. Query the database for the latest active poll
+2. Check if it has a `strawpoll_embed_url`
+3. If yes: render the Strawpoll embed in a full-page iframe
+4. If no: fall back to the internal polling UI (for legacy polls)
 
 ---
 
-### 2. Create Strawpoll Edge Function
+### 2. Update usePollData Hook
 
-**New File: `supabase/functions/strawpoll/index.ts`**
+**File: `src/components/polls/hooks/usePollData.tsx`**
 
-Create an edge function that handles:
-- **Create Poll**: POST to Strawpoll API with question and options
-- **Get Poll**: Fetch poll details and results
-- **Delete Poll**: Remove a poll from Strawpoll
+Modify the `latest-poll` query to also fetch:
+- `strawpoll_id`
+- `strawpoll_url`  
+- `strawpoll_embed_url`
 
-```text
-Endpoints:
-POST /strawpoll { action: "create", question, options[] }
-  → Returns { poll_id, embed_url, strawpoll_url }
+This data is needed to determine whether to show Strawpoll or internal poll.
 
-POST /strawpoll { action: "get", poll_id }
-  → Returns poll details with current votes
+---
 
-POST /strawpoll { action: "delete", poll_id }
-  → Deletes poll from Strawpoll
+### 3. Create StrawpollEmbed Component
+
+**New File: `src/components/polls/StrawpollEmbed.tsx`**
+
+A simple component that renders a full-page Strawpoll iframe:
+
+```tsx
+interface StrawpollEmbedProps {
+  embedUrl: string;
+}
+
+const StrawpollEmbed = ({ embedUrl }) => (
+  <iframe 
+    src={embedUrl}
+    style={{ 
+      width: '100%', 
+      height: '100%', 
+      border: 'none',
+      minHeight: '480px' 
+    }}
+    allowFullScreen
+  />
+);
 ```
 
 ---
 
-### 3. Database Changes
+### 4. Update PollEmbed.tsx Component
 
-**Modify `polls` table:**
+**File: `src/components/polls/PollEmbed.tsx`**
 
-```sql
-ALTER TABLE polls 
-ADD COLUMN strawpoll_id TEXT,
-ADD COLUMN strawpoll_url TEXT,
-ADD COLUMN strawpoll_embed_url TEXT;
+Add logic to check for Strawpoll data:
+
+```tsx
+// If poll has Strawpoll integration, show Strawpoll embed
+if (poll?.strawpoll_embed_url) {
+  return <StrawpollEmbed embedUrl={poll.strawpoll_embed_url} />;
+}
+
+// Otherwise, show internal poll UI (legacy)
+return <InternalPollUI poll={poll} ... />;
 ```
-
-This stores the Strawpoll references alongside your local poll data (so you can track which polls you've created and access their embed codes).
 
 ---
 
-### 4. Update ManagePolls UI
+### 5. Update ManagePolls "Copy Latest Poll Embed" Button
 
 **File: `src/pages/Admin/ManagePolls.tsx`**
 
-Changes:
-- Update "Create Poll" to call the Strawpoll edge function instead of inserting locally
-- Store the returned `strawpoll_id` and `strawpoll_embed_url` in your database
-- Update embed code generation to use Strawpoll's embed URL format
-- Add "View on Strawpoll" link button
+Update `handleCopyLatestPollEmbed` to:
+1. Check if the latest active poll has Strawpoll integration
+2. Generate appropriate embed code:
+   - **With Strawpoll**: Use `https://tnjtools.com/poll/latest` (wrapper page)
+   - Alternatively, use the direct Strawpoll embed URL
+
+The wrapper approach is better because:
+- Single URL that never changes
+- Automatically updates when you create a new poll
+- Works even if you switch back to internal polls
 
 ---
 
-### 5. Update PollDialog Component
+### 6. Add Types for Strawpoll Fields
 
-**File: `src/components/polls/PollDialog.tsx`**
+**File: `src/components/polls/types.ts`**
 
-Changes:
-- When saving a new poll, call the `strawpoll` edge function
-- On success, save the returned Strawpoll IDs to the local database
-- Show loading state during API call to Strawpoll
-- Handle errors from Strawpoll API (rate limits, validation, etc.)
-
----
-
-### 6. Update PollEmbedCode Component
-
-**File: `src/components/polls/PollEmbedCode.tsx`**
-
-Changes:
-- Use the stored `strawpoll_embed_url` for generating iframe code
-- Update embed format to match Strawpoll's pattern:
-```html
-<iframe src="https://strawpoll.com/embed/{poll_id}" 
-        style="width: 100%; height: 480px; border: 0;">
-</iframe>
+Update the `Poll` and `RawPoll` interfaces to include:
+```typescript
+strawpoll_id?: string | null;
+strawpoll_url?: string | null;
+strawpoll_embed_url?: string | null;
 ```
-
----
-
-### 7. Update PollList Component
-
-**File: `src/components/polls/PollList.tsx`**
-
-Changes:
-- Add "View on Strawpoll" button that opens the poll on strawpoll.com
-- Update vote counts display (optionally fetch from Strawpoll for real-time results)
-- Visual indicator showing the poll is hosted on Strawpoll
-
----
-
-### 8. Optional: Remove Chat Bot Voting Logic
-
-**Files:** 
-- `stream-chat-bot/src/bots/twitch.js`
-- `supabase/functions/youtube-bot/index.ts`
-
-If you want to fully switch to Strawpoll, remove the internal vote processing from chat bots since votes will now go through Strawpoll's system instead.
 
 ---
 
 ### Summary of Changes
 
-| Component | Change |
-|-----------|--------|
-| **Secret** | Add `STRAWPOLL_API_KEY` |
-| **Edge Function** | New `strawpoll` function for create/get/delete |
-| **Database** | Add `strawpoll_id`, `strawpoll_url`, `strawpoll_embed_url` columns |
-| **ManagePolls.tsx** | Integrate Strawpoll API calls |
-| **PollDialog.tsx** | Create polls on Strawpoll when saving |
-| **PollEmbedCode.tsx** | Use Strawpoll embed URLs |
-| **PollList.tsx** | Add Strawpoll links and indicators |
+| File | Change |
+|------|--------|
+| `types.ts` | Add Strawpoll fields to Poll interface |
+| `usePollData.tsx` | Fetch Strawpoll fields in queries |
+| `StrawpollEmbed.tsx` | New component for rendering Strawpoll iframe |
+| `PollEmbed.tsx` | Check for Strawpoll and render accordingly |
+| `PollEmbed.tsx` (page) | Handle Strawpoll rendering for `/poll/latest` |
+| `ManagePolls.tsx` | Update copy embed to explain the latest poll feature |
 
 ---
 
-### Strawpoll Features You'll Gain
+### How It Works
 
-| Feature | Description |
-|---------|-------------|
-| IP Duplication Check | Prevents same person voting twice |
-| CAPTCHA | Optional bot protection |
-| Better Analytics | Built-in results visualization |
-| Public Voting Page | Users can vote on strawpoll.com directly |
-| Mobile Optimized | Responsive voting interface |
+```text
+Website embeds: https://tnjtools.com/poll/latest
+                        ↓
+              PollEmbed page loads
+                        ↓
+         Fetches latest active poll from DB
+                        ↓
+    ┌───────────────────┴───────────────────┐
+    ↓                                       ↓
+Has strawpoll_embed_url?              No Strawpoll?
+    ↓                                       ↓
+Renders Strawpoll iframe            Shows internal poll UI
+(full voting functionality)          (legacy fallback)
+```
 
+---
+
+### Embed Code Result
+
+The "Copy Latest Poll Embed" button will provide:
+
+```html
+<iframe 
+  src="https://tnjtools.com/poll/latest" 
+  width="100%" 
+  height="500" 
+  style="border: 0; border-radius: 8px;" 
+  allowfullscreen>
+</iframe>
+```
+
+This single embed code:
+- Always shows the current active poll
+- Automatically uses Strawpoll when available
+- No need to update websites when creating new polls
