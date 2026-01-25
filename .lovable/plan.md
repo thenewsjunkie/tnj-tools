@@ -1,69 +1,66 @@
 
 
-## Plan: Fix Strawpoll Embed Extra Space Below Poll
+## Plan: Update Copy Embed Code Heights
 
 ### Problem
-The Strawpoll embed has extra blank space below the poll content because:
-1. `PollEmbedPage.tsx` uses `min-h-screen` which forces full viewport height
-2. `StrawpollEmbed.tsx` uses `min-h-[480px]` which may be larger than the actual poll content
-
-### Solution
-Remove the forced minimum heights and let the Strawpoll iframe size naturally to its content.
+The "Copy Latest Embed" and individual poll embed code still use the old fixed heights (480px, 500px), which doesn't match the updated components that now use `minHeight: 400px` for natural content sizing.
 
 ---
 
-### Changes Required
+### Files to Update
 
-**File 1: `src/pages/PollEmbed.tsx`**
+**1. `src/components/admin/AdminPolls.tsx`**
 
-Remove `min-h-screen` from the Strawpoll embed wrapper (lines 57-61):
-
+Update line 71 (handleCopyLatestEmbed):
 ```tsx
-// Change from:
-<div className="min-h-screen w-full">
-  <StrawpollEmbed embedUrl={latestPollData.strawpoll_embed_url} />
-</div>
+// From:
+const embedCode = `<iframe src="https://tnjtools.com/poll/latest" width="100%" height="500" style="border: 0; border-radius: 8px;" allowfullscreen></iframe>`;
 
 // To:
-<div className="w-full">
-  <StrawpollEmbed embedUrl={latestPollData.strawpoll_embed_url} />
-</div>
+const embedCode = `<iframe src="https://tnjtools.com/poll/latest" width="100%" height="400" style="border: 0; border-radius: 8px;" allowfullscreen></iframe>`;
 ```
 
-**File 2: `src/components/polls/StrawpollEmbed.tsx`**
-
-Remove the forced min-height and let iframe auto-size:
-
+Update lines 77-78 (handleCopyPollEmbed):
 ```tsx
-// Change from:
-<div className="w-full h-full min-h-[480px] flex items-center justify-center">
-  <iframe 
-    src={embedUrl}
-    className="w-full h-full min-h-[480px]"
-    style={{ border: 'none' }}
-    ...
-  />
-</div>
+// From:
+? `<iframe src="${poll.strawpoll_embed_url}" width="100%" height="480" ...
 
 // To:
-<div className="w-full">
-  <iframe 
-    src={embedUrl}
-    className="w-full"
-    style={{ border: 'none', minHeight: '400px' }}
-    ...
-  />
-</div>
+? `<iframe src="${poll.strawpoll_embed_url}" width="100%" height="400" ...
 ```
 
-The Strawpoll embed will auto-resize based on its content, eliminating the blank space.
+**2. `src/components/polls/PollEmbedCode.tsx`**
+
+Update line 32 (strawpollIframeCode):
+```tsx
+// From:
+height="480"
+
+// To:
+height="400"
+```
+
+**3. `src/pages/Admin/ManagePolls.tsx`**
+
+Update line 76 (handleCopyLatestPollEmbed):
+```tsx
+// From:
+height="450"
+
+// To:
+height="400"
+```
 
 ---
 
 ### Summary
 
-| File | Change |
-|------|--------|
-| `src/pages/PollEmbed.tsx` | Remove `min-h-screen` from Strawpoll wrapper div |
-| `src/components/polls/StrawpollEmbed.tsx` | Remove flex centering and adjust min-height styling |
+| File | Line | Change |
+|------|------|--------|
+| `AdminPolls.tsx` | 71 | `height="500"` → `height="400"` |
+| `AdminPolls.tsx` | 78 | `height="480"` → `height="400"` |
+| `PollEmbedCode.tsx` | 32 | `height="480"` → `height="400"` |
+| `ManagePolls.tsx` | 76 | `height="450"` → `height="400"` |
+
+This ensures all copied embed codes use consistent 400px height matching the updated components.
 
