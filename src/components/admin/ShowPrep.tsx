@@ -2,10 +2,11 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { format, isFriday as checkIsFriday, isMonday as checkIsMonday, isTuesday as checkIsTuesday, addDays, isToday } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2, ChevronLeft, ChevronRight, Loader2, ChevronDown, ChevronUp, Printer, Video, StickyNote } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight, Loader2, Printer, Video } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import ShowPrepNotes from "./show-prep/ShowPrepNotes";
+import Notepad from "./show-prep/Notepad";
 import { generatePrintDocument } from "./show-prep/PrintShowPrep";
 import { getAllScheduledSegments, ScheduledSegment } from "./show-prep/scheduledSegments";
 import { Topic } from "./show-prep/types";
@@ -53,66 +54,6 @@ const AutoSizeInput = ({ value, onChange, placeholder, disabled }: AutoSizeInput
         className="h-8 border-0 border-b-2 border-muted-foreground rounded-none bg-transparent px-1 font-medium text-base focus:outline-none focus:border-primary placeholder:text-muted-foreground/50 disabled:opacity-50"
       />
     </span>
-  );
-};
-
-interface LinkableNotepadProps {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-}
-
-const LinkableNotepad = ({ value, onChange, placeholder }: LinkableNotepadProps) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-
-  const renderWithLinks = (text: string) => {
-    if (!text) return null;
-    
-    const parts = text.split(urlRegex);
-    return parts.map((part, i) => {
-      if (part.match(urlRegex)) {
-        return (
-          <a 
-            key={i}
-            href={part}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:underline"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {part}
-          </a>
-        );
-      }
-      return <span key={i}>{part}</span>;
-    });
-  };
-
-  if (isEditing) {
-    return (
-      <textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onBlur={() => setIsEditing(false)}
-        placeholder={placeholder}
-        autoFocus
-        className="w-full h-full min-h-[400px] p-4 text-sm leading-relaxed bg-background text-foreground resize-none border-0 focus:outline-none focus:ring-0"
-        style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
-      />
-    );
-  }
-
-  return (
-    <div
-      onClick={() => setIsEditing(true)}
-      className="w-full min-h-[400px] p-4 text-sm leading-relaxed bg-background text-foreground cursor-text whitespace-pre-wrap break-words"
-      style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
-    >
-      {value ? renderWithLinks(value) : (
-        <span className="text-muted-foreground">{placeholder}</span>
-      )}
-    </div>
   );
 };
 
@@ -506,33 +447,12 @@ const ShowPrep = () => {
       </div>
 
       {/* Notepad Section */}
-      <div className="w-full border-t border-border pt-4">
-        <button
-          onClick={() => setIsNotepadOpen(!isNotepadOpen)}
-          className="w-full flex items-center justify-between px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors"
-        >
-          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-            <StickyNote className="h-4 w-4" />
-            <span>Notepad</span>
-            {notepad.trim() && (
-              <span className="text-xs text-muted-foreground font-normal">
-                ({notepad.trim().split(/\s+/).length} words)
-              </span>
-            )}
-          </div>
-          {isNotepadOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
-        </button>
-        
-        {isNotepadOpen && (
-          <div className="border border-t-0 border-border bg-background shadow-sm">
-            <LinkableNotepad
-              value={notepad}
-              onChange={setNotepad}
-              placeholder="Start typing your notes..."
-            />
-          </div>
-        )}
-      </div>
+      <Notepad
+        value={notepad}
+        onChange={setNotepad}
+        isOpen={isNotepadOpen}
+        onToggle={() => setIsNotepadOpen(!isNotepadOpen)}
+      />
     </div>
   );
 };
