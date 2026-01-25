@@ -21,19 +21,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import type { Editor } from "@tiptap/react";
 
 interface NotepadToolbarProps {
-  onBold: () => void;
-  onItalic: () => void;
-  onUnderline: () => void;
-  onBulletList: () => void;
-  onNumberedList: () => void;
+  editor: Editor | null;
   onFontSizeUp: () => void;
   onFontSizeDown: () => void;
-  onUndo: () => void;
-  onRedo: () => void;
   onFindReplace: () => void;
-  onSelectAll: () => void;
   onCopyAll: () => void;
   onPrint: () => void;
   fontSize: 'sm' | 'base' | 'lg';
@@ -44,19 +38,24 @@ const ToolbarButton = ({
   icon: Icon,
   label,
   shortcut,
+  isActive = false,
+  disabled = false,
 }: {
   onClick: () => void;
   icon: React.ElementType;
   label: string;
   shortcut?: string;
+  isActive?: boolean;
+  disabled?: boolean;
 }) => (
   <TooltipProvider delayDuration={300}>
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
           size="sm"
-          variant="ghost"
+          variant={isActive ? "secondary" : "ghost"}
           onClick={onClick}
+          disabled={disabled}
           className="h-8 w-8 p-0"
         >
           <Icon className="h-4 w-4" />
@@ -71,17 +70,10 @@ const ToolbarButton = ({
 );
 
 const NotepadToolbar = ({
-  onBold,
-  onItalic,
-  onUnderline,
-  onBulletList,
-  onNumberedList,
+  editor,
   onFontSizeUp,
   onFontSizeDown,
-  onUndo,
-  onRedo,
   onFindReplace,
-  onSelectAll,
   onCopyAll,
   onPrint,
   fontSize,
@@ -92,21 +84,53 @@ const NotepadToolbar = ({
     lg: 'Large',
   };
 
+  if (!editor) {
+    return null;
+  }
+
   return (
     <div className="flex items-center gap-1 flex-wrap p-2 border-b border-border bg-muted/30">
       {/* Text Formatting */}
       <div className="flex items-center gap-0.5">
-        <ToolbarButton onClick={onBold} icon={Bold} label="Bold" shortcut="Ctrl+B" />
-        <ToolbarButton onClick={onItalic} icon={Italic} label="Italic" shortcut="Ctrl+I" />
-        <ToolbarButton onClick={onUnderline} icon={Underline} label="Underline" shortcut="Ctrl+U" />
+        <ToolbarButton 
+          onClick={() => editor.chain().focus().toggleBold().run()} 
+          icon={Bold} 
+          label="Bold" 
+          shortcut="Ctrl+B"
+          isActive={editor.isActive('bold')}
+        />
+        <ToolbarButton 
+          onClick={() => editor.chain().focus().toggleItalic().run()} 
+          icon={Italic} 
+          label="Italic" 
+          shortcut="Ctrl+I"
+          isActive={editor.isActive('italic')}
+        />
+        <ToolbarButton 
+          onClick={() => editor.chain().focus().toggleUnderline().run()} 
+          icon={Underline} 
+          label="Underline" 
+          shortcut="Ctrl+U"
+          isActive={editor.isActive('underline')}
+        />
       </div>
 
       <Separator orientation="vertical" className="h-6 mx-1" />
 
       {/* Lists */}
       <div className="flex items-center gap-0.5">
-        <ToolbarButton onClick={onBulletList} icon={List} label="Bullet List" />
-        <ToolbarButton onClick={onNumberedList} icon={ListOrdered} label="Numbered List" />
+        <ToolbarButton 
+          onClick={() => editor.chain().focus().toggleBulletList().run()} 
+          icon={List} 
+          label="Bullet List"
+          isActive={editor.isActive('bulletList')}
+        />
+        <ToolbarButton 
+          onClick={() => editor.chain().focus().toggleOrderedList().run()} 
+          icon={ListOrdered} 
+          label="Numbered List"
+          isActive={editor.isActive('orderedList')}
+        />
       </div>
 
       <Separator orientation="vertical" className="h-6 mx-1" />
@@ -124,8 +148,20 @@ const NotepadToolbar = ({
 
       {/* Undo/Redo */}
       <div className="flex items-center gap-0.5">
-        <ToolbarButton onClick={onUndo} icon={Undo2} label="Undo" shortcut="Ctrl+Z" />
-        <ToolbarButton onClick={onRedo} icon={Redo2} label="Redo" shortcut="Ctrl+Shift+Z" />
+        <ToolbarButton 
+          onClick={() => editor.chain().focus().undo().run()} 
+          icon={Undo2} 
+          label="Undo" 
+          shortcut="Ctrl+Z"
+          disabled={!editor.can().undo()}
+        />
+        <ToolbarButton 
+          onClick={() => editor.chain().focus().redo().run()} 
+          icon={Redo2} 
+          label="Redo" 
+          shortcut="Ctrl+Shift+Z"
+          disabled={!editor.can().redo()}
+        />
       </div>
 
       <Separator orientation="vertical" className="h-6 mx-1" />
@@ -137,7 +173,12 @@ const NotepadToolbar = ({
 
       {/* Actions */}
       <div className="flex items-center gap-0.5">
-        <ToolbarButton onClick={onSelectAll} icon={MousePointer2} label="Select All" shortcut="Ctrl+A" />
+        <ToolbarButton 
+          onClick={() => editor.commands.selectAll()} 
+          icon={MousePointer2} 
+          label="Select All" 
+          shortcut="Ctrl+A" 
+        />
         <ToolbarButton onClick={onCopyAll} icon={ClipboardCopy} label="Copy All" />
         <ToolbarButton onClick={onPrint} icon={Printer} label="Print" />
       </div>
