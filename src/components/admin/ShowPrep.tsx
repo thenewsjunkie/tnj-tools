@@ -2,8 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { format, isFriday as checkIsFriday, isMonday as checkIsMonday, isTuesday as checkIsTuesday, addDays, isToday } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2, ChevronLeft, ChevronRight, Loader2, ChevronDown, ChevronUp, Printer, Video } from "lucide-react";
-import Hopper from "./show-prep/Hopper";
+import { Trash2, ChevronLeft, ChevronRight, Loader2, ChevronDown, ChevronUp, Printer, Video, StickyNote } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import ShowPrepNotes from "./show-prep/ShowPrepNotes";
@@ -72,9 +71,10 @@ const ShowPrep = () => {
   const [lastMinuteFrom, setLastMinuteFrom] = useState("");
   const [rateMyBlank, setRateMyBlank] = useState("");
   const [potentialVideos, setPotentialVideos] = useState("");
+  const [notepad, setNotepad] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isHopperOpen, setIsHopperOpen] = useState(false);
+  const [isNotepadOpen, setIsNotepadOpen] = useState(false);
   const hasLoadedRef = useRef(false);
   const { toast } = useToast();
 
@@ -89,10 +89,8 @@ const ShowPrep = () => {
   const handlePrint = async () => {
     try {
       // Fetch all required data for printing
-      const [notesResult, hopperItemsResult, hopperGroupsResult, segmentsResult] = await Promise.all([
+      const [notesResult, segmentsResult] = await Promise.all([
         supabase.from("show_prep_notes").select("topics").eq("date", dateKey).maybeSingle(),
-        supabase.from("hopper_items").select("id, url, title, group_id, is_starred").eq("date", dateKey).order("display_order"),
-        supabase.from("hopper_groups").select("id, name").eq("date", dateKey).order("display_order"),
         supabase.from("scheduled_segments").select("*").eq("is_active", true),
       ]);
 
@@ -121,8 +119,6 @@ const ShowPrep = () => {
         potentialVideos,
         localTopics,
         scheduledSegments: daySegments,
-        hopperItems: hopperItemsResult.data || [],
-        hopperGroups: hopperGroupsResult.data || [],
       });
     } catch (error) {
       console.error("Error preparing print data:", error);
@@ -141,7 +137,7 @@ const ShowPrep = () => {
     try {
       const { data, error } = await supabase
         .from("show_prep_notes")
-        .select("from_topic, to_topic, and_topic, last_minute_from, rate_my_blank, potential_videos")
+        .select("from_topic, to_topic, and_topic, last_minute_from, rate_my_blank, potential_videos, notepad")
         .eq("date", dateKey)
         .maybeSingle();
 
@@ -156,6 +152,7 @@ const ShowPrep = () => {
         setLastMinuteFrom(data.last_minute_from || "");
         setRateMyBlank(data.rate_my_blank || "");
         setPotentialVideos(data.potential_videos || "");
+        setNotepad(data.notepad || "");
       } else {
         // Check localStorage for migration
         const localTopicsKey = `show-prep-topics-${dateKey}`;
@@ -188,6 +185,7 @@ const ShowPrep = () => {
           setLastMinuteFrom("");
           setRateMyBlank("");
           setPotentialVideos("");
+          setNotepad("");
         }
       }
     } catch (error) {
@@ -230,6 +228,7 @@ const ShowPrep = () => {
           last_minute_from: lastMinuteFrom || null,
           rate_my_blank: rateMyBlank || null,
           potential_videos: potentialVideos || null,
+          notepad: notepad || null,
         }, { onConflict: "date" });
       } catch (error) {
         console.error("Error saving topics:", error);
@@ -239,7 +238,7 @@ const ShowPrep = () => {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [topics, lastMinuteFrom, rateMyBlank, potentialVideos, dateKey, isLoading]);
+  }, [topics, lastMinuteFrom, rateMyBlank, potentialVideos, notepad, dateKey, isLoading]);
 
   const navigateDay = (offset: number) => {
     setSelectedDate(prev => addDays(prev, offset));
@@ -446,20 +445,31 @@ const ShowPrep = () => {
         </div>
       </div>
 
-      {/* The Hopper Section */}
+      {/* Notepad Section */}
       <div className="w-full border-t border-border pt-4">
         <Button
           variant="outline"
-          onClick={() => setIsHopperOpen(!isHopperOpen)}
+          onClick={() => setIsNotepadOpen(!isNotepadOpen)}
           className="w-full justify-between"
         >
-          <span>{isHopperOpen ? "Close Hopper" : "Open Hopper"}</span>
-          {isHopperOpen ? <ChevronUp className="h-4 w-4 ml-2" /> : <ChevronDown className="h-4 w-4 ml-2" />}
+          <span className="flex items-center gap-2">
+            <StickyNote className="h-4 w-4" />
+            {isNotepadOpen ? "Close Notepad" : "Open Notepad"}
+          </span>
+          {isNotepadOpen ? <ChevronUp className="h-4 w-4 ml-2" /> : <ChevronDown className="h-4 w-4 ml-2" />}
         </Button>
         
-        {isHopperOpen && (
-          <div className="mt-4 p-4 bg-muted/50 rounded-lg min-h-[200px]">
-            <Hopper selectedDate={selectedDate} />
+        {isNotepadOpen && (
+          <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+            <Textarea
+              value={notepad}
+              onChange={(e) => setNotepad(e.target.value)}
+              placeholder="Quick notes for the show..."
+              className="min-h-[300px] resize-y font-mono text-sm bg-background"
+            />
+            <div className="text-xs text-muted-foreground text-right mt-2">
+              {notepad.trim() ? notepad.trim().split(/\s+/).length : 0} words
+            </div>
           </div>
         )}
       </div>

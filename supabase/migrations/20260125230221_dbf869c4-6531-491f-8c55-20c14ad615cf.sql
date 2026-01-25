@@ -1,0 +1,1 @@
+ALTER TABLE show_prep_notes ADD COLUMN IF NOT EXISTS notepad TEXT DEFAULT '';

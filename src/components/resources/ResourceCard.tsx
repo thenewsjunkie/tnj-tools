@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Pencil, Trash2, Check, X, Image as ImageIcon, XCircle, Inbox } from "lucide-react";
+import { Pencil, Trash2, Check, X, Image as ImageIcon, XCircle } from "lucide-react";
 
 interface ResourceCardProps {
   id: string;
@@ -17,7 +17,6 @@ interface ResourceCardProps {
   onDelete: () => void;
   getThumbnailUrl: (url: string) => string;
   onRemoveThumbnail?: () => void;
-  onAddToHopper?: () => void;
 }
 
 export const ResourceCard = ({
@@ -35,7 +34,6 @@ export const ResourceCard = ({
   onDelete,
   getThumbnailUrl,
   onRemoveThumbnail,
-  onAddToHopper,
 }: ResourceCardProps) => {
   const isImage = type === "image";
   
@@ -134,17 +132,6 @@ export const ResourceCard = ({
 
       {/* Actions */}
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        {onAddToHopper && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-muted-foreground hover:text-primary"
-            onClick={onAddToHopper}
-            title="Add to Hopper"
-          >
-            <Inbox className="h-4 w-4" />
-          </Button>
-        )}
         <Button
           variant="ghost"
           size="icon"
