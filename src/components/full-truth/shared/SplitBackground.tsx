@@ -13,7 +13,15 @@ const defaultTheme: ThemeConfig = {
 };
 
 const SplitBackground = ({ theme = defaultTheme, className }: SplitBackgroundProps) => {
-  const { leftColor, rightColor, dividerColor, leftGradient, rightGradient } = theme;
+  const { leftColor, rightColor, dividerColor, leftGradient, rightGradient, leftImageUrl, rightImageUrl } = theme;
+  
+  // Helper to get background style with priority: image > gradient > color
+  const getBackgroundStyle = (imageUrl?: string, gradient?: string, color?: string) => {
+    if (imageUrl) {
+      return `url(${imageUrl}) center/cover no-repeat`;
+    }
+    return gradient || color;
+  };
   
   return (
     <div className={cn("absolute inset-0 flex", className)}>
@@ -21,17 +29,19 @@ const SplitBackground = ({ theme = defaultTheme, className }: SplitBackgroundPro
       <div 
         className="flex-1 relative"
         style={{ 
-          background: leftGradient || leftColor,
+          background: getBackgroundStyle(leftImageUrl, leftGradient, leftColor),
         }}
       >
-        {/* Subtle pattern overlay */}
-        <div 
-          className="absolute inset-0 opacity-10"
-          style={{
-            backgroundImage: `radial-gradient(circle at 25px 25px, white 2%, transparent 0%)`,
-            backgroundSize: '50px 50px',
-          }}
-        />
+        {/* Subtle pattern overlay - only show when no image */}
+        {!leftImageUrl && (
+          <div 
+            className="absolute inset-0 opacity-10"
+            style={{
+              backgroundImage: `radial-gradient(circle at 25px 25px, white 2%, transparent 0%)`,
+              backgroundSize: '50px 50px',
+            }}
+          />
+        )}
       </div>
       
       {/* Center divider */}
@@ -55,17 +65,19 @@ const SplitBackground = ({ theme = defaultTheme, className }: SplitBackgroundPro
       <div 
         className="flex-1 relative"
         style={{ 
-          background: rightGradient || rightColor,
+          background: getBackgroundStyle(rightImageUrl, rightGradient, rightColor),
         }}
       >
-        {/* Subtle pattern overlay */}
-        <div 
-          className="absolute inset-0 opacity-10"
-          style={{
-            backgroundImage: `radial-gradient(circle at 25px 25px, white 2%, transparent 0%)`,
-            backgroundSize: '50px 50px',
-          }}
-        />
+        {/* Subtle pattern overlay - only show when no image */}
+        {!rightImageUrl && (
+          <div 
+            className="absolute inset-0 opacity-10"
+            style={{
+              backgroundImage: `radial-gradient(circle at 25px 25px, white 2%, transparent 0%)`,
+              backgroundSize: '50px 50px',
+            }}
+          />
+        )}
       </div>
     </div>
   );

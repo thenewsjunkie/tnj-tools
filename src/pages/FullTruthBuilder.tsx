@@ -7,6 +7,7 @@ import { BuilderToolbar } from "@/components/full-truth/builder/BuilderToolbar";
 import { NodePalette } from "@/components/full-truth/builder/NodePalette";
 import { NodeInspector } from "@/components/full-truth/builder/NodeInspector";
 import { TapestryCanvas } from "@/components/full-truth/builder/TapestryCanvas";
+import { ThemeSettingsDialog } from "@/components/full-truth/builder/ThemeSettingsDialog";
 
 import { useTapestry, useCreateTapestry, useUpdateTapestry } from "@/hooks/useTapestry";
 import { useTapestryNodes } from "@/hooks/useTapestryNodes";
@@ -47,6 +48,7 @@ const FullTruthBuilder = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [themeDialogOpen, setThemeDialogOpen] = useState(false);
 
   // Node operations hook
   const nodeOps = useTapestryNodes(tapestryId || '');
@@ -216,7 +218,15 @@ const FullTruthBuilder = () => {
         isPublishing={updateTapestry.isPending}
         onSave={handleSave}
         onPublish={handlePublish}
+        onOpenThemeSettings={() => setThemeDialogOpen(true)}
         slug={slug}
+      />
+
+      <ThemeSettingsDialog
+        open={themeDialogOpen}
+        onOpenChange={setThemeDialogOpen}
+        themeConfig={themeConfig}
+        onThemeChange={setThemeConfig}
       />
 
       <div className="flex-1 flex overflow-hidden">
