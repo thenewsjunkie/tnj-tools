@@ -59,7 +59,7 @@ const PollDialog: React.FC<PollDialogProps> = ({ open, onOpenChange, poll }) => 
         .from("polls")
         .insert([{ 
           question, 
-          status: "draft",
+          status: "active",
           strawpoll_id: strawpollData.strawpoll_id,
           strawpoll_url: strawpollData.strawpoll_url,
           strawpoll_embed_url: strawpollData.strawpoll_embed_url,
@@ -91,8 +91,8 @@ const PollDialog: React.FC<PollDialogProps> = ({ open, onOpenChange, poll }) => 
       setIsCreatingOnStrawpoll(false);
       queryClient.invalidateQueries({ queryKey: ["polls"] });
       toast({
-        title: "Poll created on Strawpoll!",
-        description: "The poll has been created successfully on Strawpoll.com",
+        title: "Poll created and started!",
+        description: "The poll is now active on Strawpoll.com. Any previous active poll has been ended.",
       });
       onOpenChange(false);
     },
