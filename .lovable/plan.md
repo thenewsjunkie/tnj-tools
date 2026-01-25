@@ -1,162 +1,145 @@
 
-## Plan: Replace Hopper Module with Simple Notepad
 
-### Overview
-Remove the entire Hopper link-collection feature and replace it with a simple notepad that auto-saves to the database, similar to onlinenotepad.org.
+## Plan: Turn Links into Hyperlinks in Notepad
 
 ### What You'll Get
-A clean, minimalist notepad section that:
-- Replaces the "Open Hopper" / "Close Hopper" button
-- Auto-saves every 2 seconds (like the rest of Show Prep)
-- Has a word counter in the corner
-- Persists per-date (each day has its own notes)
-- Shows clearly in the collapsible panel
+URLs typed in the notepad will automatically become clickable links. You'll still be able to edit the text normally, but when viewing, any URLs will be highlighted and clickable.
+
+### Approach: Hybrid View/Edit Mode
+
+Since a standard textarea can't render clickable links, we'll create a hybrid component that:
+- Shows an **editable textarea** when you're typing/editing
+- Shows a **rendered view with clickable links** when you're not focused on it
 
 ```text
-Before (Hopper):
-┌─────────────────────────────────────────────┐
-│ [     Open Hopper                      ▼]   │
-└─────────────────────────────────────────────┘
-   (Expandable link collection system)
+When editing (textarea):
+┌────────────────────────────────────────┐
+│ Check out https://example.com for more │
+│ Also see https://google.com            │
+│                                    |   │  ← cursor visible
+└────────────────────────────────────────┘
 
-After (Notepad):
-┌─────────────────────────────────────────────┐
-│ [     Open Notepad                     ▼]   │
-├─────────────────────────────────────────────┤
-│                                             │
-│   (Large textarea for quick notes)          │
-│                                             │
-│                              42 words       │
-└─────────────────────────────────────────────┘
+When viewing (rendered):
+┌────────────────────────────────────────┐
+│ Check out https://example.com for more │
+│ Also see https://google.com            │
+│                                        │  ← links are blue & clickable
+└────────────────────────────────────────┘
 ```
 
 ---
 
-### Files to Delete
-
-| File | Reason |
-|------|--------|
-| `src/components/admin/show-prep/Hopper.tsx` | Core Hopper component (1,462 lines) |
-| `src/components/admin/show-prep/CreateTopicDialog.tsx` | Only used by Hopper |
-| `src/hooks/useAddToHopper.ts` | Hook for adding to Hopper |
-
----
-
-### Files to Modify
+### File to Modify
 
 | File | Change |
 |------|--------|
-| `src/components/admin/ShowPrep.tsx` | Replace Hopper with Notepad section |
-| `src/components/admin/show-prep/PrintShowPrep.tsx` | Remove Hopper-related interfaces and props |
-| `src/components/resources/ResourceCard.tsx` | Remove "Add to Hopper" button |
-| `src/components/resources/SortableResourceCard.tsx` | Remove `onAddToHopper` prop |
-
----
-
-### Database Changes
-
-Add a `notepad` column to the existing `show_prep_notes` table:
-
-```sql
-ALTER TABLE show_prep_notes 
-ADD COLUMN notepad TEXT DEFAULT '';
-```
+| `src/components/admin/ShowPrep.tsx` | Replace Textarea with hybrid LinkableNotepad component |
 
 ---
 
 ### Technical Implementation
 
-**1. ShowPrep.tsx Changes**
-
-Replace Hopper section with a simple collapsible notepad:
+**1. Create a LinkableNotepad component within ShowPrep.tsx**
 
 ```typescript
-// State changes
-const [isNotepadOpen, setIsNotepadOpen] = useState(false);
-const [notepad, setNotepad] = useState("");
-
-// In loadData, add notepad loading:
-setNotepad(data.notepad || "");
-
-// In the save effect, add notepad:
-notepad: notepad || null,
-
-// Replace the Hopper JSX section:
-<div className="w-full border-t border-border pt-4">
-  <Button
-    variant="outline"
-    onClick={() => setIsNotepadOpen(!isNotepadOpen)}
-    className="w-full justify-between"
-  >
-    <span>{isNotepadOpen ? "Close Notepad" : "Open Notepad"}</span>
-    {isNotepadOpen ? <ChevronUp /> : <ChevronDown />}
-  </Button>
-  
-  {isNotepadOpen && (
-    <div className="mt-4 p-4 bg-muted/50 rounded-lg">
-      <Textarea
-        value={notepad}
-        onChange={(e) => setNotepad(e.target.value)}
-        placeholder="Quick notes..."
-        className="min-h-[200px] resize-y"
-      />
-      <div className="text-xs text-muted-foreground text-right mt-2">
-        {notepad.trim().split(/\s+/).filter(w => w).length} words
-      </div>
-    </div>
-  )}
-</div>
-```
-
-**2. PrintShowPrep.tsx Cleanup**
-
-Remove the Hopper interfaces and unused props:
-
-```typescript
-// Remove:
-interface HopperItem { ... }
-interface HopperGroup { ... }
-
-// Update PrintData:
-interface PrintData {
-  selectedDate: Date;
-  topics: { fromTopic: string; toTopic: string; andTopic: string };
-  lastMinuteFrom: string;
-  rateMyBlank: string;
-  potentialVideos: string;
-  localTopics: Topic[];
-  scheduledSegments: ScheduledSegment[];
-  // hopperItems removed
-  // hopperGroups removed
+interface LinkableNotepadProps {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
 }
+
+const LinkableNotepad = ({ value, onChange, placeholder }: LinkableNotepadProps) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // URL regex pattern
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+
+  // Render text with clickable links
+  const renderWithLinks = (text: string) => {
+    if (!text) return null;
+    
+    const parts = text.split(urlRegex);
+    return parts.map((part, i) => {
+      if (part.match(urlRegex)) {
+        return (
+          <a 
+            key={i}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-500 hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {part}
+          </a>
+        );
+      }
+      return <span key={i}>{part}</span>;
+    });
+  };
+
+  if (isEditing) {
+    return (
+      <Textarea
+        ref={textareaRef}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={() => setIsEditing(false)}
+        placeholder={placeholder}
+        className="min-h-[300px] resize-y font-mono text-sm bg-background"
+        autoFocus
+      />
+    );
+  }
+
+  return (
+    <div
+      onClick={() => setIsEditing(true)}
+      className="min-h-[300px] p-3 font-mono text-sm bg-background border rounded-md 
+                 cursor-text whitespace-pre-wrap break-words"
+    >
+      {value ? renderWithLinks(value) : (
+        <span className="text-muted-foreground">{placeholder}</span>
+      )}
+    </div>
+  );
+};
 ```
 
-**3. ResourceCard.tsx Cleanup**
-
-Remove the Inbox icon and "Add to Hopper" button:
+**2. Replace the Textarea in the Notepad section**
 
 ```typescript
-// Remove from interface:
-onAddToHopper?: () => void;
-
-// Remove the JSX button for adding to hopper
+{isNotepadOpen && (
+  <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+    <LinkableNotepad
+      value={notepad}
+      onChange={setNotepad}
+      placeholder="Quick notes for the show..."
+    />
+    <div className="text-xs text-muted-foreground text-right mt-2">
+      {notepad.trim() ? notepad.trim().split(/\s+/).length : 0} words
+    </div>
+  </div>
+)}
 ```
 
-**4. SortableResourceCard.tsx Cleanup**
+---
 
-Remove the `onAddToHopper` prop from the interface and component.
+### User Experience
+
+1. Click on the notepad area to start editing (shows textarea)
+2. Type your notes, including URLs like `https://example.com`
+3. Click outside the notepad to stop editing
+4. URLs become blue, clickable links that open in a new tab
+5. Click anywhere on the notepad to edit again
 
 ---
 
-### Migration Note
+### Edge Cases Handled
 
-The Hopper database tables (`hopper_items`, `hopper_groups`) will remain in the database - they won't be deleted. This is intentional:
-- No data loss
-- Tables can be dropped manually later if desired via Supabase dashboard
-- Keeps the migration simple and safe
+- **Empty notepad**: Shows placeholder text
+- **Link clicks**: Prevents accidentally entering edit mode when clicking a link
+- **Preserves formatting**: Whitespace and line breaks are preserved in view mode
+- **Auto-focus**: When entering edit mode, the textarea is auto-focused
 
----
-
-### Result
-
-The Show Prep section will have a clean, simple notepad at the bottom for jotting down quick notes during the show. Each day gets its own notepad content that auto-saves with the rest of the show prep data.
