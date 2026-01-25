@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { Settings, Github, Network } from "lucide-react";
+import { Settings, Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const AdminHeader = () => {
@@ -13,13 +13,6 @@ const AdminHeader = () => {
         ← Home
       </Link>
       <div className="flex items-center gap-4">
-        <Link
-          to="/full-truth"
-          className="flex items-center gap-2 text-foreground hover:text-primary transition-colors"
-          title="Full Truth"
-        >
-          <Network className="h-5 w-5" />
-        </Link>
         <a
           href="https://github.com/thenewsjunkie/tnj-tools"
           target="_blank"
