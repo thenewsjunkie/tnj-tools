@@ -37,6 +37,9 @@ const TopicResources = lazy(() => import("@/pages/TopicResources"));
 const TopicArchive = lazy(() => import("@/pages/TopicArchive"));
 const LowerThirdGenerator = lazy(() => import("@/pages/LowerThirdGenerator"));
 const InsertGenerator = lazy(() => import("@/pages/InsertGenerator"));
+const FullTruth = lazy(() => import("@/pages/FullTruth"));
+const FullTruthBuilder = lazy(() => import("@/pages/FullTruthBuilder"));
+const FullTruthViewer = lazy(() => import("@/pages/FullTruthViewer"));
 
 export const router = createBrowserRouter([
   {
@@ -194,6 +197,22 @@ export const router = createBrowserRouter([
       {
         path: "admin/topic-archive",
         element: <AdminRoute><TopicArchive /></AdminRoute>,
+      },
+      {
+        path: "full-truth",
+        element: <FullTruth />,
+      },
+      {
+        path: "full-truth/new",
+        element: <AdminRoute><FullTruthBuilder /></AdminRoute>,
+      },
+      {
+        path: "full-truth/edit/:id",
+        element: <AdminRoute><FullTruthBuilder /></AdminRoute>,
+      },
+      {
+        path: "full-truth/view/:slug",
+        element: <FullTruthViewer />,
       },
     ]
   }
