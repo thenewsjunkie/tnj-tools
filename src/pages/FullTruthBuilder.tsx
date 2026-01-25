@@ -117,7 +117,12 @@ const FullTruthBuilder = () => {
   }, [setNodes]);
 
   // Update node data
-  const handleUpdateNode = useCallback((nodeId: string, data: Partial<CharacterNodeData | PointNodeData>, side?: TapestryNodeSide) => {
+  const handleUpdateNode = useCallback((
+    nodeId: string, 
+    data: Partial<CharacterNodeData | PointNodeData>, 
+    side?: TapestryNodeSide,
+    scale?: number
+  ) => {
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id === nodeId) {
@@ -127,6 +132,7 @@ const FullTruthBuilder = () => {
               ...node.data,
               ...data,
               ...(side !== undefined ? { side } : {}),
+              ...(scale !== undefined ? { scale } : {}),
             },
           };
         }
@@ -138,7 +144,12 @@ const FullTruthBuilder = () => {
     if (selectedNode?.id === nodeId) {
       setSelectedNode((prev) => prev ? {
         ...prev,
-        data: { ...prev.data, ...data, ...(side !== undefined ? { side } : {}) },
+        data: { 
+          ...prev.data, 
+          ...data, 
+          ...(side !== undefined ? { side } : {}),
+          ...(scale !== undefined ? { scale } : {}),
+        },
       } : null);
     }
   }, [setNodes, selectedNode]);
