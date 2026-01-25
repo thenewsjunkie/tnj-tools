@@ -1,57 +1,102 @@
 
 
-## Plan: Fix Full Truth Access for Logged-In Users
+## Plan: Add Photo Upload for Character Nodes
 
-### Issue Identified
-The `/full-truth` page is working correctly, but:
-- The "Create New" button only appears when logged in
-- You appear to be logged out on that page
-- There are 0 tapestries in the database, so the empty state is expected
-
-### Root Cause
-The `useAuth` hook is skipping auth initialization for `/full-truth` because it's a public route. This means the `session` object is undefined even if you're actually logged in elsewhere.
+### Current State
+When editing a "Person" node in the Full Truth builder, users can only paste an image URL manually. This isn't user-friendly for uploading photos from their computer.
 
 ### Solution
-Ensure the `useAuth` hook properly initializes auth state on the `/full-truth` page so logged-in users see the "Create New" button.
+Replace the URL text input with a file upload component that:
+- Allows users to upload images directly from their device
+- Shows a preview of the uploaded/current image
+- Still allows pasting a URL as a fallback
+- Uploads to the existing `tapestry_media` storage bucket
 
 ---
+
+### Files to Create
+
+| File | Purpose |
+|------|---------|
+| `supabase/functions/upload-tapestry-image/index.ts` | Edge function to upload images to the `tapestry_media` bucket |
 
 ### Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/pages/FullTruth.tsx` | Use a more reliable auth check that works on public routes |
+| `src/components/full-truth/builder/NodeInspector.tsx` | Replace URL input with upload component + URL fallback |
 
 ---
 
 ### Implementation Details
 
-**Option A: Use `supabase.auth.getSession()` directly**
+**1. Create Edge Function (`upload-tapestry-image`)**
 
-Instead of relying on `useAuth()` which may skip initialization, fetch the session directly:
+A simple edge function that:
+- Accepts a file via FormData
+- Uploads to the `tapestry_media` bucket
+- Returns the public URL
 
 ```typescript
-// In FullTruth.tsx
-const [user, setUser] = useState<User | null>(null);
-
-useEffect(() => {
-  supabase.auth.getSession().then(({ data: { session } }) => {
-    setUser(session?.user ?? null);
-  });
-}, []);
+// supabase/functions/upload-tapestry-image/index.ts
+serve(async (req) => {
+  const formData = await req.formData();
+  const file = formData.get('file');
+  
+  // Upload to tapestry_media bucket
+  const { data, error } = await supabase.storage
+    .from('tapestry_media')
+    .upload(fileName, file);
+    
+  return new Response(JSON.stringify({ url: publicUrl }));
+});
 ```
 
-**Option B: Modify `useAuth` to always check session**
+**2. Update NodeInspector Component**
 
-Ensure the auth hook initializes session state on all routes, not just admin routes.
+Replace the simple URL input with a combined upload/URL interface:
+
+```text
+Current (lines 93-100):
+┌────────────────────────────┐
+│ Image URL                  │
+│ [https://...           ]   │
+└────────────────────────────┘
+
+After:
+┌────────────────────────────┐
+│ Photo                      │
+│ ┌──────┐ [Choose File]     │
+│ │      │ or paste URL:     │
+│ │ img  │ [https://...   ]  │
+│ └──────┘                   │
+└────────────────────────────┘
+```
+
+The updated section will:
+- Show a circular preview of the current image (matching the node's appearance)
+- Provide a file input for uploading
+- Keep a URL input as fallback for external images
+- Handle upload progress and errors with toast notifications
 
 ---
 
-### After Fix
+### Technical Notes
 
-Once implemented:
-1. Navigate to `/full-truth` while logged in
-2. You'll see the "Create New" button
-3. Click it to go to `/full-truth/new` (the builder)
-4. Create your first tapestry
+- Uses the existing `tapestry_media` storage bucket (already public)
+- Follows the same pattern as `upload-show-note-image` edge function
+- Images are uploaded with unique UUIDs to prevent conflicts
+- The upload component will be inline in NodeInspector (not a separate component) since it's specific to character nodes
+
+---
+
+### User Experience After Implementation
+
+1. Click on a Person node in the builder
+2. See the inspector panel on the right
+3. Under "Photo" section:
+   - Click "Choose File" to upload from device
+   - Or paste an external URL in the text field
+4. See a preview of the image immediately
+5. The character node updates with the new photo
 
