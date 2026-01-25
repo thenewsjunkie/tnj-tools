@@ -4,9 +4,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X, Trash2 } from "lucide-react";
+import { X, Trash2, Upload, User } from "lucide-react";
 import type { Node } from "@xyflow/react";
 import type { CharacterNodeData, PointNodeData, TapestryNodeSide, PointTagType } from "@/types/tapestry";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 interface NodeInspectorProps {
   node: Node | null;
@@ -18,6 +20,7 @@ interface NodeInspectorProps {
 export function NodeInspector({ node, onUpdate, onDelete, onClose }: NodeInspectorProps) {
   const [localData, setLocalData] = useState<CharacterNodeData | PointNodeData | null>(null);
   const [side, setSide] = useState<TapestryNodeSide>('neutral');
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (node) {
@@ -45,6 +48,35 @@ export function NodeInspector({ node, onUpdate, onDelete, onClose }: NodeInspect
   const handleSideChange = (newSide: TapestryNodeSide) => {
     setSide(newSide);
     onUpdate(node.id, {}, newSide);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const { data, error } = await supabase.functions.invoke('upload-tapestry-image', {
+        body: formData,
+      });
+
+      if (error) throw error;
+
+      handleChange('imageUrl', data.url);
+      toast({ title: "Photo uploaded successfully" });
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({ 
+        title: "Upload failed", 
+        description: "Could not upload image",
+        variant: "destructive" 
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -90,12 +122,44 @@ export function NodeInspector({ node, onUpdate, onDelete, onClose }: NodeInspect
                 placeholder="CEO, Example Corp"
               />
             </div>
-            <div className="space-y-2">
-              <Label>Image URL</Label>
+            <div className="space-y-3">
+              <Label>Photo</Label>
+              <div className="flex items-start gap-3">
+                {/* Preview */}
+                <div className="w-16 h-16 rounded-full bg-muted border-2 border-border overflow-hidden flex-shrink-0 flex items-center justify-center">
+                  {(localData as CharacterNodeData).imageUrl ? (
+                    <img 
+                      src={(localData as CharacterNodeData).imageUrl} 
+                      alt="Preview" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User className="w-8 h-8 text-muted-foreground" />
+                  )}
+                </div>
+                {/* Upload button */}
+                <div className="flex-1 space-y-2">
+                  <label className="cursor-pointer">
+                    <div className={`flex items-center justify-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                      <Upload className="w-4 h-4" />
+                      {isUploading ? 'Uploading...' : 'Upload Photo'}
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      disabled={isUploading}
+                    />
+                  </label>
+                </div>
+              </div>
+              {/* URL fallback */}
               <Input
                 value={(localData as CharacterNodeData).imageUrl || ''}
                 onChange={(e) => handleChange('imageUrl', e.target.value)}
-                placeholder="https://..."
+                placeholder="Or paste image URL..."
+                className="text-xs"
               />
             </div>
             <div className="space-y-2">
