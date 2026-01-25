@@ -12,9 +12,10 @@ import VoiceInterface from "@/components/VoiceInterface";
 import ShowPrep from "@/components/admin/ShowPrep";
 import WeekendEditionSegments from "@/components/admin/WeekendEditionSegments";
 import VideoTools from "@/components/admin/VideoTools";
+import AdminPolls from "@/components/admin/AdminPolls";
 import { Badge } from "@/components/ui/badge";
 import { useQueueState } from "@/hooks/useQueueState";
-import { Mic, Archive } from "lucide-react";
+import { Mic, Archive, ExternalLink } from "lucide-react";
 
 const Admin = () => {
   const { theme } = useTheme();
@@ -81,6 +82,24 @@ const Admin = () => {
           }
         >
           <ShowPrep />
+        </CollapsibleModule>
+
+        {/* Polls */}
+        <CollapsibleModule
+          id="polls"
+          title="Polls"
+          defaultOpen={false}
+          headerAction={
+            <Link 
+              to="/admin/manage-polls" 
+              onClick={(e) => e.stopPropagation()}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ExternalLink className="h-4 w-4" />
+            </Link>
+          }
+        >
+          <AdminPolls />
         </CollapsibleModule>
 
         {/* Weekend Edition Segments */}

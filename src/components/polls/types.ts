@@ -1,10 +1,10 @@
 
-// Poll option interface with display_order
+// Poll option interface
 export interface PollOption {
   id: string;
   text: string;
   votes: number;
-  display_order: number;
+  display_order?: number;
 }
 
 // Poll interface with typed options
