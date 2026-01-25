@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { usePollData } from "./hooks/usePollData";
 import PollVotingState from "./PollVotingState";
 import PollResultsView from "./PollResultsView";
+import StrawpollEmbed from "./StrawpollEmbed";
 import { PollEmbedProps } from "./types";
 
 const PollEmbed: React.FC<PollEmbedProps> = ({ 
@@ -110,6 +111,12 @@ const PollEmbed: React.FC<PollEmbedProps> = ({
     );
   }
 
+  // If poll has Strawpoll integration, show Strawpoll embed
+  if (poll.strawpoll_embed_url) {
+    return <StrawpollEmbed embedUrl={poll.strawpoll_embed_url} />;
+  }
+
+  // Otherwise, show internal poll UI (legacy)
   return (
     <Card className={cardClassName}>
       <CardHeader>

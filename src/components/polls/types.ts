@@ -13,6 +13,9 @@ export interface Poll {
   question: string;
   status: string;
   poll_options: PollOption[];
+  strawpoll_id?: string | null;
+  strawpoll_url?: string | null;
+  strawpoll_embed_url?: string | null;
   [key: string]: any; // For other properties we might not be using
 }
 
@@ -29,6 +32,9 @@ export interface RawPoll {
   question: string;
   status: string;
   poll_options: RawPollOption[];
+  strawpoll_id?: string | null;
+  strawpoll_url?: string | null;
+  strawpoll_embed_url?: string | null;
   [key: string]: any;
 }
 

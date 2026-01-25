@@ -13,11 +13,11 @@ export function usePollData(pollId: string | null, showLatest: boolean) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("polls")
-        .select("id")
+        .select("id, strawpoll_id, strawpoll_url, strawpoll_embed_url")
         .eq("status", "active")
         .order("created_at", { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error("Error fetching latest poll:", error);
@@ -46,12 +46,14 @@ export function usePollData(pollId: string | null, showLatest: boolean) {
         .from("polls")
         .select("*, poll_options(id, text, votes)")
         .eq("id", pollIdToFetch)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error("Error fetching poll:", error);
         return null;
       }
+      
+      if (!data) return null;
       
       // Transform the raw data to include display_order
       const rawPoll = data as RawPoll;
@@ -60,6 +62,9 @@ export function usePollData(pollId: string | null, showLatest: boolean) {
         // Create a new Poll object with properly structured poll_options that include display_order
         const transformedPoll: Poll = {
           ...rawPoll,
+          strawpoll_id: rawPoll.strawpoll_id,
+          strawpoll_url: rawPoll.strawpoll_url,
+          strawpoll_embed_url: rawPoll.strawpoll_embed_url,
           poll_options: rawPoll.poll_options.map((option, index) => ({
             ...option,
             display_order: index
