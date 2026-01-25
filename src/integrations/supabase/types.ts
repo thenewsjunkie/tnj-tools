@@ -1018,6 +1018,182 @@ export type Database = {
         }
         Relationships: []
       }
+      tapestries: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          slug: string
+          status: Database["public"]["Enums"]["tapestry_status"]
+          theme_config: Json | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          slug: string
+          status?: Database["public"]["Enums"]["tapestry_status"]
+          theme_config?: Json | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          slug?: string
+          status?: Database["public"]["Enums"]["tapestry_status"]
+          theme_config?: Json | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tapestry_edges: {
+        Row: {
+          created_at: string
+          data: Json | null
+          id: string
+          source_node_id: string
+          tapestry_id: string
+          target_node_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          source_node_id: string
+          tapestry_id: string
+          target_node_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          source_node_id?: string
+          tapestry_id?: string
+          target_node_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tapestry_edges_source_node_id_fkey"
+            columns: ["source_node_id"]
+            isOneToOne: false
+            referencedRelation: "tapestry_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tapestry_edges_tapestry_id_fkey"
+            columns: ["tapestry_id"]
+            isOneToOne: false
+            referencedRelation: "tapestries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tapestry_edges_target_node_id_fkey"
+            columns: ["target_node_id"]
+            isOneToOne: false
+            referencedRelation: "tapestry_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tapestry_nodes: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          position_x: number
+          position_y: number
+          rotation: number
+          scale: number
+          scene_visibility: Json | null
+          side: Database["public"]["Enums"]["tapestry_node_side"]
+          tapestry_id: string
+          type: Database["public"]["Enums"]["tapestry_node_type"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          id?: string
+          position_x?: number
+          position_y?: number
+          rotation?: number
+          scale?: number
+          scene_visibility?: Json | null
+          side?: Database["public"]["Enums"]["tapestry_node_side"]
+          tapestry_id: string
+          type: Database["public"]["Enums"]["tapestry_node_type"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          position_x?: number
+          position_y?: number
+          rotation?: number
+          scale?: number
+          scene_visibility?: Json | null
+          side?: Database["public"]["Enums"]["tapestry_node_side"]
+          tapestry_id?: string
+          type?: Database["public"]["Enums"]["tapestry_node_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tapestry_nodes_tapestry_id_fkey"
+            columns: ["tapestry_id"]
+            isOneToOne: false
+            referencedRelation: "tapestries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tapestry_scenes: {
+        Row: {
+          config: Json
+          created_at: string
+          id: string
+          name: string
+          order_index: number
+          tapestry_id: string
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          id?: string
+          name?: string
+          order_index?: number
+          tapestry_id: string
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          id?: string
+          name?: string
+          order_index?: number
+          tapestry_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tapestry_scenes_tapestry_id_fkey"
+            columns: ["tapestry_id"]
+            isOneToOne: false
+            referencedRelation: "tapestries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tnj_gifs: {
         Row: {
           created_at: string
@@ -1246,6 +1422,10 @@ export type Database = {
         Args: { conversation_id: string }
         Returns: undefined
       }
+      owns_tapestry: {
+        Args: { _tapestry_id: string; _user_id: string }
+        Returns: boolean
+      }
       run_queue_management: { Args: never; Returns: undefined }
       update_contestant_score:
         | {
@@ -1300,6 +1480,7 @@ export type Database = {
         | "widowed"
         | "separated"
         | "domestic_partnership"
+      point_tag_type: "claim" | "evidence" | "context"
       poll_status: "draft" | "active" | "completed"
       review_type: "television" | "movie" | "food" | "product" | "message"
       social_media_platform:
@@ -1312,6 +1493,9 @@ export type Database = {
         | "snapchat"
         | "venmo"
         | "cashapp"
+      tapestry_node_side: "left" | "right" | "neutral"
+      tapestry_node_type: "character" | "point"
+      tapestry_status: "draft" | "published"
       user_role: "admin" | "client"
       voting_platform: "twitch" | "youtube" | "web"
     }
@@ -1469,6 +1653,7 @@ export const Constants = {
         "separated",
         "domestic_partnership",
       ],
+      point_tag_type: ["claim", "evidence", "context"],
       poll_status: ["draft", "active", "completed"],
       review_type: ["television", "movie", "food", "product", "message"],
       social_media_platform: [
@@ -1482,6 +1667,9 @@ export const Constants = {
         "venmo",
         "cashapp",
       ],
+      tapestry_node_side: ["left", "right", "neutral"],
+      tapestry_node_type: ["character", "point"],
+      tapestry_status: ["draft", "published"],
       user_role: ["admin", "client"],
       voting_platform: ["twitch", "youtube", "web"],
     },
