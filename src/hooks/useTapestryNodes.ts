@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { 
@@ -15,6 +15,46 @@ import type {
 } from "@/types/tapestry";
 import type { Json } from "@/integrations/supabase/types";
 import { transformNode, transformEdge } from "@/types/tapestry";
+
+// Fetch nodes and edges for a tapestry
+export const useTapestryNodes = (tapestryId: string | undefined) => {
+  const nodesQuery = useQuery({
+    queryKey: ['tapestry-nodes', tapestryId],
+    queryFn: async () => {
+      if (!tapestryId) return [];
+      const { data, error } = await supabase
+        .from('tapestry_nodes')
+        .select('*')
+        .eq('tapestry_id', tapestryId)
+        .order('created_at');
+      if (error) throw error;
+      return (data as TapestryNodeRow[]).map(transformNode);
+    },
+    enabled: !!tapestryId,
+  });
+
+  const edgesQuery = useQuery({
+    queryKey: ['tapestry-edges', tapestryId],
+    queryFn: async () => {
+      if (!tapestryId) return [];
+      const { data, error } = await supabase
+        .from('tapestry_edges')
+        .select('*')
+        .eq('tapestry_id', tapestryId);
+      if (error) throw error;
+      return (data as TapestryEdgeRow[]).map(transformEdge);
+    },
+    enabled: !!tapestryId,
+  });
+
+  return {
+    nodes: nodesQuery.data,
+    edges: edgesQuery.data,
+    isLoading: nodesQuery.isLoading || edgesQuery.isLoading,
+    flowNodes: convertToFlowNodes(nodesQuery.data || []),
+    flowEdges: convertToFlowEdges(edgesQuery.data || []),
+  };
+};
 
 // Create a new node
 export const useCreateNode = () => {

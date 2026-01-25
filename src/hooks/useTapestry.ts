@@ -83,6 +83,27 @@ export const useTapestryBySlug = (slug: string | undefined) => {
   });
 };
 
+// Fetch a single tapestry by ID (for builder)
+export const useTapestry = (id: string | undefined) => {
+  return useQuery({
+    queryKey: ['tapestry', id],
+    queryFn: async () => {
+      if (!id) throw new Error('No ID provided');
+      
+      const { data, error } = await supabase
+        .from('tapestries')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+      
+      if (error) throw error;
+      if (!data) throw new Error('Tapestry not found');
+      return transformTapestry(data as TapestryRow);
+    },
+    enabled: !!id,
+  });
+};
+
 // Fetch a single tapestry by ID with all related data (for builder)
 export const useTapestryWithData = (id: string | undefined) => {
   return useQuery({
