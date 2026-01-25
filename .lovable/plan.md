@@ -1,185 +1,107 @@
 
-## Plan: Add Polls Module to Admin Page
+
+## Plan: Auto-Start New Strawpoll & End Previous Active Poll
 
 ### Overview
-Add a new collapsible "Polls" module to the `/admin` page, positioned between the "Show Prep" module and the "Weekend Edition Segments" module. This will give quick access to poll management directly from the main admin dashboard without navigating to a separate page.
+When you create a new Strawpoll poll, it will automatically be set to "active" status. Thanks to an existing database trigger (`ensure_single_active_poll`), any previously active poll will automatically be marked as "completed" when the new one becomes active.
 
 ---
 
-### 1. Create AdminPolls Component
-
-**New File: `src/components/admin/AdminPolls.tsx`**
-
-Create a streamlined component that displays all poll functionality:
-- List of all polls with status badges (active/draft/completed)
-- Strawpoll indicator icon for polls hosted on Strawpoll
-- Quick actions: Start/End poll, View on Strawpoll, Copy Embed Code
-- Create Poll button that opens PollDialog
-- "Copy Latest Poll Embed" button for the dynamic `/poll/latest` embed
-
-This component will reuse existing poll components:
-- `PollDialog` for creating/editing polls
-- `PollList` (adapted) for displaying polls in a compact format
-- The query logic from `ManagePolls.tsx`
+### How It Works
 
 ```text
-+--------------------------------------------------+
-|  Polls                            [+ Create Poll] |
-+--------------------------------------------------+
-|  [Copy Latest Poll Embed]                         |
-|                                                   |
-|  +------------+  +------------+  +------------+   |
-|  | Poll Card  |  | Poll Card  |  | Poll Card  |   |
-|  | Question   |  | Question   |  | Question   |   |
-|  | [Active]   |  | [Draft]    |  | [Completed]|   |
-|  | [Actions]  |  | [Actions]  |  | [Actions]  |   |
-|  +------------+  +------------+  +------------+   |
-+--------------------------------------------------+
+User creates new poll
+       ↓
+Poll inserted with status = "active"
+       ↓
+Database trigger fires: ensure_single_active_poll()
+       ↓
+All other polls with status = "active" 
+are updated to status = "completed"
+       ↓
+New poll is now the only active poll
 ```
 
 ---
 
-### 2. Update Admin Page Layout
+### Changes Required
 
-**File: `src/pages/Admin.tsx`**
+**File: `src/components/polls/PollDialog.tsx`**
 
-Add the new Polls CollapsibleModule after Show Prep:
+Change the poll creation from `status: "draft"` to `status: "active"`:
 
 ```tsx
-import AdminPolls from "@/components/admin/AdminPolls";
+// Line 61-62: Change from
+status: "draft",
 
-// ... inside the component, after ShowPrep CollapsibleModule:
-
-<CollapsibleModule
-  id="polls"
-  title="Polls"
-  defaultOpen={false}
-  headerAction={
-    <Link 
-      to="/admin/manage-polls" 
-      onClick={(e) => e.stopPropagation()}
-      className="text-muted-foreground hover:text-foreground transition-colors"
-    >
-      <ExternalLink className="h-4 w-4" />
-    </Link>
-  }
->
-  <AdminPolls />
-</CollapsibleModule>
+// To
+status: "active",
 ```
 
-The header action will link to the full Manage Polls page for advanced management.
+That's the only code change needed. The database trigger already handles completing the previous active poll automatically.
 
 ---
 
-### 3. AdminPolls Component Details
+### Existing Database Trigger (Already in Place)
 
-**File: `src/components/admin/AdminPolls.tsx`**
+The following trigger function already exists in your database:
 
-Key features:
+```sql
+CREATE OR REPLACE FUNCTION public.ensure_single_active_poll()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+  -- If the new poll is being set to active
+  IF NEW.status = 'active' THEN
+    -- Set all other polls to completed
+    UPDATE polls
+    SET status = 'completed'
+    WHERE id != NEW.id AND status = 'active';
+  END IF;
+  RETURN NEW;
+END;
+$function$
+```
 
-**A. Data Fetching**
-- Query polls with `poll_options` using `@tanstack/react-query`
-- Include Strawpoll fields: `strawpoll_id`, `strawpoll_url`, `strawpoll_embed_url`
-
-**B. Poll Cards (Compact Layout)**
-- Show poll question (truncated if long)
-- Status badge (active = green, draft = gray, completed = outline)
-- Strawpoll favicon indicator when hosted on Strawpoll
-- Action buttons: Start/End, Embed code, View on Strawpoll, Edit, Delete
-
-**C. Quick Actions Header**
-- "Create Poll" button opens PollDialog
-- "Copy Latest Embed" button copies the `/poll/latest` iframe code
-
-**D. State Management**
-- `useState` for dialog open/close
-- `useState` for active poll (editing)
-- Mutations for status updates and deletions (reuse from PollList)
+This trigger fires on INSERT and UPDATE, ensuring only one poll can be active at a time.
 
 ---
 
-### 4. Compact Poll Card Design
+### Update Success Message
 
-For the admin module, use a more compact card design than the full ManagePolls page:
+Also update the success toast message to reflect the new behavior:
 
 ```tsx
-<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-  {polls.map((poll) => (
-    <div className="p-3 bg-muted/30 rounded-lg border border-border/50">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-1.5 flex-1 min-w-0">
-          {poll.strawpoll_id && (
-            <img src="https://strawpoll.com/favicon.ico" className="w-4 h-4" />
-          )}
-          <span className="font-medium text-sm truncate">{poll.question}</span>
-        </div>
-        <Badge variant={statusVariant}>{poll.status}</Badge>
-      </div>
-      
-      <div className="flex items-center gap-1 mt-2">
-        {/* Action buttons */}
-      </div>
-    </div>
-  ))}
-</div>
+// Line 93-96: Change from
+toast({
+  title: "Poll created on Strawpoll!",
+  description: "The poll has been created successfully on Strawpoll.com",
+});
+
+// To
+toast({
+  title: "Poll created and started!",
+  description: "The poll is now active on Strawpoll.com. Any previous active poll has been ended.",
+});
 ```
 
 ---
 
-### 5. Summary of Changes
+### Summary
 
-| File | Change |
-|------|--------|
-| `src/components/admin/AdminPolls.tsx` | **New file** - Compact polls management component |
-| `src/pages/Admin.tsx` | Add Polls CollapsibleModule after Show Prep |
-
----
-
-### 6. Component Breakdown
-
-```text
-AdminPolls.tsx
-├── Header Row
-│   ├── "Create Poll" Button → Opens PollDialog
-│   └── "Copy Latest Embed" Button → Copies iframe code
-│
-├── Poll Grid (compact cards)
-│   └── Each card shows:
-│       ├── Strawpoll icon (if applicable)
-│       ├── Question text (truncated)
-│       ├── Status badge
-│       └── Action buttons (Start/End, Embed, View, Edit, Delete)
-│
-├── PollDialog (reused)
-│   └── For creating/editing polls
-│
-└── Empty State
-    └── "No polls yet. Create your first poll!"
-```
+| Change | File | Description |
+|--------|------|-------------|
+| Auto-start poll | `PollDialog.tsx` | Change `status: "draft"` → `status: "active"` |
+| Update toast | `PollDialog.tsx` | Reflect auto-start in success message |
 
 ---
 
-### 7. Imports Required
+### Result
 
-```tsx
-// AdminPolls.tsx
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Copy, Play, Pause, Code, ExternalLink, Edit, Trash2 } from "lucide-react";
-import PollDialog from "@/components/polls/PollDialog";
-```
+After this change:
+- **Create Poll** → Poll is immediately active (started)
+- **Previous active poll** → Automatically marked as completed
+- **`/poll/latest` embed** → Instantly shows the new poll
+- **No manual "Start" button needed** for new Strawpoll polls
 
----
-
-### Technical Notes
-
-- The component will be self-contained with its own data fetching, avoiding prop drilling
-- Reuses `PollDialog` for create/edit functionality
-- Poll mutations (status update, delete) are implemented inline with proper invalidation
-- The "Copy Latest Embed" uses the same logic as ManagePolls but streamlined
-- Default collapsed state (`defaultOpen={false}`) keeps the admin page clean
