@@ -1,28 +1,12 @@
 
 
-## Plan: Fix Save Draft and Publish Buttons in Full Truth Builder
+## Plan: Add Scale Control to Point Nodes
 
-### Issue Identified
-The "Save Draft" and "Publish" buttons show an error "You must be logged in to save" even when the user is logged in.
-
-### Root Cause
-The `useAuth` hook in `src/hooks/useAuth.tsx` only initializes the auth session for routes that start with `/admin`:
-
-```typescript
-// Line 13 in useAuth.tsx
-if (!currentPath.startsWith('/admin')) {
-  console.log('[useAuth] Skipping auth initialization for non-admin route:', currentPath);
-  return;
-}
-```
-
-The Full Truth builder is at `/full-truth/new` or `/full-truth/edit/:id` - these paths don't start with `/admin`, so:
-- The `session` state remains `null`
-- `user` is `undefined` when checking `session?.user` in the builder
-- The save/publish handlers fail with the "must be logged in" error
+### Problem
+When creating Point nodes in the Full Truth builder, there's no way to resize them. The data model already supports `scale` (it's stored in the database and applied via CSS), but the NodeInspector doesn't provide a UI control to change it.
 
 ### Solution
-Use the same direct Supabase auth check pattern that was successfully implemented for the `/full-truth` gallery page. This bypasses the restrictive `useAuth` hook.
+Add a scale slider to the NodeInspector for Point nodes, allowing users to shrink or enlarge individual points.
 
 ---
 
@@ -30,46 +14,96 @@ Use the same direct Supabase auth check pattern that was successfully implemente
 
 | File | Change |
 |------|--------|
-| `src/pages/FullTruthBuilder.tsx` | Replace `useAuth` hook with direct Supabase session check |
+| `src/components/full-truth/builder/NodeInspector.tsx` | Add a scale slider for point nodes (and optionally character nodes) |
 
 ---
 
 ### Implementation Details
 
-Replace the current auth approach:
+**Add a Scale Slider Section**
 
-```typescript
-// Current (broken) - relies on useAuth which doesn't work on /full-truth/* routes
-const { session } = useAuth();
-const user = session?.user;
+Add this to the NodeInspector, appearing for both node types (after the "Side" selector):
+
+```text
+Current Inspector Layout:
+┌─────────────────────────────────┐
+│ Side: [Left ▼]                  │
+│ Tag: [Claim ▼]         (points) │
+│ Headline: [___________]         │
+│ Detail: [_____________]         │
+└─────────────────────────────────┘
+
+After:
+┌─────────────────────────────────┐
+│ Side: [Left ▼]                  │
+│ Scale: [────●────] 100%         │  ← NEW
+│ Tag: [Claim ▼]         (points) │
+│ Headline: [___________]         │
+│ Detail: [_____________]         │
+└─────────────────────────────────┘
 ```
 
-With direct Supabase session management:
+**Scale Control Details:**
+
+- Uses the existing Radix Slider component (`@/components/ui/slider`)
+- Range: 0.5 to 1.5 (50% to 150% of default size)
+- Step: 0.1 for smooth resizing
+- Default: 1.0 (100%)
+- Shows percentage label next to slider
+- Changes apply immediately for live preview
+
+**Code Changes:**
 
 ```typescript
-// Fixed - fetch session directly from Supabase
-const [user, setUser] = useState<User | null>(null);
+// Add to NodeInspector.tsx imports
+import { Slider } from "@/components/ui/slider";
 
+// Add scale state tracking
+const [scale, setScale] = useState(1);
+
+// Update when node changes
 useEffect(() => {
-  supabase.auth.getSession().then(({ data: { session } }) => {
-    setUser(session?.user ?? null);
-  });
+  if (node) {
+    setScale((node.data as any).scale || 1);
+  }
+}, [node]);
 
-  const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-    setUser(session?.user ?? null);
-  });
+// Add scale change handler
+const handleScaleChange = (value: number[]) => {
+  const newScale = value[0];
+  setScale(newScale);
+  onUpdate(node.id, { scale: newScale });
+};
 
-  return () => subscription.unsubscribe();
-}, []);
+// Add to JSX (after Side selector, before node-specific fields)
+<div className="space-y-2">
+  <div className="flex items-center justify-between">
+    <Label>Scale</Label>
+    <span className="text-sm text-muted-foreground">
+      {Math.round(scale * 100)}%
+    </span>
+  </div>
+  <Slider
+    value={[scale]}
+    onValueChange={handleScaleChange}
+    min={0.5}
+    max={1.5}
+    step={0.1}
+  />
+</div>
 ```
-
-This is the same pattern already proven to work on the `/full-truth` gallery page.
 
 ---
 
-### Why This Works
+### User Experience After Implementation
 
-1. `supabase.auth.getSession()` retrieves the session regardless of the current route
-2. `onAuthStateChange` keeps the user state in sync if auth status changes
-3. The builder's `handleSave` check `if (!user)` will correctly pass when logged in
+1. Add a new Point to the canvas
+2. Click on the Point to select it
+3. In the inspector panel, use the "Scale" slider
+4. Drag left to shrink the point (down to 50%)
+5. Drag right to enlarge the point (up to 150%)
+6. See the node resize in real-time on the canvas
+7. Scale is saved with the tapestry
+
+This same control will work for Character nodes too, giving users full control over sizing of all elements.
 
