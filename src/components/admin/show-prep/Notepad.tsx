@@ -1,5 +1,9 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { StickyNote, ChevronDown, ChevronUp } from "lucide-react";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Underline from "@tiptap/extension-underline";
+import Placeholder from "@tiptap/extension-placeholder";
 import { useToast } from "@/hooks/use-toast";
 import NotepadToolbar from "./NotepadToolbar";
 import FindReplaceDialog from "./FindReplaceDialog";
@@ -14,108 +18,47 @@ interface NotepadProps {
 const Notepad = ({ value, onChange, isOpen, onToggle }: NotepadProps) => {
   const [fontSize, setFontSize] = useState<'sm' | 'base' | 'lg'>('base');
   const [showFindReplace, setShowFindReplace] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
 
   const fontSizeClasses = {
-    sm: 'text-xs',
-    base: 'text-sm',
-    lg: 'text-base',
+    sm: 'prose-sm',
+    base: 'prose-base',
+    lg: 'prose-lg',
   };
 
-  const wordCount = value.trim() ? value.trim().split(/\s+/).length : 0;
-  const charCount = value.length;
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        bulletList: { keepMarks: true },
+        orderedList: { keepMarks: true },
+      }),
+      Underline,
+      Placeholder.configure({
+        placeholder: 'Start typing your notes...',
+      }),
+    ],
+    content: value || '',
+    onUpdate: ({ editor }) => {
+      onChange(editor.getHTML());
+    },
+    editorProps: {
+      attributes: {
+        class: 'outline-none min-h-[400px] p-4',
+      },
+    },
+  });
 
-  // Text wrapping helper
-  const wrapSelection = useCallback((prefix: string, suffix: string) => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = value.substring(start, end);
-
-    const newText =
-      value.substring(0, start) +
-      prefix + selectedText + suffix +
-      value.substring(end);
-
-    onChange(newText);
-
-    // Restore cursor position after state update
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(
-        start + prefix.length,
-        end + prefix.length
-      );
-    }, 0);
-  }, [value, onChange]);
-
-  // Formatting handlers
-  const handleBold = useCallback(() => wrapSelection('**', '**'), [wrapSelection]);
-  const handleItalic = useCallback(() => wrapSelection('*', '*'), [wrapSelection]);
-  const handleUnderline = useCallback(() => wrapSelection('__', '__'), [wrapSelection]);
-
-  // List handlers
-  const insertBullet = useCallback(() => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const beforeCursor = value.substring(0, start);
-    const selectedText = value.substring(start, end);
-    
-    // Find the start of the current line
-    const lineStart = beforeCursor.lastIndexOf('\n') + 1;
-
-    if (selectedText.includes('\n')) {
-      // Multiple lines selected - add bullet to each line
-      const lines = selectedText.split('\n');
-      const bulletedLines = lines.map(line => `• ${line}`).join('\n');
-      const newText = value.substring(0, start) + bulletedLines + value.substring(end);
-      onChange(newText);
-    } else {
-      // Single line - add bullet at line start
-      const newText =
-        value.substring(0, lineStart) +
-        '• ' +
-        value.substring(lineStart);
-      onChange(newText);
+  // Sync external value changes
+  useEffect(() => {
+    if (editor && value !== editor.getHTML()) {
+      editor.commands.setContent(value || '');
     }
+  }, [value, editor]);
 
-    setTimeout(() => textarea.focus(), 0);
-  }, [value, onChange]);
-
-  const insertNumberedList = useCallback(() => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const beforeCursor = value.substring(0, start);
-    const selectedText = value.substring(start, end);
-    
-    const lineStart = beforeCursor.lastIndexOf('\n') + 1;
-
-    if (selectedText.includes('\n')) {
-      // Multiple lines selected - number each line
-      const lines = selectedText.split('\n');
-      const numberedLines = lines.map((line, i) => `${i + 1}. ${line}`).join('\n');
-      const newText = value.substring(0, start) + numberedLines + value.substring(end);
-      onChange(newText);
-    } else {
-      // Single line - add "1. " at line start
-      const newText =
-        value.substring(0, lineStart) +
-        '1. ' +
-        value.substring(lineStart);
-      onChange(newText);
-    }
-
-    setTimeout(() => textarea.focus(), 0);
-  }, [value, onChange]);
+  // Word/char count from plain text
+  const plainText = editor?.getText() || '';
+  const wordCount = plainText.trim() ? plainText.trim().split(/\s+/).length : 0;
+  const charCount = plainText.length;
 
   // Font size handlers
   const cycleFontSize = useCallback((direction: 'up' | 'down') => {
@@ -127,25 +70,11 @@ const Notepad = ({ value, onChange, isOpen, onToggle }: NotepadProps) => {
     setFontSize(sizes[newIndex]);
   }, [fontSize]);
 
-  // Undo/Redo handlers (native browser)
-  const handleUndo = useCallback(() => {
-    textareaRef.current?.focus();
-    document.execCommand('undo');
-  }, []);
-
-  const handleRedo = useCallback(() => {
-    textareaRef.current?.focus();
-    document.execCommand('redo');
-  }, []);
-
-  // Select All / Copy All
-  const handleSelectAll = useCallback(() => {
-    textareaRef.current?.select();
-  }, []);
-
+  // Copy All
   const handleCopyAll = useCallback(async () => {
+    const text = editor?.getText() || '';
     try {
-      await navigator.clipboard.writeText(value);
+      await navigator.clipboard.writeText(text);
       toast({
         title: "Copied!",
         description: "Notepad content copied to clipboard",
@@ -157,10 +86,11 @@ const Notepad = ({ value, onChange, isOpen, onToggle }: NotepadProps) => {
         variant: "destructive",
       });
     }
-  }, [value, toast]);
+  }, [editor, toast]);
 
   // Print handler
   const handlePrint = useCallback(() => {
+    const html = editor?.getHTML() || '';
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(`
@@ -172,25 +102,31 @@ const Notepad = ({ value, onChange, isOpen, onToggle }: NotepadProps) => {
               body {
                 font-family: system-ui, -apple-system, sans-serif;
                 padding: 40px;
-                white-space: pre-wrap;
                 line-height: 1.6;
+                max-width: 800px;
+                margin: 0 auto;
               }
+              ul, ol { margin-left: 20px; }
+              p { margin: 0.5em 0; }
             </style>
           </head>
-          <body>${value.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</body>
+          <body>${html}</body>
         </html>
       `);
       printWindow.document.close();
       printWindow.print();
     }
-  }, [value]);
+  }, [editor]);
 
   // Handle find & replace result
-  const handleReplace = useCallback((newText: string) => {
-    onChange(newText);
-  }, [onChange]);
+  const handleReplace = useCallback((newHtml: string) => {
+    if (editor) {
+      editor.commands.setContent(newHtml);
+      onChange(newHtml);
+    }
+  }, [editor, onChange]);
 
-  // Keyboard shortcuts
+  // Keyboard shortcut for find
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isOpen) return;
@@ -198,16 +134,7 @@ const Notepad = ({ value, onChange, isOpen, onToggle }: NotepadProps) => {
       const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
       const modifier = isMac ? e.metaKey : e.ctrlKey;
 
-      if (modifier && e.key === 'b') {
-        e.preventDefault();
-        handleBold();
-      } else if (modifier && e.key === 'i') {
-        e.preventDefault();
-        handleItalic();
-      } else if (modifier && e.key === 'u') {
-        e.preventDefault();
-        handleUnderline();
-      } else if (modifier && e.key === 'f') {
+      if (modifier && e.key === 'f') {
         e.preventDefault();
         setShowFindReplace(true);
       }
@@ -215,7 +142,7 @@ const Notepad = ({ value, onChange, isOpen, onToggle }: NotepadProps) => {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, handleBold, handleItalic, handleUnderline]);
+  }, [isOpen]);
 
   return (
     <div className="w-full border-t border-border pt-4">
@@ -227,7 +154,7 @@ const Notepad = ({ value, onChange, isOpen, onToggle }: NotepadProps) => {
         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
           <StickyNote className="h-4 w-4" />
           <span>Notepad</span>
-          {value.trim() && (
+          {plainText.trim() && (
             <span className="text-xs text-muted-foreground font-normal">
               ({wordCount} words, {charCount} chars)
             </span>
@@ -245,31 +172,32 @@ const Notepad = ({ value, onChange, isOpen, onToggle }: NotepadProps) => {
         <div className="border border-t-0 border-border bg-background shadow-sm">
           {/* Toolbar */}
           <NotepadToolbar
-            onBold={handleBold}
-            onItalic={handleItalic}
-            onUnderline={handleUnderline}
-            onBulletList={insertBullet}
-            onNumberedList={insertNumberedList}
+            editor={editor}
             onFontSizeUp={() => cycleFontSize('up')}
             onFontSizeDown={() => cycleFontSize('down')}
-            onUndo={handleUndo}
-            onRedo={handleRedo}
             onFindReplace={() => setShowFindReplace(true)}
-            onSelectAll={handleSelectAll}
             onCopyAll={handleCopyAll}
             onPrint={handlePrint}
             fontSize={fontSize}
           />
 
-          {/* Textarea */}
-          <textarea
-            ref={textareaRef}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder="Start typing your notes..."
-            className={`w-full min-h-[400px] p-4 leading-relaxed bg-background text-foreground resize-none border-0 focus:outline-none focus:ring-0 ${fontSizeClasses[fontSize]}`}
-            style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
-          />
+          {/* TipTap Editor */}
+          <div 
+            className={`
+              prose dark:prose-invert max-w-none
+              ${fontSizeClasses[fontSize]}
+              [&_.ProseMirror]:min-h-[400px]
+              [&_.ProseMirror]:p-4
+              [&_.ProseMirror]:outline-none
+              [&_.ProseMirror_p.is-editor-empty:first-child::before]:text-muted-foreground
+              [&_.ProseMirror_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)]
+              [&_.ProseMirror_p.is-editor-empty:first-child::before]:float-left
+              [&_.ProseMirror_p.is-editor-empty:first-child::before]:pointer-events-none
+              [&_.ProseMirror_p.is-editor-empty:first-child::before]:h-0
+            `}
+          >
+            <EditorContent editor={editor} />
+          </div>
         </div>
       )}
 
@@ -277,7 +205,7 @@ const Notepad = ({ value, onChange, isOpen, onToggle }: NotepadProps) => {
       <FindReplaceDialog
         open={showFindReplace}
         onOpenChange={setShowFindReplace}
-        text={value}
+        editor={editor}
         onReplace={handleReplace}
       />
     </div>

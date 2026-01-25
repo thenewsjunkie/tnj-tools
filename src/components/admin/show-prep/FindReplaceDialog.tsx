@@ -9,18 +9,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import type { Editor } from "@tiptap/react";
 
 interface FindReplaceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  text: string;
-  onReplace: (newText: string) => void;
+  editor: Editor | null;
+  onReplace: (newHtml: string) => void;
 }
 
-const FindReplaceDialog = ({ open, onOpenChange, text, onReplace }: FindReplaceDialogProps) => {
+const FindReplaceDialog = ({ open, onOpenChange, editor, onReplace }: FindReplaceDialogProps) => {
   const [findText, setFindText] = useState("");
   const [replaceText, setReplaceText] = useState("");
   const [matchCount, setMatchCount] = useState(0);
+
+  // Get plain text from editor for searching
+  const text = editor?.getText() || "";
 
   useEffect(() => {
     if (findText) {
@@ -37,17 +41,23 @@ const FindReplaceDialog = ({ open, onOpenChange, text, onReplace }: FindReplaceD
   };
 
   const handleReplaceFirst = () => {
-    if (!findText) return;
+    if (!findText || !editor) return;
+    
+    // Get HTML and replace first occurrence
+    const html = editor.getHTML();
     const regex = new RegExp(escapeRegex(findText), "i");
-    const newText = text.replace(regex, replaceText);
-    onReplace(newText);
+    const newHtml = html.replace(regex, replaceText);
+    onReplace(newHtml);
   };
 
   const handleReplaceAll = () => {
-    if (!findText) return;
+    if (!findText || !editor) return;
+    
+    // Get HTML and replace all occurrences
+    const html = editor.getHTML();
     const regex = new RegExp(escapeRegex(findText), "gi");
-    const newText = text.replace(regex, replaceText);
-    onReplace(newText);
+    const newHtml = html.replace(regex, replaceText);
+    onReplace(newHtml);
   };
 
   return (
