@@ -2,6 +2,8 @@ import { useState, useCallback, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useNodesState, useEdgesState, addEdge, Connection } from "@xyflow/react";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import type { User } from "@supabase/supabase-js";
 
 import { BuilderToolbar } from "@/components/full-truth/builder/BuilderToolbar";
 import { NodePalette } from "@/components/full-truth/builder/NodePalette";
@@ -11,7 +13,6 @@ import { ThemeSettingsDialog } from "@/components/full-truth/builder/ThemeSettin
 
 import { useTapestry, useCreateTapestry, useUpdateTapestry } from "@/hooks/useTapestry";
 import { useTapestryNodes } from "@/hooks/useTapestryNodes";
-import { useAuth } from "@/hooks/useAuth";
 
 import type { Node, Edge } from "@xyflow/react";
 import type { ThemeConfig, CharacterNodeData, PointNodeData, TapestryNodeSide } from "@/types/tapestry";
@@ -25,8 +26,20 @@ const defaultTheme: ThemeConfig = {
 const FullTruthBuilder = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { session } = useAuth();
-  const user = session?.user;
+  const [user, setUser] = useState<User | null>(null);
+
+  // Direct Supabase auth - bypasses useAuth which only works on /admin routes
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const isEditing = !!id;
 
