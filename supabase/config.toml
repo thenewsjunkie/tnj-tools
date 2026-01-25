@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.strawpoll]
 verify_jwt = false
+
+[functions.upload-tapestry-image]
+verify_jwt = false
