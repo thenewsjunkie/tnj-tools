@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import AddLinkDialog from "./tnj-links/AddLinkDialog";
@@ -164,6 +165,13 @@ const TNJLinks = () => {
 
   return (
     <div className="space-y-2">
+      <Link
+        to="/full-truth"
+        className="block px-3 py-2 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-sm font-medium"
+      >
+        Full Truth →
+      </Link>
+      
       <AddLinkDialog 
         onLinkAdded={() => queryClient.invalidateQueries({ queryKey: ['tnj-links'] })}
         lastOrder={links.length > 0 ? Math.max(...links.map(l => l.display_order)) : 0}
