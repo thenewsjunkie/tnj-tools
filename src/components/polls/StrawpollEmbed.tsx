@@ -7,11 +7,11 @@ interface StrawpollEmbedProps {
 
 const StrawpollEmbed: React.FC<StrawpollEmbedProps> = ({ embedUrl }) => {
   return (
-    <div className="w-full h-full min-h-[480px] flex items-center justify-center">
+    <div className="w-full">
       <iframe 
         src={embedUrl}
-        className="w-full h-full min-h-[480px]"
-        style={{ border: 'none' }}
+        className="w-full"
+        style={{ border: 'none', minHeight: '400px' }}
         allowFullScreen
         title="Strawpoll Embed"
       />
