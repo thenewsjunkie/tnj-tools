@@ -55,7 +55,7 @@ const PollEmbedPage = () => {
   // For latest poll route with Strawpoll, render full-page Strawpoll embed
   if (isLatestPoll && latestPollData?.strawpoll_embed_url) {
     return (
-      <div className="min-h-screen w-full">
+      <div className="w-full">
         <StrawpollEmbed embedUrl={latestPollData.strawpoll_embed_url} />
       </div>
     );
