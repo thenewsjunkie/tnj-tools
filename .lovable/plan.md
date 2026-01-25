@@ -1,158 +1,185 @@
 
-## Plan: Create "Latest Strawpoll" Dynamic Embed Page
+## Plan: Add Polls Module to Admin Page
 
 ### Overview
-Create a special embed page at `/poll/latest` that automatically displays the Strawpoll embed for whichever poll is currently marked as "active" in your database. This way you can embed one URL on any website, and it will always show the current poll without needing to update the embed code.
+Add a new collapsible "Polls" module to the `/admin` page, positioned between the "Show Prep" module and the "Weekend Edition Segments" module. This will give quick access to poll management directly from the main admin dashboard without navigating to a separate page.
 
 ---
 
-### 1. Update PollEmbed Page to Handle Strawpoll
+### 1. Create AdminPolls Component
 
-**File: `src/pages/PollEmbed.tsx`**
+**New File: `src/components/admin/AdminPolls.tsx`**
 
-When `id === 'latest'`, the page will:
-1. Query the database for the latest active poll
-2. Check if it has a `strawpoll_embed_url`
-3. If yes: render the Strawpoll embed in a full-page iframe
-4. If no: fall back to the internal polling UI (for legacy polls)
+Create a streamlined component that displays all poll functionality:
+- List of all polls with status badges (active/draft/completed)
+- Strawpoll indicator icon for polls hosted on Strawpoll
+- Quick actions: Start/End poll, View on Strawpoll, Copy Embed Code
+- Create Poll button that opens PollDialog
+- "Copy Latest Poll Embed" button for the dynamic `/poll/latest` embed
+
+This component will reuse existing poll components:
+- `PollDialog` for creating/editing polls
+- `PollList` (adapted) for displaying polls in a compact format
+- The query logic from `ManagePolls.tsx`
+
+```text
++--------------------------------------------------+
+|  Polls                            [+ Create Poll] |
++--------------------------------------------------+
+|  [Copy Latest Poll Embed]                         |
+|                                                   |
+|  +------------+  +------------+  +------------+   |
+|  | Poll Card  |  | Poll Card  |  | Poll Card  |   |
+|  | Question   |  | Question   |  | Question   |   |
+|  | [Active]   |  | [Draft]    |  | [Completed]|   |
+|  | [Actions]  |  | [Actions]  |  | [Actions]  |   |
+|  +------------+  +------------+  +------------+   |
++--------------------------------------------------+
+```
 
 ---
 
-### 2. Update usePollData Hook
+### 2. Update Admin Page Layout
 
-**File: `src/components/polls/hooks/usePollData.tsx`**
+**File: `src/pages/Admin.tsx`**
 
-Modify the `latest-poll` query to also fetch:
-- `strawpoll_id`
-- `strawpoll_url`  
-- `strawpoll_embed_url`
-
-This data is needed to determine whether to show Strawpoll or internal poll.
-
----
-
-### 3. Create StrawpollEmbed Component
-
-**New File: `src/components/polls/StrawpollEmbed.tsx`**
-
-A simple component that renders a full-page Strawpoll iframe:
+Add the new Polls CollapsibleModule after Show Prep:
 
 ```tsx
-interface StrawpollEmbedProps {
-  embedUrl: string;
-}
+import AdminPolls from "@/components/admin/AdminPolls";
 
-const StrawpollEmbed = ({ embedUrl }) => (
-  <iframe 
-    src={embedUrl}
-    style={{ 
-      width: '100%', 
-      height: '100%', 
-      border: 'none',
-      minHeight: '480px' 
-    }}
-    allowFullScreen
-  />
-);
+// ... inside the component, after ShowPrep CollapsibleModule:
+
+<CollapsibleModule
+  id="polls"
+  title="Polls"
+  defaultOpen={false}
+  headerAction={
+    <Link 
+      to="/admin/manage-polls" 
+      onClick={(e) => e.stopPropagation()}
+      className="text-muted-foreground hover:text-foreground transition-colors"
+    >
+      <ExternalLink className="h-4 w-4" />
+    </Link>
+  }
+>
+  <AdminPolls />
+</CollapsibleModule>
 ```
+
+The header action will link to the full Manage Polls page for advanced management.
 
 ---
 
-### 4. Update PollEmbed.tsx Component
+### 3. AdminPolls Component Details
 
-**File: `src/components/polls/PollEmbed.tsx`**
+**File: `src/components/admin/AdminPolls.tsx`**
 
-Add logic to check for Strawpoll data:
+Key features:
+
+**A. Data Fetching**
+- Query polls with `poll_options` using `@tanstack/react-query`
+- Include Strawpoll fields: `strawpoll_id`, `strawpoll_url`, `strawpoll_embed_url`
+
+**B. Poll Cards (Compact Layout)**
+- Show poll question (truncated if long)
+- Status badge (active = green, draft = gray, completed = outline)
+- Strawpoll favicon indicator when hosted on Strawpoll
+- Action buttons: Start/End, Embed code, View on Strawpoll, Edit, Delete
+
+**C. Quick Actions Header**
+- "Create Poll" button opens PollDialog
+- "Copy Latest Embed" button copies the `/poll/latest` iframe code
+
+**D. State Management**
+- `useState` for dialog open/close
+- `useState` for active poll (editing)
+- Mutations for status updates and deletions (reuse from PollList)
+
+---
+
+### 4. Compact Poll Card Design
+
+For the admin module, use a more compact card design than the full ManagePolls page:
 
 ```tsx
-// If poll has Strawpoll integration, show Strawpoll embed
-if (poll?.strawpoll_embed_url) {
-  return <StrawpollEmbed embedUrl={poll.strawpoll_embed_url} />;
-}
-
-// Otherwise, show internal poll UI (legacy)
-return <InternalPollUI poll={poll} ... />;
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+  {polls.map((poll) => (
+    <div className="p-3 bg-muted/30 rounded-lg border border-border/50">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-1.5 flex-1 min-w-0">
+          {poll.strawpoll_id && (
+            <img src="https://strawpoll.com/favicon.ico" className="w-4 h-4" />
+          )}
+          <span className="font-medium text-sm truncate">{poll.question}</span>
+        </div>
+        <Badge variant={statusVariant}>{poll.status}</Badge>
+      </div>
+      
+      <div className="flex items-center gap-1 mt-2">
+        {/* Action buttons */}
+      </div>
+    </div>
+  ))}
+</div>
 ```
 
 ---
 
-### 5. Update ManagePolls "Copy Latest Poll Embed" Button
-
-**File: `src/pages/Admin/ManagePolls.tsx`**
-
-Update `handleCopyLatestPollEmbed` to:
-1. Check if the latest active poll has Strawpoll integration
-2. Generate appropriate embed code:
-   - **With Strawpoll**: Use `https://tnjtools.com/poll/latest` (wrapper page)
-   - Alternatively, use the direct Strawpoll embed URL
-
-The wrapper approach is better because:
-- Single URL that never changes
-- Automatically updates when you create a new poll
-- Works even if you switch back to internal polls
-
----
-
-### 6. Add Types for Strawpoll Fields
-
-**File: `src/components/polls/types.ts`**
-
-Update the `Poll` and `RawPoll` interfaces to include:
-```typescript
-strawpoll_id?: string | null;
-strawpoll_url?: string | null;
-strawpoll_embed_url?: string | null;
-```
-
----
-
-### Summary of Changes
+### 5. Summary of Changes
 
 | File | Change |
 |------|--------|
-| `types.ts` | Add Strawpoll fields to Poll interface |
-| `usePollData.tsx` | Fetch Strawpoll fields in queries |
-| `StrawpollEmbed.tsx` | New component for rendering Strawpoll iframe |
-| `PollEmbed.tsx` | Check for Strawpoll and render accordingly |
-| `PollEmbed.tsx` (page) | Handle Strawpoll rendering for `/poll/latest` |
-| `ManagePolls.tsx` | Update copy embed to explain the latest poll feature |
+| `src/components/admin/AdminPolls.tsx` | **New file** - Compact polls management component |
+| `src/pages/Admin.tsx` | Add Polls CollapsibleModule after Show Prep |
 
 ---
 
-### How It Works
+### 6. Component Breakdown
 
 ```text
-Website embeds: https://tnjtools.com/poll/latest
-                        ↓
-              PollEmbed page loads
-                        ↓
-         Fetches latest active poll from DB
-                        ↓
-    ┌───────────────────┴───────────────────┐
-    ↓                                       ↓
-Has strawpoll_embed_url?              No Strawpoll?
-    ↓                                       ↓
-Renders Strawpoll iframe            Shows internal poll UI
-(full voting functionality)          (legacy fallback)
+AdminPolls.tsx
+├── Header Row
+│   ├── "Create Poll" Button → Opens PollDialog
+│   └── "Copy Latest Embed" Button → Copies iframe code
+│
+├── Poll Grid (compact cards)
+│   └── Each card shows:
+│       ├── Strawpoll icon (if applicable)
+│       ├── Question text (truncated)
+│       ├── Status badge
+│       └── Action buttons (Start/End, Embed, View, Edit, Delete)
+│
+├── PollDialog (reused)
+│   └── For creating/editing polls
+│
+└── Empty State
+    └── "No polls yet. Create your first poll!"
 ```
 
 ---
 
-### Embed Code Result
+### 7. Imports Required
 
-The "Copy Latest Poll Embed" button will provide:
-
-```html
-<iframe 
-  src="https://tnjtools.com/poll/latest" 
-  width="100%" 
-  height="500" 
-  style="border: 0; border-radius: 8px;" 
-  allowfullscreen>
-</iframe>
+```tsx
+// AdminPolls.tsx
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Copy, Play, Pause, Code, ExternalLink, Edit, Trash2 } from "lucide-react";
+import PollDialog from "@/components/polls/PollDialog";
 ```
 
-This single embed code:
-- Always shows the current active poll
-- Automatically uses Strawpoll when available
-- No need to update websites when creating new polls
+---
+
+### Technical Notes
+
+- The component will be self-contained with its own data fetching, avoiding prop drilling
+- Reuses `PollDialog` for create/edit functionality
+- Poll mutations (status update, delete) are implemented inline with proper invalidation
+- The "Copy Latest Embed" uses the same logic as ManagePolls but streamlined
+- Default collapsed state (`defaultOpen={false}`) keeps the admin page clean
