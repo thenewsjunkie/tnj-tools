@@ -170,11 +170,6 @@ const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProp
     ? localTopics.find(t => t.id === activeTopicId)
     : null;
 
-  // Extract all unique tags from all topics for autocomplete
-  const allTags = Array.from(
-    new Set(localTopics.flatMap(t => t.tags || []))
-  ).sort();
-
   // Get all scheduled segments for today (not filtered by hour)
   const daySegments = getAllScheduledSegments(selectedDate, scheduledSegments);
 
@@ -212,7 +207,6 @@ const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProp
             topics={localTopics}
             date={dateKey}
             onChange={handleTopicsChange}
-            allTags={allTags}
           />
           <DragOverlay>
             {activeTopic ? (
