@@ -1,59 +1,89 @@
 
-## Plan: Remove Tags Feature from Topics Module
 
-### What's Being Removed
-The tags feature in the Topics module - specifically the dropdown menu button (three-dot icon) that contains the tag management interface.
+## Plan: Fix Bullet Points - Can't Add More
 
-### Files to Modify
+### The Problem
+After adding one or two talking points, there's no obvious way to add more. The current behavior requires pressing **Enter** while typing in an existing bullet, but:
+1. This isn't intuitive - there's no visual cue
+2. Event propagation in the Popover might be interfering
+
+### Solution
+Add a visible "+" button at the bottom of the bullet list so users can always click to add more, plus ensure keyboard events don't bubble up.
+
+---
+
+### File to Modify
 
 | File | Change |
 |------|--------|
-| `src/components/admin/show-prep/TopicCard.tsx` | Remove TagButton import, handler, and the entire DropdownMenu containing it |
-| `src/components/admin/show-prep/TopicList.tsx` | Remove `allTags` prop from interface and TopicCard usage |
-| `src/components/admin/show-prep/ShowPrepNotes.tsx` | Remove `allTags` computation and prop passing |
-
-### Files to Delete
-
-| File | Reason |
-|------|--------|
-| `src/components/admin/show-prep/TagInput.tsx` | No longer used anywhere in Topics module |
+| `src/components/admin/show-prep/BulletEditor.tsx` | Add "+ Add point" button at bottom, stop event propagation |
 
 ---
 
-### Technical Details
+### Technical Changes
 
-**TopicCard.tsx Changes:**
+**1. Add a visible "Add" button at the bottom of the bullet list**
 
-Remove:
-- Import of `TagButton` from `./TagInput`
-- Import of `MoreHorizontal` icon (no longer needed)
-- Import of `DropdownMenu`, `DropdownMenuContent`, `DropdownMenuItem`, `DropdownMenuTrigger`
-- The `allTags` prop from the interface
-- The `handleTagsChange` function
-- The entire `DropdownMenu` block (lines 298-320)
+After the list of bullets, show a small "+ Add point" button:
 
-**TopicList.tsx Changes:**
+```text
+Before (no way to add more):
+┌────────────────────────────────┐
+│ ☐ First talking point          │
+│ ☐ Second talking point         │
+│                                │
+│                    [Done]      │
+└────────────────────────────────┘
 
-Remove:
-- `allTags: string[]` from the interface
-- `allTags={allTags}` prop from TopicCard component
+After:
+┌────────────────────────────────┐
+│ ☐ First talking point          │
+│ ☐ Second talking point         │
+│ + Add point                    │  ← NEW
+│                    [Done]      │
+└────────────────────────────────┘
+```
 
-**ShowPrepNotes.tsx Changes:**
+**2. Stop event propagation on keydown**
 
-Remove:
-- The `allTags` computation block (lines 173-176)
-- `allTags={allTags}` prop from TopicList component
+Add `e.stopPropagation()` to prevent the Enter key from bubbling up to the Popover:
+
+```typescript
+const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>, index: number) => {
+  e.stopPropagation(); // Prevent bubbling to Popover
+  // ... rest of handler
+};
+```
+
+**3. Updated BulletEditor render**
+
+```typescript
+return (
+  <div className="space-y-1">
+    {bullets.map((bullet, index) => (
+      // ... existing bullet inputs
+    ))}
+    
+    {/* Always show add button when there are bullets */}
+    <button
+      onClick={addBullet}
+      className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-1 mt-1"
+    >
+      <Plus className="h-3 w-3" />
+      Add point
+    </button>
+  </div>
+);
+```
 
 ---
 
-### What's Preserved
+### User Experience After Fix
 
-- The `tags?: string[]` field in the Topic type (types.ts) - keeping this avoids breaking existing data
-- Tag functionality in TopicArchive.tsx - historical topics with tags will still display and be filterable
-- No database changes needed
+1. Click the bullet icon on a topic
+2. Add your first talking point
+3. See a visible "+ Add point" button below
+4. Click it to add another bullet (or press Enter - both work)
+5. Continue adding as many points as needed
+6. Click "Done" when finished
 
----
-
-### Result
-
-The three-dot dropdown menu button will be completely removed from topic cards, simplifying the UI. The remaining action buttons will be: Strongman, Hot Take, Bullets, Edit/Save, and Delete.
