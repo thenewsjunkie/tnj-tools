@@ -141,7 +141,17 @@ const ManagePolls = () => {
             
             {selectedPollForEmbed && (
               <div className="mt-6">
-                <PollEmbedCode pollId={selectedPollForEmbed} />
+                {(() => {
+                  const selectedPoll = polls.find(p => p.id === selectedPollForEmbed);
+                  return (
+                    <PollEmbedCode 
+                      pollId={selectedPollForEmbed}
+                      strawpollId={selectedPoll?.strawpoll_id}
+                      strawpollUrl={selectedPoll?.strawpoll_url}
+                      strawpollEmbedUrl={selectedPoll?.strawpoll_embed_url}
+                    />
+                  );
+                })()}
               </div>
             )}
           </>

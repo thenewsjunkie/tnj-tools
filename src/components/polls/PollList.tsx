@@ -6,7 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, Play, Pause, Code } from "lucide-react";
+import { Edit, Trash2, Play, Pause, Code, ExternalLink } from "lucide-react";
 
 interface PollListProps {
   polls: any[];
@@ -25,8 +25,27 @@ const PollList: React.FC<PollListProps> = ({
   const queryClient = useQueryClient();
 
   const deletePollMutation = useMutation({
-    mutationFn: async (id: string) => {
-      // First delete the options
+    mutationFn: async ({ id, strawpollId }: { id: string; strawpollId?: string | null }) => {
+      // If there's a Strawpoll ID, try to delete it from Strawpoll first
+      if (strawpollId) {
+        try {
+          const { data, error } = await supabase.functions.invoke('strawpoll', {
+            body: {
+              action: 'delete',
+              poll_id: strawpollId,
+            },
+          });
+          
+          if (error) {
+            console.warn('Failed to delete from Strawpoll:', error);
+            // Continue with local deletion even if Strawpoll deletion fails
+          }
+        } catch (err) {
+          console.warn('Error deleting from Strawpoll:', err);
+        }
+      }
+
+      // Delete the options first
       const { error: optionsError } = await supabase
         .from("poll_options")
         .delete()
@@ -48,7 +67,7 @@ const PollList: React.FC<PollListProps> = ({
       queryClient.invalidateQueries({ queryKey: ["polls"] });
       toast({
         title: "Poll deleted",
-        description: "The poll has been permanently deleted.",
+        description: "The poll has been deleted from both Strawpoll and locally.",
       });
     },
     onError: (error) => {
@@ -113,7 +132,17 @@ const PollList: React.FC<PollListProps> = ({
         >
           <CardHeader className="pb-2">
             <div className="flex justify-between items-start">
-              <CardTitle className="text-lg">{poll.question}</CardTitle>
+              <div className="flex items-center gap-2">
+                {poll.strawpoll_id && (
+                  <img 
+                    src="https://strawpoll.com/favicon.ico" 
+                    alt="Strawpoll" 
+                    className="w-4 h-4"
+                    title="Hosted on Strawpoll"
+                  />
+                )}
+                <CardTitle className="text-lg">{poll.question}</CardTitle>
+              </div>
               <Badge variant={getStatusBadgeVariant(poll.status)}>
                 {poll.status}
               </Badge>
@@ -125,14 +154,19 @@ const PollList: React.FC<PollListProps> = ({
               <ul className="space-y-1">
                 {poll.poll_options.map((option: any) => (
                   <li key={option.id} className="text-sm">
-                    • {option.text} <span className="text-muted-foreground">({option.votes} votes)</span>
+                    • {option.text}
                   </li>
                 ))}
               </ul>
+              {poll.strawpoll_id && (
+                <p className="text-xs text-muted-foreground mt-2 italic">
+                  Votes tracked on Strawpoll.com
+                </p>
+              )}
             </div>
           </CardContent>
-          <CardFooter className="flex justify-between pt-2">
-            <div className="flex space-x-2">
+          <CardFooter className="flex flex-wrap justify-between gap-2 pt-2">
+            <div className="flex flex-wrap gap-2">
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -171,14 +205,25 @@ const PollList: React.FC<PollListProps> = ({
                   Embed
                 </Button>
               )}
+
+              {poll.strawpoll_url && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(poll.strawpoll_url, '_blank')}
+                >
+                  <ExternalLink className="h-4 w-4 mr-1" />
+                  View
+                </Button>
+              )}
             </div>
             
             <Button
               variant="destructive"
               size="sm"
               onClick={() => {
-                if (confirm("Are you sure you want to delete this poll? This action cannot be undone.")) {
-                  deletePollMutation.mutate(poll.id);
+                if (confirm("Are you sure you want to delete this poll? This will also delete it from Strawpoll.")) {
+                  deletePollMutation.mutate({ id: poll.id, strawpollId: poll.strawpoll_id });
                 }
               }}
             >
