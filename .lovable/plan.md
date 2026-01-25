@@ -1,275 +1,75 @@
 
+## Plan: Add Clickable Links to Notepad
 
-## Plan: Add TipTap Rich Text Editor to Notepad
+### The Problem
+URLs typed in the notepad appear as plain text because TipTap requires a dedicated **Link extension** for hyperlink support. The current setup only has StarterKit (basic formatting), Underline, and Placeholder.
 
-### Overview
-Replace the plain `<textarea>` with TipTap, a headless rich text editor that provides real visual formatting. When you click Bold, text will actually appear **bold** - not wrapped in asterisks.
-
-### What Changes
-
-| Current | After TipTap |
-|---------|--------------|
-| Plain textarea | Rich text editor with `contenteditable` |
-| `**bold**` markers | Actual **bold** text |
-| `*italic*` markers | Actual *italic* text |
-| Plain string storage | HTML string storage |
-
-### Visual Result
-
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ 📝 Notepad                                              (142 words, 856 chars) │
-├─────────────────────────────────────────────────────────────────────────────┤
-│ [B] [I] [U] │ [•] [1.] │ [A↑] [A↓] │ [⟲] [⟳] │ [🔍] │ [📋] [🖨️]            │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│   This text is bold, this is italic, and this is underlined.               │
-│                                                                             │
-│   • Bullet point with proper formatting                                     │
-│   • Another bullet point                                                    │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+### Solution
+Add TipTap's Link extension with **autolink** enabled, which will automatically detect and convert URLs as you type.
 
 ---
 
-### Dependencies to Install
+### What You'll Get
 
-```json
-{
-  "@tiptap/react": "^2.1.0",
-  "@tiptap/starter-kit": "^2.1.0",
-  "@tiptap/extension-underline": "^2.1.0",
-  "@tiptap/extension-placeholder": "^2.1.0"
-}
-```
+| Before | After |
+|--------|-------|
+| `https://example.com` (plain text) | [https://example.com](https://example.com) (clickable link) |
+| Must manually format links | URLs auto-detected as you type or paste |
+| No visual distinction | Links appear underlined and colored |
 
 ---
 
 ### Files to Modify
 
-| File | Action | Purpose |
-|------|--------|---------|
-| `package.json` | Modify | Add TipTap dependencies |
-| `src/components/admin/show-prep/Notepad.tsx` | Rewrite | Replace textarea with TipTap editor |
-| `src/components/admin/show-prep/NotepadToolbar.tsx` | Modify | Pass editor instance for direct formatting commands |
-| `src/components/admin/show-prep/FindReplaceDialog.tsx` | Modify | Work with HTML content instead of plain text |
+| File | Change |
+|------|--------|
+| `package.json` | Add `@tiptap/extension-link` dependency |
+| `src/components/admin/show-prep/Notepad.tsx` | Import and configure Link extension with autolink |
 
 ---
 
 ### Technical Implementation
 
-#### 1. TipTap Editor Setup
+**1. Install the Link Extension**
+```json
+"@tiptap/extension-link": "^2.27.2"
+```
 
+**2. Configure TipTap with Link Extension**
 ```typescript
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Underline from '@tiptap/extension-underline';
-import Placeholder from '@tiptap/extension-placeholder';
+import Link from '@tiptap/extension-link';
 
 const editor = useEditor({
   extensions: [
-    StarterKit.configure({
-      bulletList: { keepMarks: true },
-      orderedList: { keepMarks: true },
-    }),
+    StarterKit,
     Underline,
-    Placeholder.configure({
-      placeholder: 'Start typing your notes...',
+    Link.configure({
+      autolink: true,           // Auto-detect URLs as you type
+      openOnClick: true,        // Click to open in new tab
+      linkOnPaste: true,        // Auto-link pasted URLs
+      HTMLAttributes: {
+        target: '_blank',       // Open in new tab
+        rel: 'noopener noreferrer',
+      },
     }),
+    Placeholder.configure({...}),
   ],
-  content: value, // HTML string
-  onUpdate: ({ editor }) => {
-    onChange(editor.getHTML());
-  },
 });
 ```
 
-#### 2. Toolbar Integration with Editor Commands
-
-The toolbar will receive the TipTap editor instance and call its built-in commands:
-
-```typescript
-// Bold button
-<Button onClick={() => editor.chain().focus().toggleBold().run()}>
-  <Bold />
-</Button>
-
-// Available commands:
-editor.chain().focus().toggleBold().run()
-editor.chain().focus().toggleItalic().run()
-editor.chain().focus().toggleUnderline().run()
-editor.chain().focus().toggleBulletList().run()
-editor.chain().focus().toggleOrderedList().run()
-editor.chain().focus().undo().run()
-editor.chain().focus().redo().run()
-editor.commands.selectAll()
-```
-
-#### 3. Updated Notepad Component Structure
-
-```typescript
-interface NotepadProps {
-  value: string;        // Now stores HTML
-  onChange: (value: string) => void;
-  isOpen: boolean;
-  onToggle: () => void;
-}
-
-const Notepad = ({ value, onChange, isOpen, onToggle }: NotepadProps) => {
-  const [fontSize, setFontSize] = useState<'sm' | 'base' | 'lg'>('base');
-  const [showFindReplace, setShowFindReplace] = useState(false);
-  const { toast } = useToast();
-
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Underline,
-      Placeholder.configure({ placeholder: 'Start typing your notes...' }),
-    ],
-    content: value,
-    onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
-    },
-  });
-
-  // Sync external value changes
-  useEffect(() => {
-    if (editor && value !== editor.getHTML()) {
-      editor.commands.setContent(value);
-    }
-  }, [value, editor]);
-
-  // Word/char count from plain text
-  const plainText = editor?.getText() || '';
-  const wordCount = plainText.trim() ? plainText.trim().split(/\s+/).length : 0;
-  const charCount = plainText.length;
-};
-```
-
-#### 4. Updated Toolbar Props
-
-```typescript
-interface NotepadToolbarProps {
-  editor: Editor | null;  // TipTap editor instance
-  onFontSizeUp: () => void;
-  onFontSizeDown: () => void;
-  onFindReplace: () => void;
-  onCopyAll: () => void;
-  onPrint: () => void;
-  fontSize: 'sm' | 'base' | 'lg';
-}
-
-// Toolbar uses editor directly:
-<ToolbarButton 
-  onClick={() => editor?.chain().focus().toggleBold().run()} 
-  isActive={editor?.isActive('bold')}
-  icon={Bold} 
-  label="Bold" 
-/>
-```
-
-#### 5. Active State Highlighting
-
-Toolbar buttons will show when formatting is active:
-
-```typescript
-<Button
-  variant={editor?.isActive('bold') ? 'secondary' : 'ghost'}
-  onClick={() => editor?.chain().focus().toggleBold().run()}
->
-  <Bold />
-</Button>
-```
-
-#### 6. Find & Replace with HTML
-
-The FindReplaceDialog will work with the editor's plain text for searching, but apply replacements through the editor:
-
-```typescript
-// Get text for searching
-const text = editor.getText();
-
-// For replace, we need to handle HTML
-// Option: Search in getText(), replace via editor commands
-```
-
-#### 7. Print with HTML Rendering
-
-```typescript
-const handlePrint = () => {
-  const printWindow = window.open('', '_blank');
-  if (printWindow) {
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Notepad</title>
-          <style>
-            body { font-family: system-ui; padding: 40px; line-height: 1.6; }
-            ul, ol { margin-left: 20px; }
-          </style>
-        </head>
-        <body>${editor.getHTML()}</body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.print();
-  }
-};
-```
-
-#### 8. Editor Styling
-
-```typescript
-<EditorContent 
-  editor={editor} 
-  className={`
-    min-h-[400px] p-4 leading-relaxed bg-background text-foreground 
-    prose prose-sm dark:prose-invert max-w-none
-    focus:outline-none
-    ${fontSizeClasses[fontSize]}
-  `}
-/>
-```
-
-#### 9. Keyboard Shortcuts
-
-TipTap has built-in shortcuts that work automatically:
-- Ctrl/Cmd + B → Bold
-- Ctrl/Cmd + I → Italic
-- Ctrl/Cmd + U → Underline (with extension)
-- Ctrl/Cmd + Z → Undo
-- Ctrl/Cmd + Shift + Z → Redo
-
-We'll add custom handling for Ctrl+F (Find & Replace).
+**3. Add Link Styling**
+Links will automatically be styled with the prose classes, appearing as underlined clickable text.
 
 ---
 
-### Data Migration Consideration
+### How It Works
 
-The notepad currently stores plain text. After this change, it will store HTML. 
-
-**Backward Compatibility**: Existing plain text will render correctly in TipTap (it treats plain text as valid content). New formatted content will be saved as HTML like:
-```html
-<p>This is <strong>bold</strong> and <em>italic</em> text.</p>
-<ul><li>Bullet point</li></ul>
-```
+- **Type a URL** → It becomes a clickable link automatically
+- **Paste a URL** → Instantly converted to a link
+- **Click a link** → Opens in a new tab
+- **Existing plain-text URLs** → Will remain as text (only new URLs get auto-linked)
 
 ---
 
-### Features After Implementation
-
-| Feature | How It Works |
-|---------|--------------|
-| **Bold/Italic/Underline** | Real visual formatting, toggleable |
-| **Bullet/Numbered Lists** | Proper HTML lists with indentation |
-| **Undo/Redo** | Built-in editor history |
-| **Select All** | `editor.commands.selectAll()` |
-| **Copy All** | Copy HTML or plain text |
-| **Print** | Renders formatted HTML |
-| **Find & Replace** | Works on plain text content |
-| **Font Size** | CSS class on editor container |
-| **Keyboard Shortcuts** | Built-in + custom for find |
-| **Word/Char Count** | Calculated from `editor.getText()` |
-
+### Optional: Toolbar Link Button
+If you'd like, I can also add a **Link button** to the toolbar for manually adding/editing links to selected text. Let me know if you want that included.
