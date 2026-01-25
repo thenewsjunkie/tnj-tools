@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { X, Trash2, Upload, User } from "lucide-react";
 import type { Node } from "@xyflow/react";
 import type { CharacterNodeData, PointNodeData, TapestryNodeSide, PointTagType } from "@/types/tapestry";
@@ -12,7 +13,7 @@ import { toast } from "@/hooks/use-toast";
 
 interface NodeInspectorProps {
   node: Node | null;
-  onUpdate: (nodeId: string, data: Partial<CharacterNodeData | PointNodeData>, side?: TapestryNodeSide) => void;
+  onUpdate: (nodeId: string, data: Partial<CharacterNodeData | PointNodeData>, side?: TapestryNodeSide, scale?: number) => void;
   onDelete: (nodeId: string) => void;
   onClose: () => void;
 }
@@ -20,12 +21,14 @@ interface NodeInspectorProps {
 export function NodeInspector({ node, onUpdate, onDelete, onClose }: NodeInspectorProps) {
   const [localData, setLocalData] = useState<CharacterNodeData | PointNodeData | null>(null);
   const [side, setSide] = useState<TapestryNodeSide>('neutral');
+  const [scale, setScale] = useState(1);
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (node) {
       setLocalData(node.data as CharacterNodeData | PointNodeData);
       setSide((node.data as any).side || 'neutral');
+      setScale((node.data as any).scale || 1);
     }
   }, [node]);
 
@@ -48,6 +51,12 @@ export function NodeInspector({ node, onUpdate, onDelete, onClose }: NodeInspect
   const handleSideChange = (newSide: TapestryNodeSide) => {
     setSide(newSide);
     onUpdate(node.id, {}, newSide);
+  };
+
+  const handleScaleChange = (value: number[]) => {
+    const newScale = value[0];
+    setScale(newScale);
+    onUpdate(node.id, {}, undefined, newScale);
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,6 +111,23 @@ export function NodeInspector({ node, onUpdate, onDelete, onClose }: NodeInspect
               <SelectItem value="neutral">Neutral</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+
+        {/* Scale slider */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label>Scale</Label>
+            <span className="text-sm text-muted-foreground">
+              {Math.round(scale * 100)}%
+            </span>
+          </div>
+          <Slider
+            value={[scale]}
+            onValueChange={handleScaleChange}
+            min={0.5}
+            max={1.5}
+            step={0.1}
+          />
         </div>
 
         {isCharacter ? (
