@@ -133,6 +133,16 @@ export const generatePrintDocument = (data: PrintData) => {
       border-left: 2px solid #666;
       color: #444;
     }
+    .topic-bullets {
+      margin-top: 4px;
+      padding-left: 16px;
+      font-size: 11px;
+      list-style: disc;
+    }
+    .topic-bullets li {
+      margin: 2px 0;
+      color: #555;
+    }
     .main-character-field {
       background: #fff3cd;
       border: 2px solid #ffc107;
@@ -203,12 +213,20 @@ export const generatePrintDocument = (data: PrintData) => {
   <div class="two-column">
     <div class="topics-column">
       <h2>Topics</h2>
-      ${localTopics.length > 0 ? localTopics.map((topic) => `
-        <div class="topic">
-          <span class="topic-title">${topic.type === "link" ? "🔗 " : ""}${topic.title || "Untitled"}</span>
-          ${topic.take ? `<div class="topic-take">🔥 ${topic.take}</div>` : ""}
-        </div>
-      `).join("") : '<div class="empty-state">No topics</div>'}
+      ${localTopics.length > 0 ? localTopics.map((topic) => {
+        const bullets = topic.bullets?.filter(b => b.text.trim()) || [];
+        return `
+          <div class="topic">
+            <span class="topic-title">${topic.type === "link" ? "🔗 " : ""}${topic.title || "Untitled"}</span>
+            ${topic.take ? `<div class="topic-take">🔥 ${topic.take}</div>` : ""}
+            ${bullets.length > 0 ? `
+              <ul class="topic-bullets">
+                ${bullets.map(b => `<li style="margin-left: ${b.indent * 12}px">${b.text}</li>`).join('')}
+              </ul>
+            ` : ''}
+          </div>
+        `;
+      }).join("") : '<div class="empty-state">No topics</div>'}
     </div>
     
     <div class="segments-column">

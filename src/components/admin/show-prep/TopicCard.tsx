@@ -1,16 +1,16 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { GripVertical, Trash2, Pencil, Check, Plus, ExternalLink, Link2, Copy, Flame, MoreHorizontal, Hash } from "lucide-react";
+import { GripVertical, Trash2, Pencil, Check, ExternalLink, Link2, Copy, Flame, MoreHorizontal, List } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { normalizeUrl } from "@/lib/url";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Topic } from "./types";
+import { Topic, Bullet } from "./types";
 import { TagButton } from "./TagInput";
 import { StrongmanButton } from "./StrongmanButton";
+import BulletEditor from "./BulletEditor";
 import { useToast } from "@/hooks/use-toast";
 import {
   Popover,
@@ -33,12 +33,12 @@ interface TopicCardProps {
 }
 
 const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardProps) => {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const isLinkType = topic.type === "link";
   const hasContent = topic.title.trim() || topic.links.length > 0 || topic.images.length > 0 || topic.url;
   const [isEditing, setIsEditing] = useState(!hasContent);
   const [takeOpen, setTakeOpen] = useState(false);
+  const [bulletsOpen, setBulletsOpen] = useState(false);
   const {
     attributes,
     listeners,
@@ -68,8 +68,8 @@ const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardP
     onChange({ ...topic, tags });
   };
 
-  const handleOpenResources = () => {
-    window.open(`/admin/topic-resources/${date}/${topic.id}`, '_blank');
+  const handleBulletsChange = (bullets: Bullet[]) => {
+    onChange({ ...topic, bullets });
   };
 
   const handleCopyLink = (e: React.MouseEvent) => {
@@ -84,8 +84,8 @@ const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardP
     onChange({ ...topic, take });
   };
 
-  const resourceCount = topic.links.length + topic.images.length;
   const hasTake = !!topic.take?.trim();
+  const hasBullets = topic.bullets?.length > 0 && topic.bullets.some(b => b.text.trim());
 
   return (
     <div
@@ -234,20 +234,47 @@ const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardP
                   </Button>
                 ) : null}
               </>
-            ) : (
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-6 px-1.5 text-muted-foreground hover:text-foreground"
-                onClick={handleOpenResources}
-                title={resourceCount > 0 ? `Resources (${resourceCount})` : "Add Resources"}
-              >
-                <Plus className="h-3.5 w-3.5" />
-                {resourceCount > 0 && (
-                  <span className="text-xs ml-1">{resourceCount}</span>
-                )}
-              </Button>
-            )}
+            ) : null}
+
+            <Popover open={bulletsOpen} onOpenChange={setBulletsOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className={cn(
+                    "h-6 px-1.5",
+                    hasBullets 
+                      ? "text-blue-500 hover:text-blue-600" 
+                      : "text-muted-foreground hover:text-blue-500"
+                  )}
+                  title={hasBullets ? "Edit talking points" : "Add talking points"}
+                >
+                  <List className={cn("h-3.5 w-3.5", hasBullets && "fill-current")} />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80" align="end">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <List className="h-4 w-4 text-blue-500" />
+                    Talking Points
+                  </div>
+                  <BulletEditor 
+                    bullets={topic.bullets || []}
+                    onChange={handleBulletsChange}
+                  />
+                  <div className="flex justify-end pt-1">
+                    <Button
+                      size="sm"
+                      onClick={() => setBulletsOpen(false)}
+                      className="gap-1.5"
+                    >
+                      <Check className="h-3.5 w-3.5" />
+                      Done
+                    </Button>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
             
             {isEditing ? (
               <Button
@@ -309,6 +336,24 @@ const TopicCard = ({ topic, date, onChange, onDelete, allTags = [] }: TopicCardP
             <span className="text-xs text-muted-foreground italic">
               {topic.take}
             </span>
+          </div>
+        )}
+
+        {/* Display bullets when not editing */}
+        {!isEditing && hasBullets && (
+          <div className="ml-5 pl-2 border-l-2 border-blue-300 space-y-0.5">
+            {topic.bullets.filter(b => b.text.trim()).map((bullet) => (
+              <div 
+                key={bullet.id} 
+                className="flex items-start gap-1.5 text-xs text-muted-foreground"
+                style={{ paddingLeft: `${bullet.indent * 12}px` }}
+              >
+                <span className="text-blue-500">•</span>
+                <span className={cn(bullet.checked && "line-through opacity-50")}>
+                  {bullet.text}
+                </span>
+              </div>
+            ))}
           </div>
         )}
       </div>
