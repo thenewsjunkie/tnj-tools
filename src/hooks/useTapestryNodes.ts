@@ -13,6 +13,7 @@ import type {
   PointNodeData,
   EdgeData,
 } from "@/types/tapestry";
+import type { Json } from "@/integrations/supabase/types";
 import { transformNode, transformEdge } from "@/types/tapestry";
 
 // Create a new node
@@ -31,7 +32,7 @@ export const useCreateNode = () => {
           position_y: input.position_y || 0,
           scale: input.scale || 1,
           rotation: input.rotation || 0,
-          data: input.data as unknown as Record<string, unknown>,
+          data: input.data as Json,
           scene_visibility: input.scene_visibility || [],
         }])
         .select()
@@ -149,7 +150,7 @@ export const useCreateEdge = () => {
           tapestry_id: input.tapestry_id,
           source_node_id: input.source_node_id,
           target_node_id: input.target_node_id,
-          data: edgeData as unknown as Record<string, unknown>,
+          data: edgeData as Json,
         }])
         .select()
         .single();

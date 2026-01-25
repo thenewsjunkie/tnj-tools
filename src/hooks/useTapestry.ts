@@ -13,6 +13,7 @@ import type {
   ThemeConfig,
   SceneConfig,
 } from "@/types/tapestry";
+import type { Json } from "@/integrations/supabase/types";
 import { transformTapestry, transformNode, transformEdge, transformScene } from "@/types/tapestry";
 
 // Generate a URL-friendly slug from title
@@ -137,7 +138,7 @@ export const useCreateTapestry = () => {
         .insert([{
           title: input.title,
           slug,
-          theme_config: themeConfig as unknown as Record<string, unknown>,
+          theme_config: themeConfig as Json,
           created_by: user.id,
         }])
         .select()
