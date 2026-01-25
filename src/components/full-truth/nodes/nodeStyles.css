@@ -1,0 +1,101 @@
+/* Character Node Animations */
+@keyframes bob {
+  0%, 100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(1deg);
+  }
+}
+
+@keyframes tilt {
+  0%, 100% {
+    transform: rotate(-2deg);
+  }
+  50% {
+    transform: rotate(2deg);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(59, 130, 246, 0.6);
+  }
+}
+
+/* Point Node Hover State */
+.point-node:hover {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Connection Line Styles */
+.react-flow__edge-path {
+  stroke-width: 3;
+  transition: stroke 0.3s ease, stroke-width 0.3s ease;
+}
+
+.react-flow__edge.animated .react-flow__edge-path {
+  animation: dashdraw 0.5s linear infinite;
+}
+
+@keyframes dashdraw {
+  from {
+    stroke-dashoffset: 10;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Highlighted edge */
+.react-flow__edge.highlighted .react-flow__edge-path {
+  stroke-width: 4;
+  filter: drop-shadow(0 0 6px currentColor);
+}
+
+/* Custom handle styles */
+.react-flow__handle {
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.react-flow__handle:hover {
+  transform: scale(1.3);
+}
+
+/* Node selection styles */
+.react-flow__node.selected {
+  z-index: 10 !important;
+}
+
+/* Minimap styles */
+.react-flow__minimap {
+  background-color: hsl(var(--background)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 0.5rem !important;
+}
+
+/* Controls panel styles */
+.react-flow__controls {
+  background-color: hsl(var(--background)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 0.5rem !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.react-flow__controls-button {
+  background-color: hsl(var(--background)) !important;
+  border-color: hsl(var(--border)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.react-flow__controls-button:hover {
+  background-color: hsl(var(--accent)) !important;
+}
+
+/* Attribution hide */
+.react-flow__attribution {
+  display: none !important;
+}
