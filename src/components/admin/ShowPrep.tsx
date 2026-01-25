@@ -56,6 +56,64 @@ const AutoSizeInput = ({ value, onChange, placeholder, disabled }: AutoSizeInput
   );
 };
 
+interface LinkableNotepadProps {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}
+
+const LinkableNotepad = ({ value, onChange, placeholder }: LinkableNotepadProps) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+
+  const renderWithLinks = (text: string) => {
+    if (!text) return null;
+    
+    const parts = text.split(urlRegex);
+    return parts.map((part, i) => {
+      if (part.match(urlRegex)) {
+        return (
+          <a 
+            key={i}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {part}
+          </a>
+        );
+      }
+      return <span key={i}>{part}</span>;
+    });
+  };
+
+  if (isEditing) {
+    return (
+      <Textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={() => setIsEditing(false)}
+        placeholder={placeholder}
+        className="min-h-[300px] resize-y font-mono text-sm bg-background"
+        autoFocus
+      />
+    );
+  }
+
+  return (
+    <div
+      onClick={() => setIsEditing(true)}
+      className="min-h-[300px] p-3 font-mono text-sm bg-background border border-input rounded-md cursor-text whitespace-pre-wrap break-words"
+    >
+      {value ? renderWithLinks(value) : (
+        <span className="text-muted-foreground">{placeholder}</span>
+      )}
+    </div>
+  );
+};
+
 const ShowPrep = () => {
   const [selectedDate, setSelectedDate] = useState(() => {
     const saved = localStorage.getItem('show-prep-selected-date');
@@ -461,11 +519,10 @@ const ShowPrep = () => {
         
         {isNotepadOpen && (
           <div className="mt-4 p-4 bg-muted/50 rounded-lg">
-            <Textarea
+            <LinkableNotepad
               value={notepad}
-              onChange={(e) => setNotepad(e.target.value)}
+              onChange={setNotepad}
               placeholder="Quick notes for the show..."
-              className="min-h-[300px] resize-y font-mono text-sm bg-background"
             />
             <div className="text-xs text-muted-foreground text-right mt-2">
               {notepad.trim() ? notepad.trim().split(/\s+/).length : 0} words
