@@ -3,6 +3,7 @@ import { StickyNote, ChevronDown, ChevronUp } from "lucide-react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
+import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
 import { useToast } from "@/hooks/use-toast";
 import NotepadToolbar from "./NotepadToolbar";
@@ -33,6 +34,15 @@ const Notepad = ({ value, onChange, isOpen, onToggle }: NotepadProps) => {
         orderedList: { keepMarks: true },
       }),
       Underline,
+      Link.configure({
+        autolink: true,
+        openOnClick: true,
+        linkOnPaste: true,
+        HTMLAttributes: {
+          target: '_blank',
+          rel: 'noopener noreferrer',
+        },
+      }),
       Placeholder.configure({
         placeholder: 'Start typing your notes...',
       }),
