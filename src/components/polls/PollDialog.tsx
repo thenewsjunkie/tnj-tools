@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { X, Plus } from "lucide-react";
+import { X, Plus, Loader2 } from "lucide-react";
 
 interface PollDialogProps {
   open: boolean;
@@ -20,6 +20,7 @@ const PollDialog: React.FC<PollDialogProps> = ({ open, onOpenChange, poll }) => 
   const queryClient = useQueryClient();
   const [question, setQuestion] = useState("");
   const [options, setOptions] = useState<string[]>([""]);
+  const [isCreatingOnStrawpoll, setIsCreatingOnStrawpoll] = useState(false);
   const isEditing = !!poll;
 
   useEffect(() => {
@@ -34,24 +35,47 @@ const PollDialog: React.FC<PollDialogProps> = ({ open, onOpenChange, poll }) => 
 
   const createPollMutation = useMutation({
     mutationFn: async () => {
-      // First create the poll
+      setIsCreatingOnStrawpoll(true);
+      
+      const validOptions = options.filter(opt => opt.trim() !== "");
+      
+      // First, create the poll on Strawpoll
+      const { data: strawpollData, error: strawpollError } = await supabase.functions.invoke('strawpoll', {
+        body: {
+          action: 'create',
+          question,
+          options: validOptions,
+        },
+      });
+
+      if (strawpollError || !strawpollData?.success) {
+        throw new Error(strawpollData?.error || strawpollError?.message || 'Failed to create poll on Strawpoll');
+      }
+
+      console.log('Strawpoll created:', strawpollData);
+
+      // Then create the poll in our database with Strawpoll references
       const { data: pollData, error: pollError } = await supabase
         .from("polls")
-        .insert([{ question, status: "draft" }])
+        .insert([{ 
+          question, 
+          status: "draft",
+          strawpoll_id: strawpollData.strawpoll_id,
+          strawpoll_url: strawpollData.strawpoll_url,
+          strawpoll_embed_url: strawpollData.strawpoll_embed_url,
+        }])
         .select();
         
       if (pollError) throw pollError;
       
       const pollId = pollData[0].id;
       
-      // Then create the options
-      const optionsToInsert = options
-        .filter(opt => opt.trim() !== "")
-        .map(opt => ({
-          poll_id: pollId,
-          text: opt,
-          votes: 0
-        }));
+      // Create the options locally (for reference only)
+      const optionsToInsert = validOptions.map(opt => ({
+        poll_id: pollId,
+        text: opt,
+        votes: 0
+      }));
         
       if (optionsToInsert.length > 0) {
         const { error: optionsError } = await supabase
@@ -64,14 +88,16 @@ const PollDialog: React.FC<PollDialogProps> = ({ open, onOpenChange, poll }) => 
       return pollData[0];
     },
     onSuccess: () => {
+      setIsCreatingOnStrawpoll(false);
       queryClient.invalidateQueries({ queryKey: ["polls"] });
       toast({
-        title: "Poll created",
-        description: "The poll has been created successfully.",
+        title: "Poll created on Strawpoll!",
+        description: "The poll has been created successfully on Strawpoll.com",
       });
       onOpenChange(false);
     },
     onError: (error) => {
+      setIsCreatingOnStrawpoll(false);
       toast({
         title: "Error creating poll",
         description: error instanceof Error ? error.message : "Unknown error",
@@ -84,6 +110,9 @@ const PollDialog: React.FC<PollDialogProps> = ({ open, onOpenChange, poll }) => 
     mutationFn: async () => {
       if (!poll) return null;
       
+      // Note: Strawpoll doesn't support editing polls, so we only update locally
+      // The user would need to delete and recreate to update on Strawpoll
+      
       // Update the poll question
       const { error: pollError } = await supabase
         .from("polls")
@@ -91,12 +120,6 @@ const PollDialog: React.FC<PollDialogProps> = ({ open, onOpenChange, poll }) => 
         .eq("id", poll.id);
         
       if (pollError) throw pollError;
-      
-      // Get existing options
-      const existingOptions = poll.poll_options.map((opt: any) => ({
-        id: opt.id,
-        text: opt.text,
-      }));
       
       // Delete all options and recreate them
       const { error: deleteError } = await supabase
@@ -128,8 +151,8 @@ const PollDialog: React.FC<PollDialogProps> = ({ open, onOpenChange, poll }) => 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["polls"] });
       toast({
-        title: "Poll updated",
-        description: "The poll has been updated successfully.",
+        title: "Poll updated locally",
+        description: "Note: Changes are only saved locally. To update on Strawpoll, delete and recreate the poll.",
       });
       onOpenChange(false);
     },
@@ -186,12 +209,14 @@ const PollDialog: React.FC<PollDialogProps> = ({ open, onOpenChange, poll }) => 
     setOptions(newOptions);
   };
 
+  const isPending = createPollMutation.isPending || updatePollMutation.isPending || isCreatingOnStrawpoll;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md bg-background dark:bg-black/70 backdrop-blur-sm border border-border/50">
         <DialogHeader>
           <DialogTitle className="text-foreground dark:text-white/90">
-            {isEditing ? "Edit Poll" : "Create New Poll"}
+            {isEditing ? "Edit Poll" : "Create New Poll on Strawpoll"}
           </DialogTitle>
         </DialogHeader>
         
@@ -209,6 +234,7 @@ const PollDialog: React.FC<PollDialogProps> = ({ open, onOpenChange, poll }) => 
               onChange={(e) => setQuestion(e.target.value)}
               placeholder="Enter your question"
               className="bg-white/10 text-foreground dark:text-white/90 border-border/50 placeholder:text-muted-foreground/70"
+              disabled={isPending}
             />
           </div>
           
@@ -223,13 +249,14 @@ const PollDialog: React.FC<PollDialogProps> = ({ open, onOpenChange, poll }) => 
                   onChange={(e) => handleOptionChange(index, e.target.value)}
                   placeholder={`Option ${index + 1}`}
                   className="bg-white/10 text-foreground dark:text-white/90 border-border/50 placeholder:text-muted-foreground/70"
+                  disabled={isPending}
                 />
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
                   onClick={() => handleRemoveOption(index)}
-                  disabled={options.length <= 1}
+                  disabled={options.length <= 1 || isPending}
                   className="text-destructive/70 hover:text-destructive"
                 >
                   <X className="h-4 w-4" />
@@ -243,11 +270,18 @@ const PollDialog: React.FC<PollDialogProps> = ({ open, onOpenChange, poll }) => 
               size="sm"
               className="mt-2 border-primary/50 text-primary hover:bg-primary/10"
               onClick={handleAddOption}
+              disabled={isPending}
             >
               <Plus className="h-4 w-4 mr-2" />
               Add Option
             </Button>
           </div>
+
+          {!isEditing && (
+            <p className="text-xs text-muted-foreground">
+              This poll will be created on Strawpoll.com with IP-based duplicate voting prevention.
+            </p>
+          )}
         </div>
         
         <DialogFooter>
@@ -255,15 +289,17 @@ const PollDialog: React.FC<PollDialogProps> = ({ open, onOpenChange, poll }) => 
             onClick={() => onOpenChange(false)} 
             variant="secondary"
             className="mr-2 border border-gray-300 dark:border-gray-600 font-medium dark:text-white/90 text-gray-700 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600"
+            disabled={isPending}
           >
             Cancel
           </Button>
           <Button 
             onClick={handleSave} 
-            disabled={createPollMutation.isPending || updatePollMutation.isPending}
+            disabled={isPending}
             className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
-            {isEditing ? "Update" : "Create"}
+            {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            {isEditing ? "Update" : "Create on Strawpoll"}
           </Button>
         </DialogFooter>
       </DialogContent>

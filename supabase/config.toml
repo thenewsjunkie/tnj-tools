@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.capture-screenshot]
 verify_jwt = false
+
+[functions.strawpoll]
+verify_jwt = false

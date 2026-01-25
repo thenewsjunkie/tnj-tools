@@ -687,6 +687,9 @@ export type Database = {
           image_url: string | null
           question: string
           status: Database["public"]["Enums"]["poll_status"] | null
+          strawpoll_embed_url: string | null
+          strawpoll_id: string | null
+          strawpoll_url: string | null
           updated_at: string | null
         }
         Insert: {
@@ -695,6 +698,9 @@ export type Database = {
           image_url?: string | null
           question: string
           status?: Database["public"]["Enums"]["poll_status"] | null
+          strawpoll_embed_url?: string | null
+          strawpoll_id?: string | null
+          strawpoll_url?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -703,6 +709,9 @@ export type Database = {
           image_url?: string | null
           question?: string
           status?: Database["public"]["Enums"]["poll_status"] | null
+          strawpoll_embed_url?: string | null
+          strawpoll_id?: string | null
+          strawpoll_url?: string | null
           updated_at?: string | null
         }
         Relationships: []
