@@ -1,89 +1,162 @@
 
+## Plan: Replace Hopper Module with Simple Notepad
 
-## Plan: Fix Bullet Points - Can't Add More
+### Overview
+Remove the entire Hopper link-collection feature and replace it with a simple notepad that auto-saves to the database, similar to onlinenotepad.org.
 
-### The Problem
-After adding one or two talking points, there's no obvious way to add more. The current behavior requires pressing **Enter** while typing in an existing bullet, but:
-1. This isn't intuitive - there's no visual cue
-2. Event propagation in the Popover might be interfering
+### What You'll Get
+A clean, minimalist notepad section that:
+- Replaces the "Open Hopper" / "Close Hopper" button
+- Auto-saves every 2 seconds (like the rest of Show Prep)
+- Has a word counter in the corner
+- Persists per-date (each day has its own notes)
+- Shows clearly in the collapsible panel
 
-### Solution
-Add a visible "+" button at the bottom of the bullet list so users can always click to add more, plus ensure keyboard events don't bubble up.
+```text
+Before (Hopper):
+┌─────────────────────────────────────────────┐
+│ [     Open Hopper                      ▼]   │
+└─────────────────────────────────────────────┘
+   (Expandable link collection system)
+
+After (Notepad):
+┌─────────────────────────────────────────────┐
+│ [     Open Notepad                     ▼]   │
+├─────────────────────────────────────────────┤
+│                                             │
+│   (Large textarea for quick notes)          │
+│                                             │
+│                              42 words       │
+└─────────────────────────────────────────────┘
+```
 
 ---
 
-### File to Modify
+### Files to Delete
+
+| File | Reason |
+|------|--------|
+| `src/components/admin/show-prep/Hopper.tsx` | Core Hopper component (1,462 lines) |
+| `src/components/admin/show-prep/CreateTopicDialog.tsx` | Only used by Hopper |
+| `src/hooks/useAddToHopper.ts` | Hook for adding to Hopper |
+
+---
+
+### Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/components/admin/show-prep/BulletEditor.tsx` | Add "+ Add point" button at bottom, stop event propagation |
+| `src/components/admin/ShowPrep.tsx` | Replace Hopper with Notepad section |
+| `src/components/admin/show-prep/PrintShowPrep.tsx` | Remove Hopper-related interfaces and props |
+| `src/components/resources/ResourceCard.tsx` | Remove "Add to Hopper" button |
+| `src/components/resources/SortableResourceCard.tsx` | Remove `onAddToHopper` prop |
 
 ---
 
-### Technical Changes
+### Database Changes
 
-**1. Add a visible "Add" button at the bottom of the bullet list**
+Add a `notepad` column to the existing `show_prep_notes` table:
 
-After the list of bullets, show a small "+ Add point" button:
-
-```text
-Before (no way to add more):
-┌────────────────────────────────┐
-│ ☐ First talking point          │
-│ ☐ Second talking point         │
-│                                │
-│                    [Done]      │
-└────────────────────────────────┘
-
-After:
-┌────────────────────────────────┐
-│ ☐ First talking point          │
-│ ☐ Second talking point         │
-│ + Add point                    │  ← NEW
-│                    [Done]      │
-└────────────────────────────────┘
-```
-
-**2. Stop event propagation on keydown**
-
-Add `e.stopPropagation()` to prevent the Enter key from bubbling up to the Popover:
-
-```typescript
-const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>, index: number) => {
-  e.stopPropagation(); // Prevent bubbling to Popover
-  // ... rest of handler
-};
-```
-
-**3. Updated BulletEditor render**
-
-```typescript
-return (
-  <div className="space-y-1">
-    {bullets.map((bullet, index) => (
-      // ... existing bullet inputs
-    ))}
-    
-    {/* Always show add button when there are bullets */}
-    <button
-      onClick={addBullet}
-      className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-1 mt-1"
-    >
-      <Plus className="h-3 w-3" />
-      Add point
-    </button>
-  </div>
-);
+```sql
+ALTER TABLE show_prep_notes 
+ADD COLUMN notepad TEXT DEFAULT '';
 ```
 
 ---
 
-### User Experience After Fix
+### Technical Implementation
 
-1. Click the bullet icon on a topic
-2. Add your first talking point
-3. See a visible "+ Add point" button below
-4. Click it to add another bullet (or press Enter - both work)
-5. Continue adding as many points as needed
-6. Click "Done" when finished
+**1. ShowPrep.tsx Changes**
 
+Replace Hopper section with a simple collapsible notepad:
+
+```typescript
+// State changes
+const [isNotepadOpen, setIsNotepadOpen] = useState(false);
+const [notepad, setNotepad] = useState("");
+
+// In loadData, add notepad loading:
+setNotepad(data.notepad || "");
+
+// In the save effect, add notepad:
+notepad: notepad || null,
+
+// Replace the Hopper JSX section:
+<div className="w-full border-t border-border pt-4">
+  <Button
+    variant="outline"
+    onClick={() => setIsNotepadOpen(!isNotepadOpen)}
+    className="w-full justify-between"
+  >
+    <span>{isNotepadOpen ? "Close Notepad" : "Open Notepad"}</span>
+    {isNotepadOpen ? <ChevronUp /> : <ChevronDown />}
+  </Button>
+  
+  {isNotepadOpen && (
+    <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+      <Textarea
+        value={notepad}
+        onChange={(e) => setNotepad(e.target.value)}
+        placeholder="Quick notes..."
+        className="min-h-[200px] resize-y"
+      />
+      <div className="text-xs text-muted-foreground text-right mt-2">
+        {notepad.trim().split(/\s+/).filter(w => w).length} words
+      </div>
+    </div>
+  )}
+</div>
+```
+
+**2. PrintShowPrep.tsx Cleanup**
+
+Remove the Hopper interfaces and unused props:
+
+```typescript
+// Remove:
+interface HopperItem { ... }
+interface HopperGroup { ... }
+
+// Update PrintData:
+interface PrintData {
+  selectedDate: Date;
+  topics: { fromTopic: string; toTopic: string; andTopic: string };
+  lastMinuteFrom: string;
+  rateMyBlank: string;
+  potentialVideos: string;
+  localTopics: Topic[];
+  scheduledSegments: ScheduledSegment[];
+  // hopperItems removed
+  // hopperGroups removed
+}
+```
+
+**3. ResourceCard.tsx Cleanup**
+
+Remove the Inbox icon and "Add to Hopper" button:
+
+```typescript
+// Remove from interface:
+onAddToHopper?: () => void;
+
+// Remove the JSX button for adding to hopper
+```
+
+**4. SortableResourceCard.tsx Cleanup**
+
+Remove the `onAddToHopper` prop from the interface and component.
+
+---
+
+### Migration Note
+
+The Hopper database tables (`hopper_items`, `hopper_groups`) will remain in the database - they won't be deleted. This is intentional:
+- No data loss
+- Tables can be dropped manually later if desired via Supabase dashboard
+- Keeps the migration simple and safe
+
+---
+
+### Result
+
+The Show Prep section will have a clean, simple notepad at the bottom for jotting down quick notes during the show. Each day gets its own notepad content that auto-saves with the rest of the show prep data.
