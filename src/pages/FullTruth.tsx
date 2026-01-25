@@ -1,13 +1,26 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TapestryCard } from "@/components/full-truth/gallery/TapestryCard";
 import { useTapestries, useMyTapestries } from "@/hooks/useTapestry";
-import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { User } from "@supabase/supabase-js";
 
 const FullTruth = () => {
-  const { session } = useAuth();
-  const user = session?.user;
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
   const { data: publishedTapestries, isLoading: loadingPublished } = useTapestries();
   const { data: myTapestries, isLoading: loadingMy } = useMyTapestries();
 
