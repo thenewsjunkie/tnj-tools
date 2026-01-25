@@ -68,14 +68,14 @@ const AdminPolls = () => {
   });
 
   const handleCopyLatestEmbed = () => {
-    const embedCode = `<iframe src="https://tnjtools.com/poll/latest" width="100%" height="500" style="border: 0; border-radius: 8px;" allowfullscreen></iframe>`;
+    const embedCode = `<iframe src="https://tnjtools.com/poll/latest" width="100%" height="400" style="border: 0; border-radius: 8px;" allowfullscreen></iframe>`;
     navigator.clipboard.writeText(embedCode);
     toast({ title: "Embed code copied!", description: "Dynamic latest poll embed code copied to clipboard" });
   };
 
   const handleCopyPollEmbed = (poll: PollData) => {
     const embedCode = poll.strawpoll_embed_url
-      ? `<iframe src="${poll.strawpoll_embed_url}" width="100%" height="480" style="border: 0; border-radius: 8px;" allowfullscreen></iframe>`
+      ? `<iframe src="${poll.strawpoll_embed_url}" width="100%" height="400" style="border: 0; border-radius: 8px;" allowfullscreen></iframe>`
       : `<iframe src="https://tnjtools.com/poll/${poll.id}" width="100%" height="400" style="border: 0; border-radius: 8px;"></iframe>`;
     navigator.clipboard.writeText(embedCode);
     toast({ title: "Embed code copied!" });

@@ -78,7 +78,7 @@ const ManagePolls = () => {
     const iframeCode = `<iframe 
   src="${latestPollUrl}" 
   width="100%" 
-  height="450" 
+  height="400" 
   frameborder="0" 
   style="border: 1px solid #eaeaea; border-radius: 8px;" 
   allowtransparency="true">

@@ -29,7 +29,7 @@ const PollEmbedCode: React.FC<PollEmbedCodeProps> = ({
     ? `<iframe 
   src="${strawpollEmbedUrl}" 
   width="100%" 
-  height="480" 
+  height="400" 
   style="border: 0; border-radius: 8px;" 
   allowfullscreen>
 </iframe>`
