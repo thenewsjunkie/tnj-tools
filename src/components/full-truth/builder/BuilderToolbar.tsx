@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Save, Globe, Eye, ArrowLeft, Loader2 } from "lucide-react";
+import { Save, Globe, Eye, ArrowLeft, Loader2, Palette } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface BuilderToolbarProps {
@@ -11,6 +11,7 @@ interface BuilderToolbarProps {
   onSave: () => void;
   onPublish: () => void;
   onPreview?: () => void;
+  onOpenThemeSettings?: () => void;
   slug?: string;
 }
 
@@ -22,6 +23,7 @@ export function BuilderToolbar({
   onSave,
   onPublish,
   onPreview,
+  onOpenThemeSettings,
   slug
 }: BuilderToolbarProps) {
   return (
@@ -58,8 +60,15 @@ export function BuilderToolbar({
             Preview
           </Button>
         )}
+
+        {onOpenThemeSettings && (
+          <Button variant="outline" size="sm" onClick={onOpenThemeSettings}>
+            <Palette className="h-4 w-4 mr-2" />
+            Theme
+          </Button>
+        )}
         
-        <Button 
+        <Button
           variant="outline" 
           size="sm" 
           onClick={onSave}

@@ -11,6 +11,8 @@ export interface ThemeConfig {
   dividerColor: string;
   leftGradient?: string;
   rightGradient?: string;
+  leftImageUrl?: string;
+  rightImageUrl?: string;
   fontFamily?: string;
   [key: string]: string | undefined; // Index signature for Json compatibility
 }
