@@ -15,7 +15,8 @@ import VideoTools from "@/components/admin/VideoTools";
 import AdminPolls from "@/components/admin/AdminPolls";
 import { Badge } from "@/components/ui/badge";
 import { useQueueState } from "@/hooks/useQueueState";
-import { Mic, Archive, ExternalLink } from "lucide-react";
+import { Mic, Archive, ExternalLink, Plus } from "lucide-react";
+import PollDialog from "@/components/polls/PollDialog";
 
 const Admin = () => {
   const { theme } = useTheme();
@@ -24,6 +25,7 @@ const Admin = () => {
     const saved = localStorage.getItem("admin-voice-chat-open");
     return saved === "true";
   });
+  const [isPollDialogOpen, setIsPollDialogOpen] = useState(false);
   const { queueCount } = useQueueState();
 
   useEffect(() => {
@@ -36,8 +38,8 @@ const Admin = () => {
     <div className="min-h-screen bg-background text-foreground p-3 sm:p-4">
       <AdminHeader />
 
-      {/* Centered Voice Chat Tab */}
-      <div className="flex justify-center mb-4">
+      {/* Top Action Buttons */}
+      <div className="flex justify-center items-center gap-4 mb-4">
         <button
           onClick={() => setIsVoiceChatOpen(!isVoiceChatOpen)}
           className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all duration-200 ${
@@ -52,7 +54,21 @@ const Admin = () => {
             <Badge variant="secondary" className="text-xs ml-1">Speaking</Badge>
           )}
         </button>
+
+        <button
+          onClick={() => setIsPollDialogOpen(true)}
+          className="flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all duration-200 bg-muted hover:bg-muted/80 text-foreground"
+        >
+          <Plus className="h-5 w-5" />
+          <span>Poll</span>
+        </button>
       </div>
+
+      <PollDialog 
+        open={isPollDialogOpen} 
+        onOpenChange={setIsPollDialogOpen} 
+        poll={null}
+      />
 
       {/* Expandable Voice Chat Panel */}
       <div
