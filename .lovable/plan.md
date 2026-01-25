@@ -1,117 +1,62 @@
 
 
-## Plan: Move Polls to Top Header with "+ Poll" Button
+## Plan: Fix Strawpoll Embed Extra Space Below Poll
 
-### Overview
-Add a "+ Poll" button at the top of the admin page, positioned alongside the "Ask TNJ AI" button. The layout will have "Ask TNJ AI" on the left and "+ Poll" on the right, both as pill-shaped buttons in the same row.
+### Problem
+The Strawpoll embed has extra blank space below the poll content because:
+1. `PollEmbedPage.tsx` uses `min-h-screen` which forces full viewport height
+2. `StrawpollEmbed.tsx` uses `min-h-[480px]` which may be larger than the actual poll content
 
----
-
-### Current Layout
-
-```text
-                    [Ask TNJ AI]
-```
-
-### New Layout
-
-```text
-        [Ask TNJ AI]                    [+ Poll]
-```
+### Solution
+Remove the forced minimum heights and let the Strawpoll iframe size naturally to its content.
 
 ---
 
 ### Changes Required
 
-**File: `src/pages/Admin.tsx`**
+**File 1: `src/pages/PollEmbed.tsx`**
 
-1. **Add state for Poll Dialog**
-   - Add `useState` for `isPollDialogOpen`
-   - Import `PollDialog` component
-   - Import `Plus` icon from lucide-react
-
-2. **Update the top button row**
-   - Change from `justify-center` to `justify-center gap-4` with flex
-   - Add "+ Poll" button on the right side with similar styling
-
-3. **Remove the Polls CollapsibleModule** (optional - or keep it below for poll list management)
-   - The "+ Poll" button handles creation
-   - Keep the CollapsibleModule for viewing/managing existing polls
-
-4. **Add PollDialog render**
-   - Render `PollDialog` component with the state
-
----
-
-### Code Changes
+Remove `min-h-screen` from the Strawpoll embed wrapper (lines 57-61):
 
 ```tsx
-// New imports
-import { Mic, Archive, ExternalLink, Plus } from "lucide-react";
-import PollDialog from "@/components/polls/PollDialog";
-
-// New state
-const [isPollDialogOpen, setIsPollDialogOpen] = useState(false);
-
-// Updated top button section (lines 39-55)
-<div className="flex justify-center items-center gap-4 mb-4">
-  {/* Ask TNJ AI Button */}
-  <button
-    onClick={() => setIsVoiceChatOpen(!isVoiceChatOpen)}
-    className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all duration-200 ${
-      isVoiceChatOpen 
-        ? "bg-primary text-primary-foreground shadow-lg" 
-        : "bg-muted hover:bg-muted/80 text-foreground"
-    }`}
-  >
-    <Mic className={`h-5 w-5 ${isAISpeaking ? "animate-pulse" : ""}`} />
-    <span>Ask TNJ AI</span>
-    {isAISpeaking && (
-      <Badge variant="secondary" className="text-xs ml-1">Speaking</Badge>
-    )}
-  </button>
-
-  {/* + Poll Button */}
-  <button
-    onClick={() => setIsPollDialogOpen(true)}
-    className="flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all duration-200 bg-muted hover:bg-muted/80 text-foreground"
-  >
-    <Plus className="h-5 w-5" />
-    <span>Poll</span>
-  </button>
+// Change from:
+<div className="min-h-screen w-full">
+  <StrawpollEmbed embedUrl={latestPollData.strawpoll_embed_url} />
 </div>
 
-{/* Add PollDialog at the end of component */}
-<PollDialog 
-  open={isPollDialogOpen} 
-  onOpenChange={setIsPollDialogOpen} 
-/>
+// To:
+<div className="w-full">
+  <StrawpollEmbed embedUrl={latestPollData.strawpoll_embed_url} />
+</div>
 ```
 
----
+**File 2: `src/components/polls/StrawpollEmbed.tsx`**
 
-### Visual Result
+Remove the forced min-height and let iframe auto-size:
 
-```text
-+----------------------------------------------------------+
-|                      Admin Header                         |
-+----------------------------------------------------------+
-|                                                          |
-|         [🎤 Ask TNJ AI]         [+ Poll]                 |
-|                                                          |
-|  +----------------------------------------------------+  |
-|  |  Voice Interface (expandable)                      |  |
-|  +----------------------------------------------------+  |
-|                                                          |
-|  +----------------------------------------------------+  |
-|  |  Show Prep                                         |  |
-|  +----------------------------------------------------+  |
-|                                                          |
-|  +----------------------------------------------------+  |
-|  |  Polls (for viewing/managing existing polls)       |  |
-|  +----------------------------------------------------+  |
-+----------------------------------------------------------+
+```tsx
+// Change from:
+<div className="w-full h-full min-h-[480px] flex items-center justify-center">
+  <iframe 
+    src={embedUrl}
+    className="w-full h-full min-h-[480px]"
+    style={{ border: 'none' }}
+    ...
+  />
+</div>
+
+// To:
+<div className="w-full">
+  <iframe 
+    src={embedUrl}
+    className="w-full"
+    style={{ border: 'none', minHeight: '400px' }}
+    ...
+  />
+</div>
 ```
+
+The Strawpoll embed will auto-resize based on its content, eliminating the blank space.
 
 ---
 
@@ -119,14 +64,6 @@ const [isPollDialogOpen, setIsPollDialogOpen] = useState(false);
 
 | File | Change |
 |------|--------|
-| `src/pages/Admin.tsx` | Add "+ Poll" button next to "Ask TNJ AI", add state for dialog, render PollDialog |
-
----
-
-### Technical Notes
-
-- The "+ Poll" button opens `PollDialog` directly for quick poll creation
-- Keep the existing Polls `CollapsibleModule` below for managing/viewing existing polls
-- Both buttons use the same pill-shaped styling for visual consistency
-- The new poll is automatically started (per previous implementation)
+| `src/pages/PollEmbed.tsx` | Remove `min-h-screen` from Strawpoll wrapper div |
+| `src/components/polls/StrawpollEmbed.tsx` | Remove flex centering and adjust min-height styling |
 
