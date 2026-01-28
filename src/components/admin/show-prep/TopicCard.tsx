@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { GripVertical, Trash2, Pencil, Check, ExternalLink, Link2, Copy, Flame, List } from "lucide-react";
+import { GripVertical, Trash2, Pencil, Check, ExternalLink, Link2, Copy, Flame, List, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { normalizeUrl } from "@/lib/url";
 import { useSortable } from "@dnd-kit/sortable";
@@ -22,9 +22,10 @@ interface TopicCardProps {
   date: string;
   onChange: (topic: Topic) => void;
   onDelete: () => void;
+  onMoveToNextDay: () => void;
 }
 
-const TopicCard = ({ topic, date, onChange, onDelete }: TopicCardProps) => {
+const TopicCard = ({ topic, date, onChange, onDelete, onMoveToNextDay }: TopicCardProps) => {
   const { toast } = useToast();
   const isLinkType = topic.type === "link";
   const hasContent = topic.title.trim() || topic.links.length > 0 || topic.images.length > 0 || topic.url;
@@ -321,6 +322,19 @@ const TopicCard = ({ topic, date, onChange, onDelete }: TopicCardProps) => {
             ))}
           </div>
         )}
+
+        {/* Move to next day button */}
+        <div className="flex justify-end mt-1">
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-5 text-xs text-muted-foreground hover:text-primary gap-1"
+            onClick={onMoveToNextDay}
+            title="Move to next day"
+          >
+            <ArrowRight className="h-3 w-3" />
+          </Button>
+        </div>
       </div>
     </div>
   );
