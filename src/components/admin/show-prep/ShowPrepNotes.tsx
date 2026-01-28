@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { format } from "date-fns";
+import { format, addDays } from "date-fns";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { DndContext, closestCenter, DragEndEvent, DragOverlay, DragStartEvent } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
@@ -139,6 +139,65 @@ const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProp
     setLocalTopics(newTopics);
   };
 
+  const handleMoveTopicToNextDay = async (topicToMove: Topic) => {
+    try {
+      // 1. Calculate next day's date
+      const nextDate = format(addDays(selectedDate, 1), "yyyy-MM-dd");
+      
+      // 2. Remove from current day's topics
+      const updatedLocalTopics = localTopics.filter(t => t.id !== topicToMove.id);
+      setLocalTopics(updatedLocalTopics);
+      
+      // 3. Fetch next day's data
+      const { data: nextDayData } = await supabase
+        .from("show_prep_notes")
+        .select("*")
+        .eq("date", nextDate)
+        .maybeSingle();
+      
+      // 4. Parse existing topics for next day
+      let nextDayTopics: Topic[] = [];
+      if (nextDayData?.topics) {
+        const rawData = nextDayData.topics as unknown;
+        if (rawData && typeof rawData === "object") {
+          if (Array.isArray((rawData as { topics?: unknown }).topics)) {
+            nextDayTopics = (rawData as { topics: Topic[] }).topics;
+          } else if (Array.isArray(rawData)) {
+            nextDayTopics = rawData as Topic[];
+          }
+        }
+      }
+      
+      // 5. Add topic to next day (at end, with new display_order)
+      const movedTopic = {
+        ...topicToMove,
+        display_order: nextDayTopics.length,
+      };
+      nextDayTopics.push(movedTopic);
+      
+      // 6. Save to next day
+      const { error } = await supabase
+        .from("show_prep_notes")
+        .upsert({
+          date: nextDate,
+          topics: JSON.parse(JSON.stringify({ topics: nextDayTopics }))
+        }, { onConflict: "date" });
+      
+      if (error) throw error;
+      
+      // 7. Invalidate query cache for next day
+      queryClient.invalidateQueries({ 
+        queryKey: ["show-prep-notes", nextDate] 
+      });
+      
+      // 8. Show success toast
+      toast.success("Moved to " + format(addDays(selectedDate, 1), "MMM d"));
+    } catch (error) {
+      console.error("Error moving topic:", error);
+      toast.error("Failed to move topic");
+    }
+  };
+
   const handleDragStart = (event: DragStartEvent) => {
     isDraggingRef.current = true;
     setActiveTopicId(event.active.id as string);
@@ -207,6 +266,7 @@ const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProp
             topics={localTopics}
             date={dateKey}
             onChange={handleTopicsChange}
+            onMoveTopicToNextDay={handleMoveTopicToNextDay}
           />
           <DragOverlay>
             {activeTopic ? (
