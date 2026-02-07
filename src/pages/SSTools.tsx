@@ -26,7 +26,7 @@ const SSTools = () => {
       {/* Gear icon */}
       <button
         onClick={() => setShowSettings((v) => !v)}
-        className="absolute top-3 right-3 p-2 rounded-full text-white/30 hover:text-white/70 hover:bg-white/10 transition-colors z-20"
+        className="absolute top-3 right-3 p-2 rounded-full text-foreground/50 hover:text-foreground hover:bg-muted transition-colors z-20"
         aria-label="Toggle settings"
       >
         <Settings className="h-5 w-5" />
@@ -34,15 +34,15 @@ const SSTools = () => {
 
       {/* Settings overlay */}
       {showSettings && (
-        <div className="absolute inset-0 z-10 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="absolute inset-0 z-10 bg-background/95 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-xl space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-white text-sm font-semibold tracking-wider uppercase">
+              <h2 className="text-foreground text-sm font-semibold tracking-wider uppercase">
                 SS Tools Settings
               </h2>
               <button
                 onClick={() => setShowSettings(false)}
-                className="text-white/40 hover:text-white/80 transition-colors"
+                className="text-muted-foreground hover:text-foreground transition-colors"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -52,16 +52,16 @@ const SSTools = () => {
 
             {/* Embed code */}
             <div className="space-y-2">
-              <label className="text-xs font-medium text-gray-400">Embed Code</label>
+              <label className="text-xs font-medium text-muted-foreground">Embed Code</label>
               <div className="relative">
-                <pre className="bg-gray-900 border border-gray-700 rounded-md p-3 text-xs text-gray-300 overflow-x-auto whitespace-pre-wrap break-all">
+                <pre className="bg-muted border border-border rounded-md p-3 text-xs text-muted-foreground overflow-x-auto whitespace-pre-wrap break-all">
                   {EMBED_CODE}
                 </pre>
                 <Button
                   size="sm"
                   variant="ghost"
                   onClick={handleCopy}
-                  className="absolute top-1.5 right-1.5 h-7 px-2 text-gray-400 hover:text-white hover:bg-gray-700"
+                  className="absolute top-1.5 right-1.5 h-7 px-2 text-muted-foreground hover:text-foreground"
                 >
                   {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                 </Button>
