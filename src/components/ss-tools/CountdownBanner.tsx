@@ -114,7 +114,7 @@ const CountdownBanner = ({ embed = false }: CountdownBannerProps) => {
       <div
         className="w-full max-w-5xl flex items-center gap-0 relative"
         style={{
-          background: "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
+          background: "linear-gradient(180deg, rgba(30,30,30,0.95) 0%, rgba(15,15,15,0.98) 100%)",
           border: "1px solid rgba(255,255,255,0.1)",
           borderRadius: "6px",
           boxShadow: "0 4px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)",
