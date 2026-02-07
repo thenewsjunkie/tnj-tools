@@ -81,7 +81,7 @@ const CountdownBanner = ({ embed = false }: CountdownBannerProps) => {
 
   if (isLoading || !settings || !target) {
     return (
-      <div className={`flex items-center justify-center ${embed ? "h-full" : "h-screen"}`} style={embed ? { background: "transparent" } : { background: "#000" }}>
+      <div className={`flex items-center justify-center ${embed ? "h-full" : "h-screen"}`} style={{ background: "transparent" }}>
         <div className="text-white/50 text-sm">Loading...</div>
       </div>
     );

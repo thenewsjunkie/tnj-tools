@@ -4,8 +4,9 @@
   <head>
     <script>
       (function() {
-        // Don't set background on alerts page - needs transparency for OBS
-        if (window.location.pathname.startsWith('/alerts')) {
+        // Don't set background on pages that need transparency for OBS/embeds
+        var path = window.location.pathname;
+        if (path.startsWith('/alerts') || path.startsWith('/sstools')) {
           document.documentElement.style.backgroundColor = 'transparent';
           return;
         }
