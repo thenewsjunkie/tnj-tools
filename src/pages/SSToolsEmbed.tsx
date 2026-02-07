@@ -2,7 +2,7 @@ import CountdownBanner from "@/components/ss-tools/CountdownBanner";
 
 const SSToolsEmbed = () => {
   return (
-    <div style={{ background: "transparent", minHeight: "100vh" }}>
+    <div style={{ background: "transparent" }}>
       <CountdownBanner embed />
     </div>
   );

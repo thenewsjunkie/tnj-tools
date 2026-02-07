@@ -107,12 +107,12 @@ const CountdownBanner = ({ embed = false }: CountdownBannerProps) => {
 
   return (
     <div
-      className={`${embed ? "flex items-center justify-center px-4 py-2" : "min-h-screen flex items-center justify-center px-4 py-2"}`}
+      className={`${embed ? "flex items-center w-full" : "min-h-screen flex items-center justify-center px-4 py-2"}`}
       style={{ background: "transparent" }}
     >
       {/* Banner bar */}
       <div
-        className="w-full max-w-5xl flex items-center gap-0 relative"
+        className={`${embed ? "w-full" : "w-full max-w-5xl"} flex items-center gap-0 relative`}
         style={{
           background: "linear-gradient(180deg, rgba(30,30,30,0.95) 0%, rgba(15,15,15,0.98) 100%)",
           border: "1px solid rgba(255,255,255,0.1)",
