@@ -6,53 +6,40 @@ const getNextOccurrence = (dayOfWeek: number, timeOfDay: string, timezone: strin
   const now = new Date();
   const [hours, minutes] = timeOfDay.split(":").map(Number);
 
-  // Build target in the configured timezone
+  // Get current date parts in the target timezone
   const formatter = new Intl.DateTimeFormat("en-US", {
     timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
     hour12: false,
   });
-
   const parts = formatter.formatToParts(now);
-  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "0";
-  const nowDay = new Date(
+  const get = (type: string) => parts.find(p => p.type === type)?.value ?? "0";
+
+  // Current day-of-week in the target timezone
+  const nowInTZ = new Date(
     `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}:${get("second")}`
-  ).getDay();
-
-  let daysUntil = (dayOfWeek - nowDay + 7) % 7;
-
-  // Build target date string in timezone
-  const targetDate = new Date(now);
-  targetDate.setDate(targetDate.getDate() + daysUntil);
-
-  // Create a date string for the target in the specified timezone
-  const targetStr = targetDate.toLocaleDateString("en-CA", { timeZone: timezone });
-  const targetDateTime = new Date(`${targetStr}T${timeOfDay}:00`);
-
-  // Convert from timezone to UTC using offset estimation
-  const utcTarget = new Date(
-    targetDateTime.getTime() +
-      targetDateTime.getTimezoneOffset() * 60000 -
-      getTimezoneOffset(timezone, targetDateTime) * 60000
   );
+  const currentDay = nowInTZ.getDay();
 
-  // If target is in the past, add 7 days
-  if (utcTarget <= now) {
-    utcTarget.setDate(utcTarget.getDate() + 7);
+  let daysUntil = (dayOfWeek - currentDay + 7) % 7;
+
+  // Build target date in the target timezone
+  const targetLocal = new Date(nowInTZ);
+  targetLocal.setDate(targetLocal.getDate() + daysUntil);
+  targetLocal.setHours(hours, minutes, 0, 0);
+
+  // If target is already past today in TZ, jump to next week
+  if (daysUntil === 0 && targetLocal <= nowInTZ) {
+    targetLocal.setDate(targetLocal.getDate() + 7);
   }
 
-  return utcTarget;
-};
+  // Convert targetLocal (wall-clock time in `timezone`) to real UTC timestamp
+  const targetStr = targetLocal.toLocaleString("en-US", { timeZone: "UTC" });
+  const tzStr = targetLocal.toLocaleString("en-US", { timeZone: timezone });
+  const offsetMs = new Date(tzStr).getTime() - new Date(targetStr).getTime();
 
-const getTimezoneOffset = (tz: string, date: Date): number => {
-  const utcStr = date.toLocaleString("en-US", { timeZone: "UTC" });
-  const tzStr = date.toLocaleString("en-US", { timeZone: tz });
-  return (new Date(tzStr).getTime() - new Date(utcStr).getTime()) / 60000;
+  return new Date(targetLocal.getTime() - offsetMs);
 };
 
 const CountdownBanner = () => {
