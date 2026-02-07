@@ -106,7 +106,7 @@ const CountdownBanner = ({ embed = false }: CountdownBannerProps) => {
   }
 
   return (
-    <div className={`${embed ? "flex items-center justify-center p-4" : "min-h-screen bg-gradient-to-br from-black via-gray-950 to-black flex items-center justify-center p-4"}`} style={embed ? { background: "transparent" } : undefined}>
+    <div className={`${embed ? "flex items-center justify-center p-4" : "min-h-screen flex items-center justify-center p-4"}`} style={{ background: "transparent" }}>
       <div className="w-full max-w-4xl flex flex-col sm:flex-row items-center gap-6 sm:gap-10">
         {/* Logo */}
         <div className="flex-shrink-0">
