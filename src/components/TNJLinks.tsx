@@ -165,12 +165,6 @@ const TNJLinks = () => {
 
   return (
     <div className="space-y-2">
-      <Link
-        to="/sstools"
-        className="block px-3 py-2 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-sm font-medium"
-      >
-        SS Tools →
-      </Link>
       
       <AddLinkDialog 
         onLinkAdded={() => queryClient.invalidateQueries({ queryKey: ['tnj-links'] })}

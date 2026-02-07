@@ -13,7 +13,7 @@ import ShowPrep from "@/components/admin/ShowPrep";
 import WeekendEditionSegments from "@/components/admin/WeekendEditionSegments";
 import VideoTools from "@/components/admin/VideoTools";
 import AdminPolls from "@/components/admin/AdminPolls";
-import SSToolsAdmin from "@/components/ss-tools/SSToolsAdmin";
+
 import { Badge } from "@/components/ui/badge";
 import { useQueueState } from "@/hooks/useQueueState";
 import { Mic, Archive, ExternalLink, Plus } from "lucide-react";
@@ -137,14 +137,6 @@ const Admin = () => {
           <VideoTools />
         </CollapsibleModule>
 
-        {/* SS Tools */}
-        <CollapsibleModule
-          id="ss-tools"
-          title="SS Tools"
-          defaultOpen={false}
-        >
-          <SSToolsAdmin />
-        </CollapsibleModule>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <CollapsibleModule
             id="alerts"
