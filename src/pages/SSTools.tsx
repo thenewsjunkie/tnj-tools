@@ -26,7 +26,7 @@ const SSTools = () => {
       {/* Gear icon */}
       <button
         onClick={() => setShowSettings((v) => !v)}
-        className="absolute top-3 right-3 p-2 rounded-full text-foreground/50 hover:text-foreground hover:bg-muted transition-colors z-20"
+        className="absolute top-3 right-3 p-2 rounded-full text-foreground hover:bg-muted transition-colors z-20"
         aria-label="Toggle settings"
       >
         <Settings className="h-5 w-5" />
