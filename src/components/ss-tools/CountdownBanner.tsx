@@ -4,11 +4,17 @@ import secretShowsLogo from "@/assets/secret-shows-logo.png";
 
 const LIVE_DURATION_MS = 2 * 60 * 60 * 1000; // 2 hours
 
+const getTimezoneOffsetMs = (tz: string, date: Date): number => {
+  const utcStr = date.toLocaleString("en-US", { timeZone: "UTC" });
+  const tzStr = date.toLocaleString("en-US", { timeZone: tz });
+  return new Date(tzStr).getTime() - new Date(utcStr).getTime();
+};
+
 const getNextOccurrence = (dayOfWeek: number, timeOfDay: string, timezone: string): Date => {
   const now = new Date();
-  const [hours, minutes] = timeOfDay.split(":").map(Number);
+  const [targetHour, targetMinute] = timeOfDay.split(":").map(Number);
 
-  // Get current date parts in the target timezone
+  // Get current date/time components in the target timezone
   const formatter = new Intl.DateTimeFormat("en-US", {
     timeZone: timezone,
     year: "numeric", month: "2-digit", day: "2-digit",
@@ -18,34 +24,41 @@ const getNextOccurrence = (dayOfWeek: number, timeOfDay: string, timezone: strin
   const parts = formatter.formatToParts(now);
   const get = (type: string) => parts.find(p => p.type === type)?.value ?? "0";
 
-  // Current day-of-week in the target timezone
-  const nowInTZ = new Date(
-    `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}:${get("second")}`
-  );
-  const currentDay = nowInTZ.getDay();
+  const nowYear = Number(get("year"));
+  const nowMonth = Number(get("month"));
+  const nowDay = Number(get("day"));
+  const nowHour = Number(get("hour"));
+  const nowMinuteVal = Number(get("minute"));
 
-  let daysUntil = (dayOfWeek - currentDay + 7) % 7;
+  // Use local Date constructor just to get day-of-week from date components
+  const currentDayOfWeek = new Date(nowYear, nowMonth - 1, nowDay).getDay();
+  let daysUntil = (dayOfWeek - currentDayOfWeek + 7) % 7;
 
-  // Build target date in the target timezone
-  const targetLocal = new Date(nowInTZ);
-  targetLocal.setDate(targetLocal.getDate() + daysUntil);
-  targetLocal.setHours(hours, minutes, 0, 0);
+  // Build the target date (may roll into next month correctly via Date constructor)
+  const targetDate = new Date(nowYear, nowMonth - 1, nowDay + daysUntil);
+  const targetDateStr = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, "0")}-${String(targetDate.getDate()).padStart(2, "0")}`;
+  const targetWallClock = `${targetDateStr}T${String(targetHour).padStart(2, "0")}:${String(targetMinute).padStart(2, "0")}:00`;
 
-  // If target is already past today in TZ, check if still within live window
-  if (daysUntil === 0 && targetLocal <= nowInTZ) {
-    const elapsedMs = nowInTZ.getTime() - targetLocal.getTime();
+  // Parse as UTC, then adjust by timezone offset to get the real UTC moment
+  const asUTC = new Date(targetWallClock + "Z");
+  const offsetMs = getTimezoneOffsetMs(timezone, asUTC);
+  let result = new Date(asUTC.getTime() - offsetMs);
+
+  // Check if target is in the past
+  if (daysUntil === 0 && result.getTime() <= now.getTime()) {
+    const elapsedMs = now.getTime() - result.getTime();
     if (elapsedMs > LIVE_DURATION_MS) {
-      // Past live window, jump to next week
-      targetLocal.setDate(targetLocal.getDate() + 7);
+      // Past live window — jump to next week
+      const nextWeek = new Date(nowYear, nowMonth - 1, nowDay + 7);
+      const nextDateStr = `${nextWeek.getFullYear()}-${String(nextWeek.getMonth() + 1).padStart(2, "0")}-${String(nextWeek.getDate()).padStart(2, "0")}`;
+      const nextWallClock = `${nextDateStr}T${String(targetHour).padStart(2, "0")}:${String(targetMinute).padStart(2, "0")}:00`;
+      const nextAsUTC = new Date(nextWallClock + "Z");
+      const nextOffsetMs = getTimezoneOffsetMs(timezone, nextAsUTC);
+      result = new Date(nextAsUTC.getTime() - nextOffsetMs);
     }
   }
 
-  // Convert targetLocal (wall-clock time in `timezone`) to real UTC timestamp
-  const targetStr = targetLocal.toLocaleString("en-US", { timeZone: "UTC" });
-  const tzStr = targetLocal.toLocaleString("en-US", { timeZone: timezone });
-  const offsetMs = new Date(tzStr).getTime() - new Date(targetStr).getTime();
-
-  return new Date(targetLocal.getTime() - offsetMs);
+  return result;
 };
 
 const CountdownBanner = () => {
