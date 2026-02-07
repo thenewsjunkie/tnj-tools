@@ -106,64 +106,94 @@ const CountdownBanner = ({ embed = false }: CountdownBannerProps) => {
   }
 
   return (
-    <div className={`${embed ? "flex items-center justify-center p-4" : "min-h-screen flex items-center justify-center p-4"}`} style={{ background: "transparent" }}>
-      <div className="w-full max-w-4xl flex flex-col sm:flex-row items-center gap-6 sm:gap-10">
-        {/* Logo */}
-        <div className="flex-shrink-0">
+    <div
+      className={`${embed ? "flex items-center justify-center px-4 py-2" : "min-h-screen flex items-center justify-center px-4 py-2"}`}
+      style={{ background: "transparent" }}
+    >
+      {/* Banner bar */}
+      <div
+        className="w-full max-w-5xl flex items-center gap-0 relative"
+        style={{
+          background: "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
+          border: "1px solid rgba(255,255,255,0.1)",
+          borderRadius: "6px",
+          boxShadow: "0 4px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)",
+          minHeight: "80px",
+        }}
+      >
+        {/* Logo — overlapping left edge */}
+        <div className="flex-shrink-0 -ml-4 sm:-ml-6 z-10">
           <img
             src={secretShowsLogo}
             alt="Secret Shows"
-            className="w-28 h-28 sm:w-36 sm:h-36 object-contain"
+            className="w-20 h-20 sm:w-24 sm:h-24 object-contain drop-shadow-lg"
           />
         </div>
 
         {/* Content */}
-        <div className="flex-1 text-center sm:text-left">
+        <div className="flex-1 pl-3 sm:pl-5 py-3">
           {isLive ? (
             <>
-              <h1 className="text-white text-xl sm:text-2xl font-bold tracking-widest uppercase mb-2">
-                SECRET SHOWS IS LIVE!
-              </h1>
-              <p className="text-gray-400 text-sm">
-                Exclusive live stream — Members only
+              <div className="flex items-baseline gap-2 flex-wrap">
+                <span className="text-white text-sm sm:text-base font-bold tracking-widest uppercase">
+                  SECRET SHOWS IS LIVE!
+                </span>
+              </div>
+              <p className="text-gray-400 text-xs sm:text-sm mt-0.5">
+                Exclusive live stream • Members only
               </p>
             </>
           ) : (
             <>
-              <h1 className="text-white text-lg sm:text-xl font-bold tracking-widest uppercase mb-1">
-                SECRET SHOWS GOES LIVE IN
-              </h1>
-              <div
-                className="text-red-500 font-bold text-5xl sm:text-6xl tracking-wider my-3"
-                style={{ fontFamily: "'Digital-7 Mono', monospace" }}
-              >
-                {countdownText}
+              <div className="flex items-baseline gap-2 sm:gap-3 flex-wrap">
+                <span className="text-white text-sm sm:text-base font-bold tracking-widest uppercase">
+                  SECRET SHOWS GOES LIVE IN
+                </span>
+                <span
+                  className="text-red-500 font-bold text-2xl sm:text-3xl tracking-wider"
+                  style={{
+                    fontFamily: "'Digital-7 Mono', monospace",
+                    textShadow: "0 0 10px rgba(239,68,68,0.5), 0 0 20px rgba(239,68,68,0.2)",
+                  }}
+                >
+                  {countdownText}
+                </span>
               </div>
-              <p className="text-gray-400 text-sm">
-                Exclusive live stream — Members only
+              <p className="text-gray-400 text-xs sm:text-sm mt-0.5">
+                Exclusive live stream • Members only
               </p>
             </>
           )}
         </div>
 
-        {/* Watch Now / Start Stream button on the right */}
+        {/* Start Stream / Watch Now button */}
         {settings.stream_url && (
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 pr-3 sm:pr-4">
             {isLive ? (
               <a
                 href={settings.stream_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-block px-8 py-3 rounded-lg font-bold text-white text-lg uppercase tracking-wider bg-gradient-to-r from-red-700 to-red-500 hover:from-red-600 hover:to-red-400 transition-all shadow-lg shadow-red-900/40"
+                className="inline-flex items-center gap-1.5 px-5 sm:px-6 py-2.5 rounded font-bold text-white text-xs sm:text-sm uppercase tracking-wider transition-all"
+                style={{
+                  background: "linear-gradient(180deg, #c62828 0%, #8b1a1a 100%)",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  boxShadow: "0 2px 8px rgba(198,40,40,0.4), inset 0 1px 0 rgba(255,255,255,0.1)",
+                }}
               >
-                Watch Now
+                Watch Now <span className="text-base">▸</span>
               </a>
             ) : (
               <button
                 disabled
-                className="px-8 py-3 rounded-lg font-bold text-white/40 text-lg uppercase tracking-wider bg-gray-800 cursor-not-allowed"
+                className="inline-flex items-center gap-1.5 px-5 sm:px-6 py-2.5 rounded font-bold text-xs sm:text-sm uppercase tracking-wider cursor-not-allowed"
+                style={{
+                  background: "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  color: "rgba(255,255,255,0.3)",
+                }}
               >
-                Watch Now
+                Start Stream <span className="text-base">▸</span>
               </button>
             )}
           </div>
