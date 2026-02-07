@@ -120,19 +120,9 @@ const CountdownBanner = () => {
               <h1 className="text-white text-xl sm:text-2xl font-bold tracking-widest uppercase mb-2">
                 SECRET SHOWS IS LIVE!
               </h1>
-              <p className="text-gray-400 text-sm mb-6">
+              <p className="text-gray-400 text-sm">
                 Exclusive live stream — Members only
               </p>
-              {settings.stream_url && (
-                <a
-                  href={settings.stream_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block px-8 py-3 rounded-lg font-bold text-white text-lg uppercase tracking-wider bg-gradient-to-r from-red-700 to-red-500 hover:from-red-600 hover:to-red-400 transition-all shadow-lg shadow-red-900/40"
-                >
-                  Start Stream
-                </a>
-              )}
             </>
           ) : (
             <>
@@ -152,15 +142,26 @@ const CountdownBanner = () => {
           )}
         </div>
 
-        {/* Start Stream button (visible but disabled when not live) */}
-        {!isLive && settings.stream_url && (
+        {/* Watch Now / Start Stream button on the right */}
+        {settings.stream_url && (
           <div className="flex-shrink-0">
-            <button
-              disabled
-              className="px-8 py-3 rounded-lg font-bold text-white/40 text-lg uppercase tracking-wider bg-gray-800 cursor-not-allowed"
-            >
-              Start Stream
-            </button>
+            {isLive ? (
+              <a
+                href={settings.stream_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block px-8 py-3 rounded-lg font-bold text-white text-lg uppercase tracking-wider bg-gradient-to-r from-red-700 to-red-500 hover:from-red-600 hover:to-red-400 transition-all shadow-lg shadow-red-900/40"
+              >
+                Watch Now
+              </a>
+            ) : (
+              <button
+                disabled
+                className="px-8 py-3 rounded-lg font-bold text-white/40 text-lg uppercase tracking-wider bg-gray-800 cursor-not-allowed"
+              >
+                Watch Now
+              </button>
+            )}
           </div>
         )}
       </div>
