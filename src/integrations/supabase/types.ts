@@ -1003,6 +1003,33 @@ export type Database = {
         }
         Relationships: []
       }
+      ss_tools_settings: {
+        Row: {
+          day_of_week: number
+          id: string
+          stream_url: string
+          time_of_day: string
+          timezone: string
+          updated_at: string
+        }
+        Insert: {
+          day_of_week?: number
+          id?: string
+          stream_url?: string
+          time_of_day?: string
+          timezone?: string
+          updated_at?: string
+        }
+        Update: {
+          day_of_week?: number
+          id?: string
+          stream_url?: string
+          time_of_day?: string
+          timezone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
           key: string
