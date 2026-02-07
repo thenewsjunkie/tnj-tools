@@ -61,7 +61,11 @@ const getNextOccurrence = (dayOfWeek: number, timeOfDay: string, timezone: strin
   return result;
 };
 
-const CountdownBanner = () => {
+interface CountdownBannerProps {
+  embed?: boolean;
+}
+
+const CountdownBanner = ({ embed = false }: CountdownBannerProps) => {
   const { data: settings, isLoading } = useSSToolsSettings();
   const [now, setNow] = useState(Date.now());
 
@@ -77,7 +81,7 @@ const CountdownBanner = () => {
 
   if (isLoading || !settings || !target) {
     return (
-      <div className="flex items-center justify-center h-screen bg-black">
+      <div className={`flex items-center justify-center ${embed ? "h-full" : "h-screen"}`} style={embed ? { background: "transparent" } : { background: "#000" }}>
         <div className="text-white/50 text-sm">Loading...</div>
       </div>
     );
@@ -102,7 +106,7 @@ const CountdownBanner = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-black flex items-center justify-center p-4">
+    <div className={`${embed ? "flex items-center justify-center p-4" : "min-h-screen bg-gradient-to-br from-black via-gray-950 to-black flex items-center justify-center p-4"}`} style={embed ? { background: "transparent" } : undefined}>
       <div className="w-full max-w-4xl flex flex-col sm:flex-row items-center gap-6 sm:gap-10">
         {/* Logo */}
         <div className="flex-shrink-0">
