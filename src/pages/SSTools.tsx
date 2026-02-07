@@ -5,7 +5,7 @@ import { Settings, Copy, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
-const EMBED_CODE = `<iframe src="${window.location.origin}/sstools/embed" width="100%" height="200" frameborder="0" style="border:none;overflow:hidden;" allowtransparency="true"></iframe>`;
+const EMBED_CODE = `<iframe src="${window.location.origin}/sstools/embed" width="100%" height="100" frameborder="0" style="border:none;overflow:hidden;" allowtransparency="true"></iframe>`;
 
 const SSTools = () => {
   const [showSettings, setShowSettings] = useState(false);
