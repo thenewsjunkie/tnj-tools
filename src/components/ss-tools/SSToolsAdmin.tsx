@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useSSToolsSettings, useUpdateSSToolsSettings } from "@/hooks/useSSToolsSettings";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save } from "lucide-react";
+import { Save, Clock } from "lucide-react";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const TIMEZONES = [
@@ -20,11 +20,17 @@ const SSToolsAdmin = () => {
   const { data: settings, isLoading } = useSSToolsSettings();
   const updateMutation = useUpdateSSToolsSettings();
   const { toast } = useToast();
+  const [currentTime, setCurrentTime] = useState(Date.now());
 
   const [dayOfWeek, setDayOfWeek] = useState("5");
   const [timeOfDay, setTimeOfDay] = useState("19:00");
   const [timezone, setTimezone] = useState("America/New_York");
   const [streamUrl, setStreamUrl] = useState("");
+
+  useEffect(() => {
+    const interval = setInterval(() => setCurrentTime(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (settings) {
@@ -54,8 +60,24 @@ const SSToolsAdmin = () => {
 
   if (isLoading) return <div className="text-sm text-muted-foreground">Loading...</div>;
 
+  const liveTimezone = settings?.timezone ?? timezone;
+  const currentTimeStr = new Intl.DateTimeFormat("en-US", {
+    timeZone: liveTimezone,
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+    hour12: true,
+  }).format(currentTime);
+  const tzAbbr = new Intl.DateTimeFormat("en-US", {
+    timeZone: liveTimezone,
+    timeZoneName: "short",
+  }).formatToParts(currentTime).find(p => p.type === "timeZoneName")?.value ?? "";
+
   return (
     <div className="space-y-4">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
+        <Clock className="h-4 w-4" />
+        <span>Current time in {liveTimezone.replace("America/", "").replace("_", " ")}:</span>
+        <span className="font-mono font-medium text-foreground">{currentTimeStr} {tzAbbr}</span>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="space-y-1">
           <label className="text-xs font-medium text-muted-foreground">Day of Week</label>

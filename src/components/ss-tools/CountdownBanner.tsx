@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from "react";
 import { useSSToolsSettings } from "@/hooks/useSSToolsSettings";
 import secretShowsLogo from "@/assets/secret-shows-logo.png";
 
+const LIVE_DURATION_MS = 2 * 60 * 60 * 1000; // 2 hours
+
 const getNextOccurrence = (dayOfWeek: number, timeOfDay: string, timezone: string): Date => {
   const now = new Date();
   const [hours, minutes] = timeOfDay.split(":").map(Number);
@@ -29,9 +31,13 @@ const getNextOccurrence = (dayOfWeek: number, timeOfDay: string, timezone: strin
   targetLocal.setDate(targetLocal.getDate() + daysUntil);
   targetLocal.setHours(hours, minutes, 0, 0);
 
-  // If target is already past today in TZ, jump to next week
+  // If target is already past today in TZ, check if still within live window
   if (daysUntil === 0 && targetLocal <= nowInTZ) {
-    targetLocal.setDate(targetLocal.getDate() + 7);
+    const elapsedMs = nowInTZ.getTime() - targetLocal.getTime();
+    if (elapsedMs > LIVE_DURATION_MS) {
+      // Past live window, jump to next week
+      targetLocal.setDate(targetLocal.getDate() + 7);
+    }
   }
 
   // Convert targetLocal (wall-clock time in `timezone`) to real UTC timestamp
@@ -64,21 +70,8 @@ const CountdownBanner = () => {
     );
   }
 
-  const currentTimeInTZ = new Intl.DateTimeFormat("en-US", {
-    timeZone: settings?.timezone ?? "UTC",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: true,
-  }).format(now);
-
-  const tzAbbr = new Intl.DateTimeFormat("en-US", {
-    timeZone: settings?.timezone ?? "UTC",
-    timeZoneName: "short",
-  }).formatToParts(now).find(p => p.type === "timeZoneName")?.value ?? "";
-
   const diff = target.getTime() - now;
-  const isLive = diff <= 0;
+  const isLive = diff <= 0 && Math.abs(diff) <= LIVE_DURATION_MS;
 
   const totalSeconds = Math.max(0, Math.floor(diff / 1000));
   const days = Math.floor(totalSeconds / 86400);
@@ -141,9 +134,6 @@ const CountdownBanner = () => {
               </div>
               <p className="text-gray-400 text-sm">
                 Exclusive live stream — Members only
-              </p>
-              <p className="text-gray-500 text-xs mt-2 font-mono">
-                {currentTimeInTZ} {tzAbbr}
               </p>
             </>
           )}
