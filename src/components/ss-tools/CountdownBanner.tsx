@@ -115,18 +115,18 @@ const CountdownBanner = ({ embed = false }: CountdownBannerProps) => {
         className={`${embed ? "w-full" : "w-full max-w-5xl"} flex items-center gap-0 relative`}
         style={{
           background: "linear-gradient(180deg, rgba(30,30,30,0.95) 0%, rgba(15,15,15,0.98) 100%)",
-          border: "1px solid rgba(255,255,255,0.1)",
-          borderRadius: "6px",
-          boxShadow: "0 4px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)",
-          minHeight: "80px",
+          border: embed ? "none" : "1px solid rgba(255,255,255,0.1)",
+          borderRadius: embed ? "0" : "6px",
+          boxShadow: embed ? "none" : "0 4px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)",
+          minHeight: embed ? "auto" : "80px",
         }}
       >
-        {/* Logo — overlapping left edge */}
-        <div className="flex-shrink-0 -ml-4 sm:-ml-6 z-10">
+        {/* Logo */}
+        <div className={`flex-shrink-0 ${embed ? "ml-2 sm:ml-3" : "-ml-4 sm:-ml-6"} z-10`}>
           <img
             src={secretShowsLogo}
             alt="Secret Shows"
-            className="w-20 h-20 sm:w-24 sm:h-24 object-contain drop-shadow-lg"
+            className={`${embed ? "w-14 h-14 sm:w-16 sm:h-16" : "w-20 h-20 sm:w-24 sm:h-24"} object-contain drop-shadow-lg`}
           />
         </div>
 
