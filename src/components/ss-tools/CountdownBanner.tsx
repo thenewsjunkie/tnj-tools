@@ -64,6 +64,19 @@ const CountdownBanner = () => {
     );
   }
 
+  const currentTimeInTZ = new Intl.DateTimeFormat("en-US", {
+    timeZone: settings?.timezone ?? "UTC",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  }).format(now);
+
+  const tzAbbr = new Intl.DateTimeFormat("en-US", {
+    timeZone: settings?.timezone ?? "UTC",
+    timeZoneName: "short",
+  }).formatToParts(now).find(p => p.type === "timeZoneName")?.value ?? "";
+
   const diff = target.getTime() - now;
   const isLive = diff <= 0;
 
@@ -128,6 +141,9 @@ const CountdownBanner = () => {
               </div>
               <p className="text-gray-400 text-sm">
                 Exclusive live stream — Members only
+              </p>
+              <p className="text-gray-500 text-xs mt-2 font-mono">
+                {currentTimeInTZ} {tzAbbr}
               </p>
             </>
           )}
