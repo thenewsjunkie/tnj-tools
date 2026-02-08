@@ -1,34 +1,39 @@
 
 
-## Fix: "Add talking points" button does nothing
+## Show Prep Printout Updates
 
-### Root Cause
+Three changes: remove Main Character, sort scheduled segments, and add Google Trending Searches.
 
-The empty-state render condition (`!hasContent && bullets.length <= 1`) shows only the button — no inputs are rendered. When clicked, `addBullet()` tries to focus `inputRefs.current[0]`, but that ref is `null` because the input doesn't exist in the DOM yet.
+### 1. Remove "Today's Main Character" from printout
+Remove the yellow box and its CSS from `PrintShowPrep.tsx`.
 
-### Fix in `src/components/admin/show-prep/BulletEditor.tsx`
+### 2. Sort scheduled segments by time
+Update `getAllScheduledSegments` in `scheduledSegments.ts` to sort results using the same `parseTime` logic already in `getScheduledSegments`. Currently it filters but doesn't sort.
 
-1. Add a `showEditor` state (default `false`)
-2. In `addBullet`, when there's one empty bullet and we're in the empty state, set `showEditor = true` instead of trying to focus a non-existent input
-3. Update the render condition: show the full editor if `hasContent || showEditor`
+### 3. Add Google Top Searches to the printout
 
-```typescript
-const [showEditor, setShowEditor] = useState(false);
+**New edge function: `fetch-trends/index.ts`**
+- Standalone edge function that hits the Google Trends daily trends API (same approach already used in `fetch-news/trends.ts`)
+- Returns top 10 trending search queries for the US in the last 24 hours
+- No API keys needed -- uses the public Google Trends endpoint
+- CORS-enabled so it can be called from the frontend
 
-const addBullet = () => {
-  if (bullets.length === 1 && !bullets[0].text.trim()) {
-    setShowEditor(true);
-    return;
-  }
-  const newBullet: Bullet = { id: uuidv4(), text: "", indent: 0, checked: false };
-  onChange([...bullets, newBullet]);
-};
+**Update `ShowPrep.tsx` `handlePrint`**
+- Call the `fetch-trends` edge function before generating the print document
+- Pass the results into `generatePrintDocument`
 
-// Render condition changes from:
-if (!hasContent && bullets.length <= 1)
-// to:
-if (!hasContent && bullets.length <= 1 && !showEditor)
-```
+**Update `PrintShowPrep.tsx`**
+- Add `googleTrends: string[]` to the `PrintData` interface
+- Render a numbered list of top 10 Google searches below the Scheduled section in the right column
+- Styled with a light blue background to distinguish it from scheduled segments
 
-The existing `useEffect` will then auto-focus the first input once it mounts. One file changed, three small edits.
+### Files changed
+
+| File | Change |
+|------|--------|
+| `supabase/functions/fetch-trends/index.ts` | New edge function |
+| `supabase/config.toml` | Add `[functions.fetch-trends]` with `verify_jwt = false` |
+| `src/components/admin/show-prep/scheduledSegments.ts` | Add sort to `getAllScheduledSegments` |
+| `src/components/admin/show-prep/PrintShowPrep.tsx` | Remove Main Character, add Google Trends section |
+| `src/components/admin/ShowPrep.tsx` | Fetch trends data in `handlePrint` |
 
