@@ -16,7 +16,7 @@ serve(async (req) => {
   }
 
   try {
-    const { model, prompt, eli5Mode, detailedMode, strongmanMode } = await req.json();
+    const { model, prompt, eli5Mode, detailedMode, strongmanMode, datasheetMode, sections } = await req.json();
     
     if (!prompt) {
       return new Response(
@@ -31,7 +31,28 @@ serve(async (req) => {
     // Set system prompt based on mode
     let systemPrompt = 'Your name is TNJ AI. You are a helpful assistant for a radio show. Provide comprehensive, detailed, and thorough explanations. Do not ask questions. Take stances on tough issues and explain why with full reasoning and context. Give complete answers that fully address the topic. Do not mention your knowledge cutoff date or recommend checking other sources for more current information.';
     
-    if (strongmanMode) {
+    if (datasheetMode) {
+      const sectionList = (sections || []).join(", ");
+      systemPrompt = `You are a research analyst for a radio show. Create a concise data briefing sheet. KEEP TOTAL RESPONSE UNDER 500 WORDS to fit on one printed page.
+
+Only include the following sections: ${sectionList}
+
+For each requested section, use this format:
+
+**SECTION NAME**
+• [Specific data point with dates, numbers, sources where possible]
+• [Another data point - one sentence each, 3-5 per section]
+
+Section guidelines:
+- **Basic Details**: Key facts, people involved, background context, what happened and why it matters
+- **Timeline**: Chronological sequence of major events with dates
+- **Polling Data**: Public opinion polls, survey results, approval ratings on this topic and related issues
+- **Key Players**: Who's involved, their positions, motivations, and influence
+- **Legal/Regulatory**: Relevant laws, court rulings, pending legislation, regulatory actions
+- **Financial Impact**: Economic data, costs, budget implications, market effects
+
+IMPORTANT: Only include the sections listed above. Skip any section not requested. Be specific with data — use real numbers, dates, and names. Do not mention knowledge cutoff.`;
+    } else if (strongmanMode) {
       systemPrompt = `You are an expert debate researcher for a radio show. Create a concise "Strongman" argument analysis. KEEP TOTAL RESPONSE UNDER 400 WORDS to fit on one printed page.
 
 Format your response EXACTLY like this, replacing the bracketed instructions with actual content:
@@ -77,7 +98,7 @@ IMPORTANT: Replace ALL bracketed text with real content. Be direct and concise. 
           { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }
         ],
-        max_tokens: strongmanMode ? 800 : 1500,
+        max_tokens: datasheetMode ? 1000 : strongmanMode ? 800 : 1500,
         temperature: 0.7,
         presence_penalty: 0.1,
         frequency_penalty: 0.1

@@ -9,6 +9,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Topic, Bullet } from "./types";
 import { StrongmanButton } from "./StrongmanButton";
+import { DatasheetButton } from "./DatasheetButton";
 import BulletEditor from "./BulletEditor";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -149,6 +150,10 @@ const TopicCard = ({ topic, date, onChange, onDelete, onMoveToNextDay }: TopicCa
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
+            <DatasheetButton
+              topic={topic}
+              onChange={(datasheet) => onChange({ ...topic, datasheet })}
+            />
             <StrongmanButton
               topic={topic}
               onChange={(strongman) => onChange({ ...topic, strongman })}
