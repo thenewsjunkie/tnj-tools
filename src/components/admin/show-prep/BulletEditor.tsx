@@ -63,6 +63,10 @@ const BulletEditor = ({ bullets, onChange }: BulletEditorProps) => {
   };
 
   const addBullet = () => {
+    if (bullets.length === 1 && !bullets[0].text.trim()) {
+      inputRefs.current[0]?.focus();
+      return;
+    }
     const newBullet: Bullet = { id: uuidv4(), text: "", indent: 0, checked: false };
     onChange([...bullets, newBullet]);
   };
