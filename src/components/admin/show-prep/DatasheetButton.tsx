@@ -143,7 +143,7 @@ export const DatasheetButton = ({ topic, onChange }: DatasheetButtonProps) => {
                 <Button size="sm" variant="ghost" className="h-7 px-2" onClick={handlePrint} title="Print">
                   <Printer className="h-3.5 w-3.5" />
                 </Button>
-                <Button size="sm" variant="ghost" className="h-7 px-2" onClick={handleRegenerate} disabled={isLoading} title="Regenerate">
+                <Button size="sm" variant="ghost" className="h-7 px-2" onClick={handleRegenerate} disabled={isLoading} title="Edit and regenerate">
                   <RefreshCw className={cn("h-3.5 w-3.5", isLoading && "animate-spin")} />
                 </Button>
               </div>
@@ -186,8 +186,13 @@ export const DatasheetButton = ({ topic, onChange }: DatasheetButtonProps) => {
                   </label>
                 ))}
               </div>
+              {isEditing && customPrompt && (
+                <p className="text-xs text-muted-foreground">Previous context used:</p>
+              )}
               <Textarea
-                placeholder="Additional context or focus (optional)..."
+                placeholder={isEditing
+                  ? "Clarify or correct the topic (e.g., 'This is the Anna Kepner custody case in Ohio, not the musician')..."
+                  : "Additional context or focus (optional)..."}
                 value={customPrompt}
                 onChange={(e) => setCustomPrompt(e.target.value)}
                 className="min-h-[60px] text-sm"
