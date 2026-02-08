@@ -1,26 +1,34 @@
 
 
-## Fix: "Add talking points" creates duplicate bullet
+## Fix: "Add talking points" button does nothing
 
-### Problem
-When `bullets` already contains one empty bullet (length 1, no text), clicking "Add talking points" calls `addBullet()` which appends a second bullet. The `useEffect` focuses the last (second) bullet, making the first one look like it has text ("Add a talking point..." placeholder is visible but unfocused).
+### Root Cause
+
+The empty-state render condition (`!hasContent && bullets.length <= 1`) shows only the button — no inputs are rendered. When clicked, `addBullet()` tries to focus `inputRefs.current[0]`, but that ref is `null` because the input doesn't exist in the DOM yet.
 
 ### Fix in `src/components/admin/show-prep/BulletEditor.tsx`
 
-Change the `addBullet` function (used by the "Add talking points" button in the empty state) to focus the existing empty bullet instead of adding a new one:
+1. Add a `showEditor` state (default `false`)
+2. In `addBullet`, when there's one empty bullet and we're in the empty state, set `showEditor = true` instead of trying to focus a non-existent input
+3. Update the render condition: show the full editor if `hasContent || showEditor`
 
 ```typescript
+const [showEditor, setShowEditor] = useState(false);
+
 const addBullet = () => {
-  // If there's already an empty bullet, just focus it
   if (bullets.length === 1 && !bullets[0].text.trim()) {
-    const firstInput = inputRefs.current[0];
-    firstInput?.focus();
+    setShowEditor(true);
     return;
   }
   const newBullet: Bullet = { id: uuidv4(), text: "", indent: 0, checked: false };
   onChange([...bullets, newBullet]);
 };
+
+// Render condition changes from:
+if (!hasContent && bullets.length <= 1)
+// to:
+if (!hasContent && bullets.length <= 1 && !showEditor)
 ```
 
-This way, clicking "Add talking points" when there's already a single empty bullet just focuses it instead of creating a duplicate. The "+ Add point" button at the bottom still adds new bullets normally.
+The existing `useEffect` will then auto-focus the first input once it mounts. One file changed, three small edits.
 
