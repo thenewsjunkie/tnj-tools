@@ -1,4 +1,4 @@
-import { useRef, useEffect, KeyboardEvent } from "react";
+import { useRef, useEffect, useState, KeyboardEvent } from "react";
 import { Bullet } from "./types";
 import { v4 as uuidv4 } from "uuid";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -12,6 +12,7 @@ interface BulletEditorProps {
 
 const BulletEditor = ({ bullets, onChange }: BulletEditorProps) => {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [showEditor, setShowEditor] = useState(false);
 
   // Focus newly added bullet
   useEffect(() => {
@@ -64,7 +65,7 @@ const BulletEditor = ({ bullets, onChange }: BulletEditorProps) => {
 
   const addBullet = () => {
     if (bullets.length === 1 && !bullets[0].text.trim()) {
-      inputRefs.current[0]?.focus();
+      setShowEditor(true);
       return;
     }
     const newBullet: Bullet = { id: uuidv4(), text: "", indent: 0, checked: false };
@@ -74,7 +75,7 @@ const BulletEditor = ({ bullets, onChange }: BulletEditorProps) => {
   // Check if there's any actual content
   const hasContent = bullets.some(b => b.text.trim());
 
-  if (!hasContent && bullets.length <= 1) {
+  if (!hasContent && bullets.length <= 1 && !showEditor) {
     return (
       <button
         onClick={addBullet}
