@@ -287,6 +287,15 @@ const TopicCard = ({ topic, date, onChange, onDelete, onMoveToNextDay }: TopicCa
             <Button
               size="sm"
               variant="ghost"
+              className="h-6 w-6 p-0 text-muted-foreground hover:text-primary"
+              onClick={onMoveToNextDay}
+              title="Move to next day"
+            >
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
               className="h-6 w-6 p-0 hover:text-destructive"
               onClick={onDelete}
             >
@@ -322,19 +331,6 @@ const TopicCard = ({ topic, date, onChange, onDelete, onMoveToNextDay }: TopicCa
             ))}
           </div>
         )}
-
-        {/* Move to next day button */}
-        <div className="flex justify-end mt-1">
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-5 text-xs text-muted-foreground hover:text-primary gap-1"
-            onClick={onMoveToNextDay}
-            title="Move to next day"
-          >
-            <ArrowRight className="h-3 w-3" />
-          </Button>
-        </div>
       </div>
     </div>
   );
