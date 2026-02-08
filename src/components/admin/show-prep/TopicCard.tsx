@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { GripVertical, Trash2, Pencil, Check, ExternalLink, Link2, Copy, Flame, List, ArrowRight } from "lucide-react";
+import { GripVertical, Trash2, Pencil, Check, ExternalLink, Link2, Copy, Flame, List, ArrowRight, MoreVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { normalizeUrl } from "@/lib/url";
 import { useSortable } from "@dnd-kit/sortable";
@@ -16,6 +16,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 
 interface TopicCardProps {
   topic: Topic;
@@ -265,7 +271,7 @@ const TopicCard = ({ topic, date, onChange, onDelete, onMoveToNextDay }: TopicCa
               </PopoverContent>
             </Popover>
             
-            {isEditing ? (
+            {isEditing && (
               <Button
                 size="sm"
                 variant="ghost"
@@ -274,33 +280,34 @@ const TopicCard = ({ topic, date, onChange, onDelete, onMoveToNextDay }: TopicCa
               >
                 <Check className="h-3.5 w-3.5" />
               </Button>
-            ) : (
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-6 w-6 p-0"
-                onClick={handleEdit}
-              >
-                <Pencil className="h-3.5 w-3.5" />
-              </Button>
             )}
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-6 w-6 p-0 text-muted-foreground hover:text-primary"
-              onClick={onMoveToNextDay}
-              title="Move to next day"
-            >
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-6 w-6 p-0 hover:text-destructive"
-              onClick={onDelete}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 w-6 p-0"
+                >
+                  <MoreVertical className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {!isEditing && (
+                  <DropdownMenuItem onClick={handleEdit}>
+                    <Pencil className="h-3.5 w-3.5 mr-2" />
+                    Edit
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem onClick={onMoveToNextDay}>
+                  <ArrowRight className="h-3.5 w-3.5 mr-2" />
+                  Move to next day
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
+                  <Trash2 className="h-3.5 w-3.5 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
