@@ -1,45 +1,26 @@
 
 
-## Improve Datasheet Print Layout
+## Fix: "Add talking points" creates duplicate bullet
 
-Based on the screenshot, the current printout has several readability issues: too much vertical spacing between bullets, section headers that don't pop, and no visual emphasis on key data. Here's what will change:
+### Problem
+When `bullets` already contains one empty bullet (length 1, no text), clicking "Add talking points" calls `addBullet()` which appends a second bullet. The `useEffect` focuses the last (second) bullet, making the first one look like it has text ("Add a talking point..." placeholder is visible but unfocused).
 
-### Changes to `src/components/admin/show-prep/PrintDatasheet.tsx`
+### Fix in `src/components/admin/show-prep/BulletEditor.tsx`
 
-**1. Tighter bullet spacing**
-- Reduce line spacing between bullet points from the current loose layout to tight 1-2px margins
-- Remove the extra paragraph spacing that's doubling gaps between items
+Change the `addBullet` function (used by the "Add talking points" button in the empty state) to focus the existing empty bullet instead of adding a new one:
 
-**2. Bold, visually distinct section headers**
-- Add a green background bar/highlight behind section headers (e.g., "BASIC DETAILS", "TIMELINE") so they jump off the page
-- Use white text on the green background for contrast
-- Add slight padding to make them look like labeled tabs
-
-**3. Highlight key data automatically**
-- Bold any dates, numbers, and percentages in the content using regex patterns
-- Style names/proper nouns that appear in bold markdown more prominently with a darker color
-
-**4. Better content formatting**
-- Wrap bullet lists in proper `<ul>` tags instead of loose `<li>` elements for correct indentation
-- Reduce overall line-height from 1.3 to 1.25 to pack more on the page
-- Tighten margins on `<p>` and `<li>` elements
-
-**5. Two-column layout for Timeline sections**
-- When timeline data is present, format date entries with the date portion left-aligned in a fixed-width column and the description to the right, making it scannable
-
-### Summary of visual improvements
-
-```text
-BEFORE:                          AFTER:
-                                 
-BASIC DETAILS                    [====BASIC DETAILS====] (green bar)
-  * loose bullet                   * tight bullet
-                                   * tight bullet
-  * loose bullet                 
-                                 [======TIMELINE=======] (green bar)
-TIMELINE                           Apr 2022 | Event description
-  * loose date + text              Apr 2023 | Event description
+```typescript
+const addBullet = () => {
+  // If there's already an empty bullet, just focus it
+  if (bullets.length === 1 && !bullets[0].text.trim()) {
+    const firstInput = inputRefs.current[0];
+    firstInput?.focus();
+    return;
+  }
+  const newBullet: Bullet = { id: uuidv4(), text: "", indent: 0, checked: false };
+  onChange([...bullets, newBullet]);
+};
 ```
 
-All changes are contained in `PrintDatasheet.tsx` -- no other files affected.
+This way, clicking "Add talking points" when there's already a single empty bullet just focuses it instead of creating a duplicate. The "+ Add point" button at the bottom still adds new bullets normally.
 
