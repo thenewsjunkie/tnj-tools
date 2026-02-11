@@ -93,7 +93,7 @@ const ShowPrep = () => {
       const [notesResult, segmentsResult, trendsResult] = await Promise.all([
         supabase.from("show_prep_notes").select("topics").eq("date", dateKey).maybeSingle(),
         supabase.from("scheduled_segments").select("*").eq("is_active", true),
-        supabase.functions.invoke("fetch-trends").then(res => res.data).catch(() => ({ googleTrends: [] })),
+        supabase.functions.invoke("fetch-trends").then(res => res.data).catch(() => ({ googleTrends: [], yahooTrends: [] })),
       ]);
 
       // Parse topics from notes
@@ -122,6 +122,7 @@ const ShowPrep = () => {
         localTopics,
         scheduledSegments: daySegments,
         googleTrends: trendsResult?.googleTrends || [],
+        yahooTrends: trendsResult?.yahooTrends || [],
       });
     } catch (error) {
       console.error("Error preparing print data:", error);
