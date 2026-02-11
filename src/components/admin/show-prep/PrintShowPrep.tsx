@@ -231,24 +231,20 @@ export const generatePrintDocument = (data: PrintData) => {
         </div>
       `).join("") : '<div class="empty-state">None</div>'}
       
-      ${(data.googleTrends.length > 0 || data.yahooTrends.length > 0) ? `
-      <div style="display: flex; gap: 8px; margin-top: 12px;">
-        ${data.googleTrends.length > 0 ? `
-        <div class="google-trends" style="flex: 1; margin-top: 0;">
-          <h3>🔍 Google</h3>
-          <ol>
-            ${data.googleTrends.map(t => `<li>${t}</li>`).join('')}
-          </ol>
-        </div>
-        ` : ''}
-        ${data.yahooTrends.length > 0 ? `
-        <div class="yahoo-trends" style="flex: 1;">
-          <h3>🟣 Yahoo</h3>
-          <ol>
-            ${data.yahooTrends.map(t => `<li>${t}</li>`).join('')}
-          </ol>
-        </div>
-        ` : ''}
+      ${data.googleTrends.length > 0 ? `
+      <div class="google-trends" style="margin-top: 12px;">
+        <h3>🔍 Google</h3>
+        <ol>
+          ${data.googleTrends.map(t => `<li>${t}</li>`).join('')}
+        </ol>
+      </div>
+      ` : ''}
+      ${data.yahooTrends.length > 0 ? `
+      <div class="yahoo-trends" style="margin-top: 8px;">
+        <h3>🟣 Yahoo</h3>
+        <ol>
+          ${data.yahooTrends.map(t => `<li>${t}</li>`).join('')}
+        </ol>
       </div>
       ` : ''}
     </div>
