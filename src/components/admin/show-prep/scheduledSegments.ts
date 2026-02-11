@@ -50,7 +50,15 @@ export const getAllScheduledSegments = (
 
   const dayOfWeek = getDay(date);
 
-  return allSegments.filter(
-    (s) => s.is_active && s.days.includes(dayOfWeek)
-  );
+  const parseTime = (t: string) => {
+    const [time, period] = t.split(" ");
+    let [hours, mins] = time.split(":").map(Number);
+    if (period === "PM" && hours !== 12) hours += 12;
+    if (period === "AM" && hours === 12) hours = 0;
+    return hours * 60 + mins;
+  };
+
+  return allSegments
+    .filter((s) => s.is_active && s.days.includes(dayOfWeek))
+    .sort((a, b) => parseTime(a.time) - parseTime(b.time));
 };
