@@ -117,7 +117,7 @@ async function fetchYahooTrends(): Promise<string[]> {
       }
     }
 
-    return trends.slice(0, 10).map(shortenHeadline);
+    return trends.slice(0, 5).map(shortenHeadline);
   } catch (e) {
     console.error('Yahoo trends fetch failed:', e);
     return [];
