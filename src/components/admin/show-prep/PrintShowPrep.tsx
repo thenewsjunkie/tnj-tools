@@ -10,6 +10,7 @@ interface PrintData {
   potentialVideos: string;
   localTopics: Topic[];
   scheduledSegments: ScheduledSegment[];
+  googleTrends: string[];
 }
 
 export const generatePrintDocument = (data: PrintData) => {
@@ -128,24 +129,33 @@ export const generatePrintDocument = (data: PrintData) => {
       margin: 2px 0;
       color: #555;
     }
-    .main-character-field {
-      background: #fff3cd;
-      border: 2px solid #ffc107;
+    .empty-state {
+      color: #999;
+      font-style: italic;
+      padding: 6px 0;
+      font-size: 13px;
+    }
+    .google-trends {
+      background: #e8f0fe;
+      border: 1px solid #a8c7fa;
       border-radius: 4px;
       padding: 8px 12px;
-      margin-bottom: 12px;
+      margin-top: 12px;
+      font-size: 13px;
+    }
+    .google-trends h3 {
       font-size: 14px;
+      font-weight: 600;
+      margin: 0 0 6px 0;
+      color: #1a73e8;
     }
-    .main-character-field strong {
-      margin-right: 8px;
+    .google-trends ol {
+      margin: 0;
+      padding-left: 20px;
     }
-    .main-character-line {
-      display: inline-block;
-      border-bottom: 1px solid #333;
-      min-width: 350px;
-      height: 18px;
+    .google-trends li {
+      margin: 2px 0;
     }
-    .empty-state {
       color: #999;
       font-style: italic;
       padding: 6px 0;
@@ -190,10 +200,6 @@ export const generatePrintDocument = (data: PrintData) => {
   ${isTuesday ? `<div class="special-segment"><strong>Share the Show Tuesday</strong></div>` : ""}
   ${isFriday && lastMinuteFrom ? `<div class="special-segment"><strong>Last Minute From:</strong> ${lastMinuteFrom}</div>` : ""}
   
-  <div class="main-character-field">
-    <strong>Today's Main Character:</strong>
-    <span class="main-character-line"></span>
-  </div>
   
   <div class="two-column">
     <div class="topics-column">
@@ -222,6 +228,15 @@ export const generatePrintDocument = (data: PrintData) => {
           <span>${seg.name}</span>
         </div>
       `).join("") : '<div class="empty-state">None</div>'}
+      
+      ${data.googleTrends.length > 0 ? `
+      <div class="google-trends" style="margin-top: 12px;">
+        <h3>🔍 Google Top Searches</h3>
+        <ol>
+          ${data.googleTrends.map(t => `<li>${t}</li>`).join('')}
+        </ol>
+      </div>
+      ` : ''}
     </div>
   </div>
   

@@ -90,9 +90,10 @@ const ShowPrep = () => {
   const handlePrint = async () => {
     try {
       // Fetch all required data for printing
-      const [notesResult, segmentsResult] = await Promise.all([
+      const [notesResult, segmentsResult, trendsResult] = await Promise.all([
         supabase.from("show_prep_notes").select("topics").eq("date", dateKey).maybeSingle(),
         supabase.from("scheduled_segments").select("*").eq("is_active", true),
+        supabase.functions.invoke("fetch-trends").then(res => res.data).catch(() => ({ googleTrends: [] })),
       ]);
 
       // Parse topics from notes
@@ -120,6 +121,7 @@ const ShowPrep = () => {
         potentialVideos,
         localTopics,
         scheduledSegments: daySegments,
+        googleTrends: trendsResult?.googleTrends || [],
       });
     } catch (error) {
       console.error("Error preparing print data:", error);
