@@ -1,42 +1,20 @@
 
 
-## Add Yahoo Trending Stories to Show Prep Printout
+## Shorten Yahoo Trending Headlines
 
-### What changes
+The Yahoo RSS feed returns full article titles which are often very long (e.g., "Nancy Guthrie's family speaks out after tragic accident on Interstate 95"). These need to be truncated to short, punchy headlines.
 
-**1. Update `fetch-trends` edge function** to also scrape Yahoo's trending searches from `https://search.yahoo.com/`. The page has bold topic names (e.g., "Nancy Guthrie", "Bad Bunny Super Bowl Show") that can be extracted. Return them alongside Google trends as `yahooTrends: string[]`.
+### Change
 
-**2. Update `ShowPrep.tsx`** to pass the new `yahooTrends` array into the print document generator.
+**`supabase/functions/fetch-trends/index.ts`** -- Update the `fetchYahooTrends` function to truncate each title to a short headline:
+- Truncate at the first colon, dash, or pipe character (common headline separators) to grab just the key subject
+- If no separator found, cap at 50 characters with an ellipsis
+- This keeps Yahoo items comparable in length to the short Google search terms
 
-**3. Update `PrintShowPrep.tsx`**:
-- Add `yahooTrends: string[]` to the `PrintData` interface
-- Render a compact "Yahoo Trending" section next to (or below) the Google Trends section
-- Use a two-column layout for both trend lists side-by-side to save space, with small font (11px) and tight spacing
-- Style with a light purple/violet background to distinguish from Google's blue
+Example:
+- Before: `"Nancy Guthrie's family speaks out after tragic accident on Interstate 95 — here's what we know"`
+- After: `"Nancy Guthrie's family speaks out after tragic..."`
+- Or if it has a separator: `"Super Bowl 2025: Bad Bunny halftime show details"` becomes `"Super Bowl 2025"`
 
-### Layout in printout (right column)
-
-```text
-Scheduled
-  9:00 AM  News
-  10:00 AM Segment X
-  ...
-
-+---------------------------+---------------------------+
-| Google Top Searches       | Yahoo Trending            |
-| 1. Topic A                | 1. Story A                |
-| 2. Topic B                | 2. Story B                |
-| ...                       | ...                       |
-+---------------------------+---------------------------+
-```
-
-Both lists rendered as compact numbered lists at 11px font, side-by-side in a flex row to minimize vertical space.
-
-### Files changed
-
-| File | Change |
-|------|--------|
-| `supabase/functions/fetch-trends/index.ts` | Add Yahoo scraping, return `yahooTrends` array |
-| `src/components/admin/ShowPrep.tsx` | Pass `yahooTrends` to print generator |
-| `src/components/admin/show-prep/PrintShowPrep.tsx` | Add `yahooTrends` to interface, render side-by-side with Google trends |
+Only one file needs to change -- the edge function. The printout template already renders whatever strings it receives.
 
