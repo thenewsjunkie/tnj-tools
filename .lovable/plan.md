@@ -1,20 +1,19 @@
 
 
-## Shorten Yahoo Trending Headlines
+## Yahoo Trends: 5 Stories, Below Google
 
-The Yahoo RSS feed returns full article titles which are often very long (e.g., "Nancy Guthrie's family speaks out after tragic accident on Interstate 95"). These need to be truncated to short, punchy headlines.
+Two small changes:
 
-### Change
+### 1. `supabase/functions/fetch-trends/index.ts`
+Change `trends.slice(0, 10)` to `trends.slice(0, 5)` in `fetchYahooTrends` to only return 5 stories.
 
-**`supabase/functions/fetch-trends/index.ts`** -- Update the `fetchYahooTrends` function to truncate each title to a short headline:
-- Truncate at the first colon, dash, or pipe character (common headline separators) to grab just the key subject
-- If no separator found, cap at 50 characters with an ellipsis
-- This keeps Yahoo items comparable in length to the short Google search terms
+### 2. `src/components/admin/show-prep/PrintShowPrep.tsx`
+Change the trending layout from side-by-side flex row to a stacked layout -- Google on top, Yahoo below. Remove the `display: flex` wrapper and render them as two separate blocks with a small gap.
 
-Example:
-- Before: `"Nancy Guthrie's family speaks out after tragic accident on Interstate 95 — here's what we know"`
-- After: `"Nancy Guthrie's family speaks out after tragic..."`
-- Or if it has a separator: `"Super Bowl 2025: Bad Bunny halftime show details"` becomes `"Super Bowl 2025"`
+### Files changed
 
-Only one file needs to change -- the edge function. The printout template already renders whatever strings it receives.
+| File | Change |
+|------|--------|
+| `supabase/functions/fetch-trends/index.ts` | Slice Yahoo to 5 instead of 10 |
+| `src/components/admin/show-prep/PrintShowPrep.tsx` | Stack Yahoo below Google instead of side-by-side |
 
