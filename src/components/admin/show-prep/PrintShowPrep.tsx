@@ -11,6 +11,7 @@ interface PrintData {
   localTopics: Topic[];
   scheduledSegments: ScheduledSegment[];
   googleTrends: string[];
+  yahooTrends: string[];
 }
 
 export const generatePrintDocument = (data: PrintData) => {
@@ -135,31 +136,32 @@ export const generatePrintDocument = (data: PrintData) => {
       padding: 6px 0;
       font-size: 13px;
     }
+    .google-trends, .yahoo-trends {
+      border-radius: 4px;
+      padding: 6px 8px;
+      font-size: 11px;
+    }
     .google-trends {
       background: #e8f0fe;
       border: 1px solid #a8c7fa;
-      border-radius: 4px;
-      padding: 8px 12px;
-      margin-top: 12px;
-      font-size: 13px;
     }
-    .google-trends h3 {
-      font-size: 14px;
+    .yahoo-trends {
+      background: #f3e8ff;
+      border: 1px solid #c4b5fd;
+    }
+    .google-trends h3, .yahoo-trends h3 {
+      font-size: 12px;
       font-weight: 600;
-      margin: 0 0 6px 0;
-      color: #1a73e8;
+      margin: 0 0 4px 0;
     }
-    .google-trends ol {
+    .google-trends h3 { color: #1a73e8; }
+    .yahoo-trends h3 { color: #7c3aed; }
+    .google-trends ol, .yahoo-trends ol {
       margin: 0;
-      padding-left: 20px;
+      padding-left: 16px;
     }
-    .google-trends li {
-      margin: 2px 0;
-    }
-      color: #999;
-      font-style: italic;
-      padding: 6px 0;
-      font-size: 13px;
+    .google-trends li, .yahoo-trends li {
+      margin: 1px 0;
     }
     .potential-videos {
       background: #f3e8ff;
@@ -229,12 +231,24 @@ export const generatePrintDocument = (data: PrintData) => {
         </div>
       `).join("") : '<div class="empty-state">None</div>'}
       
-      ${data.googleTrends.length > 0 ? `
-      <div class="google-trends" style="margin-top: 12px;">
-        <h3>🔍 Google Top Searches</h3>
-        <ol>
-          ${data.googleTrends.map(t => `<li>${t}</li>`).join('')}
-        </ol>
+      ${(data.googleTrends.length > 0 || data.yahooTrends.length > 0) ? `
+      <div style="display: flex; gap: 8px; margin-top: 12px;">
+        ${data.googleTrends.length > 0 ? `
+        <div class="google-trends" style="flex: 1; margin-top: 0;">
+          <h3>🔍 Google</h3>
+          <ol>
+            ${data.googleTrends.map(t => `<li>${t}</li>`).join('')}
+          </ol>
+        </div>
+        ` : ''}
+        ${data.yahooTrends.length > 0 ? `
+        <div class="yahoo-trends" style="flex: 1;">
+          <h3>🟣 Yahoo</h3>
+          <ol>
+            ${data.yahooTrends.map(t => `<li>${t}</li>`).join('')}
+          </ol>
+        </div>
+        ` : ''}
       </div>
       ` : ''}
     </div>
