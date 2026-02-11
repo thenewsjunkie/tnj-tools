@@ -1,39 +1,42 @@
 
 
-## Show Prep Printout Updates
+## Add Yahoo Trending Stories to Show Prep Printout
 
-Three changes: remove Main Character, sort scheduled segments, and add Google Trending Searches.
+### What changes
 
-### 1. Remove "Today's Main Character" from printout
-Remove the yellow box and its CSS from `PrintShowPrep.tsx`.
+**1. Update `fetch-trends` edge function** to also scrape Yahoo's trending searches from `https://search.yahoo.com/`. The page has bold topic names (e.g., "Nancy Guthrie", "Bad Bunny Super Bowl Show") that can be extracted. Return them alongside Google trends as `yahooTrends: string[]`.
 
-### 2. Sort scheduled segments by time
-Update `getAllScheduledSegments` in `scheduledSegments.ts` to sort results using the same `parseTime` logic already in `getScheduledSegments`. Currently it filters but doesn't sort.
+**2. Update `ShowPrep.tsx`** to pass the new `yahooTrends` array into the print document generator.
 
-### 3. Add Google Top Searches to the printout
+**3. Update `PrintShowPrep.tsx`**:
+- Add `yahooTrends: string[]` to the `PrintData` interface
+- Render a compact "Yahoo Trending" section next to (or below) the Google Trends section
+- Use a two-column layout for both trend lists side-by-side to save space, with small font (11px) and tight spacing
+- Style with a light purple/violet background to distinguish from Google's blue
 
-**New edge function: `fetch-trends/index.ts`**
-- Standalone edge function that hits the Google Trends daily trends API (same approach already used in `fetch-news/trends.ts`)
-- Returns top 10 trending search queries for the US in the last 24 hours
-- No API keys needed -- uses the public Google Trends endpoint
-- CORS-enabled so it can be called from the frontend
+### Layout in printout (right column)
 
-**Update `ShowPrep.tsx` `handlePrint`**
-- Call the `fetch-trends` edge function before generating the print document
-- Pass the results into `generatePrintDocument`
+```text
+Scheduled
+  9:00 AM  News
+  10:00 AM Segment X
+  ...
 
-**Update `PrintShowPrep.tsx`**
-- Add `googleTrends: string[]` to the `PrintData` interface
-- Render a numbered list of top 10 Google searches below the Scheduled section in the right column
-- Styled with a light blue background to distinguish it from scheduled segments
++---------------------------+---------------------------+
+| Google Top Searches       | Yahoo Trending            |
+| 1. Topic A                | 1. Story A                |
+| 2. Topic B                | 2. Story B                |
+| ...                       | ...                       |
++---------------------------+---------------------------+
+```
+
+Both lists rendered as compact numbered lists at 11px font, side-by-side in a flex row to minimize vertical space.
 
 ### Files changed
 
 | File | Change |
 |------|--------|
-| `supabase/functions/fetch-trends/index.ts` | New edge function |
-| `supabase/config.toml` | Add `[functions.fetch-trends]` with `verify_jwt = false` |
-| `src/components/admin/show-prep/scheduledSegments.ts` | Add sort to `getAllScheduledSegments` |
-| `src/components/admin/show-prep/PrintShowPrep.tsx` | Remove Main Character, add Google Trends section |
-| `src/components/admin/ShowPrep.tsx` | Fetch trends data in `handlePrint` |
+| `supabase/functions/fetch-trends/index.ts` | Add Yahoo scraping, return `yahooTrends` array |
+| `src/components/admin/ShowPrep.tsx` | Pass `yahooTrends` to print generator |
+| `src/components/admin/show-prep/PrintShowPrep.tsx` | Add `yahooTrends` to interface, render side-by-side with Google trends |
 
