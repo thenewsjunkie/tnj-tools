@@ -117,9 +117,19 @@ async function fetchYahooTrends(): Promise<string[]> {
       }
     }
 
-    return trends.slice(0, 10);
+    return trends.slice(0, 10).map(shortenHeadline);
   } catch (e) {
     console.error('Yahoo trends fetch failed:', e);
     return [];
   }
+}
+
+function shortenHeadline(title: string): string {
+  // Truncate at first colon, em-dash, pipe, or long dash
+  const separatorMatch = title.match(/^(.*?)\s*[:\|—–\-]\s/);
+  if (separatorMatch && separatorMatch[1].length >= 10) {
+    return separatorMatch[1].trim();
+  }
+  if (title.length <= 50) return title;
+  return title.substring(0, 47).trimEnd() + '...';
 }
