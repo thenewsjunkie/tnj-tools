@@ -1224,6 +1224,39 @@ export type Database = {
           },
         ]
       }
+      timer_settings: {
+        Row: {
+          button_label: string
+          created_at: string
+          id: string
+          logo_url: string | null
+          stream_url: string
+          target_datetime: string | null
+          theme: string
+          updated_at: string
+        }
+        Insert: {
+          button_label?: string
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          stream_url?: string
+          target_datetime?: string | null
+          theme?: string
+          updated_at?: string
+        }
+        Update: {
+          button_label?: string
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          stream_url?: string
+          target_datetime?: string | null
+          theme?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tnj_gifs: {
         Row: {
           created_at: string

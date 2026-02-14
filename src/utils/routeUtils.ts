@@ -6,7 +6,7 @@ export const OBS_EMBED_ROUTES = [
   '/tnjgifs-embed',
   '/fritz/current-score',
   '/fritz/total-score',
-  
+  '/timer',
 ];
 
 // Routes that start with these patterns should also exclude GlobalQueueManager

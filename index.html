@@ -6,7 +6,7 @@
       (function() {
         // Don't set background on pages that need transparency for OBS/embeds
         var path = window.location.pathname;
-        if (path.startsWith('/alerts')) {
+        if (path.startsWith('/alerts') || path.startsWith('/timer')) {
           document.documentElement.style.backgroundColor = 'transparent';
           return;
         }
