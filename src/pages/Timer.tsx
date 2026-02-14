@@ -8,9 +8,81 @@ interface TimerSettings {
   button_label: string;
   logo_url: string | null;
   theme: string;
+  is_recurring: boolean;
+  day_of_week: number;
+  time_of_day: string;
+  timezone: string;
+  button_duration_minutes: number;
 }
 
 const SYSTEM_FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+
+/**
+ * For recurring mode: compute the next occurrence of the given day/time.
+ * day_of_week: 0=Sun..6=Sat, time_of_day: "HH:MM", timezone: IANA string
+ */
+function getNextOccurrence(dayOfWeek: number, timeOfDay: string, timezone: string): Date {
+  const [hours, minutes] = timeOfDay.split(":").map(Number);
+  const now = new Date();
+
+  // Build a date string in the target timezone for "today"
+  // We'll iterate up to 7 days to find the next matching day
+  for (let offset = 0; offset <= 7; offset++) {
+    const candidate = new Date(now.getTime() + offset * 86400000);
+    // Format candidate date in target timezone
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      weekday: "short",
+    }).formatToParts(candidate);
+
+    const yearStr = parts.find((p) => p.type === "year")?.value || "";
+    const monthStr = parts.find((p) => p.type === "month")?.value || "";
+    const dayStr = parts.find((p) => p.type === "day")?.value || "";
+
+    // Get day of week in target timezone
+    const tzDate = new Date(`${yearStr}-${monthStr}-${dayStr}T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`);
+    
+    // Use Intl to get the actual weekday in the target timezone
+    const weekdayInTz = new Date(
+      candidate.toLocaleString("en-US", { timeZone: timezone })
+    ).getDay();
+
+    if (weekdayInTz === dayOfWeek) {
+      // Build the target time in the specified timezone
+      // We need to create a Date that represents this specific time in the given timezone
+      const dateString = `${yearStr}-${monthStr}-${dayStr}T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`;
+      
+      // Convert from target timezone to UTC by using the timezone offset
+      const targetInTz = new Date(
+        new Date(dateString).toLocaleString("en-US", { timeZone: "UTC" })
+      );
+      
+      // Get the offset by comparing
+      const inTz = new Date(new Date(dateString).toLocaleString("en-US", { timeZone: timezone }));
+      const inUtc = new Date(new Date(dateString).toLocaleString("en-US", { timeZone: "UTC" }));
+      const offsetMs = inUtc.getTime() - inTz.getTime();
+      
+      const result = new Date(new Date(dateString).getTime() + offsetMs);
+      
+      if (result.getTime() > now.getTime()) {
+        return result;
+      }
+    }
+  }
+  // Fallback: shouldn't happen
+  return new Date(now.getTime() + 7 * 86400000);
+}
+
+/**
+ * For recurring mode: get the most recent past occurrence to check if button should still show.
+ */
+function getLastOccurrence(dayOfWeek: number, timeOfDay: string, timezone: string): Date {
+  const next = getNextOccurrence(dayOfWeek, timeOfDay, timezone);
+  return new Date(next.getTime() - 7 * 86400000);
+}
 
 const Timer = () => {
   const [searchParams] = useSearchParams();
@@ -29,20 +101,19 @@ const Timer = () => {
 
   // Fetch settings
   useEffect(() => {
-    const fetch = async () => {
+    const fetchSettings = async () => {
       const { data } = await supabase
         .from("timer_settings")
         .select("*")
         .limit(1)
         .maybeSingle();
       if (data) {
-        setSettings(data as TimerSettings);
+        setSettings(data as unknown as TimerSettings);
       }
       setLoaded(true);
     };
-    fetch();
+    fetchSettings();
 
-    // Subscribe to realtime changes
     const channel = supabase
       .channel("timer_settings_changes")
       .on(
@@ -50,7 +121,7 @@ const Timer = () => {
         { event: "*", schema: "public", table: "timer_settings" },
         (payload) => {
           if (payload.new) {
-            setSettings(payload.new as TimerSettings);
+            setSettings(payload.new as unknown as TimerSettings);
           }
         }
       )
@@ -67,18 +138,51 @@ const Timer = () => {
     return () => clearInterval(id);
   }, []);
 
-  // Compute countdown
-  const countdown = useMemo(() => {
-    if (!settings?.target_datetime) return null;
-    const target = new Date(settings.target_datetime).getTime();
-    const diff = target - now.getTime();
-    if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0, expired: true };
+  // Compute countdown with recurring support
+  const { countdown, showButton } = useMemo(() => {
+    if (!settings) return { countdown: null, showButton: false };
+
+    let targetTime: number;
+
+    if (settings.is_recurring) {
+      // Recurring weekly mode
+      const lastOccurrence = getLastOccurrence(settings.day_of_week, settings.time_of_day, settings.timezone);
+      const minutesSinceLast = (now.getTime() - lastOccurrence.getTime()) / 60000;
+
+      if (minutesSinceLast >= 0 && minutesSinceLast < settings.button_duration_minutes) {
+        // Within button display window
+        return { countdown: { days: 0, hours: 0, minutes: 0, seconds: 0, expired: true }, showButton: true };
+      }
+
+      // Count down to next occurrence
+      const nextOccurrence = getNextOccurrence(settings.day_of_week, settings.time_of_day, settings.timezone);
+      targetTime = nextOccurrence.getTime();
+    } else {
+      // One-time mode
+      if (!settings.target_datetime) return { countdown: null, showButton: false };
+      targetTime = new Date(settings.target_datetime).getTime();
+    }
+
+    const diff = targetTime - now.getTime();
+    if (diff <= 0) {
+      // For one-time mode, check button duration
+      if (!settings.is_recurring) {
+        const minutesSinceExpiry = (now.getTime() - targetTime) / 60000;
+        if (minutesSinceExpiry < settings.button_duration_minutes) {
+          return { countdown: { days: 0, hours: 0, minutes: 0, seconds: 0, expired: true }, showButton: true };
+        }
+        // Button duration passed for one-time — just show expired
+        return { countdown: { days: 0, hours: 0, minutes: 0, seconds: 0, expired: true }, showButton: true };
+      }
+      return { countdown: { days: 0, hours: 0, minutes: 0, seconds: 0, expired: true }, showButton: true };
+    }
+
     const days = Math.floor(diff / 86400000);
     const hours = Math.floor((diff % 86400000) / 3600000);
     const minutes = Math.floor((diff % 3600000) / 60000);
     const seconds = Math.floor((diff % 60000) / 1000);
-    return { days, hours, minutes, seconds, expired: false };
-  }, [settings?.target_datetime, now]);
+    return { countdown: { days, hours, minutes, seconds, expired: false }, showButton: false };
+  }, [settings, now]);
 
   // Format local time
   const localTime = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
@@ -158,7 +262,7 @@ const Timer = () => {
       )}
 
       {/* Countdown or Watch Now */}
-      {countdown?.expired ? (
+      {countdown?.expired && showButton ? (
         <a
           href={settings?.stream_url || "#"}
           style={{
