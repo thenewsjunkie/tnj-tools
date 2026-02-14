@@ -153,7 +153,7 @@ const Timer = () => {
 
       if (minutesSinceLast >= 0 && minutesSinceLast < settings.button_duration_minutes) {
         // Within button display window
-        return { countdown: { days: 0, hours: 0, minutes: 0, seconds: 0, expired: true }, showButton: true };
+      return { countdown: { hours: 0, minutes: 0, seconds: 0, expired: true }, showButton: true };
       }
 
       // Count down to next occurrence
@@ -171,19 +171,17 @@ const Timer = () => {
       if (!settings.is_recurring) {
         const minutesSinceExpiry = (now.getTime() - targetTime) / 60000;
         if (minutesSinceExpiry < settings.button_duration_minutes) {
-          return { countdown: { days: 0, hours: 0, minutes: 0, seconds: 0, expired: true }, showButton: true };
+          return { countdown: { hours: 0, minutes: 0, seconds: 0, expired: true }, showButton: true };
         }
-        // Button duration passed for one-time — just show expired
-        return { countdown: { days: 0, hours: 0, minutes: 0, seconds: 0, expired: true }, showButton: true };
+        return { countdown: { hours: 0, minutes: 0, seconds: 0, expired: true }, showButton: true };
       }
-      return { countdown: { days: 0, hours: 0, minutes: 0, seconds: 0, expired: true }, showButton: true };
+      return { countdown: { hours: 0, minutes: 0, seconds: 0, expired: true }, showButton: true };
     }
 
-    const days = Math.floor(diff / 86400000);
-    const hours = Math.floor((diff % 86400000) / 3600000);
+    const hours = Math.floor(diff / 3600000);
     const minutes = Math.floor((diff % 3600000) / 60000);
     const seconds = Math.floor((diff % 60000) / 1000);
-    return { countdown: { days, hours, minutes, seconds, expired: false }, showButton: false };
+    return { countdown: { hours, minutes, seconds, expired: false }, showButton: false };
   }, [settings, now]);
 
 
@@ -291,7 +289,6 @@ const Timer = () => {
       ) : countdown ? (
         <div style={{ display: "flex", gap: "clamp(4px, 1.5vw, 12px)" }}>
           {[
-            { value: countdown.days, label: "Days" },
             { value: countdown.hours, label: "Hours" },
             { value: countdown.minutes, label: "Minutes" },
             { value: countdown.seconds, label: "Seconds" },
