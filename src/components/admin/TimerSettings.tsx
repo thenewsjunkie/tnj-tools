@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Clock, Upload, X, Copy, ExternalLink } from "lucide-react";
 
@@ -13,6 +14,11 @@ interface TimerSettingsData {
   button_label: string;
   logo_url: string | null;
   theme: string;
+  is_recurring: boolean;
+  day_of_week: number;
+  time_of_day: string;
+  timezone: string;
+  button_duration_minutes: number;
 }
 
 const TIMEZONES = [
@@ -28,6 +34,16 @@ const TIMEZONES = [
   "Asia/Tokyo",
 ];
 
+const DAYS_OF_WEEK = [
+  { value: 0, label: "Sunday" },
+  { value: 1, label: "Monday" },
+  { value: 2, label: "Tuesday" },
+  { value: 3, label: "Wednesday" },
+  { value: 4, label: "Thursday" },
+  { value: 5, label: "Friday" },
+  { value: 6, label: "Saturday" },
+];
+
 const TimerSettings = () => {
   const [settings, setSettings] = useState<TimerSettingsData>({
     target_datetime: null,
@@ -35,9 +51,13 @@ const TimerSettings = () => {
     button_label: "Watch Now",
     logo_url: null,
     theme: "dark",
+    is_recurring: false,
+    day_of_week: 5,
+    time_of_day: "19:00",
+    timezone: "America/New_York",
+    button_duration_minutes: 60,
   });
   const [localDatetime, setLocalDatetime] = useState("");
-  const [timezone, setTimezone] = useState("America/New_York");
   const [serverTime, setServerTime] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -50,57 +70,44 @@ const TimerSettings = () => {
   });
   const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  // Load settings + server time
+  // Load settings
   useEffect(() => {
     const load = async () => {
-      const [settingsRes, timeRes] = await Promise.all([
-        supabase.from("timer_settings").select("*").limit(1).maybeSingle(),
-        supabase.rpc("get_next_conversation").then(() => null), // just need server time
-      ]);
-
-      // Get server time via a simple query
-      const { data: timeData } = await supabase
+      const { data } = await supabase
         .from("timer_settings")
-        .select("created_at")
-        .limit(0);
-      
-      // Use a raw SQL approach for server time
-      try {
-        const res = await fetch(
-          `https://gpmandlkcdompmdvethh.supabase.co/rest/v1/rpc/`,
-          { method: "HEAD" }
-        );
-        setServerTime(new Date().toLocaleString(undefined, { dateStyle: "medium", timeStyle: "long" }));
-      } catch {
-        setServerTime(new Date().toLocaleString(undefined, { dateStyle: "medium", timeStyle: "long" }));
-      }
+        .select("*")
+        .limit(1)
+        .maybeSingle();
 
-      if (settingsRes.data) {
-        const s = settingsRes.data as TimerSettingsData & { id: string };
+      setServerTime(
+        new Date().toLocaleString(undefined, { dateStyle: "medium", timeStyle: "long" })
+      );
+
+      if (data) {
+        const s = data as unknown as TimerSettingsData & { id: string };
         setSettings(s);
-        // Convert UTC target_datetime to local input value
         if (s.target_datetime) {
           const d = new Date(s.target_datetime);
-          // Format as YYYY-MM-DDTHH:MM for datetime-local input
           const pad = (n: number) => String(n).padStart(2, "0");
-          const localStr = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-          setLocalDatetime(localStr);
+          setLocalDatetime(
+            `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+          );
         }
       }
     };
     load();
   }, []);
 
-  // Refresh server time every 30s
   useEffect(() => {
     const id = setInterval(() => {
-      setServerTime(new Date().toLocaleString(undefined, { dateStyle: "medium", timeStyle: "long" }));
+      setServerTime(
+        new Date().toLocaleString(undefined, { dateStyle: "medium", timeStyle: "long" })
+      );
     }, 30000);
     return () => clearInterval(id);
   }, []);
 
   const handleSave = async () => {
-    // Validate stream URL
     if (settings.stream_url) {
       try {
         new URL(settings.stream_url);
@@ -110,12 +117,9 @@ const TimerSettings = () => {
       }
     }
 
-    // Convert local datetime to UTC using selected timezone
     let targetUtc: string | null = null;
-    if (localDatetime) {
-      // Create a date string with timezone
-      const dateStr = `${localDatetime}:00`;
-      const d = new Date(dateStr);
+    if (!settings.is_recurring && localDatetime) {
+      const d = new Date(`${localDatetime}:00`);
       if (isNaN(d.getTime())) {
         toast.error("Invalid date/time");
         return;
@@ -124,12 +128,17 @@ const TimerSettings = () => {
     }
 
     setSaving(true);
-    const payload = {
+    const payload: Record<string, unknown> = {
       target_datetime: targetUtc,
       stream_url: settings.stream_url,
       button_label: settings.button_label || "Watch Now",
       logo_url: settings.logo_url,
       theme: settings.theme,
+      is_recurring: settings.is_recurring,
+      day_of_week: settings.day_of_week,
+      time_of_day: settings.time_of_day,
+      timezone: settings.timezone,
+      button_duration_minutes: settings.button_duration_minutes,
     };
 
     let error;
@@ -153,7 +162,6 @@ const TimerSettings = () => {
       toast.error("Failed to save: " + error.message);
     } else {
       toast.success("Timer settings saved");
-      // Refresh preview
       iframeRef.current?.contentWindow?.location.reload();
     }
   };
@@ -220,29 +228,102 @@ const TimerSettings = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Left: Fields */}
         <div className="space-y-3">
-          <div>
-            <Label className="text-xs mb-1 block">Target Date & Time</Label>
-            <Input
-              type="datetime-local"
-              value={localDatetime}
-              onChange={(e) => setLocalDatetime(e.target.value)}
-              className="text-sm"
+          {/* Recurring toggle */}
+          <div className="flex items-center gap-3">
+            <Switch
+              checked={settings.is_recurring}
+              onCheckedChange={(checked) =>
+                setSettings({ ...settings, is_recurring: checked })
+              }
             />
+            <Label className="text-xs">Repeat weekly</Label>
           </div>
 
+          {settings.is_recurring ? (
+            <>
+              {/* Day of week */}
+              <div>
+                <Label className="text-xs mb-1 block">Day of Week</Label>
+                <select
+                  value={settings.day_of_week}
+                  onChange={(e) =>
+                    setSettings({ ...settings, day_of_week: Number(e.target.value) })
+                  }
+                  className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  {DAYS_OF_WEEK.map((d) => (
+                    <option key={d.value} value={d.value}>
+                      {d.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Time of day */}
+              <div>
+                <Label className="text-xs mb-1 block">Time</Label>
+                <Input
+                  type="time"
+                  value={settings.time_of_day}
+                  onChange={(e) =>
+                    setSettings({ ...settings, time_of_day: e.target.value })
+                  }
+                  className="text-sm"
+                />
+              </div>
+            </>
+          ) : (
+            /* One-time target */
+            <div>
+              <Label className="text-xs mb-1 block">Target Date & Time</Label>
+              <Input
+                type="datetime-local"
+                value={localDatetime}
+                onChange={(e) => setLocalDatetime(e.target.value)}
+                className="text-sm"
+              />
+            </div>
+          )}
+
+          {/* Timezone */}
           <div>
             <Label className="text-xs mb-1 block">Timezone</Label>
             <select
-              value={timezone}
-              onChange={(e) => setTimezone(e.target.value)}
+              value={settings.timezone}
+              onChange={(e) => setSettings({ ...settings, timezone: e.target.value })}
               className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
             >
               {TIMEZONES.map((tz) => (
-                <option key={tz} value={tz}>{tz}</option>
+                <option key={tz} value={tz}>
+                  {tz}
+                </option>
               ))}
             </select>
           </div>
 
+          {/* Button duration */}
+          <div>
+            <Label className="text-xs mb-1 block">
+              Button display duration (minutes)
+            </Label>
+            <Input
+              type="number"
+              min={1}
+              value={settings.button_duration_minutes}
+              onChange={(e) =>
+                setSettings({
+                  ...settings,
+                  button_duration_minutes: Math.max(1, Number(e.target.value)),
+                })
+              }
+              className="text-sm"
+            />
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              How long the "{settings.button_label || "Watch Now"}" button shows before reverting to countdown
+            </p>
+          </div>
+
+          {/* Stream URL */}
           <div>
             <Label className="text-xs mb-1 block">Stream URL</Label>
             <Input
@@ -253,11 +334,14 @@ const TimerSettings = () => {
             />
           </div>
 
+          {/* Button Label */}
           <div>
             <Label className="text-xs mb-1 block">Button Label</Label>
             <Input
               value={settings.button_label}
-              onChange={(e) => setSettings({ ...settings, button_label: e.target.value })}
+              onChange={(e) =>
+                setSettings({ ...settings, button_label: e.target.value })
+              }
               placeholder="Watch Now"
               className="text-sm"
             />

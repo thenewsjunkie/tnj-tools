@@ -1226,33 +1226,48 @@ export type Database = {
       }
       timer_settings: {
         Row: {
+          button_duration_minutes: number
           button_label: string
           created_at: string
+          day_of_week: number
           id: string
+          is_recurring: boolean
           logo_url: string | null
           stream_url: string
           target_datetime: string | null
           theme: string
+          time_of_day: string
+          timezone: string
           updated_at: string
         }
         Insert: {
+          button_duration_minutes?: number
           button_label?: string
           created_at?: string
+          day_of_week?: number
           id?: string
+          is_recurring?: boolean
           logo_url?: string | null
           stream_url?: string
           target_datetime?: string | null
           theme?: string
+          time_of_day?: string
+          timezone?: string
           updated_at?: string
         }
         Update: {
+          button_duration_minutes?: number
           button_label?: string
           created_at?: string
+          day_of_week?: number
           id?: string
+          is_recurring?: boolean
           logo_url?: string | null
           stream_url?: string
           target_datetime?: string | null
           theme?: string
+          time_of_day?: string
+          timezone?: string
           updated_at?: string
         }
         Relationships: []
