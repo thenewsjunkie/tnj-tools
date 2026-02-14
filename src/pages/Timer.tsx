@@ -25,54 +25,56 @@ function getNextOccurrence(dayOfWeek: number, timeOfDay: string, timezone: strin
   const [hours, minutes] = timeOfDay.split(":").map(Number);
   const now = new Date();
 
-  // Build a date string in the target timezone for "today"
-  // We'll iterate up to 7 days to find the next matching day
   for (let offset = 0; offset <= 7; offset++) {
     const candidate = new Date(now.getTime() + offset * 86400000);
-    // Format candidate date in target timezone
     const parts = new Intl.DateTimeFormat("en-US", {
       timeZone: timezone,
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
-      weekday: "short",
     }).formatToParts(candidate);
 
     const yearStr = parts.find((p) => p.type === "year")?.value || "";
     const monthStr = parts.find((p) => p.type === "month")?.value || "";
     const dayStr = parts.find((p) => p.type === "day")?.value || "";
 
-    // Get day of week in target timezone
-    const tzDate = new Date(`${yearStr}-${monthStr}-${dayStr}T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`);
-    
-    // Use Intl to get the actual weekday in the target timezone
     const weekdayInTz = new Date(
       candidate.toLocaleString("en-US", { timeZone: timezone })
     ).getDay();
 
     if (weekdayInTz === dayOfWeek) {
-      // Build the target time in the specified timezone
-      // We need to create a Date that represents this specific time in the given timezone
-      const dateString = `${yearStr}-${monthStr}-${dayStr}T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`;
-      
-      // Convert from target timezone to UTC by using the timezone offset
-      const targetInTz = new Date(
-        new Date(dateString).toLocaleString("en-US", { timeZone: "UTC" })
+      // Create a UTC anchor at the desired wall-clock time
+      const utcGuess = new Date(
+        Date.UTC(
+          parseInt(yearStr),
+          parseInt(monthStr) - 1,
+          parseInt(dayStr),
+          hours,
+          minutes,
+          0
+        )
       );
-      
-      // Get the offset by comparing
-      const inTz = new Date(new Date(dateString).toLocaleString("en-US", { timeZone: timezone }));
-      const inUtc = new Date(new Date(dateString).toLocaleString("en-US", { timeZone: "UTC" }));
-      const offsetMs = inUtc.getTime() - inTz.getTime();
-      
-      const result = new Date(new Date(dateString).getTime() + offsetMs);
-      
+
+      // Find what wall-clock time utcGuess shows in the target timezone
+      const wallParts = new Intl.DateTimeFormat("en-US", {
+        timeZone: timezone,
+        hour: "numeric",
+        minute: "numeric",
+        hour12: false,
+      }).formatToParts(utcGuess);
+
+      const wallHour = parseInt(wallParts.find(p => p.type === "hour")?.value || "0");
+      const wallMin = parseInt(wallParts.find(p => p.type === "minute")?.value || "0");
+
+      // Shift UTC so the wall-clock in the target timezone matches the desired time
+      const diffMinutes = (wallHour * 60 + wallMin) - (hours * 60 + minutes);
+      const result = new Date(utcGuess.getTime() + diffMinutes * 60000);
+
       if (result.getTime() > now.getTime()) {
         return result;
       }
     }
   }
-  // Fallback: shouldn't happen
   return new Date(now.getTime() + 7 * 86400000);
 }
 
