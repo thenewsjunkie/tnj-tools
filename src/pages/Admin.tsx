@@ -13,6 +13,7 @@ import ShowPrep from "@/components/admin/ShowPrep";
 import WeekendEditionSegments from "@/components/admin/WeekendEditionSegments";
 import VideoTools from "@/components/admin/VideoTools";
 import AdminPolls from "@/components/admin/AdminPolls";
+import TimerSettings from "@/components/admin/TimerSettings";
 
 import { Badge } from "@/components/ui/badge";
 import { useQueueState } from "@/hooks/useQueueState";
@@ -126,6 +127,15 @@ const Admin = () => {
           defaultOpen={false}
         >
           <WeekendEditionSegments />
+        </CollapsibleModule>
+
+        {/* Countdown Timer */}
+        <CollapsibleModule
+          id="countdown-timer"
+          title="Countdown Timer"
+          defaultOpen={false}
+        >
+          <TimerSettings />
         </CollapsibleModule>
 
         {/* Video Tools */}
