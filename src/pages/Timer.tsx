@@ -243,7 +243,7 @@ const Timer = () => {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
-        minHeight: "100vh",
+        minHeight: "auto",
         fontFamily: SYSTEM_FONT,
         padding: "clamp(4px, 1vw, 8px)",
         boxSizing: "border-box",
