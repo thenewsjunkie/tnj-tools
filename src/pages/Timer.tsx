@@ -68,7 +68,7 @@ function getNextOccurrence(dayOfWeek: number, timeOfDay: string, timezone: strin
 
       // Shift UTC so the wall-clock in the target timezone matches the desired time
       const diffMinutes = (wallHour * 60 + wallMin) - (hours * 60 + minutes);
-      const result = new Date(utcGuess.getTime() + diffMinutes * 60000);
+      const result = new Date(utcGuess.getTime() - diffMinutes * 60000);
 
       if (result.getTime() > now.getTime()) {
         return result;
