@@ -206,13 +206,13 @@ const Timer = () => {
     justifyContent: "center",
     background: blockBg,
     border: `1px solid ${blockBorder}`,
-    borderRadius: "8px",
-    padding: "clamp(6px, 2vw, 16px) clamp(8px, 3vw, 24px)",
-    minWidth: "clamp(48px, 12vw, 100px)",
+    borderRadius: "6px",
+    padding: "clamp(4px, 1.5vw, 10px) clamp(6px, 2vw, 16px)",
+    minWidth: "clamp(36px, 10vw, 72px)",
   };
 
   const numberStyle: React.CSSProperties = {
-    fontSize: "clamp(24px, 8vw, 56px)",
+    fontSize: "clamp(18px, 5vw, 36px)",
     fontWeight: 700,
     lineHeight: 1.1,
     color: textColor,
@@ -221,25 +221,26 @@ const Timer = () => {
   };
 
   const labelStyle: React.CSSProperties = {
-    fontSize: "clamp(8px, 2vw, 12px)",
+    fontSize: "clamp(7px, 1.5vw, 10px)",
     textTransform: "uppercase",
     letterSpacing: "0.08em",
     color: mutedColor,
     fontFamily: SYSTEM_FONT,
-    marginTop: "2px",
+    marginTop: "1px",
   };
 
   return (
     <div
       style={{
         display: "flex",
-        flexDirection: "column",
+        flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
         minHeight: "100vh",
         fontFamily: SYSTEM_FONT,
-        padding: "clamp(8px, 2vw, 16px)",
+        padding: "clamp(4px, 1vw, 8px)",
         boxSizing: "border-box",
+        gap: "clamp(6px, 2vw, 16px)",
       }}
     >
       {/* Logo */}
@@ -248,10 +249,9 @@ const Timer = () => {
           src={settings.logo_url}
           alt="Logo"
           style={{
-            maxHeight: "clamp(28px, 6vw, 48px)",
-            maxWidth: "80%",
+            maxHeight: "clamp(20px, 4vw, 36px)",
+            maxWidth: "120px",
             objectFit: "contain",
-            marginBottom: "clamp(6px, 1.5vw, 12px)",
           }}
         />
       )}
@@ -262,18 +262,16 @@ const Timer = () => {
           href={settings?.stream_url || "#"}
           style={{
             display: "inline-block",
-            padding: "clamp(10px, 2vw, 16px) clamp(24px, 5vw, 48px)",
-            background: isDark
-              ? "linear-gradient(135deg, #6366f1, #8b5cf6)"
-              : "linear-gradient(135deg, #4f46e5, #7c3aed)",
+            padding: "clamp(6px, 1.5vw, 12px) clamp(16px, 3vw, 32px)",
+            background: "#000000",
             color: "#ffffff",
-            fontSize: "clamp(14px, 3vw, 20px)",
+            fontSize: "clamp(12px, 2.5vw, 16px)",
             fontWeight: 600,
             fontFamily: SYSTEM_FONT,
-            borderRadius: "8px",
+            borderRadius: "6px",
             textDecoration: "none",
             cursor: "pointer",
-            boxShadow: "0 4px 14px rgba(99,102,241,0.4)",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
             transition: "transform 0.15s, box-shadow 0.15s",
           }}
         >
