@@ -1,31 +1,39 @@
 
 
-## Fix: Timezone Offset Direction Bug
+## Animate Watch Now Button Reveal
 
-The `getNextOccurrence` function in `src/pages/Timer.tsx` applies the timezone offset in the wrong direction, causing the countdown to be off.
+Add a CSS animation to the "Watch Now" button so it smoothly appears when the countdown expires, rather than popping in abruptly.
 
-### Root Cause
+### Approach
 
-Line 71 currently reads:
+Use a CSS `@keyframes` animation defined inline via the `style` prop on the button's `<a>` tag. The animation will scale the button up from 90% and fade it in over 0.5 seconds with a slight bounce effect.
+
+### Changes to `src/pages/Timer.tsx`
+
+Add the following inline style properties to the Watch Now `<a>` element (around line 265):
+
+- `animation: "watchNowReveal 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards"` -- a slightly bouncy ease for a satisfying pop-in
+- `opacity: 0` as initial state (the animation fills forward to opacity 1)
+
+Since inline `@keyframes` aren't supported in React's `style` prop, inject a small `<style>` tag inside the component's return (before the main `<div>`) to define the keyframes:
+
+```css
+@keyframes watchNowReveal {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
 ```
-const result = new Date(utcGuess.getTime() + diffMinutes * 60000);
-```
 
-It should be:
-```
-const result = new Date(utcGuess.getTime() - diffMinutes * 60000);
-```
+Then apply `animation: "watchNowReveal 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards"` to the button's style object.
 
-### What Went Wrong
+### Technical Details
 
-For America/New_York (UTC-5) with a target of 17:00:
-- `utcGuess` is set to 17:00 UTC
-- In EST, that displays as 12:00 (noon)
-- `diffMinutes` = (12 x 60) - (17 x 60) = -300
-- Adding -300 minutes shifts to 12:00 UTC (7 AM EST) -- **wrong**
-- Subtracting -300 minutes shifts to 22:00 UTC (5 PM EST) -- **correct**
-
-### Change
-
-**`src/pages/Timer.tsx`**, line 71 -- Change `+` to `-` in the offset calculation.
-
+- The `cubic-bezier(0.34, 1.56, 0.64, 1)` curve overshoots slightly, giving a subtle bounce/pop effect
+- `forwards` fill mode keeps the button visible after animation completes
+- No new dependencies or files needed -- just a `<style>` tag and one style property addition
