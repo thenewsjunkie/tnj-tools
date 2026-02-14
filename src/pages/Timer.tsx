@@ -184,11 +184,6 @@ const Timer = () => {
     return { countdown: { days, hours, minutes, seconds, expired: false }, showButton: false };
   }, [settings, now]);
 
-  // Format local time
-  const localTime = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-  const tzAbbr = Intl.DateTimeFormat(undefined, { timeZoneName: "short" })
-    .formatToParts(now)
-    .find((p) => p.type === "timeZoneName")?.value || "";
 
   // Make body transparent
   useEffect(() => {
@@ -304,17 +299,6 @@ const Timer = () => {
         </p>
       )}
 
-      {/* Current time */}
-      <div
-        style={{
-          marginTop: "clamp(6px, 1.5vw, 12px)",
-          fontSize: "clamp(9px, 2vw, 12px)",
-          color: mutedColor,
-          fontFamily: SYSTEM_FONT,
-        }}
-      >
-        {localTime} {tzAbbr}
-      </div>
     </div>
   );
 };
