@@ -267,6 +267,8 @@ const Timer = () => {
       {countdown?.expired && showButton ? (
         <a
           href={settings?.stream_url || "#"}
+          target="_blank"
+          rel="noopener noreferrer"
           style={{
             display: "inline-block",
             padding: "clamp(6px, 1.5vw, 12px) clamp(16px, 3vw, 32px)",
