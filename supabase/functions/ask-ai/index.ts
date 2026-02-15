@@ -57,7 +57,9 @@ IMPORTANT: Only include the sections listed above. Skip any section not requeste
 
 Give me a comprehensive, structured analysis in tight bullet points with clear section headers.
 
-Be specific. Avoid vague summaries.
+Be specific. Avoid vague summaries. Write at least 3-5 detailed bullet points per section. Do not summarize in one sentence what deserves a paragraph. Be thorough -- this is a full briefing document, not a quick summary.
+
+Include specific names, dates, numbers, and direct quotes wherever possible.
 
 Separate confirmed facts from claims, allegations, or speculation.
 
@@ -131,7 +133,7 @@ Keep it structured, factual, and precise. Do not mention your knowledge cutoff d
           { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }
         ],
-        max_tokens: datasheetMode ? 1000 : (rundownMode || strongmanMode) ? 2500 : 1500,
+        max_tokens: datasheetMode ? 1000 : (rundownMode || strongmanMode) ? 4500 : 1500,
         temperature: 0.7,
         presence_penalty: 0.1,
         frequency_penalty: 0.1
