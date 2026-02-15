@@ -1,30 +1,16 @@
 
 
-## Remove Auto-Image, Add Manual Image Upload Button to Rundowns
+## Increase Rundown Length
 
-### What Changes
+### Problem
+Rundowns are being cut short because `max_tokens` is set to 4,500 for search mode.
 
-1. **Remove the automatic Wikipedia image fetch** -- delete the `useEffect` that calls `fetch-topic-image`, and remove the `wikiImage`/`wikiImageLoading` state
-2. **Remove the Skeleton loading state** for the auto-fetched image
-3. **Show manual images only** -- if the topic already has images in `topic.images`, display the hero image as before
-4. **Add a small upload icon button** in the header area (next to the title or below the metadata) that lets you manually add a hero image. Clicking it opens a file picker, uploads the image to Supabase storage, and saves the URL into `topic.images`
+### Changes
 
-### File: `src/pages/RundownPage.tsx`
+**File: `supabase/functions/ask-ai/index.ts`** (line 137)
 
-- Remove `wikiImage` and `wikiImageLoading` state variables
-- Remove the `useEffect` block that auto-fetches Wikipedia images (lines 131-152)
-- Remove `hasManualImages` and `heroImage` computed values that reference `wikiImage`
-- Replace the hero image section with:
-  - If `topic.images?.length > 0`: show the existing hero image as before
-  - If no images: show a small, subtle button with an `ImagePlus` icon that opens a file input
-- Add a hidden `<input type="file">` and handler that:
-  - Uploads the selected image to the `show-notes-images` Supabase storage bucket
-  - Updates the topic's `images` array in the `show_prep_notes` database record
-  - Displays the newly uploaded image as the hero
+1. Increase `max_tokens` from `4500` to `10000` for search mode (rundown/strongman) -- this gives the model room for all 9 sections plus citations
+2. Optionally bump `search_context_size` from `"medium"` to `"high"` so the model gathers more source material before generating the response
 
-### Technical Details
-
-- Reuse the existing `show-notes-images` storage bucket (already used by other show prep features)
-- On upload, update the topic in `show_prep_notes.topics` JSON by finding the topic by ID and adding the image URL to its `images` array
-- Add a remove/delete button on the hero image so you can clear it if needed
+That's the only change -- one line, two values. No frontend changes needed.
 
