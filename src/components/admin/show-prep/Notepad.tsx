@@ -205,6 +205,7 @@ const Notepad = ({ value, onChange, isOpen, onToggle }: NotepadProps) => {
             className={`
               prose dark:prose-invert max-w-none
               ${fontSizeClasses[fontSize]}
+              [&_.ProseMirror]:text-foreground
               [&_.ProseMirror]:min-h-[400px]
               [&_.ProseMirror]:p-4
               [&_.ProseMirror]:outline-none
