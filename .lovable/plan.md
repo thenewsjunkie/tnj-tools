@@ -1,29 +1,35 @@
 
 
-## Move Countdown Timer and Polls into Video Tools Module
+## Make Notepad Available at /notepad
 
-Consolidate the admin page by moving the "Countdown Timer" and "Polls" sections into the existing "Video Tools" collapsible module, and shrink the icon buttons so everything fits neatly.
+### Overview
+
+Create a standalone `/notepad` page that renders the Notepad editor with the same date-aware data loading as the admin Show Prep module. Add navigation links between the two.
 
 ### Changes
 
-**1. `src/components/admin/VideoTools.tsx`**
+**1. Create `src/pages/NotepadPage.tsx`**
 
-- Import `AdminPolls`, `TimerSettings`, and the `Link` component from react-router-dom
-- Shrink button grid: reduce button height from `h-24` to `h-16`, icon size from `h-8 w-8` to `h-5 w-5`, and text from `text-sm` to `text-xs`
-- Add more columns: change grid to `grid-cols-3 sm:grid-cols-4 md:grid-cols-6` so 6 buttons fit in one row on desktop
-- Add two new buttons: "Timer" (Clock icon, orange theme) and "Polls" (BarChart icon, purple theme) -- these will expand/collapse their respective settings inline below the button grid
-- Below the button grid, conditionally render `<TimerSettings />` and `<AdminPolls />` panels when their buttons are toggled, with a subtle border/background to visually separate them
-- The Polls section header will include the external link to `/admin/manage-polls`
+A standalone page that:
+- Reuses the same date selection logic and Supabase loading/saving from ShowPrep (date picker, notepad state, auto-save)
+- Renders the `Notepad` component (always open, no toggle)
+- Includes a "Back to Admin" link with an ArrowLeft icon in the top corner
+- Shows the current date with navigation arrows so users can switch days
 
-**2. `src/pages/Admin.tsx`**
+**2. Update `src/components/admin/show-prep/Notepad.tsx`**
 
-- Remove the standalone "Polls" `<CollapsibleModule>` block (lines 105-121)
-- Remove the standalone "Countdown Timer" `<CollapsibleModule>` block (lines 132-139)
-- Remove unused imports: `TimerSettings`, `AdminPolls`, `ExternalLink` (if no longer used elsewhere), and the `isPollDialogOpen` / `PollDialog` setup tied to the top-level Poll button can remain as-is since it's a separate quick-action
+- Import `Link` from react-router-dom and the `ExternalLink` icon from lucide-react
+- Add a small icon-link next to the "Notepad" label in the header that navigates to `/notepad` (using `ExternalLink` icon) -- clicking the icon stops propagation so it doesn't toggle the notepad open/closed
+
+**3. Update `src/components/routing/routes.tsx`**
+
+- Add lazy import for `NotepadPage`
+- Add route: `{ path: "notepad", element: <NotepadPage /> }`
 
 ### Technical Details
 
-- VideoTools will use local `useState` to track which sub-panel (timer/polls) is expanded
-- Only one sub-panel open at a time (clicking one closes the other) to keep things tidy
-- Button grid gap reduced from `gap-3` to `gap-2` for a tighter layout
-- The Polls external link icon moves into the VideoTools component as a small icon button next to the inline Polls header
+- The standalone NotepadPage will replicate the date-based loading/saving logic from ShowPrep but only for the `notepad` field (no topics, no show prep notes panel)
+- The Notepad component itself stays unchanged -- the page wraps it with its own state management
+- The `/notepad` route will be public (no AdminRoute wrapper) to allow quick access, matching the pattern of other non-admin pages
+- Date navigation uses the same `selectedDate` + `localStorage` persistence pattern from ShowPrep
+
