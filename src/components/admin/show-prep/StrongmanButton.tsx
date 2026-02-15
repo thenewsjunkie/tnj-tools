@@ -1,16 +1,23 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { FileSearch, Loader2, Printer, RefreshCw, ExternalLink } from "lucide-react";
+import { FileSearch, Loader2, Printer, RefreshCw, ExternalLink, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Topic, Strongman } from "./types";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { printRundown } from "./PrintStrongman";
@@ -25,25 +32,25 @@ export const StrongmanButton = ({ topic, date, onChange }: StrongmanButtonProps)
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
+  const [generateOpen, setGenerateOpen] = useState(false);
+  const [viewOpen, setViewOpen] = useState(false);
   const [argumentInput, setArgumentInput] = useState("");
-  const [isEditing, setIsEditing] = useState(false);
-  
+  const [isRegenerating, setIsRegenerating] = useState(false);
+
   const hasStrongman = !!topic.strongman?.content;
 
-  // Pre-fill with existing prompt or topic title when opening
   useEffect(() => {
-    if (isOpen && !hasStrongman) {
-      // Default to topic title + take for new generation
-      const defaultPrompt = topic.take 
-        ? `${topic.title}\n\nMy angle: ${topic.take}`
-        : topic.title;
-      setArgumentInput(defaultPrompt);
-    } else if (isOpen && hasStrongman && isEditing) {
-      // Pre-fill with the previous prompt when regenerating
-      setArgumentInput(topic.strongman?.prompt || topic.title);
+    if (generateOpen) {
+      if (isRegenerating && hasStrongman) {
+        setArgumentInput(topic.strongman?.prompt || topic.title);
+      } else {
+        const defaultPrompt = topic.take
+          ? `${topic.title}\n\nMy angle: ${topic.take}`
+          : topic.title;
+        setArgumentInput(defaultPrompt);
+      }
     }
-  }, [isOpen, hasStrongman, isEditing, topic.title, topic.take, topic.strongman?.prompt]);
+  }, [generateOpen, isRegenerating, hasStrongman, topic.title, topic.take, topic.strongman?.prompt]);
 
   const generateStrongman = async () => {
     if (!argumentInput.trim()) {
@@ -54,13 +61,8 @@ export const StrongmanButton = ({ topic, date, onChange }: StrongmanButtonProps)
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("ask-ai", {
-        body: {
-          prompt: argumentInput,
-          rundownMode: true,
-          model: "gpt-4o"
-        }
+        body: { prompt: argumentInput, rundownMode: true, model: "gpt-4o" }
       });
-
       if (error) throw error;
 
       const strongman: Strongman = {
@@ -70,156 +72,125 @@ export const StrongmanButton = ({ topic, date, onChange }: StrongmanButtonProps)
       };
 
       onChange(strongman);
-      setIsEditing(false);
+      setGenerateOpen(false);
+      setIsRegenerating(false);
       toast({ description: "Rundown generated!" });
     } catch (error) {
       console.error("Error generating strongman:", error);
-      toast({ 
-        description: "Failed to generate rundown", 
-        variant: "destructive" 
-      });
+      toast({ description: "Failed to generate rundown", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleRegenerate = () => {
-    setIsEditing(true);
-    setArgumentInput(topic.strongman?.prompt || topic.title);
-  };
-
   const handlePrint = () => {
-    if (topic.strongman) {
-      printRundown(topic);
-    }
+    if (topic.strongman) printRundown(topic);
   };
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          size="sm"
-          variant="ghost"
-          className={cn(
-            "h-6 px-1.5",
-            hasStrongman 
-              ? "text-purple-500 hover:text-purple-600" 
-              : "text-muted-foreground hover:text-purple-500"
-          )}
-          title={hasStrongman ? "View rundown" : "Generate rundown"}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <FileSearch className={cn("h-3.5 w-3.5", hasStrongman && "fill-current")} />
-          )}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-96" align="end">
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <FileSearch className="h-4 w-4 text-purple-500" />
-              Rundown
-            </div>
-            {hasStrongman && !isEditing && (
-              <div className="flex items-center gap-1">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 px-2"
-                  onClick={() => navigate(`/admin/rundown/${date}/${topic.id}`)}
-                  title="Open full page"
-                >
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 px-2"
-                  onClick={handlePrint}
-                  title="Print"
-                >
-                  <Printer className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 px-2"
-                  onClick={handleRegenerate}
-                  disabled={isLoading}
-                  title="Regenerate"
-                >
-                  <RefreshCw className={cn("h-3.5 w-3.5", isLoading && "animate-spin")} />
-                </Button>
-              </div>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            size="sm"
+            variant="ghost"
+            className={cn(
+              "h-6 px-1.5",
+              hasStrongman
+                ? "text-purple-500 hover:text-purple-600"
+                : "text-muted-foreground hover:text-purple-500"
             )}
-          </div>
-          
-          {hasStrongman && !isEditing ? (
+            title={hasStrongman ? "Rundown options" : "Generate rundown"}
+          >
+            <FileSearch className={cn("h-3.5 w-3.5", hasStrongman && "fill-current")} />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {hasStrongman ? (
             <>
-              <ScrollArea className="h-[300px] rounded-md border p-3">
-                <div className="prose prose-sm dark:prose-invert max-w-none">
-                  <div className="whitespace-pre-wrap text-sm">
-                    {topic.strongman!.content}
-                  </div>
-                </div>
-              </ScrollArea>
-              {topic.strongman?.prompt && (
-                <p className="text-xs text-muted-foreground italic">
-                  Argument: "{topic.strongman.prompt.length > 50 
-                    ? topic.strongman.prompt.substring(0, 50) + "..." 
-                    : topic.strongman.prompt}"
-                </p>
-              )}
-              <p className="text-xs text-muted-foreground">
-                Generated {new Date(topic.strongman!.generatedAt).toLocaleString()}
-              </p>
+              <DropdownMenuItem onClick={() => setViewOpen(true)}>
+                <Eye className="h-4 w-4 mr-2" />
+                View Rundown
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate(`/admin/rundown/${date}/${topic.id}`)}>
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Open Full Page
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handlePrint}>
+                <Printer className="h-4 w-4 mr-2" />
+                Print
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { setIsRegenerating(true); setGenerateOpen(true); }}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Regenerate
+              </DropdownMenuItem>
             </>
           ) : (
-            <div className="space-y-3">
-              <Textarea
-                placeholder="Enter a topic to research..."
-                value={argumentInput}
-                onChange={(e) => setArgumentInput(e.target.value)}
-                className="min-h-[100px] text-sm"
-                disabled={isLoading}
-              />
-              <div className="flex gap-2">
-                {isEditing && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsEditing(false)}
-                    disabled={isLoading}
-                  >
-                    Cancel
-                  </Button>
-                )}
-                <Button
-                  onClick={generateStrongman}
-                  disabled={isLoading || !argumentInput.trim()}
-                  className="gap-2 flex-1"
-                  size="sm"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                     <>
-                       <FileSearch className="h-4 w-4" />
-                       {isEditing ? "Regenerate" : "Generate Rundown"}
-                     </>
-                  )}
-                </Button>
-              </div>
-            </div>
+            <DropdownMenuItem onClick={() => { setIsRegenerating(false); setGenerateOpen(true); }}>
+              <FileSearch className="h-4 w-4 mr-2" />
+              Generate Rundown
+            </DropdownMenuItem>
           )}
-        </div>
-      </PopoverContent>
-    </Popover>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* View Rundown Dialog */}
+      <Dialog open={viewOpen} onOpenChange={setViewOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileSearch className="h-4 w-4 text-purple-500" />
+              Rundown
+            </DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="h-[300px] rounded-md border p-3">
+            <div className="whitespace-pre-wrap text-sm">
+              {topic.strongman?.content}
+            </div>
+          </ScrollArea>
+          {topic.strongman?.prompt && (
+            <p className="text-xs text-muted-foreground italic">
+              Argument: "{topic.strongman.prompt.length > 50
+                ? topic.strongman.prompt.substring(0, 50) + "..."
+                : topic.strongman.prompt}"
+            </p>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Generated {topic.strongman?.generatedAt && new Date(topic.strongman.generatedAt).toLocaleString()}
+          </p>
+        </DialogContent>
+      </Dialog>
+
+      {/* Generate/Regenerate Dialog */}
+      <Dialog open={generateOpen} onOpenChange={(open) => { setGenerateOpen(open); if (!open) setIsRegenerating(false); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileSearch className="h-4 w-4 text-purple-500" />
+              {isRegenerating ? "Regenerate Rundown" : "Generate Rundown"}
+            </DialogTitle>
+          </DialogHeader>
+          <Textarea
+            placeholder="Enter a topic to research..."
+            value={argumentInput}
+            onChange={(e) => setArgumentInput(e.target.value)}
+            className="min-h-[100px] text-sm"
+            disabled={isLoading}
+          />
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" size="sm" onClick={() => setGenerateOpen(false)} disabled={isLoading}>
+              Cancel
+            </Button>
+            <Button onClick={generateStrongman} disabled={isLoading || !argumentInput.trim()} className="gap-2" size="sm">
+              {isLoading ? (
+                <><Loader2 className="h-4 w-4 animate-spin" />Generating...</>
+              ) : (
+                <><FileSearch className="h-4 w-4" />{isRegenerating ? "Regenerate" : "Generate"}</>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
