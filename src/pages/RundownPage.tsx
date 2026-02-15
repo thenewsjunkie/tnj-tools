@@ -102,14 +102,24 @@ const RundownPage = () => {
         .from("show_prep_notes")
         .select("topics")
         .eq("date", date!)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+      if (!data) throw new Error("No data for this date");
 
-      const hours = data.topics as unknown as HourBlock[];
-      for (const hour of hours) {
-        const found = hour.topics?.find((t: Topic) => t.id === topicId);
+      const rawData = data.topics as unknown;
+
+      // New flat format: { topics: [...] }
+      if (rawData && typeof rawData === "object" && Array.isArray((rawData as any).topics)) {
+        const found = (rawData as any).topics.find((t: Topic) => t.id === topicId);
         if (found) return found;
+      }
+      // Old hour-based format: { hours: [...] }
+      else if (rawData && typeof rawData === "object" && Array.isArray((rawData as any).hours)) {
+        for (const hour of (rawData as any).hours) {
+          const found = hour.topics?.find((t: Topic) => t.id === topicId);
+          if (found) return found;
+        }
       }
       throw new Error("Topic not found");
     },
