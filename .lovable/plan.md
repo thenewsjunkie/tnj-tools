@@ -1,16 +1,26 @@
 
 
-## Increase Rundown Length
+## Make Rundown Text Stream-Readable
 
 ### Problem
-Rundowns are being cut short because `max_tokens` is set to 4,500 for search mode.
+The rundown page text is too small for live stream viewers to read comfortably.
 
 ### Changes
 
-**File: `supabase/functions/ask-ai/index.ts`** (line 137)
+**File: `src/pages/RundownPage.tsx`**
+- Increase the title from `text-2xl` to `text-4xl`
+- Increase "Rundown -- Deep Dive" subtitle and generated date text sizes
+- Increase the "Take" quote text size
+- Widen the max-width container from `max-w-4xl` to `max-w-5xl` for better use of screen space
+- Increase padding for more breathing room
 
-1. Increase `max_tokens` from `4500` to `10000` for search mode (rundown/strongman) -- this gives the model room for all 9 sections plus citations
-2. Optionally bump `search_context_size` from `"medium"` to `"high"` so the model gathers more source material before generating the response
+**File: `src/components/rundown/formatRundownContent.tsx`**
+- Section headers (`h3`): from `text-lg` to `text-2xl`
+- Bullet points and numbered items: from default size to `text-xl`
+- Regular paragraphs: from default to `text-xl`
+- Increase vertical spacing between elements (`h-3` spacers to `h-5`, `mt-6` to `mt-8`)
+- Increase bullet/number text to match
 
-That's the only change -- one line, two values. No frontend changes needed.
+### Result
+All body text will be roughly 20px+ (text-xl), headers 24px+ (text-2xl), and the title 36px+ (text-4xl) -- comfortably readable on a 1080p stream.
 
