@@ -13,6 +13,38 @@ export const formatInlineHTML = (text: string) => {
     );
 };
 
+export const splitRundownAtFirstSection = (content: string): { firstSection: string; rest: string } => {
+  const lines = content.split("\n");
+  let headerCount = 0;
+  let splitIndex = -1;
+
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    const isHeader =
+      /^#{1,3}\s+/.test(trimmed) ||
+      /^\d+\.\s+\*\*.+\*\*$/.test(trimmed) ||
+      /^\*\*[^*]+\*\*$/.test(trimmed) ||
+      /big takeaway/i.test(trimmed);
+
+    if (isHeader) {
+      headerCount++;
+      if (headerCount === 2) {
+        splitIndex = i;
+        break;
+      }
+    }
+  }
+
+  if (splitIndex === -1) {
+    return { firstSection: content, rest: "" };
+  }
+
+  return {
+    firstSection: lines.slice(0, splitIndex).join("\n"),
+    rest: lines.slice(splitIndex).join("\n"),
+  };
+};
+
 export const formatRundownContent = (content: string) => {
   const lines = content.split("\n");
   const elements: React.ReactNode[] = [];
