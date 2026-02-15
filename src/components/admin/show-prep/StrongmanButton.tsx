@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { FileSearch, Loader2, Printer, RefreshCw, ExternalLink, Eye } from "lucide-react";
+import { FileSearch, Loader2, Printer, RefreshCw, ExternalLink, Eye, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Topic, Strongman } from "./types";
 import { useToast } from "@/hooks/use-toast";
@@ -121,6 +121,10 @@ export const StrongmanButton = ({ topic, date, onChange }: StrongmanButtonProps)
                 Print
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => { setIsRegenerating(true); setGenerateOpen(true); }}>
+                <Pencil className="h-4 w-4 mr-2" />
+                Edit Prompt
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { setIsRegenerating(true); setGenerateOpen(true); }}>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Regenerate
               </DropdownMenuItem>
@@ -144,7 +148,7 @@ export const StrongmanButton = ({ topic, date, onChange }: StrongmanButtonProps)
             </DialogTitle>
           </DialogHeader>
           <ScrollArea className="h-[300px] rounded-md border p-3">
-            <div className="whitespace-pre-wrap text-sm">
+            <div className="whitespace-pre-wrap text-sm text-foreground">
               {topic.strongman?.content}
             </div>
           </ScrollArea>
