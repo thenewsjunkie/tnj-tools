@@ -4,10 +4,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, FileSearch, Printer, ImagePlus, X } from "lucide-react";
-import { Topic, HourBlock } from "@/components/admin/show-prep/types";
+import { Topic, HourBlock, MediaLink } from "@/components/admin/show-prep/types";
 import { printRundownSummary } from "@/components/admin/show-prep/PrintStrongman";
 import { useToast } from "@/hooks/use-toast";
 import { formatRundownContent } from "@/components/rundown/formatRundownContent";
+import MediaLinksSection from "@/components/rundown/MediaLinksSection";
 
 const RundownPage = () => {
   const { date, topicId } = useParams<{ date: string; topicId: string }>();
@@ -229,6 +230,47 @@ const RundownPage = () => {
             </Button>
           </div>
         )}
+
+        {/* Media links */}
+        <MediaLinksSection
+          mediaLinks={topic.strongman.mediaLinks || []}
+          onUpdate={async (links: MediaLink[]) => {
+            const { data, error } = await supabase
+              .from("show_prep_notes")
+              .select("topics")
+              .eq("date", date!)
+              .maybeSingle();
+            if (error || !data) return;
+
+            const rawData = data.topics as any;
+            const updateTopic = (t: Topic) => {
+              if (t.id === topicId) {
+                return { ...t, strongman: { ...t.strongman, mediaLinks: links } };
+              }
+              return t;
+            };
+
+            let updatedTopics: any;
+            if (Array.isArray(rawData?.topics)) {
+              updatedTopics = { ...rawData, topics: rawData.topics.map(updateTopic) };
+            } else if (Array.isArray(rawData?.hours)) {
+              updatedTopics = {
+                ...rawData,
+                hours: rawData.hours.map((h: HourBlock) => ({
+                  ...h,
+                  topics: h.topics?.map(updateTopic) || [],
+                })),
+              };
+            } else return;
+
+            await supabase
+              .from("show_prep_notes")
+              .update({ topics: updatedTopics })
+              .eq("date", date!);
+
+            queryClient.invalidateQueries({ queryKey: ["rundown", date, topicId] });
+          }}
+        />
 
         {/* Rundown content */}
         <div className="space-y-1">
