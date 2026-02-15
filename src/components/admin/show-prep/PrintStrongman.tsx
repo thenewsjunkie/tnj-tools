@@ -1,4 +1,5 @@
 import { Topic } from "./types";
+import { splitRundownAtFirstSection } from "../../../components/rundown/formatRundownContent";
 
 export const printRundownSummary = (topic: Topic) => {
   if (!topic.strongman?.content) return;
@@ -7,14 +8,13 @@ export const printRundownSummary = (topic: Topic) => {
     month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit",
   });
 
-  // Extract "3 Big Takeaways" section
-  const content = topic.strongman.content;
-  const takeawayIdx = content.toLowerCase().indexOf("big takeaway");
-  let takeaways = "";
-  if (takeawayIdx !== -1) {
-    const start = content.lastIndexOf("\n", takeawayIdx);
-    takeaways = content.substring(start !== -1 ? start : takeawayIdx);
-  }
+  const { firstSection } = splitRundownAtFirstSection(topic.strongman.content);
+  const snapshotHtml = firstSection
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .split("\n")
+    .map(line => line.trim())
+    .filter(line => line.length > 0)
+    .join("<br />");
 
   const htmlContent = `<!DOCTYPE html><html><head><title>Summary: ${topic.title}</title>
     <style>
@@ -29,10 +29,10 @@ export const printRundownSummary = (topic: Topic) => {
     </style></head><body>
     <div class="header">
       <h1>🔍 ${topic.title}</h1>
-      <div class="meta">Rundown Summary Card • Generated: ${generatedDate}</div>
+      <div class="meta">Executive Snapshot • Generated: ${generatedDate}</div>
       ${topic.take ? `<div class="meta" style="margin-top:4px">Take: "${topic.take}"</div>` : ""}
     </div>
-    ${takeaways ? `<div class="takeaways">${takeaways.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")}</div>` : "<p>See full rundown for details.</p>"}
+    ${snapshotHtml ? `<div class="takeaways">${snapshotHtml}</div>` : "<p>See full rundown for details.</p>"}
     <div class="footer">Full rundown available in Admin → Show Prep</div>
   </body></html>`;
 
