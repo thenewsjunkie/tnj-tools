@@ -1,18 +1,32 @@
 
+## Make Notepad Date-Independent
 
-## Fix Text Visibility on /notepad in Dark Mode
+### Overview
 
-### Problem
+Decouple the notepad content from the per-date `show_prep_notes` table. Instead, store it in the existing `system_settings` table with a fixed key, so the same notepad content persists regardless of which date is selected.
 
-The TipTap editor text on `/notepad` is nearly invisible -- dark gray text on a near-black background. The `prose dark:prose-invert` Tailwind class should handle this but isn't applying the correct text color to the ProseMirror content.
+### Changes
 
-### Fix
+**1. `src/components/admin/ShowPrep.tsx`**
 
-**`src/components/admin/show-prep/Notepad.tsx`**
+- Remove `notepad` from the per-date `loadData` function (stop reading `data.notepad`)
+- Remove `notepad` from the debounced save effect (stop writing `notepad` to `show_prep_notes`)
+- Add a separate `useEffect` to load notepad from `system_settings` where `key = 'notepad_content'`
+- Add a separate debounced `useEffect` to save notepad to `system_settings` (upsert with key `'notepad_content'`, value as `{ content: notepad }`)
+- The notepad loading should not depend on `dateKey` -- it loads once on mount
 
-Add an explicit text color class to the ProseMirror editor content area to ensure white text in dark mode:
+**2. `src/pages/NotepadPage.tsx`**
 
-- Add `[&_.ProseMirror]:text-foreground` to the TipTap editor wrapper's className. This forces the editor text to use the theme's foreground color (white in dark mode, dark in light mode), regardless of any `prose` specificity issues.
+- Replace the Supabase load/save logic: read from `system_settings` where `key = 'notepad_content'` instead of `show_prep_notes`
+- Remove the date-based save (upsert to `show_prep_notes`)
+- Save to `system_settings` with key `'notepad_content'` and value `{ content: notepad }`
+- Keep the `DateSelector` removed since it's no longer relevant -- replace the header with just the back link and a "Notepad" title
+- Remove the date navigation entirely (no `DateSelector`, no date state)
 
-This is a one-line CSS class addition -- no logic changes needed. It fixes the issue on both `/notepad` and the admin Show Prep notepad.
+### Technical Details
 
+- The `system_settings` table already exists with columns: `key` (text, PK), `value` (jsonb), `updated_at`
+- RLS on `system_settings` allows all operations (policy: `true`), so no auth issues
+- The notepad value will be stored as `{ "content": "<html string>" }` in the `value` jsonb column
+- Both ShowPrep and NotepadPage will read/write the same `system_settings` row, keeping them in sync
+- The `notepad` column in `show_prep_notes` can remain in the schema (no migration needed) -- it simply won't be used going forward
