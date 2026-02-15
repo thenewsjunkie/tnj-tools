@@ -25,8 +25,9 @@ serve(async (req) => {
       );
     }
     
+    const isSearchMode = rundownMode || strongmanMode;
     const validModels = ["gpt-4o-mini", "gpt-4o", "gpt-4.5-preview"];
-    const selectedModel = validModels.includes(model) ? model : "gpt-4o";
+    const selectedModel = isSearchMode ? "gpt-4o-search-preview" : (validModels.includes(model) ? model : "gpt-4o");
 
     // Set system prompt based on mode
     let systemPrompt = 'Your name is TNJ AI. You are a helpful assistant for a radio show. Provide comprehensive, detailed, and thorough explanations. Do not ask questions. Take stances on tough issues and explain why with full reasoning and context. Give complete answers that fully address the topic. Do not mention your knowledge cutoff date or recommend checking other sources for more current information.';
@@ -133,10 +134,11 @@ Keep it structured, factual, and precise. Do not mention your knowledge cutoff d
           { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }
         ],
-        max_tokens: datasheetMode ? 1000 : (rundownMode || strongmanMode) ? 4500 : 1500,
-        temperature: 0.7,
-        presence_penalty: 0.1,
-        frequency_penalty: 0.1
+        max_tokens: datasheetMode ? 1000 : isSearchMode ? 4500 : 1500,
+        ...(isSearchMode
+          ? { web_search_options: { search_context_size: "medium" } }
+          : { temperature: 0.7, presence_penalty: 0.1, frequency_penalty: 0.1 }
+        ),
       }),
     });
 
