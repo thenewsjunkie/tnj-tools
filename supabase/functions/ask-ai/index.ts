@@ -16,7 +16,7 @@ serve(async (req) => {
   }
 
   try {
-    const { model, prompt, eli5Mode, detailedMode, strongmanMode, rundownMode, datasheetMode, sections } = await req.json();
+    const { model, prompt, eli5Mode, detailedMode, strongmanMode, rundownMode, datasheetMode, sections, customSystemPrompt } = await req.json();
     
     if (!prompt) {
       return new Response(
@@ -54,7 +54,13 @@ Section guidelines:
 
 IMPORTANT: Only include the sections listed above. Skip any section not requested. Be specific with data — use real numbers, dates, and names. Do not mention knowledge cutoff.`;
     } else if (rundownMode || strongmanMode) {
-      systemPrompt = `I'm preparing a detailed breakdown on: ${prompt}
+      if (customSystemPrompt) {
+        // Use custom prompt, replacing {topic} placeholder if present
+        systemPrompt = customSystemPrompt.includes('{topic}')
+          ? customSystemPrompt.replace('{topic}', prompt)
+          : customSystemPrompt;
+      } else {
+        systemPrompt = `I'm preparing a detailed breakdown on: ${prompt}
 
 Give me a comprehensive, structured analysis in tight bullet points with clear section headers.
 
@@ -116,6 +122,7 @@ End with:
 - Clear, punchy summary bullets suitable for broadcast
 
 Keep it structured, factual, and precise. Do not mention your knowledge cutoff date.`;
+      }
     } else if (eli5Mode) {
       systemPrompt = 'Your name is TNJ AI. You are a helpful assistant. Explain concepts in very simple terms that a 5-year-old child could understand. Use simple words, short sentences, and relatable examples. Avoid technical jargon and complex explanations. Do not mention your knowledge cutoff date or recommend checking other sources for more current information.';
     } else if (detailedMode) {
