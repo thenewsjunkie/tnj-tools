@@ -1,43 +1,80 @@
 
-## Rename Strongman to Rundown (Deep Dive) with New Prompt
 
-### Overview
+## Rundown Detail Page
 
-Replace the "Strongman" feature with "Rundown" -- a comprehensive deep-dive research tool for topics. This involves renaming labels/icons across the UI, replacing the AI system prompt, and updating the print template.
+### What We're Building
 
-### Changes
+A dedicated full-page view for each topic's rundown (deep dive). When a rundown exists, the user can open it as its own page with a clean, stream-friendly layout. The page will include a back button, the topic name and icon at the top, the full rundown content formatted with clear section headers, and a print summary button.
 
-**1. `src/components/admin/show-prep/types.ts`**
-- Keep the `Strongman` interface as-is (no data migration needed), but add a type alias or just continue using it internally. The data shape (content, generatedAt, prompt) stays the same -- only labels change.
+### Route
 
-**2. `src/components/admin/show-prep/StrongmanButton.tsx`**
-- Rename the file conceptually (or keep filename, just change UI labels)
-- Change icon from `BicepsFlexed` to `Search` (or `FileSearch`, `BookOpen` -- a research-oriented icon)
-- Change all UI text: "Strongman Argument" becomes "Rundown" / "Deep Dive"
-- Change button title from "Generate strongman argument" to "Generate rundown"
-- Change toast messages accordingly
-- Change the `strongmanMode` flag in the `ask-ai` call to `rundownMode: true`
-- Change the color theme from blue to a distinct color (e.g., purple with `text-purple-500`) to differentiate from Datasheet
+`/admin/rundown/:date/:topicId` -- protected by AdminRoute. The date and topic ID identify which topic's rundown to load from the `show_prep_notes` table.
 
-**3. `src/components/admin/show-prep/TopicCard.tsx`**
-- Update the `StrongmanButton` usage -- the prop name `strongman` stays (data compatibility), but the component will show "Rundown" labels
+### New Files
 
-**4. `supabase/functions/ask-ai/index.ts`**
-- Add a new `rundownMode` flag (alongside keeping `strongmanMode` for backward compat, or just replace it)
-- Replace the strongman system prompt with the user's deep-dive prompt:
-  - Sections: Overview, Timeline, Key Players, Core Issues, Verified Facts vs Claims, Impact/Stakes, Reactions, What Happens Next, Unanswered Questions, 3 Big Takeaways
-  - Instruct to include source links, separate facts from claims
-- Increase `max_tokens` from 800 to ~2500 since this is a comprehensive breakdown
-- The user's topic title will be injected where `[INSERT TOPIC HERE]` appears
+**1. `src/pages/RundownPage.tsx`**
 
-**5. `src/components/admin/show-prep/PrintStrongman.tsx`**
-- Rename header from "Strongman Argument Analysis" to "Rundown - Deep Dive"
-- Change emoji from muscle to magnifying glass or similar
-- Update color scheme in print CSS (blue to purple or keep neutral)
-- Adjust print styles to accommodate longer content (the deep dive will be multi-page, so remove the one-page constraint)
+The main page component:
+- Reads `date` and `topicId` from URL params
+- Fetches the `show_prep_notes` row for that date
+- Finds the matching topic by ID from the JSONB topics array
+- Renders the rundown in a polished, readable layout
 
-### Files Modified
-1. `src/components/admin/show-prep/StrongmanButton.tsx` -- icon, labels, mode flag
-2. `src/components/admin/show-prep/PrintStrongman.tsx` -- header, styling
-3. `supabase/functions/ask-ai/index.ts` -- new prompt, increased token limit
-4. `src/components/admin/show-prep/TopicCard.tsx` -- minor label updates if needed
+Layout structure:
+- Top bar: Back to Admin button (left), Print Summary button (right)
+- Header section: FileSearch icon + topic title in large text, subtitle showing "Rundown -- Deep Dive", generated date, and the take if one exists
+- Content area: The rundown text rendered with proper markdown-to-HTML formatting -- section headers styled with purple left borders, numbered/bulleted lists, bold text, clear spacing between sections
+- Dark mode compatible with good contrast
+- Max width container (~prose width) centered on the page for readability on stream
+
+The markdown formatting will parse:
+- `## Section Headers` into styled h2/h3 with purple accents
+- `**bold text**` into strong tags
+- Numbered lists (`1. item`) and bullet lists (`- item`)
+- Double newlines as paragraph breaks
+
+**2. Update `src/components/admin/show-prep/StrongmanButton.tsx`**
+
+Add an "Open Full Page" button (ExternalLink icon) in the header bar next to Print and Regenerate. When clicked, navigates to `/admin/rundown/{date}/{topicId}`.
+
+This requires passing the `date` prop into `StrongmanButton`.
+
+**3. Update `src/components/admin/show-prep/TopicCard.tsx`**
+
+Pass the `date` prop through to `StrongmanButton`.
+
+**4. Update `src/components/routing/routes.tsx`**
+
+Add the new route:
+```
+{
+  path: "admin/rundown/:date/:topicId",
+  element: <AdminRoute><RundownPage /></AdminRoute>
+}
+```
+
+**5. Update `src/components/admin/show-prep/PrintStrongman.tsx`**
+
+Add a new `printRundownSummary` export -- a shorter, one-page print format that serves as a reminder/reference card rather than the full deep dive. It will include:
+- Topic title
+- Generated date
+- The "3 Big Takeaways" section (extracted from the content if possible)
+- A note saying "Full rundown available at /admin"
+
+### Visual Design (Stream-Friendly)
+
+- Dark background with high-contrast text
+- Purple accent color for section headers (matching the existing rundown theme)
+- Clean typography with generous spacing
+- Section headers have a left purple border for visual scanning
+- The FileSearch icon displayed prominently at the top
+- Responsive but optimized for ~1920x1080 display
+
+### Technical Details
+
+- Data is fetched from `show_prep_notes` by date, then the specific topic is found by matching `topic.id`
+- No new database tables or columns needed
+- The content formatting logic (markdown to styled HTML/JSX) will be extracted into a shared utility so both the page and the print template can use it
+- Uses existing React Query patterns for data fetching
+- Uses `useNavigate` for the back button and `useParams` for reading route params
+
