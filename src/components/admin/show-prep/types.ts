@@ -13,10 +13,18 @@ export interface Link {
   type?: 'link' | 'image';
 }
 
+export interface MediaLink {
+  id: string;
+  url: string;
+  title?: string;
+  thumbnail?: string;
+}
+
 export interface Strongman {
   content: string;
   generatedAt: string;
   prompt?: string;  // The argument that was strongmanned
+  mediaLinks?: MediaLink[];
 }
 
 export interface Topic {
