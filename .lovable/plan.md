@@ -1,45 +1,34 @@
 
 
-## Fix: Rundown Page Not Finding Topics
+## Add Hero Image to Rundown Page
 
-### Problem
+### Change
 
-The `RundownPage` fetches data from `show_prep_notes` and tries to parse it using the **old hour-based format** (`HourBlock[]`), iterating through `hour.topics`. However, the data was migrated to a **flat format** (`{ topics: [...] }`), so the parsing logic never finds the matching topic.
+Display the first image from the topic's `images` array as a large, prominent hero image between the header section and the rundown content. Topics already store images via the `images: string[]` field, so no data changes are needed.
 
-### Solution
+### Implementation
 
-Update the query function in `src/pages/RundownPage.tsx` (lines 108-113) to handle both the new flat format and the old hour-based format for backward compatibility:
+**File: `src/pages/RundownPage.tsx`**
 
-**Current (broken):**
-```typescript
-const hours = data.topics as unknown as HourBlock[];
-for (const hour of hours) {
-  const found = hour.topics?.find((t: Topic) => t.id === topicId);
-  if (found) return found;
-}
+After the header section (line 201) and before the rundown content (line 203), insert a hero image block:
+
+- Check if `topic.images` has at least one entry
+- Render the first image in a rounded container with max-width, a subtle border, and object-cover styling
+- Use `aspect-video` (16:9) for a cinematic, stream-friendly look
+- Add a subtle gradient overlay or shadow for polish
+- If no images exist, skip the section entirely (no empty space)
+
+```tsx
+{topic.images?.length > 0 && (
+  <div className="mb-8 rounded-xl overflow-hidden border border-border/50 shadow-lg">
+    <img
+      src={topic.images[0]}
+      alt={topic.title}
+      className="w-full aspect-video object-cover"
+    />
+  </div>
+)}
 ```
-
-**Fixed:**
-```typescript
-const rawData = data.topics as unknown;
-
-// New flat format: { topics: [...] }
-if (rawData && typeof rawData === "object" && Array.isArray((rawData as any).topics)) {
-  const found = (rawData as any).topics.find((t: Topic) => t.id === topicId);
-  if (found) return found;
-}
-// Old hour-based format: { hours: [...] }
-else if (rawData && typeof rawData === "object" && Array.isArray((rawData as any).hours)) {
-  for (const hour of (rawData as any).hours) {
-    const found = hour.topics?.find((t: Topic) => t.id === topicId);
-    if (found) return found;
-  }
-}
-
-throw new Error("Topic not found");
-```
-
-Also switch `.single()` to `.maybeSingle()` to avoid errors when no row exists for that date.
 
 ### Files Modified
-1. `src/pages/RundownPage.tsx` -- fix topic parsing to match current data format
+1. `src/pages/RundownPage.tsx` -- add hero image block between header and content
