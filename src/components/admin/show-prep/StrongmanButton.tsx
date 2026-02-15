@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { BicepsFlexed, Loader2, Printer, RefreshCw } from "lucide-react";
+import { FileSearch, Loader2, Printer, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Topic, Strongman } from "./types";
 import { useToast } from "@/hooks/use-toast";
@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
-import { printStrongman } from "./PrintStrongman";
+import { printRundown } from "./PrintStrongman";
 
 interface StrongmanButtonProps {
   topic: Topic;
@@ -44,7 +44,7 @@ export const StrongmanButton = ({ topic, onChange }: StrongmanButtonProps) => {
 
   const generateStrongman = async () => {
     if (!argumentInput.trim()) {
-      toast({ description: "Enter an argument to strongman", variant: "destructive" });
+      toast({ description: "Enter a topic for the rundown", variant: "destructive" });
       return;
     }
 
@@ -53,7 +53,7 @@ export const StrongmanButton = ({ topic, onChange }: StrongmanButtonProps) => {
       const { data, error } = await supabase.functions.invoke("ask-ai", {
         body: {
           prompt: argumentInput,
-          strongmanMode: true,
+          rundownMode: true,
           model: "gpt-4o"
         }
       });
@@ -68,11 +68,11 @@ export const StrongmanButton = ({ topic, onChange }: StrongmanButtonProps) => {
 
       onChange(strongman);
       setIsEditing(false);
-      toast({ description: "Strongman argument generated!" });
+      toast({ description: "Rundown generated!" });
     } catch (error) {
       console.error("Error generating strongman:", error);
       toast({ 
-        description: "Failed to generate strongman argument", 
+        description: "Failed to generate rundown", 
         variant: "destructive" 
       });
     } finally {
@@ -87,7 +87,7 @@ export const StrongmanButton = ({ topic, onChange }: StrongmanButtonProps) => {
 
   const handlePrint = () => {
     if (topic.strongman) {
-      printStrongman(topic);
+      printRundown(topic);
     }
   };
 
@@ -100,16 +100,16 @@ export const StrongmanButton = ({ topic, onChange }: StrongmanButtonProps) => {
           className={cn(
             "h-6 px-1.5",
             hasStrongman 
-              ? "text-blue-500 hover:text-blue-600" 
-              : "text-muted-foreground hover:text-blue-500"
+              ? "text-purple-500 hover:text-purple-600" 
+              : "text-muted-foreground hover:text-purple-500"
           )}
-          title={hasStrongman ? "View strongman argument" : "Generate strongman argument"}
+          title={hasStrongman ? "View rundown" : "Generate rundown"}
           disabled={isLoading}
         >
           {isLoading ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : (
-            <BicepsFlexed className={cn("h-3.5 w-3.5", hasStrongman && "fill-current")} />
+            <FileSearch className={cn("h-3.5 w-3.5", hasStrongman && "fill-current")} />
           )}
         </Button>
       </PopoverTrigger>
@@ -117,8 +117,8 @@ export const StrongmanButton = ({ topic, onChange }: StrongmanButtonProps) => {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm font-medium">
-              <BicepsFlexed className="h-4 w-4 text-blue-500" />
-              Strongman Argument
+              <FileSearch className="h-4 w-4 text-purple-500" />
+              Rundown
             </div>
             {hasStrongman && !isEditing && (
               <div className="flex items-center gap-1">
@@ -168,7 +168,7 @@ export const StrongmanButton = ({ topic, onChange }: StrongmanButtonProps) => {
           ) : (
             <div className="space-y-3">
               <Textarea
-                placeholder="Enter the argument you want to strengthen..."
+                placeholder="Enter a topic to research..."
                 value={argumentInput}
                 onChange={(e) => setArgumentInput(e.target.value)}
                 className="min-h-[100px] text-sm"
@@ -197,10 +197,10 @@ export const StrongmanButton = ({ topic, onChange }: StrongmanButtonProps) => {
                       Generating...
                     </>
                   ) : (
-                    <>
-                      <BicepsFlexed className="h-4 w-4" />
-                      {isEditing ? "Regenerate" : "Generate Strongman"}
-                    </>
+                     <>
+                       <FileSearch className="h-4 w-4" />
+                       {isEditing ? "Regenerate" : "Generate Rundown"}
+                     </>
                   )}
                 </Button>
               </div>
