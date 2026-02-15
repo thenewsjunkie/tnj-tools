@@ -1,50 +1,19 @@
 
 
-## Add Rundown Indicator to Daily Printout
+## Replace Print Summary Content with Executive Snapshot
 
-Add a visible badge next to any topic title on the daily printout that has a Rundown (strongman) attached, so it stands out at a glance.
+The current `printRundownSummary` function searches for a "Big Takeaways" section in the rundown content, which isn't reliably present anymore. Instead, it will use the executive snapshot -- the first section of the rundown (everything before the second header), which is already extracted by the existing `splitRundownAtFirstSection` utility.
 
 ### What changes
 
-On the printed show prep document, any topic with a `strongman` property will display a bold "RUNDOWN" badge inline with the topic title. The badge will have a purple background with white text, making it immediately noticeable when scanning the page.
+**`src/components/admin/show-prep/PrintStrongman.tsx`**
 
-### Visual result
+1. Import `splitRundownAtFirstSection` from the formatRundownContent module.
+2. Replace the "Big Takeaways" extraction logic (lines 10-17) with a call to `splitRundownAtFirstSection(content)` and use `firstSection` as the print body.
+3. Convert the markdown in `firstSection` to HTML using the same bold-replacement approach already in the file, plus basic line break handling.
+4. Update the subtitle label from "Rundown Summary Card" to "Executive Snapshot" for clarity.
 
-Topics without a rundown print as before:
-> **Immigration bill passes committee**
+### Result
 
-Topics with a rundown get a badge:
-> **[RUNDOWN]** **Immigration bill passes committee**
-
-### File to modify
-
-**`src/components/admin/show-prep/PrintShowPrep.tsx`**
-
-1. Add a `.rundown-badge` CSS class: small inline label with purple background (`#7c3aed`), white text, rounded corners, uppercase, slightly smaller font size.
-2. In the topic rendering loop, check `topic.strongman?.content` -- if truthy, prepend the badge before the topic title.
-
-### Technical details
-
-Single file change. In the topic `.map()` block (around line 190), add a conditional badge:
-
-```html
-${topic.strongman?.content ? '<span class="rundown-badge">RUNDOWN</span> ' : ''}
-```
-
-CSS for the badge:
-```css
-.rundown-badge {
-  display: inline-block;
-  background: #7c3aed;
-  color: #fff;
-  font-size: 9px;
-  font-weight: 700;
-  padding: 1px 5px;
-  border-radius: 3px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  vertical-align: middle;
-  margin-right: 4px;
-}
-```
+The Print Summary button will now reliably output the executive snapshot (the introductory overview section) of the rundown, formatted cleanly for print. No other files change.
 
