@@ -1,7 +1,9 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, FileSearch, Printer } from "lucide-react";
 import { Topic, HourBlock } from "@/components/admin/show-prep/types";
 import { printRundownSummary } from "@/components/admin/show-prep/PrintStrongman";
@@ -94,6 +96,8 @@ const formatRundownContent = (content: string) => {
 const RundownPage = () => {
   const { date, topicId } = useParams<{ date: string; topicId: string }>();
   const navigate = useNavigate();
+  const [wikiImage, setWikiImage] = useState<string | null>(null);
+  const [wikiImageLoading, setWikiImageLoading] = useState(false);
 
   const { data: topic, isLoading } = useQuery({
     queryKey: ["rundown", date, topicId],
@@ -109,12 +113,10 @@ const RundownPage = () => {
 
       const rawData = data.topics as unknown;
 
-      // New flat format: { topics: [...] }
       if (rawData && typeof rawData === "object" && Array.isArray((rawData as any).topics)) {
         const found = (rawData as any).topics.find((t: Topic) => t.id === topicId);
         if (found) return found;
       }
-      // Old hour-based format: { hours: [...] }
       else if (rawData && typeof rawData === "object" && Array.isArray((rawData as any).hours)) {
         for (const hour of (rawData as any).hours) {
           const found = hour.topics?.find((t: Topic) => t.id === topicId);
@@ -125,6 +127,32 @@ const RundownPage = () => {
     },
     enabled: !!date && !!topicId,
   });
+
+  // Auto-fetch Wikipedia image when topic has no manual images
+  useEffect(() => {
+    if (!topic || topic.images?.length > 0) return;
+    
+    const fetchImage = async () => {
+      setWikiImageLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('fetch-topic-image', {
+          body: { title: topic.title },
+        });
+        if (!error && data?.imageUrl) {
+          setWikiImage(data.imageUrl);
+        }
+      } catch {
+        // Silently fail
+      } finally {
+        setWikiImageLoading(false);
+      }
+    };
+    
+    fetchImage();
+  }, [topic]);
+
+  const hasManualImages = topic?.images?.length > 0;
+  const heroImage = hasManualImages ? topic.images[0] : wikiImage;
 
   if (isLoading) {
     return (
@@ -201,10 +229,13 @@ const RundownPage = () => {
         </div>
 
         {/* Hero image */}
-        {topic.images?.length > 0 && (
+        {wikiImageLoading && !hasManualImages && (
+          <Skeleton className="mb-8 w-full aspect-video rounded-xl" />
+        )}
+        {heroImage && (
           <div className="mb-8 rounded-xl overflow-hidden border border-border/50 shadow-lg">
             <img
-              src={topic.images[0]}
+              src={heroImage}
               alt={topic.title}
               className="w-full aspect-video object-cover"
             />
