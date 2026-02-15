@@ -1,32 +1,22 @@
 
 
-## Convert Rundown Button from Pop-up to Dropdown Menu
+## Fix "View Rundown" Dialog Not Opening
 
 ### Problem
-Currently, clicking the rundown icon (FileSearch) immediately opens a large pop-up (Popover) with either a generation form or the full rundown content. You want it to behave like the three-dot menu instead -- showing a compact dropdown with action options.
+When clicking "View Rundown" from the dropdown menu, the dialog doesn't appear. This is a known Radix UI issue where the DropdownMenu (which is modal by default) interferes with the Dialog opening -- the dropdown steals focus back as it closes, causing the dialog to immediately close or never mount.
 
-### Changes
+### Fix
 
 **File: `src/components/admin/show-prep/StrongmanButton.tsx`**
 
-Replace the `Popover` with a `DropdownMenu` that shows contextual options:
+Add `modal={false}` to the `DropdownMenu` component (line 92):
 
-**When no rundown exists yet:**
-- "Generate Rundown" -- opens the generation pop-up (a separate dialog/popover triggered from the menu item)
+```tsx
+<DropdownMenu modal={false}>
+```
 
-**When a rundown already exists:**
-- "View Rundown" -- opens the pop-up to read it
-- "Open Full Page" -- navigates to `/admin/rundown/{date}/{topicId}`
-- "Print" -- triggers the print function
-- "Regenerate" -- opens the generation form pre-filled with the previous prompt
+This single prop change prevents the DropdownMenu from locking focus/pointer-events on the document body, allowing the Dialog to open correctly when triggered from a menu item.
 
-### How It Works
-1. The main button click opens a `DropdownMenu` (same pattern as the three-dot menu)
-2. Menu items trigger specific actions: some navigate directly, others open a secondary `Popover` or `Dialog` for the generation form / content viewer
-3. The icon still shows purple when a rundown exists (visual indicator preserved)
-
-### Technical Approach
-- Replace the outer `Popover` wrapper with `DropdownMenu`
-- Add state (`viewOpen`, `generateOpen`) to control secondary popovers for viewing content and generating
-- Keep the existing generation logic and content display, just move them into on-demand dialogs triggered by menu items
+### Why This Works
+Radix UI's DropdownMenu defaults to `modal={true}`, which adds a dismissal layer and traps focus. When a menu item triggers a Dialog, the dropdown's cleanup (removing pointer-event locks, restoring focus) races with the Dialog's setup. Setting `modal={false}` avoids this conflict entirely.
 
