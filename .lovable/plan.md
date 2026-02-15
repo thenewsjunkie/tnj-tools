@@ -1,24 +1,32 @@
 
 
-## Remove Datasheet Feature from Topics
+## Convert Rundown Button from Pop-up to Dropdown Menu
+
+### Problem
+Currently, clicking the rundown icon (FileSearch) immediately opens a large pop-up (Popover) with either a generation form or the full rundown content. You want it to behave like the three-dot menu instead -- showing a compact dropdown with action options.
 
 ### Changes
 
-**File: `src/components/admin/show-prep/TopicCard.tsx`**
-- Remove the `DatasheetButton` import (line 12)
-- Remove the `DatasheetButton` component usage (lines 153-156)
+**File: `src/components/admin/show-prep/StrongmanButton.tsx`**
 
-**File: `src/components/admin/show-prep/types.ts`**
-- Remove the `Datasheet` interface
-- Remove the `datasheet` property from the `Topic` interface
+Replace the `Popover` with a `DropdownMenu` that shows contextual options:
 
-**File: `src/components/admin/show-prep/DatasheetButton.tsx`**
-- Delete this file entirely (it's no longer needed)
+**When no rundown exists yet:**
+- "Generate Rundown" -- opens the generation pop-up (a separate dialog/popover triggered from the menu item)
 
-**File: `src/components/admin/show-prep/PrintDatasheet.tsx`**
-- Delete this file entirely (it's no longer needed)
+**When a rundown already exists:**
+- "View Rundown" -- opens the pop-up to read it
+- "Open Full Page" -- navigates to `/admin/rundown/{date}/{topicId}`
+- "Print" -- triggers the print function
+- "Regenerate" -- opens the generation form pre-filled with the previous prompt
 
-### Notes
-- The `ask-ai` edge function still supports `datasheetMode` but that's harmless since nothing will call it with that flag anymore. Leaving it avoids unnecessary edge function redeployment.
-- Existing topic data in the database may still have `datasheet` fields in the JSON -- this is harmless and will simply be ignored.
+### How It Works
+1. The main button click opens a `DropdownMenu` (same pattern as the three-dot menu)
+2. Menu items trigger specific actions: some navigate directly, others open a secondary `Popover` or `Dialog` for the generation form / content viewer
+3. The icon still shows purple when a rundown exists (visual indicator preserved)
+
+### Technical Approach
+- Replace the outer `Popover` wrapper with `DropdownMenu`
+- Add state (`viewOpen`, `generateOpen`) to control secondary popovers for viewing content and generating
+- Keep the existing generation logic and content display, just move them into on-demand dialogs triggered by menu items
 
