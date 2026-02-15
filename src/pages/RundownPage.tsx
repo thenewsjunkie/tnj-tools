@@ -7,7 +7,7 @@ import { ArrowLeft, FileSearch, Printer, ImagePlus, X } from "lucide-react";
 import { Topic, HourBlock, MediaLink } from "@/components/admin/show-prep/types";
 import { printRundownSummary } from "@/components/admin/show-prep/PrintStrongman";
 import { useToast } from "@/hooks/use-toast";
-import { formatRundownContent } from "@/components/rundown/formatRundownContent";
+import { formatRundownContent, splitRundownAtFirstSection } from "@/components/rundown/formatRundownContent";
 import MediaLinksSection from "@/components/rundown/MediaLinksSection";
 
 const RundownPage = () => {
@@ -231,51 +231,64 @@ const RundownPage = () => {
           </div>
         )}
 
-        {/* Media links */}
-        <MediaLinksSection
-          mediaLinks={topic.strongman.mediaLinks || []}
-          onUpdate={async (links: MediaLink[]) => {
-            const { data, error } = await supabase
-              .from("show_prep_notes")
-              .select("topics")
-              .eq("date", date!)
-              .maybeSingle();
-            if (error || !data) return;
+        {/* Rundown content with media after first section */}
+        {(() => {
+          const { firstSection, rest } = splitRundownAtFirstSection(topic.strongman.content);
+          return (
+            <>
+              <div className="space-y-1">
+                {formatRundownContent(firstSection)}
+              </div>
 
-            const rawData = data.topics as any;
-            const updateTopic = (t: Topic) => {
-              if (t.id === topicId) {
-                return { ...t, strongman: { ...t.strongman, mediaLinks: links } };
-              }
-              return t;
-            };
+              {/* Media links */}
+              <MediaLinksSection
+                mediaLinks={topic.strongman.mediaLinks || []}
+                onUpdate={async (links: MediaLink[]) => {
+                  const { data, error } = await supabase
+                    .from("show_prep_notes")
+                    .select("topics")
+                    .eq("date", date!)
+                    .maybeSingle();
+                  if (error || !data) return;
 
-            let updatedTopics: any;
-            if (Array.isArray(rawData?.topics)) {
-              updatedTopics = { ...rawData, topics: rawData.topics.map(updateTopic) };
-            } else if (Array.isArray(rawData?.hours)) {
-              updatedTopics = {
-                ...rawData,
-                hours: rawData.hours.map((h: HourBlock) => ({
-                  ...h,
-                  topics: h.topics?.map(updateTopic) || [],
-                })),
-              };
-            } else return;
+                  const rawData = data.topics as any;
+                  const updateTopic = (t: Topic) => {
+                    if (t.id === topicId) {
+                      return { ...t, strongman: { ...t.strongman, mediaLinks: links } };
+                    }
+                    return t;
+                  };
 
-            await supabase
-              .from("show_prep_notes")
-              .update({ topics: updatedTopics })
-              .eq("date", date!);
+                  let updatedTopics: any;
+                  if (Array.isArray(rawData?.topics)) {
+                    updatedTopics = { ...rawData, topics: rawData.topics.map(updateTopic) };
+                  } else if (Array.isArray(rawData?.hours)) {
+                    updatedTopics = {
+                      ...rawData,
+                      hours: rawData.hours.map((h: HourBlock) => ({
+                        ...h,
+                        topics: h.topics?.map(updateTopic) || [],
+                      })),
+                    };
+                  } else return;
 
-            queryClient.invalidateQueries({ queryKey: ["rundown", date, topicId] });
-          }}
-        />
+                  await supabase
+                    .from("show_prep_notes")
+                    .update({ topics: updatedTopics })
+                    .eq("date", date!);
 
-        {/* Rundown content */}
-        <div className="space-y-1">
-          {formatRundownContent(topic.strongman.content)}
-        </div>
+                  queryClient.invalidateQueries({ queryKey: ["rundown", date, topicId] });
+                }}
+              />
+
+              {rest && (
+                <div className="space-y-1">
+                  {formatRundownContent(rest)}
+                </div>
+              )}
+            </>
+          );
+        })()}
       </div>
     </div>
   );
