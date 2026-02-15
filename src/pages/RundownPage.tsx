@@ -175,17 +175,17 @@ const RundownPage = () => {
             <div className="p-2 rounded-lg bg-purple-500/10">
               <FileSearch className="h-10 w-10 text-purple-500" />
             </div>
-            <h1 className="text-7xl font-bold text-foreground">{topic.title}</h1>
+            <h1 className="text-6xl font-bold text-foreground">{topic.title}</h1>
           </div>
           <div className="flex flex-col gap-1 ml-14">
-            <p className="text-3xl text-muted-foreground">
+            <p className="text-2xl text-muted-foreground">
               Rundown — Deep Dive
             </p>
-            <p className="text-2xl text-muted-foreground">
+            <p className="text-xl text-muted-foreground">
               Generated {generatedDate}
             </p>
             {topic.take && (
-              <p className="text-3xl text-orange-400 italic mt-1">
+              <p className="text-2xl text-orange-400 italic mt-1">
                 Take: "{topic.take}"
               </p>
             )}
