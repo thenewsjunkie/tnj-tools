@@ -1,32 +1,43 @@
 
-## Make Notepad Date-Independent
+## Rename Strongman to Rundown (Deep Dive) with New Prompt
 
 ### Overview
 
-Decouple the notepad content from the per-date `show_prep_notes` table. Instead, store it in the existing `system_settings` table with a fixed key, so the same notepad content persists regardless of which date is selected.
+Replace the "Strongman" feature with "Rundown" -- a comprehensive deep-dive research tool for topics. This involves renaming labels/icons across the UI, replacing the AI system prompt, and updating the print template.
 
 ### Changes
 
-**1. `src/components/admin/ShowPrep.tsx`**
+**1. `src/components/admin/show-prep/types.ts`**
+- Keep the `Strongman` interface as-is (no data migration needed), but add a type alias or just continue using it internally. The data shape (content, generatedAt, prompt) stays the same -- only labels change.
 
-- Remove `notepad` from the per-date `loadData` function (stop reading `data.notepad`)
-- Remove `notepad` from the debounced save effect (stop writing `notepad` to `show_prep_notes`)
-- Add a separate `useEffect` to load notepad from `system_settings` where `key = 'notepad_content'`
-- Add a separate debounced `useEffect` to save notepad to `system_settings` (upsert with key `'notepad_content'`, value as `{ content: notepad }`)
-- The notepad loading should not depend on `dateKey` -- it loads once on mount
+**2. `src/components/admin/show-prep/StrongmanButton.tsx`**
+- Rename the file conceptually (or keep filename, just change UI labels)
+- Change icon from `BicepsFlexed` to `Search` (or `FileSearch`, `BookOpen` -- a research-oriented icon)
+- Change all UI text: "Strongman Argument" becomes "Rundown" / "Deep Dive"
+- Change button title from "Generate strongman argument" to "Generate rundown"
+- Change toast messages accordingly
+- Change the `strongmanMode` flag in the `ask-ai` call to `rundownMode: true`
+- Change the color theme from blue to a distinct color (e.g., purple with `text-purple-500`) to differentiate from Datasheet
 
-**2. `src/pages/NotepadPage.tsx`**
+**3. `src/components/admin/show-prep/TopicCard.tsx`**
+- Update the `StrongmanButton` usage -- the prop name `strongman` stays (data compatibility), but the component will show "Rundown" labels
 
-- Replace the Supabase load/save logic: read from `system_settings` where `key = 'notepad_content'` instead of `show_prep_notes`
-- Remove the date-based save (upsert to `show_prep_notes`)
-- Save to `system_settings` with key `'notepad_content'` and value `{ content: notepad }`
-- Keep the `DateSelector` removed since it's no longer relevant -- replace the header with just the back link and a "Notepad" title
-- Remove the date navigation entirely (no `DateSelector`, no date state)
+**4. `supabase/functions/ask-ai/index.ts`**
+- Add a new `rundownMode` flag (alongside keeping `strongmanMode` for backward compat, or just replace it)
+- Replace the strongman system prompt with the user's deep-dive prompt:
+  - Sections: Overview, Timeline, Key Players, Core Issues, Verified Facts vs Claims, Impact/Stakes, Reactions, What Happens Next, Unanswered Questions, 3 Big Takeaways
+  - Instruct to include source links, separate facts from claims
+- Increase `max_tokens` from 800 to ~2500 since this is a comprehensive breakdown
+- The user's topic title will be injected where `[INSERT TOPIC HERE]` appears
 
-### Technical Details
+**5. `src/components/admin/show-prep/PrintStrongman.tsx`**
+- Rename header from "Strongman Argument Analysis" to "Rundown - Deep Dive"
+- Change emoji from muscle to magnifying glass or similar
+- Update color scheme in print CSS (blue to purple or keep neutral)
+- Adjust print styles to accommodate longer content (the deep dive will be multi-page, so remove the one-page constraint)
 
-- The `system_settings` table already exists with columns: `key` (text, PK), `value` (jsonb), `updated_at`
-- RLS on `system_settings` allows all operations (policy: `true`), so no auth issues
-- The notepad value will be stored as `{ "content": "<html string>" }` in the `value` jsonb column
-- Both ShowPrep and NotepadPage will read/write the same `system_settings` row, keeping them in sync
-- The `notepad` column in `show_prep_notes` can remain in the schema (no migration needed) -- it simply won't be used going forward
+### Files Modified
+1. `src/components/admin/show-prep/StrongmanButton.tsx` -- icon, labels, mode flag
+2. `src/components/admin/show-prep/PrintStrongman.tsx` -- header, styling
+3. `supabase/functions/ask-ai/index.ts` -- new prompt, increased token limit
+4. `src/components/admin/show-prep/TopicCard.tsx` -- minor label updates if needed
