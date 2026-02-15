@@ -1,22 +1,27 @@
 
 
-## Fix "View Rundown" Dialog Not Opening
+## Fix Rundown View Text Color and Add "Edit Prompt" Menu Option
 
-### Problem
-When clicking "View Rundown" from the dropdown menu, the dialog doesn't appear. This is a known Radix UI issue where the DropdownMenu (which is modal by default) interferes with the Dialog opening -- the dropdown steals focus back as it closes, causing the dialog to immediately close or never mount.
+### 1. Fix text color in View Rundown dialog
 
-### Fix
+The rundown content on line 147 uses a plain `div` with `text-sm` but no explicit text color, so it inherits from the parent and becomes invisible in dark mode. Add `text-foreground` to ensure it's always readable.
 
 **File: `src/components/admin/show-prep/StrongmanButton.tsx`**
+- Line 147: Change `<div className="whitespace-pre-wrap text-sm">` to `<div className="whitespace-pre-wrap text-sm text-foreground">`
 
-Add `modal={false}` to the `DropdownMenu` component (line 92):
+### 2. Add "Edit Prompt" menu option
 
-```tsx
-<DropdownMenu modal={false}>
-```
+Add a new dropdown menu item (with a Pencil icon) that opens the generate dialog pre-filled with the saved prompt, allowing you to tweak and re-run it.
 
-This single prop change prevents the DropdownMenu from locking focus/pointer-events on the document body, allowing the Dialog to open correctly when triggered from a menu item.
+**File: `src/components/admin/show-prep/StrongmanButton.tsx`**
+- Add `Pencil` to the lucide-react import (line 4)
+- Insert a new `DropdownMenuItem` after "Print" and before "Regenerate" (around line 123):
+  ```tsx
+  <DropdownMenuItem onClick={() => { setIsRegenerating(true); setGenerateOpen(true); }}>
+    <Pencil className="h-4 w-4 mr-2" />
+    Edit Prompt
+  </DropdownMenuItem>
+  ```
+  This reuses the same regenerate dialog (which pre-fills the previous prompt) so you can edit the prompt text before hitting Generate.
 
-### Why This Works
-Radix UI's DropdownMenu defaults to `modal={true}`, which adds a dismissal layer and traps focus. When a menu item triggers a Dialog, the dropdown's cleanup (removing pointer-event locks, restoring focus) races with the Dialog's setup. Setting `modal={false}` avoids this conflict entirely.
-
+Two small changes, one file.
