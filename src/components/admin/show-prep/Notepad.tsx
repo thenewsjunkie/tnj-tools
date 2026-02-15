@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
-import { StickyNote, ChevronDown, ChevronUp } from "lucide-react";
+import { Link as RouterLink } from "react-router-dom";
+import { StickyNote, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
-import Link from "@tiptap/extension-link";
+import TiptapLink from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
 import { useToast } from "@/hooks/use-toast";
 import NotepadToolbar from "./NotepadToolbar";
@@ -34,7 +35,7 @@ const Notepad = ({ value, onChange, isOpen, onToggle }: NotepadProps) => {
         orderedList: { keepMarks: true },
       }),
       Underline,
-      Link.configure({
+      TiptapLink.configure({
         autolink: true,
         openOnClick: true,
         linkOnPaste: true,
@@ -164,6 +165,14 @@ const Notepad = ({ value, onChange, isOpen, onToggle }: NotepadProps) => {
         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
           <StickyNote className="h-4 w-4" />
           <span>Notepad</span>
+          <RouterLink
+            to="/notepad"
+            onClick={(e) => e.stopPropagation()}
+            className="text-muted-foreground hover:text-foreground transition-colors"
+            title="Open standalone notepad"
+          >
+            <ExternalLink className="h-3 w-3" />
+          </RouterLink>
           {plainText.trim() && (
             <span className="text-xs text-muted-foreground font-normal">
               ({wordCount} words, {charCount} chars)
