@@ -19,7 +19,7 @@ export const formatRundownContent = (content: string) => {
     const trimmed = line.trim();
 
     if (!trimmed) {
-      elements.push(<div key={key++} className="h-3" />);
+      elements.push(<div key={key++} className="h-5" />);
       continue;
     }
 
@@ -28,7 +28,7 @@ export const formatRundownContent = (content: string) => {
     if (headerMatch) {
       const text = headerMatch[2] || headerMatch[1];
       elements.push(
-        <h3 key={key++} className="text-lg font-semibold text-purple-400 border-l-2 border-purple-500 pl-3 mt-6 mb-2">
+        <h3 key={key++} className="text-2xl font-semibold text-purple-400 border-l-2 border-purple-500 pl-3 mt-8 mb-3">
           {text.replace(/\*\*/g, "")}
         </h3>
       );
@@ -38,7 +38,7 @@ export const formatRundownContent = (content: string) => {
     // "3 Big Takeaways" special header
     if (trimmed.includes("Big Takeaway") || trimmed.includes("big takeaway")) {
       elements.push(
-        <h3 key={key++} className="text-lg font-semibold text-amber-400 border-l-2 border-amber-500 pl-3 mt-6 mb-2">
+        <h3 key={key++} className="text-2xl font-semibold text-amber-400 border-l-2 border-amber-500 pl-3 mt-8 mb-3">
           {trimmed.replace(/[*#]/g, "").trim()}
         </h3>
       );
@@ -48,7 +48,7 @@ export const formatRundownContent = (content: string) => {
     // Bold section headers (standalone **text**)
     if (/^\*\*[^*]+\*\*$/.test(trimmed)) {
       elements.push(
-        <h3 key={key++} className="text-lg font-semibold text-purple-400 border-l-2 border-purple-500 pl-3 mt-6 mb-2">
+        <h3 key={key++} className="text-2xl font-semibold text-purple-400 border-l-2 border-purple-500 pl-3 mt-8 mb-3">
           {trimmed.replace(/\*\*/g, "")}
         </h3>
       );
@@ -59,9 +59,9 @@ export const formatRundownContent = (content: string) => {
     if (trimmed.startsWith("- ") || trimmed.startsWith("• ")) {
       const bulletText = trimmed.replace(/^[-•]\s+/, "");
       elements.push(
-        <div key={key++} className="flex items-start gap-2 pl-4 py-0.5">
-          <span className="text-purple-400 mt-1 shrink-0">•</span>
-          <span className="text-foreground/90" dangerouslySetInnerHTML={{
+        <div key={key++} className="flex items-start gap-3 pl-4 py-1">
+          <span className="text-xl text-purple-400 mt-0.5 shrink-0">•</span>
+          <span className="text-xl text-foreground/90" dangerouslySetInnerHTML={{
             __html: formatInlineHTML(bulletText)
           }} />
         </div>
@@ -73,9 +73,9 @@ export const formatRundownContent = (content: string) => {
     const numberedMatch = trimmed.match(/^(\d+)\.\s+(.*)$/);
     if (numberedMatch) {
       elements.push(
-        <div key={key++} className="flex items-start gap-2 pl-4 py-0.5">
-          <span className="text-purple-400 font-semibold shrink-0">{numberedMatch[1]}.</span>
-          <span className="text-foreground/90" dangerouslySetInnerHTML={{
+        <div key={key++} className="flex items-start gap-3 pl-4 py-1">
+          <span className="text-xl text-purple-400 font-semibold shrink-0">{numberedMatch[1]}.</span>
+          <span className="text-xl text-foreground/90" dangerouslySetInnerHTML={{
             __html: formatInlineHTML(numberedMatch[2])
           }} />
         </div>
@@ -85,7 +85,7 @@ export const formatRundownContent = (content: string) => {
 
     // Regular text
     elements.push(
-      <p key={key++} className="text-foreground/85 pl-4" dangerouslySetInnerHTML={{
+      <p key={key++} className="text-xl text-foreground/85 pl-4" dangerouslySetInnerHTML={{
         __html: formatInlineHTML(trimmed)
       }} />
     );

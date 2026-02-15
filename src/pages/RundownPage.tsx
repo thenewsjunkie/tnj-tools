@@ -149,7 +149,7 @@ const RundownPage = () => {
     <div className="min-h-screen bg-background">
       {/* Top bar */}
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border">
-        <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
           <Button variant="ghost" size="sm" onClick={() => navigate("/admin")} className="gap-2">
             <ArrowLeft className="h-4 w-4" />
             Back to Admin
@@ -167,24 +167,24 @@ const RundownPage = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="max-w-5xl mx-auto px-8 py-10">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
+        <div className="mb-10">
+          <div className="flex items-center gap-3 mb-3">
             <div className="p-2 rounded-lg bg-purple-500/10">
-              <FileSearch className="h-6 w-6 text-purple-500" />
+              <FileSearch className="h-8 w-8 text-purple-500" />
             </div>
-            <h1 className="text-2xl font-bold text-foreground">{topic.title}</h1>
+            <h1 className="text-4xl font-bold text-foreground">{topic.title}</h1>
           </div>
           <div className="flex flex-col gap-1 ml-14">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-lg text-muted-foreground">
               Rundown — Deep Dive
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               Generated {generatedDate}
             </p>
             {topic.take && (
-              <p className="text-sm text-orange-400 italic mt-1">
+              <p className="text-lg text-orange-400 italic mt-1">
                 Take: "{topic.take}"
               </p>
             )}
