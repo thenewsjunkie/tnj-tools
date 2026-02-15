@@ -12,12 +12,10 @@ import VoiceInterface from "@/components/VoiceInterface";
 import ShowPrep from "@/components/admin/ShowPrep";
 import WeekendEditionSegments from "@/components/admin/WeekendEditionSegments";
 import VideoTools from "@/components/admin/VideoTools";
-import AdminPolls from "@/components/admin/AdminPolls";
-import TimerSettings from "@/components/admin/TimerSettings";
 
 import { Badge } from "@/components/ui/badge";
 import { useQueueState } from "@/hooks/useQueueState";
-import { Mic, Archive, ExternalLink, Plus } from "lucide-react";
+import { Mic, Archive, Plus } from "lucide-react";
 import PollDialog from "@/components/polls/PollDialog";
 
 const Admin = () => {
@@ -102,24 +100,6 @@ const Admin = () => {
           <ShowPrep />
         </CollapsibleModule>
 
-        {/* Polls */}
-        <CollapsibleModule
-          id="polls"
-          title="Polls"
-          defaultOpen={false}
-          headerAction={
-            <Link 
-              to="/admin/manage-polls" 
-              onClick={(e) => e.stopPropagation()}
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ExternalLink className="h-4 w-4" />
-            </Link>
-          }
-        >
-          <AdminPolls />
-        </CollapsibleModule>
-
         {/* Weekend Edition Segments */}
         <CollapsibleModule
           id="weekend-edition"
@@ -127,15 +107,6 @@ const Admin = () => {
           defaultOpen={false}
         >
           <WeekendEditionSegments />
-        </CollapsibleModule>
-
-        {/* Countdown Timer */}
-        <CollapsibleModule
-          id="countdown-timer"
-          title="Countdown Timer"
-          defaultOpen={false}
-        >
-          <TimerSettings />
         </CollapsibleModule>
 
         {/* Video Tools */}
