@@ -1,18 +1,18 @@
 
 
-## Remove Potential Videos from Show Prep
+## Fix Text Visibility on /notepad in Dark Mode
 
-### Changes
+### Problem
 
-**1. `src/components/admin/ShowPrep.tsx`**
-- Remove the `potentialVideos` state variable and its setter
-- Remove `handleClearPotentialVideos` function
-- Remove the `Video` icon import from lucide-react
-- Remove `potentialVideos` from the debounced save effect and the `loadData` function
-- Remove the entire "Potential Videos" UI block (textarea, clear button, heading)
+The TipTap editor text on `/notepad` is nearly invisible -- dark gray text on a near-black background. The `prose dark:prose-invert` Tailwind class should handle this but isn't applying the correct text color to the ProseMirror content.
 
-**2. `src/components/admin/show-prep/PrintShowPrep.tsx`**
-- Remove `potentialVideos` from the `PrintData` interface
-- Remove the "Potential Videos" HTML block from the generated print document
-- Remove the `.potential-videos` CSS styles
+### Fix
+
+**`src/components/admin/show-prep/Notepad.tsx`**
+
+Add an explicit text color class to the ProseMirror editor content area to ensure white text in dark mode:
+
+- Add `[&_.ProseMirror]:text-foreground` to the TipTap editor wrapper's className. This forces the editor text to use the theme's foreground color (white in dark mode, dark in light mode), regardless of any `prose` specificity issues.
+
+This is a one-line CSS class addition -- no logic changes needed. It fixes the issue on both `/notepad` and the admin Show Prep notepad.
 
