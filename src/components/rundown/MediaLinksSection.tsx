@@ -1,10 +1,13 @@
 import { useState } from "react";
-import { Plus, X, Video, Loader2 } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MediaLink } from "@/components/admin/show-prep/types";
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, rectSortingStrategy, arrayMove } from "@dnd-kit/sortable";
+import SortableMediaCard from "./SortableMediaCard";
 
 interface MediaLinksSectionProps {
   mediaLinks: MediaLink[];
@@ -58,6 +61,20 @@ const MediaLinksSection = ({ mediaLinks, onUpdate }: MediaLinksSectionProps) => 
     }
   };
 
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor)
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = mediaLinks.findIndex((l) => l.id === active.id);
+      const newIndex = mediaLinks.findIndex((l) => l.id === over.id);
+      onUpdate(arrayMove(mediaLinks, oldIndex, newIndex));
+    }
+  };
+
   return (
     <div className="mb-8">
       <h3 className="text-sm font-medium text-muted-foreground mb-3">Media</h3>
@@ -79,51 +96,15 @@ const MediaLinksSection = ({ mediaLinks, onUpdate }: MediaLinksSectionProps) => 
 
       {/* Grid */}
       {mediaLinks.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {mediaLinks.map((link) => (
-            <a
-              key={link.id}
-              href={link.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative rounded-lg overflow-hidden border border-border/50 hover:border-border transition-colors block"
-            >
-              {/* Thumbnail */}
-              <div className="aspect-video bg-muted flex items-center justify-center">
-                {link.thumbnail ? (
-                  <img
-                    src={link.thumbnail}
-                    alt={link.title || "Video thumbnail"}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <Video className="h-8 w-8 text-muted-foreground" />
-                )}
-              </div>
-
-              {/* Title */}
-              {link.title && (
-                <div className="px-2 py-1.5">
-                  <p className="text-xs text-muted-foreground line-clamp-2">{link.title}</p>
-                </div>
-              )}
-
-              {/* Remove button */}
-              <Button
-                variant="destructive"
-                size="icon"
-                className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleRemove(link.id);
-                }}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </a>
-          ))}
-        </div>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={mediaLinks.map((l) => l.id)} strategy={rectSortingStrategy}>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {mediaLinks.map((link) => (
+                <SortableMediaCard key={link.id} link={link} onRemove={handleRemove} />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
     </div>
   );
