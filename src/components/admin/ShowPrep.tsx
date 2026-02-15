@@ -77,6 +77,7 @@ const ShowPrep = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isNotepadOpen, setIsNotepadOpen] = useState(false);
   const hasLoadedRef = useRef(false);
+  const notepadLoadedRef = useRef(false);
   const { toast } = useToast();
 
   const selectedDateFormatted = format(selectedDate, "EEEE, MMMM do yyyy");
@@ -155,7 +156,7 @@ const ShowPrep = () => {
         setLastMinuteFrom(data.last_minute_from || "");
         setRateMyBlank(data.rate_my_blank || "");
         
-        setNotepad(data.notepad || "");
+        // notepad is now loaded separately from system_settings
       } else {
         // Check localStorage for migration
         const localTopicsKey = `show-prep-topics-${dateKey}`;
@@ -188,7 +189,7 @@ const ShowPrep = () => {
           setLastMinuteFrom("");
           setRateMyBlank("");
           
-          setNotepad("");
+          // notepad loaded separately
         }
       }
     } catch (error) {
@@ -216,6 +217,42 @@ const ShowPrep = () => {
     localStorage.setItem('show-prep-selected-date', selectedDate.toISOString());
   }, [selectedDate]);
 
+  // Load notepad from system_settings (date-independent)
+  useEffect(() => {
+    const loadNotepad = async () => {
+      try {
+        const { data } = await supabase
+          .from("system_settings")
+          .select("value")
+          .eq("key", "notepad_content")
+          .maybeSingle();
+        const val = data?.value as { content?: string } | null;
+        setNotepad(val?.content || "");
+      } catch (error) {
+        console.error("Error loading notepad:", error);
+      } finally {
+        setTimeout(() => { notepadLoadedRef.current = true; }, 100);
+      }
+    };
+    loadNotepad();
+  }, []);
+
+  // Debounced save notepad to system_settings
+  useEffect(() => {
+    if (!notepadLoadedRef.current) return;
+    const timer = setTimeout(async () => {
+      try {
+        await supabase.from("system_settings").upsert({
+          key: "notepad_content",
+          value: { content: notepad } as unknown as import("@/integrations/supabase/types").Json,
+        }, { onConflict: "key" });
+      } catch (error) {
+        console.error("Error saving notepad:", error);
+      }
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [notepad]);
+
   // Debounced save to Supabase - only after initial load is complete
   useEffect(() => {
     if (isLoading || !hasLoadedRef.current) return;
@@ -230,7 +267,6 @@ const ShowPrep = () => {
           and_topic: topics.andTopic || null,
           last_minute_from: lastMinuteFrom || null,
           rate_my_blank: rateMyBlank || null,
-          notepad: notepad || null,
         }, { onConflict: "date" });
       } catch (error) {
         console.error("Error saving topics:", error);
@@ -240,7 +276,7 @@ const ShowPrep = () => {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [topics, lastMinuteFrom, rateMyBlank, notepad, dateKey, isLoading]);
+  }, [topics, lastMinuteFrom, rateMyBlank, dateKey, isLoading]);
 
   const navigateDay = (offset: number) => {
     setSelectedDate(prev => addDays(prev, offset));
