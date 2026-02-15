@@ -134,6 +134,19 @@ export const generatePrintDocument = (data: PrintData) => {
       padding: 6px 0;
       font-size: 13px;
     }
+    .rundown-badge {
+      display: inline-block;
+      background: #7c3aed;
+      color: #fff;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      vertical-align: middle;
+      margin-right: 4px;
+    }
     .google-trends, .yahoo-trends {
       border-radius: 4px;
       padding: 6px 8px;
@@ -187,7 +200,7 @@ export const generatePrintDocument = (data: PrintData) => {
         const bullets = topic.bullets?.filter(b => b.text.trim()) || [];
         return `
           <div class="topic">
-            <span class="topic-title">${topic.type === "link" ? "🔗 " : ""}${topic.title || "Untitled"}</span>
+            <span class="topic-title">${topic.strongman?.content ? '<span class="rundown-badge">RUNDOWN</span> ' : ''}${topic.type === "link" ? "🔗 " : ""}${topic.title || "Untitled"}</span>
             ${topic.take ? `<div class="topic-take">🔥 ${topic.take}</div>` : ""}
             ${bullets.length > 0 ? `
               <ul class="topic-bullets">
