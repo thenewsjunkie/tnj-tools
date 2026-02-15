@@ -1,103 +1,21 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, FileSearch, Printer } from "lucide-react";
+import { ArrowLeft, FileSearch, Printer, ImagePlus, X } from "lucide-react";
 import { Topic, HourBlock } from "@/components/admin/show-prep/types";
 import { printRundownSummary } from "@/components/admin/show-prep/PrintStrongman";
-
-const formatRundownContent = (content: string) => {
-  const lines = content.split("\n");
-  const elements: React.ReactNode[] = [];
-  let key = 0;
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const trimmed = line.trim();
-
-    if (!trimmed) {
-      elements.push(<div key={key++} className="h-3" />);
-      continue;
-    }
-
-    // Section headers (## or lines like "1. Overview")
-    const headerMatch = trimmed.match(/^#{1,3}\s+(.*)$/) || trimmed.match(/^(\d+)\.\s+\*\*(.+)\*\*$/);
-    if (headerMatch) {
-      const text = headerMatch[2] || headerMatch[1];
-      elements.push(
-        <h3 key={key++} className="text-lg font-semibold text-purple-400 border-l-2 border-purple-500 pl-3 mt-6 mb-2">
-          {text.replace(/\*\*/g, "")}
-        </h3>
-      );
-      continue;
-    }
-
-    // "3 Big Takeaways" special header
-    if (trimmed.includes("Big Takeaway") || trimmed.includes("big takeaway")) {
-      elements.push(
-        <h3 key={key++} className="text-lg font-semibold text-amber-400 border-l-2 border-amber-500 pl-3 mt-6 mb-2">
-          {trimmed.replace(/[*#]/g, "").trim()}
-        </h3>
-      );
-      continue;
-    }
-
-    // Bold section headers (standalone **text**)
-    if (/^\*\*[^*]+\*\*$/.test(trimmed)) {
-      elements.push(
-        <h3 key={key++} className="text-lg font-semibold text-purple-400 border-l-2 border-purple-500 pl-3 mt-6 mb-2">
-          {trimmed.replace(/\*\*/g, "")}
-        </h3>
-      );
-      continue;
-    }
-
-    // Bullet points
-    if (trimmed.startsWith("- ") || trimmed.startsWith("• ")) {
-      const bulletText = trimmed.replace(/^[-•]\s+/, "");
-      elements.push(
-        <div key={key++} className="flex items-start gap-2 pl-4 py-0.5">
-          <span className="text-purple-400 mt-1 shrink-0">•</span>
-          <span className="text-foreground/90" dangerouslySetInnerHTML={{
-            __html: bulletText.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground font-semibold">$1</strong>')
-          }} />
-        </div>
-      );
-      continue;
-    }
-
-    // Numbered items
-    const numberedMatch = trimmed.match(/^(\d+)\.\s+(.*)$/);
-    if (numberedMatch) {
-      elements.push(
-        <div key={key++} className="flex items-start gap-2 pl-4 py-0.5">
-          <span className="text-purple-400 font-semibold shrink-0">{numberedMatch[1]}.</span>
-          <span className="text-foreground/90" dangerouslySetInnerHTML={{
-            __html: numberedMatch[2].replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground font-semibold">$1</strong>')
-          }} />
-        </div>
-      );
-      continue;
-    }
-
-    // Regular text
-    elements.push(
-      <p key={key++} className="text-foreground/85 pl-4" dangerouslySetInnerHTML={{
-        __html: trimmed.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground font-semibold">$1</strong>')
-      }} />
-    );
-  }
-
-  return elements;
-};
+import { useToast } from "@/hooks/use-toast";
+import { formatRundownContent } from "@/components/rundown/formatRundownContent";
 
 const RundownPage = () => {
   const { date, topicId } = useParams<{ date: string; topicId: string }>();
   const navigate = useNavigate();
-  const [wikiImage, setWikiImage] = useState<string | null>(null);
-  const [wikiImageLoading, setWikiImageLoading] = useState(false);
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+  const [uploading, setUploading] = useState(false);
 
   const { data: topic, isLoading } = useQuery({
     queryKey: ["rundown", date, topicId],
@@ -128,31 +46,74 @@ const RundownPage = () => {
     enabled: !!date && !!topicId,
   });
 
-  // Auto-fetch Wikipedia image when topic has no manual images
-  useEffect(() => {
-    if (!topic || topic.images?.length > 0) return;
-    
-    const fetchImage = async () => {
-      setWikiImageLoading(true);
-      try {
-        const { data, error } = await supabase.functions.invoke('fetch-topic-image', {
-          body: { title: topic.title },
-        });
-        if (!error && data?.imageUrl) {
-          setWikiImage(data.imageUrl);
-        }
-      } catch {
-        // Silently fail
-      } finally {
-        setWikiImageLoading(false);
-      }
-    };
-    
-    fetchImage();
-  }, [topic]);
+  const updateTopicImages = async (newImages: string[]) => {
+    const { data, error } = await supabase
+      .from("show_prep_notes")
+      .select("topics")
+      .eq("date", date!)
+      .maybeSingle();
 
-  const hasManualImages = topic?.images?.length > 0;
-  const heroImage = hasManualImages ? topic.images[0] : wikiImage;
+    if (error || !data) return;
+
+    const rawData = data.topics as any;
+
+    const updateTopic = (t: Topic) => {
+      if (t.id === topicId) return { ...t, images: newImages };
+      return t;
+    };
+
+    let updatedTopics: any;
+    if (Array.isArray(rawData?.topics)) {
+      updatedTopics = { ...rawData, topics: rawData.topics.map(updateTopic) };
+    } else if (Array.isArray(rawData?.hours)) {
+      updatedTopics = {
+        ...rawData,
+        hours: rawData.hours.map((h: HourBlock) => ({
+          ...h,
+          topics: h.topics?.map(updateTopic) || [],
+        })),
+      };
+    } else return;
+
+    await supabase
+      .from("show_prep_notes")
+      .update({ topics: updatedTopics })
+      .eq("date", date!);
+
+    queryClient.invalidateQueries({ queryKey: ["rundown", date, topicId] });
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const { data, error } = await supabase.functions.invoke("upload-show-note-image", {
+        body: formData,
+      });
+
+      if (error) throw error;
+
+      const currentImages = topic?.images || [];
+      await updateTopicImages([data.url, ...currentImages]);
+      toast({ title: "Image uploaded" });
+    } catch {
+      toast({ title: "Upload failed", variant: "destructive" });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    const currentImages = topic?.images || [];
+    await updateTopicImages(currentImages.slice(1));
+    toast({ title: "Image removed" });
+  };
 
   if (isLoading) {
     return (
@@ -181,6 +142,8 @@ const RundownPage = () => {
     hour: "numeric",
     minute: "2-digit",
   });
+
+  const heroImage = topic.images?.[0];
 
   return (
     <div className="min-h-screen bg-background">
@@ -229,16 +192,41 @@ const RundownPage = () => {
         </div>
 
         {/* Hero image */}
-        {wikiImageLoading && !hasManualImages && (
-          <Skeleton className="mb-8 w-full aspect-video rounded-xl" />
-        )}
-        {heroImage && (
-          <div className="mb-8 rounded-xl overflow-hidden border border-border/50 shadow-lg">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleImageUpload}
+          className="hidden"
+        />
+        {heroImage ? (
+          <div className="mb-8 rounded-xl overflow-hidden border border-border/50 shadow-lg relative group">
             <img
               src={heroImage}
               alt={topic.title}
               className="w-full aspect-video object-cover"
             />
+            <Button
+              variant="destructive"
+              size="icon"
+              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+              onClick={handleRemoveImage}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : (
+          <div className="mb-8">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground gap-2"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+            >
+              <ImagePlus className="h-4 w-4" />
+              {uploading ? "Uploading..." : "Add hero image"}
+            </Button>
           </div>
         )}
 
