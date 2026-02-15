@@ -200,6 +200,17 @@ const RundownPage = () => {
           </div>
         </div>
 
+        {/* Hero image */}
+        {topic.images?.length > 0 && (
+          <div className="mb-8 rounded-xl overflow-hidden border border-border/50 shadow-lg">
+            <img
+              src={topic.images[0]}
+              alt={topic.title}
+              className="w-full aspect-video object-cover"
+            />
+          </div>
+        )}
+
         {/* Rundown content */}
         <div className="space-y-1">
           {formatRundownContent(topic.strongman.content)}
