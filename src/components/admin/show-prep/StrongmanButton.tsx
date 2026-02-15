@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { FileSearch, Loader2, Printer, RefreshCw } from "lucide-react";
+import { FileSearch, Loader2, Printer, RefreshCw, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Topic, Strongman } from "./types";
 import { useToast } from "@/hooks/use-toast";
@@ -16,11 +17,13 @@ import { printRundown } from "./PrintStrongman";
 
 interface StrongmanButtonProps {
   topic: Topic;
+  date: string;
   onChange: (strongman: Strongman | undefined) => void;
 }
 
-export const StrongmanButton = ({ topic, onChange }: StrongmanButtonProps) => {
+export const StrongmanButton = ({ topic, date, onChange }: StrongmanButtonProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [argumentInput, setArgumentInput] = useState("");
@@ -122,6 +125,15 @@ export const StrongmanButton = ({ topic, onChange }: StrongmanButtonProps) => {
             </div>
             {hasStrongman && !isEditing && (
               <div className="flex items-center gap-1">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 px-2"
+                  onClick={() => navigate(`/admin/rundown/${date}/${topic.id}`)}
+                  title="Open full page"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </Button>
                 <Button
                   size="sm"
                   variant="ghost"

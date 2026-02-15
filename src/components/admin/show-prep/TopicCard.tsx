@@ -156,6 +156,7 @@ const TopicCard = ({ topic, date, onChange, onDelete, onMoveToNextDay }: TopicCa
             />
             <StrongmanButton
               topic={topic}
+              date={date}
               onChange={(strongman) => onChange({ ...topic, strongman })}
             />
 

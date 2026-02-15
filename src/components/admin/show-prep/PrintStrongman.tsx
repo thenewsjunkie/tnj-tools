@@ -1,5 +1,45 @@
 import { Topic } from "./types";
 
+export const printRundownSummary = (topic: Topic) => {
+  if (!topic.strongman?.content) return;
+
+  const generatedDate = new Date(topic.strongman.generatedAt).toLocaleString("en-US", {
+    month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit",
+  });
+
+  // Extract "3 Big Takeaways" section
+  const content = topic.strongman.content;
+  const takeawayIdx = content.toLowerCase().indexOf("big takeaway");
+  let takeaways = "";
+  if (takeawayIdx !== -1) {
+    const start = content.lastIndexOf("\n", takeawayIdx);
+    takeaways = content.substring(start !== -1 ? start : takeawayIdx);
+  }
+
+  const htmlContent = `<!DOCTYPE html><html><head><title>Summary: ${topic.title}</title>
+    <style>
+      @page { size: letter; margin: 0.75in; }
+      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 11pt; color: #1a1a1a; }
+      .header { border-bottom: 2px solid #8b5cf6; padding-bottom: 8px; margin-bottom: 16px; }
+      .header h1 { font-size: 16pt; color: #6d28d9; margin: 0 0 4px; }
+      .meta { font-size: 9pt; color: #6b7280; }
+      .takeaways { white-space: pre-wrap; font-size: 10pt; line-height: 1.5; }
+      .takeaways strong { color: #1e3a5f; }
+      .footer { margin-top: 24px; padding-top: 8px; border-top: 1px solid #e5e7eb; font-size: 8pt; color: #9ca3af; }
+    </style></head><body>
+    <div class="header">
+      <h1>🔍 ${topic.title}</h1>
+      <div class="meta">Rundown Summary Card • Generated: ${generatedDate}</div>
+      ${topic.take ? `<div class="meta" style="margin-top:4px">Take: "${topic.take}"</div>` : ""}
+    </div>
+    ${takeaways ? `<div class="takeaways">${takeaways.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")}</div>` : "<p>See full rundown for details.</p>"}
+    <div class="footer">Full rundown available in Admin → Show Prep</div>
+  </body></html>`;
+
+  const w = window.open("", "_blank");
+  if (w) { w.document.write(htmlContent); w.document.close(); w.onload = () => w.print(); }
+};
+
 export const printRundown = (topic: Topic) => {
   if (!topic.strongman?.content) return;
 
