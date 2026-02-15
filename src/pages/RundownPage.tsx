@@ -175,7 +175,7 @@ const RundownPage = () => {
             <div className="p-2 rounded-lg bg-purple-500/10">
               <FileSearch className="h-10 w-10 text-purple-500" />
             </div>
-            <h1 className="text-6xl font-bold text-foreground">{topic.title}</h1>
+            <h1 className="text-5xl font-bold text-foreground">{topic.title}</h1>
           </div>
           <div className="flex flex-col gap-1 ml-14">
             <p className="text-2xl text-muted-foreground">
