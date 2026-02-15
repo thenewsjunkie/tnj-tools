@@ -21,6 +21,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { printRundown } from "./PrintStrongman";
+import { formatInlineHTML } from "@/components/rundown/formatRundownContent";
 
 const DEFAULT_RUNDOWN_PROMPT = `I'm preparing a detailed breakdown on: {topic}
 
@@ -195,13 +196,13 @@ export const StrongmanButton = ({ topic, date, onChange }: StrongmanButtonProps)
         <DropdownMenuContent align="end">
           {hasStrongman ? (
             <>
-              <DropdownMenuItem onClick={() => setViewOpen(true)}>
-                <Eye className="h-4 w-4 mr-2" />
-                View Rundown
-              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate(`/admin/rundown/${date}/${topic.id}`)}>
                 <ExternalLink className="h-4 w-4 mr-2" />
                 Open Full Page
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setViewOpen(true)}>
+                <Eye className="h-4 w-4 mr-2" />
+                View Rundown
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handlePrint}>
                 <Printer className="h-4 w-4 mr-2" />
@@ -241,9 +242,9 @@ export const StrongmanButton = ({ topic, date, onChange }: StrongmanButtonProps)
             </DialogTitle>
           </DialogHeader>
           <ScrollArea className="h-[300px] rounded-md border p-3">
-            <div className="whitespace-pre-wrap text-sm text-foreground">
-              {topic.strongman?.content}
-            </div>
+            <div className="whitespace-pre-wrap text-sm text-foreground" dangerouslySetInnerHTML={{
+              __html: formatInlineHTML(topic.strongman?.content || "")
+            }} />
           </ScrollArea>
           {topic.strongman?.prompt && (
             <p className="text-xs text-muted-foreground italic">
