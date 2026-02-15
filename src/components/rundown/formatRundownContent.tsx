@@ -1,5 +1,14 @@
 import React from "react";
 
+const formatInlineHTML = (text: string) => {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground font-semibold">$1</strong>')
+    .replace(
+      /(https?:\/\/[^\s<]+)/g,
+      '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-purple-400 underline hover:text-purple-300 break-all">$1</a>'
+    );
+};
+
 export const formatRundownContent = (content: string) => {
   const lines = content.split("\n");
   const elements: React.ReactNode[] = [];
@@ -53,7 +62,7 @@ export const formatRundownContent = (content: string) => {
         <div key={key++} className="flex items-start gap-2 pl-4 py-0.5">
           <span className="text-purple-400 mt-1 shrink-0">•</span>
           <span className="text-foreground/90" dangerouslySetInnerHTML={{
-            __html: bulletText.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground font-semibold">$1</strong>')
+            __html: formatInlineHTML(bulletText)
           }} />
         </div>
       );
@@ -67,7 +76,7 @@ export const formatRundownContent = (content: string) => {
         <div key={key++} className="flex items-start gap-2 pl-4 py-0.5">
           <span className="text-purple-400 font-semibold shrink-0">{numberedMatch[1]}.</span>
           <span className="text-foreground/90" dangerouslySetInnerHTML={{
-            __html: numberedMatch[2].replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground font-semibold">$1</strong>')
+            __html: formatInlineHTML(numberedMatch[2])
           }} />
         </div>
       );
@@ -77,7 +86,7 @@ export const formatRundownContent = (content: string) => {
     // Regular text
     elements.push(
       <p key={key++} className="text-foreground/85 pl-4" dangerouslySetInnerHTML={{
-        __html: trimmed.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground font-semibold">$1</strong>')
+        __html: formatInlineHTML(trimmed)
       }} />
     );
   }
