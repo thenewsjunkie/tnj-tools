@@ -31,50 +31,63 @@ function isYouTubeUrl(url: string): boolean {
 }
 
 async function fetchTweetMetadata(url: string): Promise<{ title: string | null; ogImage: string | null }> {
+  // 1. Extract tweet ID and try FxTwitter API for media/thumbnail
+  const tweetIdMatch = url.match(/status\/(\d+)/);
+  const tweetId = tweetIdMatch?.[1];
+  let ogImage: string | null = null;
+
+  if (tweetId) {
+    try {
+      console.log(`Fetching FxTwitter for tweet ID: ${tweetId}`);
+      const fxResponse = await fetch(`https://api.fxtwitter.com/status/${tweetId}`);
+      console.log(`FxTwitter status: ${fxResponse.status}`);
+      if (fxResponse.ok) {
+        const fxData = await fxResponse.json();
+        console.log(`FxTwitter media:`, JSON.stringify(fxData?.tweet?.media));
+        const media = fxData?.tweet?.media?.all;
+        if (media?.length > 0) {
+          ogImage = media[0].thumbnail_url || media[0].url || null;
+        }
+      }
+    } catch (e) {
+      console.log("FxTwitter API failed:", e?.message);
+    }
+  }
+
+  // 2. Still use oEmbed for the title (tweet text + author)
   const oembedUrl = `https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}&omit_script=1`;
-  
   console.log(`Fetching tweet via oEmbed: ${oembedUrl}`);
   
   const response = await fetch(oembedUrl);
-  if (!response.ok) {
-    console.log(`oEmbed failed with status: ${response.status}`);
-    return { title: null, ogImage: null };
-  }
-  
-  const data = await response.json();
-  console.log(`oEmbed response:`, JSON.stringify(data));
-  
-  // Extract tweet text from the HTML blockquote
-  let tweetText = null;
-  if (data.html) {
-    // Use [\s\S]*? to capture everything inside <p> tags including nested <a> tags
-    const match = data.html.match(/<p[^>]*>([\s\S]*?)<\/p>/);
-    if (match) {
-      tweetText = match[1]
-        // Strip HTML tags (links, mentions, hashtags)
-        .replace(/<[^>]*>/g, '')
-        // Decode HTML entities
-        .replace(/&amp;/g, '&')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&quot;/g, '"')
-        .replace(/&#39;/g, "'")
-        .replace(/&mdash;/g, '—')
-        .replace(/&nbsp;/g, ' ')
-        .replace(/\s+/g, ' ')  // Normalize whitespace
-        .trim();
+  let title: string | null = null;
+
+  if (response.ok) {
+    const data = await response.json();
+    let tweetText = null;
+    if (data.html) {
+      const match = data.html.match(/<p[^>]*>([\s\S]*?)<\/p>/);
+      if (match) {
+        tweetText = match[1]
+          .replace(/<[^>]*>/g, '')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'")
+          .replace(/&mdash;/g, '—')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
     }
+    const author = data.author_name || 'Tweet';
+    title = tweetText 
+      ? `${author}: "${tweetText.substring(0, 120)}${tweetText.length > 120 ? '...' : ''}"`
+      : author;
   }
-  
-  // Build a title with author name if available
-  const author = data.author_name || 'Tweet';
-  const title = tweetText 
-    ? `${author}: "${tweetText.substring(0, 120)}${tweetText.length > 120 ? '...' : ''}"`
-    : author;
-  
-  console.log(`Extracted tweet title: ${title}`);
-  
-  return { title, ogImage: null };
+
+  console.log(`Extracted tweet title: ${title}, ogImage: ${ogImage}`);
+  return { title, ogImage };
 }
 
 async function fetchYouTubeMetadata(url: string): Promise<{ title: string | null; ogImage: string | null }> {
