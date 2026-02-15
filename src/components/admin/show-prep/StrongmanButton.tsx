@@ -89,7 +89,7 @@ export const StrongmanButton = ({ topic, date, onChange }: StrongmanButtonProps)
 
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <Button
             size="sm"
