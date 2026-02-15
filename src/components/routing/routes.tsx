@@ -41,6 +41,7 @@ const FullTruth = lazy(() => import("@/pages/FullTruth"));
 const FullTruthBuilder = lazy(() => import("@/pages/FullTruthBuilder"));
 const FullTruthViewer = lazy(() => import("@/pages/FullTruthViewer"));
 const Timer = lazy(() => import("@/pages/Timer"));
+const NotepadPage = lazy(() => import("@/pages/NotepadPage"));
 
 export const router = createBrowserRouter([
   {
@@ -218,6 +219,10 @@ export const router = createBrowserRouter([
       {
         path: "timer",
         element: <Timer />,
+      },
+      {
+        path: "notepad",
+        element: <NotepadPage />,
       },
     ]
   }
