@@ -1,11 +1,11 @@
 import React from "react";
 
-const formatInlineHTML = (text: string) => {
+export const formatInlineHTML = (text: string) => {
   return text
     .replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground font-semibold">$1</strong>')
     .replace(
       /(https?:\/\/[^\s<]+)/g,
-      '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-purple-400 underline hover:text-purple-300 break-all">$1</a>'
+      '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-purple-400 underline hover:text-purple-300">[Link]</a>'
     );
 };
 
