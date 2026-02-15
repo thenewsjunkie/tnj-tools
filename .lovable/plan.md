@@ -1,27 +1,46 @@
 
 
-## Fix Rundown View Text Color and Add "Edit Prompt" Menu Option
+## Add "Edit Prompt" to Edit the Rundown System Prompt
 
-### 1. Fix text color in View Rundown dialog
+### What This Does
+The "Edit Prompt" menu option will open a dialog where you can view and customize the master system prompt that powers all rundown generations -- the one that defines the 9-section format (Overview, Timeline, Key Players, etc.). Your customized prompt is saved locally so it persists across sessions. The existing "Regenerate" option stays as-is for editing the topic/user input.
 
-The rundown content on line 147 uses a plain `div` with `text-sm` but no explicit text color, so it inherits from the parent and becomes invisible in dark mode. Add `text-foreground` to ensure it's always readable.
+### How It Works
+
+1. **Store custom prompt in localStorage** under a key like `rundown_system_prompt`
+2. **New dialog** with a large textarea pre-filled with the current system prompt (either your saved custom one or the default)
+3. **Pass custom prompt to the edge function** via a new `customSystemPrompt` field in the request body
+4. **Edge function** checks for that field and uses it instead of the hardcoded rundown prompt
+5. **Reset button** in the dialog to restore the default prompt
+
+### Changes
 
 **File: `src/components/admin/show-prep/StrongmanButton.tsx`**
-- Line 147: Change `<div className="whitespace-pre-wrap text-sm">` to `<div className="whitespace-pre-wrap text-sm text-foreground">`
+- Add a new `editPromptOpen` state variable
+- Change the "Edit Prompt" menu item to open a new dialog (instead of reusing the generate dialog)
+- New dialog contains:
+  - A large textarea with the saved system prompt (or the default)
+  - A "Reset to Default" button
+  - A "Save" button that writes to localStorage
+- When generating a rundown, read the custom prompt from localStorage and pass it as `customSystemPrompt` in the request body
 
-### 2. Add "Edit Prompt" menu option
+**File: `supabase/functions/ask-ai/index.ts`**
+- Accept a new optional `customSystemPrompt` field from the request body
+- When `rundownMode` is true and `customSystemPrompt` is provided, use it instead of the hardcoded prompt template
+- The `${prompt}` interpolation in the default system prompt will be handled by inserting the user's topic into the custom prompt if it contains a `{topic}` placeholder, or appending it
 
-Add a new dropdown menu item (with a Pencil icon) that opens the generate dialog pre-filled with the saved prompt, allowing you to tweak and re-run it.
+### Default Prompt (shown in the editor)
+The full rundown prompt currently hardcoded on lines 57-118 of the edge function will be shown as the default, so you can see exactly what it does and tweak any section.
 
-**File: `src/components/admin/show-prep/StrongmanButton.tsx`**
-- Add `Pencil` to the lucide-react import (line 4)
-- Insert a new `DropdownMenuItem` after "Print" and before "Regenerate" (around line 123):
-  ```tsx
-  <DropdownMenuItem onClick={() => { setIsRegenerating(true); setGenerateOpen(true); }}>
-    <Pencil className="h-4 w-4 mr-2" />
-    Edit Prompt
-  </DropdownMenuItem>
-  ```
-  This reuses the same regenerate dialog (which pre-fills the previous prompt) so you can edit the prompt text before hitting Generate.
+### UI Flow
+1. Click rundown icon -> dropdown menu
+2. Click "Edit Prompt" -> dialog opens with the full system prompt in a textarea
+3. Edit as desired, click "Save" -> stored in localStorage
+4. Next time you generate/regenerate a rundown, your custom prompt is used
+5. "Reset to Default" button restores the original
 
-Two small changes, one file.
+### Technical Details
+
+- localStorage key: `rundown_system_prompt`
+- The edge function change is minimal: destructure `customSystemPrompt` from the body, and in the `rundownMode` branch, use `customSystemPrompt || defaultPrompt`
+- The `{topic}` placeholder pattern lets the prompt reference the user's topic dynamically (e.g., `I'm preparing a breakdown on: {topic}`)
