@@ -1,35 +1,23 @@
 
 
-## Fix Link Formatting for Markdown-Style Links
+## Fix Rundown Getting Cut Off
 
 ### Problem
-The AI generates markdown links like `[NBC New York](https://example.com)`. The current regex only catches bare URLs, so the output becomes the ugly `[NBC New York]([Link])` instead of `NBC New York [Link]`.
+Rundowns use the `gpt-4o-search-preview` model with `max_tokens: 10000`. This should generally be enough, but with detailed web search citations and the 9-section format requesting "3-5 detailed bullet points per section," responses can exceed that limit -- especially for complex topics with many sources.
 
 ### Solution
-In `src/components/rundown/formatRundownContent.tsx`, update `formatInlineHTML` to handle markdown links **first** (before bare URLs):
+Increase the `max_tokens` for search mode from `10,000` to `16,000` in the edge function. The `gpt-4o-search-preview` model supports up to 16,384 output tokens, so we should use that full capacity for rundowns.
 
-1. Add a new regex to match `[text](url)` patterns and convert them to `text <a href="url">[Link]</a>`
-2. Keep the existing bare URL regex as a fallback for URLs not wrapped in markdown syntax
+### Change
 
-### Updated function
+**File: `supabase/functions/ask-ai/index.ts`** (line 144)
 
 ```
-export const formatInlineHTML = (text: string) => {
-  return text
-    .replace(/\*\*(.*?)\*\*/g, '<strong class="...">$1</strong>')
-    // Markdown links: [Label](url) -> Label [Link]
-    .replace(
-      /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
-      '$1 <a href="$2" target="_blank" rel="noopener noreferrer" class="text-purple-400 underline hover:text-purple-300">[Link]</a>'
-    )
-    // Bare URLs (fallback)
-    .replace(
-      /(https?:\/\/[^\s<]+)/g,
-      '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-purple-400 underline hover:text-purple-300">[Link]</a>'
-    );
-};
+// Before
+max_tokens: datasheetMode ? 1000 : isSearchMode ? 10000 : 1500,
+
+// After
+max_tokens: datasheetMode ? 1000 : isSearchMode ? 16000 : 1500,
 ```
 
-Result: `Source: [NBC New York](https://...)` becomes `Source: NBC New York [Link]`
-
-One file, one function change.
+One line change, then redeploy the edge function.
