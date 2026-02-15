@@ -1,33 +1,30 @@
 
 
-## Move Media Links Below Executive Snapshot
+## Scale Up Rundown Text to Teleprompter Size
 
-### What changes
-Currently the Media section appears above all rundown content. This change moves it to appear right after the Executive Snapshot section (the first section in the rundown), so the flow becomes:
+Bump all rundown typography two steps up for maximum on-air readability.
 
-1. Header, hero image
-2. Executive Snapshot section
-3. **Media links**
-4. Remaining rundown sections
+### Size changes
 
-### How
+| Element | Current | New |
+|---|---|---|
+| Page title | text-5xl (48px) | text-7xl (72px) |
+| Section headers | text-3xl (30px) | text-5xl (48px) |
+| "Big Takeaway" headers | text-3xl (30px) | text-5xl (48px) |
+| Body paragraphs | text-2xl (24px) | text-4xl (36px) |
+| Bullet points (dot + text) | text-2xl (24px) | text-4xl (36px) |
+| Numbered items (number + text) | text-2xl (24px) | text-4xl (36px) |
+| Subtitle ("Rundown -- Deep Dive") | text-xl (20px) | text-3xl (30px) |
+| Generated date | text-lg (18px) | text-2xl (24px) |
+| Take quote | text-xl (20px) | text-3xl (30px) |
+| Empty line spacers | h-6 (24px) | h-10 (40px) |
 
-**File: `src/components/rundown/formatRundownContent.tsx`**
+### Files to modify
 
-Update the function to return a split result -- two arrays: the "first section" elements (Executive Snapshot) and the "rest" elements. We'll export a new helper `splitRundownAtFirstSection` that:
-- Finds the index of the second section header in the rendered elements
-- Returns `{ firstSection: elements[0..splitIndex], rest: elements[splitIndex..end] }`
+1. **`src/components/rundown/formatRundownContent.tsx`** -- Update all text size classes in section headers, bullets, numbered items, and paragraphs. Increase spacer height.
 
-**File: `src/pages/RundownPage.tsx`**
+2. **`src/pages/RundownPage.tsx`** -- Update the title, subtitle, date, and take text sizes in the header area.
 
-Instead of rendering all content in one block, call the split helper and render:
+### Technical details
 
-```
-{firstSection}
-<MediaLinksSection ... />
-{rest}
-```
-
-### Details
-
-The split logic will scan the raw content string for the second `##` or `**bold header**` line, then split the text there. This way `formatRundownContent` is called twice -- once for the Executive Snapshot portion, once for the remainder -- keeping the existing rendering logic untouched.
+All changes are Tailwind class swaps only -- no logic changes. The content container stays at `max-w-5xl` so lines will wrap more frequently at these larger sizes, which is expected for teleprompter-style reading.
