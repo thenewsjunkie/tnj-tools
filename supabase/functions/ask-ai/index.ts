@@ -134,9 +134,9 @@ Keep it structured, factual, and precise. Do not mention your knowledge cutoff d
           { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }
         ],
-        max_tokens: datasheetMode ? 1000 : isSearchMode ? 4500 : 1500,
+        max_tokens: datasheetMode ? 1000 : isSearchMode ? 10000 : 1500,
         ...(isSearchMode
-          ? { web_search_options: { search_context_size: "medium" } }
+          ? { web_search_options: { search_context_size: "high" } }
           : { temperature: 0.7, presence_penalty: 0.1, frequency_penalty: 0.1 }
         ),
       }),
