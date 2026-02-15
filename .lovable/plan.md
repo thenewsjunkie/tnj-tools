@@ -1,33 +1,39 @@
 
-## Make Rundown Content Richer and More Detailed
+
+## Add Real-Time Web Search to Rundowns Using OpenAI Search Models
 
 ### Problem
 
-The rundown generation is capped at **2,500 tokens** (`max_tokens: 2500` in `ask-ai/index.ts`). That's roughly 1,800 words -- not nearly enough for the prompt which asks GPT to cover 9 detailed sections plus "3 Big Takeaways." The model runs out of room and produces shallow, one-line bullets for each section.
+GPT-4o has a training data cutoff, so for current events it either refuses to answer or provides outdated information. The rundown and strongman modes need access to live, up-to-date information.
 
 ### Solution
 
-Two changes in `supabase/functions/ask-ai/index.ts`:
+OpenAI offers dedicated search models that have built-in web search -- no extra API keys or services needed. For rundown and strongman modes, switch from `gpt-4o` to `gpt-4o-search-preview`, which automatically searches the web and returns current, sourced information.
 
-**1. Increase `max_tokens` from 2,500 to 4,500**
+Your existing `OPENAI_API_KEY` already works with these models. No new secrets or connectors needed.
 
-This gives GPT enough room to actually flesh out each of the 9 sections with multiple detailed bullets, quotes, dates, and context. 4,500 tokens is roughly 3,000-3,500 words -- a proper briefing document.
+### Changes
 
-**2. Strengthen the system prompt to demand depth**
+**File: `supabase/functions/ask-ai/index.ts`**
 
-Add explicit instructions to the rundown prompt telling the model to be thorough and avoid surface-level summaries. Specifically:
-- Add "Write at least 3-5 detailed bullet points per section"
-- Add "Do not summarize in one sentence what deserves a paragraph"
-- Add "Include specific names, dates, numbers, and quotes wherever possible"
+1. When `rundownMode` or `strongmanMode` is true, override the model to `gpt-4o-search-preview` (ignoring whatever model the user selected in the dropdown)
+2. For search models, use the `web_search_options` parameter to enable web search with medium context size
+3. Remove `presence_penalty` and `frequency_penalty` for search model calls (not supported by search models)
+4. All other modes (ELI5, detailed, datasheet, general) continue using GPT-4o as before
+
+### Technical Details
+
+The key change in the API call for rundown/strongman:
+
+```text
+model: "gpt-4o-search-preview"
+web_search_options: { search_context_size: "medium" }
+// No presence_penalty or frequency_penalty (unsupported by search models)
+```
+
+The response format is identical -- `data.choices[0].message.content` -- so no frontend changes are needed. The search model will automatically find and cite current sources.
 
 ### Files Modified
 
-1. **`supabase/functions/ask-ai/index.ts`**
-   - Line 134: Change `max_tokens` for rundown/strongman mode from `2500` to `4500`
-   - Lines 56-115: Add depth instructions to the rundown system prompt (e.g., "Write at least 3-5 detailed bullets per section. Be thorough -- this is a full briefing, not a summary.")
+1. `supabase/functions/ask-ai/index.ts` -- use `gpt-4o-search-preview` with `web_search_options` for rundown/strongman modes
 
-### Notes
-
-- This will use slightly more OpenAI tokens per generation (roughly 2x cost per rundown), but the quality improvement should be significant
-- Existing rundowns won't change -- only newly generated ones will be longer. Users can regenerate any topic to get the richer version
-- The model being used (gpt-4o) is fully capable of producing this level of detail; it was just being cut short by the token limit
