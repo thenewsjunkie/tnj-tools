@@ -19,13 +19,6 @@ export interface Strongman {
   prompt?: string;  // The argument that was strongmanned
 }
 
-export interface Datasheet {
-  content: string;
-  generatedAt: string;
-  prompt?: string;
-  selectedSections: string[];
-}
-
 export interface Topic {
   id: string;
   title: string;
@@ -39,7 +32,6 @@ export interface Topic {
   url?: string;             // Only used when type is 'link'
   take?: string;            // Your unique angle/perspective on the topic
   strongman?: Strongman;    // AI-generated argument analysis
-  datasheet?: Datasheet;    // AI-generated data briefing sheet
 }
 
 export interface HourBlock {
