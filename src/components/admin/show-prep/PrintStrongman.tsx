@@ -1,6 +1,6 @@
 import { Topic } from "./types";
 
-export const printStrongman = (topic: Topic) => {
+export const printRundown = (topic: Topic) => {
   if (!topic.strongman?.content) return;
 
   const formattedDate = new Date().toLocaleDateString("en-US", {
@@ -41,7 +41,7 @@ export const printStrongman = (topic: Topic) => {
     <!DOCTYPE html>
     <html>
     <head>
-      <title>Strongman: ${topic.title}</title>
+      <title>Rundown: ${topic.title}</title>
       <style>
         @page {
           size: letter;
@@ -63,7 +63,7 @@ export const printStrongman = (topic: Topic) => {
         }
         
         .header {
-          border-bottom: 2px solid #3b82f6;
+          border-bottom: 2px solid #8b5cf6;
           padding-bottom: 8px;
           margin-bottom: 12px;
         }
@@ -72,7 +72,7 @@ export const printStrongman = (topic: Topic) => {
           font-size: 14pt;
           font-weight: 700;
           margin: 0 0 2px 0;
-          color: #1e40af;
+          color: #6d28d9;
         }
         
         .header .subtitle {
@@ -94,9 +94,9 @@ export const printStrongman = (topic: Topic) => {
         .content h3 {
           font-size: 11pt;
           font-weight: 600;
-          color: #1e40af;
+          color: #6d28d9;
           margin: 10px 0 4px 0;
-          border-left: 2px solid #3b82f6;
+          border-left: 2px solid #8b5cf6;
           padding-left: 6px;
         }
         
@@ -104,7 +104,7 @@ export const printStrongman = (topic: Topic) => {
           color: #ea580c;
           border-left-color: #f97316;
           margin-top: 12px;
-          border-left: 2px solid #3b82f6;
+          border-left: 2px solid #8b5cf6;
           padding-left: 6px;
         }
         
@@ -152,9 +152,9 @@ export const printStrongman = (topic: Topic) => {
     </head>
     <body>
       <div class="header">
-        <h1>💪 ${topic.title}</h1>
+        <h1>🔍 ${topic.title}</h1>
         <div class="subtitle">
-          <span>Strongman Argument Analysis</span>
+          <span>Rundown — Deep Dive</span>
           ${topic.take ? `<span>• Take: "${topic.take}"</span>` : ''}
         </div>
       </div>

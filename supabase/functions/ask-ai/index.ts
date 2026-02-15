@@ -16,7 +16,7 @@ serve(async (req) => {
   }
 
   try {
-    const { model, prompt, eli5Mode, detailedMode, strongmanMode, datasheetMode, sections } = await req.json();
+    const { model, prompt, eli5Mode, detailedMode, strongmanMode, rundownMode, datasheetMode, sections } = await req.json();
     
     if (!prompt) {
       return new Response(
@@ -52,34 +52,67 @@ Section guidelines:
 - **Financial Impact**: Economic data, costs, budget implications, market effects
 
 IMPORTANT: Only include the sections listed above. Skip any section not requested. Be specific with data — use real numbers, dates, and names. Do not mention knowledge cutoff.`;
-    } else if (strongmanMode) {
-      systemPrompt = `You are an expert debate researcher for a radio show. Create a concise "Strongman" argument analysis. KEEP TOTAL RESPONSE UNDER 400 WORDS to fit on one printed page.
+    } else if (rundownMode || strongmanMode) {
+      systemPrompt = `I'm preparing a detailed breakdown on: ${prompt}
 
-Format your response EXACTLY like this, replacing the bracketed instructions with actual content:
+Give me a comprehensive, structured analysis in tight bullet points with clear section headers.
 
-**CORE ARGUMENT**
-[Write the strongest, most defensible version of this position in 1-2 sentences]
+Be specific. Avoid vague summaries.
 
-**KEY FACTS**
-• [Specific fact/statistic with dates and numbers]
-• [Another fact - one sentence each, 4-5 total]
+Separate confirmed facts from claims, allegations, or speculation.
 
-**MYTH BUSTERS**
-• MYTH: [common misconception] → FACT: [the truth]
-• MYTH: [another myth] → FACT: [correction]
+Include direct links to credible sources (AP, Reuters, official statements, court documents, regulatory filings, academic papers, etc.) whenever possible.
 
-**COUNTER-ARGUMENTS**
-• [Opposing argument 1] However, [brief rebuttal]
-• [Opposing argument 2] However, [brief rebuttal]
+Organize the response into these sections:
 
-**TLDR**
-[1-2 sentence summary]
+1. Overview
+- What this story/event is
+- Why it is currently relevant
+- The most important headline-level facts
 
-**🔥 HOT TAKES**
-• [Bold, provocative angle that reframes the debate - one punchy sentence]
-• [Contrarian opinion that sparks conversation - one punchy sentence]
+2. Timeline
+- Key events in chronological order
+- Dates whenever available
+- Major turning points
 
-IMPORTANT: Replace ALL bracketed text with real content. Be direct and concise. Do not mention knowledge cutoff.`;
+3. Key Players
+- Individuals, organizations, governments, companies involved
+- Their roles and stakes in the situation
+
+4. Core Issues
+- What is actually at the center of this story
+- Legal, financial, scientific, ethical, or political dimensions
+- What is disputed (if anything)
+
+5. Verified Facts vs. Claims
+- Clearly distinguish confirmed information from allegations or narratives
+- Identify what remains unproven or unclear
+
+6. Impact & Stakes
+- Who is affected
+- Financial, legal, cultural, or geopolitical consequences
+- Why this matters beyond the headline
+
+7. Reactions
+- Statements from key figures
+- Institutional responses
+- Public or media reaction
+
+8. What Happens Next
+- Upcoming deadlines, hearings, releases, votes, matches, or expected developments
+- Realistic possible outcomes
+
+9. Unanswered Questions
+- Gaps in evidence
+- Inconsistencies
+- What experts are still debating
+
+End with:
+
+3 Big Takeaways
+- Clear, punchy summary bullets suitable for broadcast
+
+Keep it structured, factual, and precise. Do not mention your knowledge cutoff date.`;
     } else if (eli5Mode) {
       systemPrompt = 'Your name is TNJ AI. You are a helpful assistant. Explain concepts in very simple terms that a 5-year-old child could understand. Use simple words, short sentences, and relatable examples. Avoid technical jargon and complex explanations. Do not mention your knowledge cutoff date or recommend checking other sources for more current information.';
     } else if (detailedMode) {
@@ -98,7 +131,7 @@ IMPORTANT: Replace ALL bracketed text with real content. Be direct and concise. 
           { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }
         ],
-        max_tokens: datasheetMode ? 1000 : strongmanMode ? 800 : 1500,
+        max_tokens: datasheetMode ? 1000 : (rundownMode || strongmanMode) ? 2500 : 1500,
         temperature: 0.7,
         presence_penalty: 0.1,
         frequency_penalty: 0.1
