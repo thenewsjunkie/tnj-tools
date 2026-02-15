@@ -1,39 +1,30 @@
 
 
-## Add Real-Time Web Search to Rundowns Using OpenAI Search Models
+## Remove Auto-Image, Add Manual Image Upload Button to Rundowns
 
-### Problem
+### What Changes
 
-GPT-4o has a training data cutoff, so for current events it either refuses to answer or provides outdated information. The rundown and strongman modes need access to live, up-to-date information.
+1. **Remove the automatic Wikipedia image fetch** -- delete the `useEffect` that calls `fetch-topic-image`, and remove the `wikiImage`/`wikiImageLoading` state
+2. **Remove the Skeleton loading state** for the auto-fetched image
+3. **Show manual images only** -- if the topic already has images in `topic.images`, display the hero image as before
+4. **Add a small upload icon button** in the header area (next to the title or below the metadata) that lets you manually add a hero image. Clicking it opens a file picker, uploads the image to Supabase storage, and saves the URL into `topic.images`
 
-### Solution
+### File: `src/pages/RundownPage.tsx`
 
-OpenAI offers dedicated search models that have built-in web search -- no extra API keys or services needed. For rundown and strongman modes, switch from `gpt-4o` to `gpt-4o-search-preview`, which automatically searches the web and returns current, sourced information.
-
-Your existing `OPENAI_API_KEY` already works with these models. No new secrets or connectors needed.
-
-### Changes
-
-**File: `supabase/functions/ask-ai/index.ts`**
-
-1. When `rundownMode` or `strongmanMode` is true, override the model to `gpt-4o-search-preview` (ignoring whatever model the user selected in the dropdown)
-2. For search models, use the `web_search_options` parameter to enable web search with medium context size
-3. Remove `presence_penalty` and `frequency_penalty` for search model calls (not supported by search models)
-4. All other modes (ELI5, detailed, datasheet, general) continue using GPT-4o as before
+- Remove `wikiImage` and `wikiImageLoading` state variables
+- Remove the `useEffect` block that auto-fetches Wikipedia images (lines 131-152)
+- Remove `hasManualImages` and `heroImage` computed values that reference `wikiImage`
+- Replace the hero image section with:
+  - If `topic.images?.length > 0`: show the existing hero image as before
+  - If no images: show a small, subtle button with an `ImagePlus` icon that opens a file input
+- Add a hidden `<input type="file">` and handler that:
+  - Uploads the selected image to the `show-notes-images` Supabase storage bucket
+  - Updates the topic's `images` array in the `show_prep_notes` database record
+  - Displays the newly uploaded image as the hero
 
 ### Technical Details
 
-The key change in the API call for rundown/strongman:
-
-```text
-model: "gpt-4o-search-preview"
-web_search_options: { search_context_size: "medium" }
-// No presence_penalty or frequency_penalty (unsupported by search models)
-```
-
-The response format is identical -- `data.choices[0].message.content` -- so no frontend changes are needed. The search model will automatically find and cite current sources.
-
-### Files Modified
-
-1. `supabase/functions/ask-ai/index.ts` -- use `gpt-4o-search-preview` with `web_search_options` for rundown/strongman modes
+- Reuse the existing `show-notes-images` storage bucket (already used by other show prep features)
+- On upload, update the topic in `show_prep_notes.topics` JSON by finding the topic by ID and adding the image URL to its `images` array
+- Add a remove/delete button on the hero image so you can clear it if needed
 
