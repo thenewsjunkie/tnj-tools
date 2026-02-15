@@ -1,22 +1,24 @@
 
 
-## Scale Up Rundown Text Even Larger
+## Remove Datasheet Feature from Topics
 
 ### Changes
 
-**File: `src/pages/RundownPage.tsx`**
-- Title: `text-4xl` to `text-5xl`
-- Subtitle "Rundown -- Deep Dive": `text-lg` to `text-xl`
-- Generated date: `text-base` to `text-lg`
-- Take quote: `text-lg` to `text-xl`
-- Icon: `h-8 w-8` to `h-10 w-10`
+**File: `src/components/admin/show-prep/TopicCard.tsx`**
+- Remove the `DatasheetButton` import (line 12)
+- Remove the `DatasheetButton` component usage (lines 153-156)
 
-**File: `src/components/rundown/formatRundownContent.tsx`**
-- Section headers (h3): `text-2xl` to `text-3xl`
-- All body text (bullets, numbered items, paragraphs): `text-xl` to `text-2xl`
-- Bullet dot: `text-xl` to `text-2xl`
-- Blank line spacers: `h-5` to `h-6`
+**File: `src/components/admin/show-prep/types.ts`**
+- Remove the `Datasheet` interface
+- Remove the `datasheet` property from the `Topic` interface
 
-### Result
-Body text will be ~24px (text-2xl), headers ~30px (text-3xl), title ~48px (text-5xl) -- very comfortable on a 1080p stream.
+**File: `src/components/admin/show-prep/DatasheetButton.tsx`**
+- Delete this file entirely (it's no longer needed)
+
+**File: `src/components/admin/show-prep/PrintDatasheet.tsx`**
+- Delete this file entirely (it's no longer needed)
+
+### Notes
+- The `ask-ai` edge function still supports `datasheetMode` but that's harmless since nothing will call it with that flag anymore. Leaving it avoids unnecessary edge function redeployment.
+- Existing topic data in the database may still have `datasheet` fields in the JSON -- this is harmless and will simply be ignored.
 
