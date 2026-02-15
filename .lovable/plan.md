@@ -1,19 +1,25 @@
 
 
-## Replace Print Summary Content with Executive Snapshot
+## Add Drag-and-Drop Reordering to Media Links
 
-The current `printRundownSummary` function searches for a "Big Takeaways" section in the rundown content, which isn't reliably present anymore. Instead, it will use the executive snapshot -- the first section of the rundown (everything before the second header), which is already extracted by the existing `splitRundownAtFirstSection` utility.
+Add the ability to reorder media link cards by dragging them, using the same `@dnd-kit` library already installed and used elsewhere in the project (e.g., sortable links, sortable resources).
 
 ### What changes
 
-**`src/components/admin/show-prep/PrintStrongman.tsx`**
+**`src/components/rundown/MediaLinksSection.tsx`**
 
-1. Import `splitRundownAtFirstSection` from the formatRundownContent module.
-2. Replace the "Big Takeaways" extraction logic (lines 10-17) with a call to `splitRundownAtFirstSection(content)` and use `firstSection` as the print body.
-3. Convert the markdown in `firstSection` to HTML using the same bold-replacement approach already in the file, plus basic line break handling.
-4. Update the subtitle label from "Rundown Summary Card" to "Executive Snapshot" for clarity.
+1. Import `DndContext`, `closestCenter`, `KeyboardSensor`, `PointerSensor`, `useSensor`, `useSensors` from `@dnd-kit/core`, and `SortableContext`, `rectSortingStrategy`, `arrayMove` from `@dnd-kit/sortable`.
+2. Wrap the grid in a `DndContext` + `SortableContext` using the media link IDs.
+3. Replace the plain `<a>` card with a new sortable wrapper component.
+4. On `DragEnd`, compute the new order with `arrayMove` and call `onUpdate` with the reordered array.
 
-### Result
+**`src/components/rundown/SortableMediaCard.tsx`** (new file)
 
-The Print Summary button will now reliably output the executive snapshot (the introductory overview section) of the rundown, formatted cleanly for print. No other files change.
+A small wrapper component using `useSortable` from `@dnd-kit/sortable`. It renders the existing media card content (thumbnail, title, remove button) inside a sortable container with a drag handle (grip icon) that appears on hover, matching the existing drag-handle pattern used in `SortableLink` and `SortableResourceCard`.
+
+### Interaction
+
+- A grip handle appears on hover in the top-left corner of each card.
+- Drag a card to reorder; the new order persists immediately via `onUpdate`.
+- Cards remain clickable links -- the grip handle is the drag target, so clicking the card still opens the URL.
 
