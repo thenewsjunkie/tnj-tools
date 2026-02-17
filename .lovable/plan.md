@@ -1,25 +1,23 @@
 
 
-## Add Drag-and-Drop Reordering to Media Links
+## Add Audio Button to Admin Top Bar
 
-Add the ability to reorder media link cards by dragging them, using the same `@dnd-kit` library already installed and used elsewhere in the project (e.g., sortable links, sortable resources).
+Add an "Audio" pill button to the left of "Ask TNJ AI" in the top action buttons row. Clicking it toggles an expandable panel that embeds your local audio producer page in an iframe.
 
 ### What changes
 
-**`src/components/rundown/MediaLinksSection.tsx`**
+**`src/pages/Admin.tsx`**
 
-1. Import `DndContext`, `closestCenter`, `KeyboardSensor`, `PointerSensor`, `useSensor`, `useSensors` from `@dnd-kit/core`, and `SortableContext`, `rectSortingStrategy`, `arrayMove` from `@dnd-kit/sortable`.
-2. Wrap the grid in a `DndContext` + `SortableContext` using the media link IDs.
-3. Replace the plain `<a>` card with a new sortable wrapper component.
-4. On `DragEnd`, compute the new order with `arrayMove` and call `onUpdate` with the reordered array.
+1. Add a new `isAudioOpen` state (persisted to localStorage like the voice chat toggle).
+2. Add a `Headphones` icon import from `lucide-react`.
+3. Insert a new pill button before "Ask TNJ AI" with the label "Audio" and a headphones icon. It highlights when active, matching the existing button style.
+4. Add an expandable panel (same pattern as the voice chat panel) that shows an iframe pointing to `http://192.168.1.122:3060/producer`. The iframe will be sized to fill a reasonable area (e.g., `max-w-5xl mx-auto`, height ~500px) so you can interact with the producer UI inline.
 
-**`src/components/rundown/SortableMediaCard.tsx`** (new file)
+### Layout
 
-A small wrapper component using `useSortable` from `@dnd-kit/sortable`. It renders the existing media card content (thumbnail, title, remove button) inside a sortable container with a drag handle (grip icon) that appears on hover, matching the existing drag-handle pattern used in `SortableLink` and `SortableResourceCard`.
+```text
+[Audio]  [Ask TNJ AI]  [+ Poll]
+```
 
-### Interaction
-
-- A grip handle appears on hover in the top-left corner of each card.
-- Drag a card to reorder; the new order persists immediately via `onUpdate`.
-- Cards remain clickable links -- the grip handle is the drag target, so clicking the card still opens the URL.
+When "Audio" is clicked, a panel slides open below the buttons (above the modules) containing the embedded iframe. Clicking again collapses it. Both the Audio and Voice Chat panels can be open simultaneously.
 
