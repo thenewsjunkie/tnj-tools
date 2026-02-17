@@ -12,9 +12,10 @@ interface TopicListProps {
   date: string;
   onChange: (topics: Topic[]) => void;
   onMoveTopicToNextDay: (topic: Topic) => void;
+  onSaveImmediately?: (updatedTopics?: Topic[]) => void;
 }
 
-const TopicList = ({ topics, date, onChange, onMoveTopicToNextDay }: TopicListProps) => {
+const TopicList = ({ topics, date, onChange, onMoveTopicToNextDay, onSaveImmediately }: TopicListProps) => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   const handleAddTopic = (newTopic: Topic) => {
@@ -71,6 +72,11 @@ const TopicList = ({ topics, date, onChange, onMoveTopicToNextDay }: TopicListPr
                     onChange={(updated) => handleTopicChange(index, updated)}
                     onDelete={() => handleTopicDelete(index)}
                     onMoveToNextDay={() => onMoveTopicToNextDay(topic)}
+                    onSaveImmediately={(updatedTopic) => {
+                      const newTopics = [...topics];
+                      newTopics[index] = updatedTopic;
+                      onSaveImmediately?.(newTopics);
+                    }}
                   />
                 ))}
               </div>

@@ -122,6 +122,10 @@ const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProp
     }
   }, [noteId, dateKey, queryClient]);
 
+  // Keep a ref to localTopics so saveImmediately can access latest
+  const localTopicsRef = useRef(localTopics);
+  localTopicsRef.current = localTopics;
+
   // Debounced save
   useEffect(() => {
     if (isLoading || isDraggingRef.current) return;
@@ -138,6 +142,12 @@ const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProp
   const handleTopicsChange = (newTopics: Topic[]) => {
     setLocalTopics(newTopics);
   };
+
+  // Immediate save callback for critical updates (e.g. rundown generation)
+  const handleSaveImmediately = useCallback((updatedTopics?: Topic[]) => {
+    const topicsToSave = updatedTopics || localTopicsRef.current;
+    saveNotes(topicsToSave);
+  }, [saveNotes]);
 
   const handleMoveTopicToNextDay = async (topicToMove: Topic) => {
     try {
@@ -267,6 +277,7 @@ const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProp
             date={dateKey}
             onChange={handleTopicsChange}
             onMoveTopicToNextDay={handleMoveTopicToNextDay}
+            onSaveImmediately={handleSaveImmediately}
           />
           <DragOverlay>
             {activeTopic ? (
