@@ -21,9 +21,15 @@ const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProp
   const [localTopics, setLocalTopics] = useState<Topic[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const isDraggingRef = useRef(false);
+  const hasLoadedRef = useRef(false);
   const queryClient = useQueryClient();
 
   const dateKey = format(selectedDate, "yyyy-MM-dd");
+
+  // Reset load tracking on date change
+  useEffect(() => {
+    hasLoadedRef.current = false;
+  }, [dateKey]);
 
   // Fetch show prep notes using React Query
   const { data: noteData, isLoading } = useQuery({
@@ -39,28 +45,21 @@ const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProp
     },
   });
 
-  // Sync query data to local state for editing
-  // Handles migration from old hour-based format to flat topic list
+  // Sync query data to local state only on initial load (not on background refetches)
   useEffect(() => {
+    if (hasLoadedRef.current) return;
     if (noteData) {
       const rawData = noteData.topics as unknown;
       
       if (rawData && typeof rawData === "object") {
-        // Check for new flat format: { topics: [...] }
         if (Array.isArray((rawData as { topics?: unknown }).topics)) {
           setLocalTopics((rawData as { topics: Topic[] }).topics);
-        }
-        // Check for old hour-based format: { hours: [...] }
-        else if (Array.isArray((rawData as { hours?: unknown }).hours)) {
-          // Migrate: flatten all topics from all hours
+        } else if (Array.isArray((rawData as { hours?: unknown }).hours)) {
           const hours = (rawData as { hours: HourBlock[] }).hours;
           const flattenedTopics = hours.flatMap(h => h.topics);
-          // Re-assign display orders
           flattenedTopics.forEach((t, i) => t.display_order = i);
           setLocalTopics(flattenedTopics);
-        }
-        // Legacy: raw array of topics
-        else if (Array.isArray(rawData)) {
+        } else if (Array.isArray(rawData)) {
           setLocalTopics(rawData as Topic[]);
         } else {
           setLocalTopics([]);
@@ -68,10 +67,12 @@ const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProp
       } else {
         setLocalTopics([]);
       }
-    } else if (noteData === null) {
+      hasLoadedRef.current = true;
+    } else if (noteData === null && !isLoading) {
       setLocalTopics([]);
+      hasLoadedRef.current = true;
     }
-  }, [noteData]);
+  }, [noteData, isLoading]);
 
   const noteId = noteData?.id ?? null;
 
