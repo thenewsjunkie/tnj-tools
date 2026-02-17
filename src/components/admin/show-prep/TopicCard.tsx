@@ -30,9 +30,10 @@ interface TopicCardProps {
   onChange: (topic: Topic) => void;
   onDelete: () => void;
   onMoveToNextDay: () => void;
+  onSaveImmediately?: (updatedTopic: Topic) => void;
 }
 
-const TopicCard = ({ topic, date, onChange, onDelete, onMoveToNextDay }: TopicCardProps) => {
+const TopicCard = ({ topic, date, onChange, onDelete, onMoveToNextDay, onSaveImmediately }: TopicCardProps) => {
   const { toast } = useToast();
   const isLinkType = topic.type === "link";
   const hasContent = topic.title.trim() || topic.links.length > 0 || topic.images.length > 0 || topic.url;
@@ -153,7 +154,12 @@ const TopicCard = ({ topic, date, onChange, onDelete, onMoveToNextDay }: TopicCa
             <StrongmanButton
               topic={topic}
               date={date}
-              onChange={(strongman) => onChange({ ...topic, strongman })}
+              onChange={(strongman) => {
+                const updated = { ...topic, strongman };
+                onChange(updated);
+                return updated;
+              }}
+              onSaveImmediately={(updatedTopic) => onSaveImmediately?.(updatedTopic)}
             />
 
             <Popover open={takeOpen} onOpenChange={setTakeOpen}>

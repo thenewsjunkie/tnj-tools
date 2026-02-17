@@ -86,15 +86,16 @@ End with:
 
 Keep it structured, factual, and precise. Do not mention your knowledge cutoff date.`;
 
-const LOCALSTORAGE_KEY = "rundown_system_prompt";
+const SYSTEM_SETTINGS_KEY = "rundown_system_prompt";
 
 interface StrongmanButtonProps {
   topic: Topic;
   date: string;
-  onChange: (strongman: Strongman | undefined) => void;
+  onChange: (strongman: Strongman | undefined) => Topic;
+  onSaveImmediately?: (updatedTopic: Topic) => void;
 }
 
-export const StrongmanButton = ({ topic, date, onChange }: StrongmanButtonProps) => {
+export const StrongmanButton = ({ topic, date, onChange, onSaveImmediately }: StrongmanButtonProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -122,8 +123,16 @@ export const StrongmanButton = ({ topic, date, onChange }: StrongmanButtonProps)
 
   useEffect(() => {
     if (editPromptOpen) {
-      const saved = localStorage.getItem(LOCALSTORAGE_KEY);
-      setSystemPromptInput(saved || DEFAULT_RUNDOWN_PROMPT);
+      // Load from database
+      supabase
+        .from("system_settings")
+        .select("value")
+        .eq("key", SYSTEM_SETTINGS_KEY)
+        .maybeSingle()
+        .then(({ data }) => {
+          const dbPrompt = (data?.value as { prompt?: string })?.prompt;
+          setSystemPromptInput(dbPrompt || DEFAULT_RUNDOWN_PROMPT);
+        });
     }
   }, [editPromptOpen]);
 
@@ -135,7 +144,13 @@ export const StrongmanButton = ({ topic, date, onChange }: StrongmanButtonProps)
 
     setIsLoading(true);
     try {
-      const customSystemPrompt = localStorage.getItem(LOCALSTORAGE_KEY) || undefined;
+      // Load custom system prompt from DB
+      const { data: settingsData } = await supabase
+        .from("system_settings")
+        .select("value")
+        .eq("key", SYSTEM_SETTINGS_KEY)
+        .maybeSingle();
+      const customSystemPrompt = (settingsData?.value as { prompt?: string })?.prompt || undefined;
       const { data, error } = await supabase.functions.invoke("ask-ai", {
         body: { prompt: argumentInput, rundownMode: true, model: "gpt-4o", customSystemPrompt }
       });
@@ -147,7 +162,9 @@ export const StrongmanButton = ({ topic, date, onChange }: StrongmanButtonProps)
         prompt: argumentInput
       };
 
-      onChange(strongman);
+      const updatedTopic = onChange(strongman);
+      // Immediately save to prevent data loss from debounce race condition
+      onSaveImmediately?.(updatedTopic);
       setGenerateOpen(false);
       setIsRegenerating(false);
       toast({ description: "Rundown generated!" });
@@ -163,16 +180,27 @@ export const StrongmanButton = ({ topic, date, onChange }: StrongmanButtonProps)
     if (topic.strongman) printRundown(topic);
   };
 
-  const handleSaveSystemPrompt = () => {
-    localStorage.setItem(LOCALSTORAGE_KEY, systemPromptInput);
-    setEditPromptOpen(false);
-    toast({ description: "System prompt saved!" });
+  const handleSaveSystemPrompt = async () => {
+    try {
+      await supabase.from("system_settings").upsert({
+        key: SYSTEM_SETTINGS_KEY,
+        value: { prompt: systemPromptInput } as unknown as import("@/integrations/supabase/types").Json,
+      });
+      setEditPromptOpen(false);
+      toast({ description: "System prompt saved!" });
+    } catch {
+      toast({ description: "Failed to save prompt", variant: "destructive" });
+    }
   };
 
-  const handleResetSystemPrompt = () => {
+  const handleResetSystemPrompt = async () => {
     setSystemPromptInput(DEFAULT_RUNDOWN_PROMPT);
-    localStorage.removeItem(LOCALSTORAGE_KEY);
-    toast({ description: "Prompt reset to default" });
+    try {
+      await supabase.from("system_settings").delete().eq("key", SYSTEM_SETTINGS_KEY);
+      toast({ description: "Prompt reset to default" });
+    } catch {
+      toast({ description: "Failed to reset prompt", variant: "destructive" });
+    }
   };
 
   return (
