@@ -15,7 +15,7 @@ import VideoTools from "@/components/admin/VideoTools";
 
 import { Badge } from "@/components/ui/badge";
 import { useQueueState } from "@/hooks/useQueueState";
-import { Mic, Archive, Plus } from "lucide-react";
+import { Mic, Archive, Plus, Headphones } from "lucide-react";
 import PollDialog from "@/components/polls/PollDialog";
 
 const Admin = () => {
@@ -25,12 +25,20 @@ const Admin = () => {
     const saved = localStorage.getItem("admin-voice-chat-open");
     return saved === "true";
   });
+  const [isAudioOpen, setIsAudioOpen] = useState(() => {
+    const saved = localStorage.getItem("admin-audio-panel-open");
+    return saved === "true";
+  });
   const [isPollDialogOpen, setIsPollDialogOpen] = useState(false);
   const { queueCount } = useQueueState();
 
   useEffect(() => {
     localStorage.setItem("admin-voice-chat-open", String(isVoiceChatOpen));
   }, [isVoiceChatOpen]);
+
+  useEffect(() => {
+    localStorage.setItem("admin-audio-panel-open", String(isAudioOpen));
+  }, [isAudioOpen]);
   
   console.log("[Admin] Rendering Admin page, theme:", theme);
 
@@ -40,6 +48,18 @@ const Admin = () => {
 
       {/* Top Action Buttons */}
       <div className="flex justify-center items-center gap-4 mb-4">
+        <button
+          onClick={() => setIsAudioOpen(!isAudioOpen)}
+          className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all duration-200 ${
+            isAudioOpen 
+              ? "bg-primary text-primary-foreground shadow-lg" 
+              : "bg-muted hover:bg-muted/80 text-foreground"
+          }`}
+        >
+          <Headphones className="h-5 w-5" />
+          <span>Audio</span>
+        </button>
+
         <button
           onClick={() => setIsVoiceChatOpen(!isVoiceChatOpen)}
           className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all duration-200 ${
@@ -70,7 +90,22 @@ const Admin = () => {
         poll={null}
       />
 
-      {/* Expandable Voice Chat Panel */}
+      {/* Expandable Audio Panel */}
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          isAudioOpen ? "max-h-[2000px] opacity-100 mb-4" : "max-h-0 opacity-0"
+        }`}
+      >
+        <div className="max-w-5xl mx-auto">
+          <iframe
+            src="http://192.168.1.122:3060/producer"
+            className="w-full h-[500px] rounded-lg border border-border"
+            title="Audio Producer"
+            allow="microphone; autoplay"
+          />
+        </div>
+      </div>
+
       <div
         className={`overflow-hidden transition-all duration-300 ease-in-out ${
           isVoiceChatOpen ? "max-h-[2000px] opacity-100 mb-4" : "max-h-0 opacity-0"
