@@ -22,6 +22,7 @@ const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProp
   const [isSaving, setIsSaving] = useState(false);
   const isDraggingRef = useRef(false);
   const hasLoadedRef = useRef(false);
+  const hasUserEditedRef = useRef(false);
   const queryClient = useQueryClient();
 
   const dateKey = format(selectedDate, "yyyy-MM-dd");
@@ -29,6 +30,7 @@ const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProp
   // Reset load tracking on date change
   useEffect(() => {
     hasLoadedRef.current = false;
+    hasUserEditedRef.current = false;
   }, [dateKey]);
 
   // Fetch show prep notes using React Query
@@ -127,9 +129,9 @@ const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProp
   const localTopicsRef = useRef(localTopics);
   localTopicsRef.current = localTopics;
 
-  // Debounced save
+  // Debounced save - only when user has explicitly edited
   useEffect(() => {
-    if (isLoading || isDraggingRef.current) return;
+    if (isLoading || isDraggingRef.current || !hasUserEditedRef.current) return;
     
     const timeoutId = setTimeout(() => {
       saveNotes(localTopics);
@@ -141,14 +143,22 @@ const ShowPrepNotes = ({ selectedDate, onSelectedDateChange }: ShowPrepNotesProp
   const [activeTopicId, setActiveTopicId] = useState<string | null>(null);
 
   const handleTopicsChange = (newTopics: Topic[]) => {
+    hasUserEditedRef.current = true;
     setLocalTopics(newTopics);
   };
 
   // Immediate save callback for critical updates (e.g. rundown generation)
   const handleSaveImmediately = useCallback((updatedTopics?: Topic[]) => {
     const topicsToSave = updatedTopics || localTopicsRef.current;
-    saveNotes(topicsToSave);
-  }, [saveNotes]);
+    hasUserEditedRef.current = true;
+    saveNotes(topicsToSave).then(() => {
+      // Update React Query cache so future reads have correct data
+      queryClient.setQueryData(["show-prep-notes", dateKey], (old: any) => {
+        if (!old) return old;
+        return { ...old, topics: JSON.parse(JSON.stringify({ topics: topicsToSave })) };
+      });
+    });
+  }, [saveNotes, queryClient, dateKey]);
 
   const handleMoveTopicToNextDay = async (topicToMove: Topic) => {
     try {
