@@ -1,55 +1,48 @@
 
 
-## Fix Rundown Save Reliability and Persist System Prompt to Database
+## Fix: Rundown Disappearing Due to React Query Race Condition
 
-### Problem
+### Root Cause
 
-1. **Rundown not saving**: When a rundown is generated in `StrongmanButton`, it calls `onChange(strongman)` which updates `localTopics` state in `ShowPrepNotes`. But the save is debounced by 1 second. If the React Query cache invalidates or the component re-renders during that window, the `useEffect` that syncs from `noteData` overwrites `localTopics` with stale data, losing the rundown.
-
-2. **System prompt reverting**: The rundown system prompt is stored in `localStorage` (`rundown_system_prompt`), which gets cleared on browser/environment resets.
+The `useEffect([noteData])` sync in `ShowPrepNotes.tsx` unconditionally overwrites `localTopics` whenever React Query refetches data. With the default `staleTime` of 0, a background refetch can return stale DB data (before the save completes), wiping out the just-generated rundown.
 
 ### Solution
 
-#### 1. Immediate save on rundown generation
+Make `localTopics` the source of truth after initial load. Only sync from DB on initial load or date change -- not on every refetch.
 
-Instead of relying on the debounced auto-save, perform an immediate save when a rundown is generated. This means passing a `saveNow` callback down through the component tree so `StrongmanButton` can trigger it after updating the topic.
+### Changes
 
-**Files changed:**
-- `src/components/admin/show-prep/ShowPrepNotes.tsx` -- expose an immediate save function and pass it down
-- `src/components/admin/show-prep/TopicList.tsx` -- pass-through the save function
-- `src/components/admin/show-prep/TopicCard.tsx` -- pass-through to StrongmanButton
-- `src/components/admin/show-prep/StrongmanButton.tsx` -- call immediate save after generating rundown
+**`src/components/admin/show-prep/ShowPrepNotes.tsx`**
 
-The flow becomes:
-1. Rundown generates successfully
-2. `onChange(strongman)` updates local state
-3. Immediately call `onImmediateSave()` which saves without waiting for debounce
+1. Add a `hasLoadedRef` that tracks whether initial data has been synced for the current date.
+2. Reset `hasLoadedRef` to `false` when `dateKey` changes.
+3. In the sync `useEffect`, only set `localTopics` from `noteData` when `!hasLoadedRef.current`. After the first sync, mark it as loaded.
+4. This prevents background refetches from overwriting local edits or in-flight saves.
 
-#### 2. Move system prompt to database
+```text
+Before (simplified):
+useEffect(() => {
+  if (noteData) {
+    setLocalTopics(parse(noteData.topics));  // runs on EVERY refetch
+  }
+}, [noteData]);
 
-Use the existing `system_settings` table (key-value store with JSONB values, already has open RLS) to persist the rundown system prompt.
+After (simplified):
+useEffect(() => {
+  if (hasLoadedRef.current) return;  // skip after initial load
+  if (noteData) {
+    setLocalTopics(parse(noteData.topics));
+    hasLoadedRef.current = true;
+  } else if (noteData === null && !isLoading) {
+    setLocalTopics([]);
+    hasLoadedRef.current = true;
+  }
+}, [noteData, isLoading]);
 
-**Database**: No schema changes needed. The `system_settings` table already exists with `key` (text PK) and `value` (jsonb).
+// Reset on date change
+useEffect(() => {
+  hasLoadedRef.current = false;
+}, [dateKey]);
+```
 
-**Files changed:**
-- `src/components/admin/show-prep/StrongmanButton.tsx`:
-  - Replace `localStorage.getItem/setItem("rundown_system_prompt")` with reads/writes to `system_settings` table using key `"rundown_system_prompt"`
-  - Load prompt from DB when the edit dialog opens
-  - Save prompt to DB via upsert on save
-  - Pass the DB-stored prompt to the edge function instead of from localStorage
-
-### Technical Details
-
-**ShowPrepNotes.tsx changes:**
-- Extract `saveNotes` into a stable ref-based function that can be called immediately
-- Add a `saveImmediately` function that calls `saveNotes` with current topics right away
-- Pass `onSaveImmediately` prop to `TopicList`
-
-**StrongmanButton.tsx changes:**
-- Add a new `onSaveImmediately` prop
-- After successful rundown generation, call `onChange(strongman)` then `onSaveImmediately()`
-- Replace localStorage reads with: `supabase.from("system_settings").select("value").eq("key", "rundown_system_prompt").maybeSingle()`
-- Replace localStorage writes with: `supabase.from("system_settings").upsert({ key: "rundown_system_prompt", value: { prompt: systemPromptInput } })`
-
-**TopicList.tsx and TopicCard.tsx:**
-- Thread through the `onSaveImmediately` callback prop
+This is a minimal, targeted fix. No other files need to change.
