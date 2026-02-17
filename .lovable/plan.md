@@ -1,48 +1,33 @@
 
 
-## Fix: Rundown Disappearing Due to React Query Race Condition
+## Fix: Debounced Save Overwrites DB on Component Remount
 
 ### Root Cause
 
-The `useEffect([noteData])` sync in `ShowPrepNotes.tsx` unconditionally overwrites `localTopics` whenever React Query refetches data. With the default `staleTime` of 0, a background refetch can return stale DB data (before the save completes), wiping out the just-generated rundown.
+The debounced auto-save fires on every `localTopics` change, including the initial load from React Query cache. When the component remounts (e.g., after a page refresh or navigation), the React Query cache may contain stale data (without the strongman). The flow:
 
-### Solution
+1. Component mounts, `hasLoadedRef = false`
+2. React Query provides cached (stale) data -- no strongman
+3. `setLocalTopics(staleData)` fires, `hasLoadedRef = true`
+4. Debounced save triggers 1 second later, PATCHES DB with stale data -- strongman is lost
+5. Fresh DB refetch is ignored because `hasLoadedRef = true`
 
-Make `localTopics` the source of truth after initial load. Only sync from DB on initial load or date change -- not on every refetch.
+### Fix
 
-### Changes
+Add a `hasUserEditedRef` flag that starts as `false` and only flips to `true` when the user (or code like StrongmanButton) explicitly changes topics. The debounced save only runs when `hasUserEditedRef.current` is `true`.
 
-**`src/components/admin/show-prep/ShowPrepNotes.tsx`**
+### Changes (single file)
 
-1. Add a `hasLoadedRef` that tracks whether initial data has been synced for the current date.
-2. Reset `hasLoadedRef` to `false` when `dateKey` changes.
-3. In the sync `useEffect`, only set `localTopics` from `noteData` when `!hasLoadedRef.current`. After the first sync, mark it as loaded.
-4. This prevents background refetches from overwriting local edits or in-flight saves.
+**`src/components/admin/show-prep/ShowPrepNotes.tsx`**:
 
-```text
-Before (simplified):
-useEffect(() => {
-  if (noteData) {
-    setLocalTopics(parse(noteData.topics));  // runs on EVERY refetch
-  }
-}, [noteData]);
+1. Add `hasUserEditedRef = useRef(false)` -- tracks whether topics changed from user action vs initial DB load
+2. Reset it to `false` on date change (alongside `hasLoadedRef`)
+3. In `handleTopicsChange`, set `hasUserEditedRef.current = true` before calling `setLocalTopics`
+4. In the debounced save `useEffect`, skip saving when `!hasUserEditedRef.current`
+5. In `handleSaveImmediately`, also update the React Query cache after saving so future cache reads have correct data
 
-After (simplified):
-useEffect(() => {
-  if (hasLoadedRef.current) return;  // skip after initial load
-  if (noteData) {
-    setLocalTopics(parse(noteData.topics));
-    hasLoadedRef.current = true;
-  } else if (noteData === null && !isLoading) {
-    setLocalTopics([]);
-    hasLoadedRef.current = true;
-  }
-}, [noteData, isLoading]);
+This ensures:
+- Initial load from cache never triggers an overwrite
+- Only explicit user edits or rundown generations trigger saves
+- The query cache stays in sync after immediate saves
 
-// Reset on date change
-useEffect(() => {
-  hasLoadedRef.current = false;
-}, [dateKey]);
-```
-
-This is a minimal, targeted fix. No other files need to change.
