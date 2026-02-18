@@ -184,11 +184,6 @@ const RundownPage = () => {
             <p className="text-xl text-muted-foreground">
               Generated {generatedDate}
             </p>
-            {topic.take && (
-              <p className="text-2xl text-orange-400 italic mt-1">
-                Take: "{topic.take}"
-              </p>
-            )}
           </div>
         </div>
 
