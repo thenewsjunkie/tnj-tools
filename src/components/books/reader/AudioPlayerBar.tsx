@@ -106,7 +106,7 @@ export default function AudioPlayerBar({
             <SelectValue placeholder="Voice" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Default</SelectItem>
+            <SelectItem value="__default">Default</SelectItem>
             {voices.map((v) => (
               <SelectItem key={v.voiceURI} value={v.voiceURI}>
                 {v.name} ({v.lang})
