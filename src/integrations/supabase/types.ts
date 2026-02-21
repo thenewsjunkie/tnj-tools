@@ -244,6 +244,153 @@ export type Database = {
         }
         Relationships: []
       }
+      book_bookmarks: {
+        Row: {
+          book_id: string
+          created_at: string | null
+          id: string
+          label: string | null
+          location: string
+        }
+        Insert: {
+          book_id: string
+          created_at?: string | null
+          id?: string
+          label?: string | null
+          location: string
+        }
+        Update: {
+          book_id?: string
+          created_at?: string | null
+          id?: string
+          label?: string | null
+          location?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_bookmarks_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      book_highlights: {
+        Row: {
+          book_id: string
+          cfi_range: string
+          color: string | null
+          created_at: string | null
+          id: string
+          text_excerpt: string | null
+        }
+        Insert: {
+          book_id: string
+          cfi_range: string
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          text_excerpt?: string | null
+        }
+        Update: {
+          book_id?: string
+          cfi_range?: string
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          text_excerpt?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_highlights_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      book_notes: {
+        Row: {
+          book_id: string
+          cfi_range: string | null
+          created_at: string | null
+          id: string
+          text: string
+        }
+        Insert: {
+          book_id: string
+          cfi_range?: string | null
+          created_at?: string | null
+          id?: string
+          text: string
+        }
+        Update: {
+          book_id?: string
+          cfi_range?: string | null
+          created_at?: string | null
+          id?: string
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_notes_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      books: {
+        Row: {
+          author: string | null
+          checksum: string | null
+          cover_url: string | null
+          created_at: string | null
+          description: string | null
+          file_size: number | null
+          file_type: string
+          file_url: string
+          id: string
+          language: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          author?: string | null
+          checksum?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          file_size?: number | null
+          file_type: string
+          file_url: string
+          id?: string
+          language?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          author?: string | null
+          checksum?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          file_size?: number | null
+          file_type?: string
+          file_url?: string
+          id?: string
+          language?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       bot_instances: {
         Row: {
           created_at: string | null
@@ -745,6 +892,38 @@ export type Database = {
           timezone?: string
         }
         Relationships: []
+      }
+      reading_progress: {
+        Row: {
+          book_id: string
+          id: string
+          last_read_at: string | null
+          location: string | null
+          percentage: number | null
+        }
+        Insert: {
+          book_id: string
+          id?: string
+          last_read_at?: string | null
+          location?: string | null
+          percentage?: number | null
+        }
+        Update: {
+          book_id?: string
+          id?: string
+          last_read_at?: string | null
+          location?: string | null
+          percentage?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reading_progress_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: true
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rejoins: {
         Row: {
