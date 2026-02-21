@@ -8,10 +8,12 @@ export interface ReadAloudSettings {
 interface UseReadAloudOptions {
   getVisibleText: () => string | null;
   onPageFinished: () => void;
+  onWordBoundary?: (charIndex: number, charLength: number) => void;
+  onStop?: () => void;
   settings: ReadAloudSettings;
 }
 
-export function useReadAloud({ getVisibleText, onPageFinished, settings }: UseReadAloudOptions) {
+export function useReadAloud({ getVisibleText, onPageFinished, onWordBoundary, onStop, settings }: UseReadAloudOptions) {
   const [isReading, setIsReading] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
@@ -25,7 +27,8 @@ export function useReadAloud({ getVisibleText, onPageFinished, settings }: UseRe
     setIsPaused(false);
     window.speechSynthesis.cancel();
     utteranceRef.current = null;
-  }, []);
+    onStop?.();
+  }, [onStop]);
 
   const speakCurrentPage = useCallback(() => {
     const text = getVisibleText();
@@ -45,6 +48,12 @@ export function useReadAloud({ getVisibleText, onPageFinished, settings }: UseRe
       if (voice) utterance.voice = voice;
     }
 
+    utterance.onboundary = (e) => {
+      if (e.name === "word") {
+        onWordBoundary?.(e.charIndex, e.charLength ?? 0);
+      }
+    };
+
     utterance.onend = () => {
       if (!isReadingRef.current) return;
       onPageFinished();
@@ -63,7 +72,7 @@ export function useReadAloud({ getVisibleText, onPageFinished, settings }: UseRe
 
     utteranceRef.current = utterance;
     window.speechSynthesis.speak(utterance);
-  }, [getVisibleText, onPageFinished, stop]);
+  }, [getVisibleText, onPageFinished, onWordBoundary, stop]);
 
   const play = useCallback(() => {
     if (isPaused) {
@@ -90,7 +99,6 @@ export function useReadAloud({ getVisibleText, onPageFinished, settings }: UseRe
     }
   }, [isReading, isPaused, pause, play]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       isReadingRef.current = false;
@@ -98,5 +106,5 @@ export function useReadAloud({ getVisibleText, onPageFinished, settings }: UseRe
     };
   }, []);
 
-  return { isReading, isPaused, toggle, stop };
+  return { isReading, isPaused, play, pause, toggle, stop };
 }

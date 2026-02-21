@@ -10,6 +10,8 @@ export interface EpubReaderHandle {
   next: () => void;
   prev: () => void;
   getVisibleText: () => string | null;
+  highlightWord: (charIndex: number, charLength: number) => void;
+  clearHighlight: () => void;
 }
 
 interface EpubReaderProps {
@@ -58,6 +60,73 @@ const EpubReader = forwardRef<EpubReaderHandle, EpubReaderProps>(function EpubRe
         // ignore
       }
       return null;
+    },
+    highlightWord: (charIndex: number, charLength: number) => {
+      try {
+        const contents = renditionRef.current?.getContents();
+        if (!contents || !(contents as any).length) return;
+        const doc = (contents as any)[0]?.document as Document;
+        if (!doc?.body) return;
+
+        // Remove previous highlight
+        doc.querySelectorAll("mark.tts-highlight").forEach((el) => {
+          const parent = el.parentNode;
+          if (parent) {
+            parent.replaceChild(doc.createTextNode(el.textContent || ""), el);
+            parent.normalize();
+          }
+        });
+
+        if (charLength <= 0) return;
+
+        // Walk text nodes to find the one containing charIndex
+        const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
+        let offset = 0;
+        let node: Text | null = null;
+        while (walker.nextNode()) {
+          const textNode = walker.currentNode as Text;
+          const len = textNode.length;
+          if (offset + len > charIndex) {
+            node = textNode;
+            break;
+          }
+          offset += len;
+        }
+        if (!node) return;
+
+        const localStart = charIndex - offset;
+        const localEnd = Math.min(localStart + charLength, node.length);
+
+        const range = doc.createRange();
+        range.setStart(node, localStart);
+        range.setEnd(node, localEnd);
+
+        const mark = doc.createElement("mark");
+        mark.className = "tts-highlight";
+        mark.style.backgroundColor = "rgba(59, 130, 246, 0.35)";
+        mark.style.borderRadius = "2px";
+        mark.style.color = "inherit";
+        range.surroundContents(mark);
+      } catch {
+        // ignore highlight errors
+      }
+    },
+    clearHighlight: () => {
+      try {
+        const contents = renditionRef.current?.getContents();
+        if (!contents || !(contents as any).length) return;
+        const doc = (contents as any)[0]?.document as Document;
+        if (!doc?.body) return;
+        doc.querySelectorAll("mark.tts-highlight").forEach((el) => {
+          const parent = el.parentNode;
+          if (parent) {
+            parent.replaceChild(doc.createTextNode(el.textContent || ""), el);
+            parent.normalize();
+          }
+        });
+      } catch {
+        // ignore
+      }
     },
   }));
 
