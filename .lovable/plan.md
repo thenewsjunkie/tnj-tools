@@ -1,54 +1,32 @@
 
 
-## Hover Settings Overlay on Book Cards + Fetch Cover Feature
+## Add "Edit Book" to the Book Card Menu
 
-### What You'll Get
-
-When you hover over a book in the library, a settings gear icon will appear. Clicking it opens a small menu with options like "Edit details", "Fetch cover", and "Delete". The "Fetch cover" option will search the Open Library API using the book's title and author to find a cover image, then save it to your book record.
+Add an "Edit Details" option to the existing dropdown menu that opens a dialog where you can edit the book's title, author, description, and tags.
 
 ### Changes
 
-**1. `src/components/books/library/BookCard.tsx`** -- Add hover overlay
+**1. `src/components/books/library/BookCardMenu.tsx`** -- Add edit dialog
 
-- In grid view: overlay a semi-transparent dark layer on hover with a settings (gear/ellipsis) icon button in the top-right corner
-- Clicking the settings button opens a dropdown menu (using the existing DropdownMenu component) with:
-  - "Fetch Cover" (only shown when no cover exists) -- searches Open Library for a cover
-  - "Edit" -- navigates to an edit view or opens an inline editor
-  - "Delete" -- deletes the book with confirmation
-- The overlay button uses `e.stopPropagation()` so clicking it doesn't navigate to the reader
-- In list view: show a small ellipsis button on the right side on hover, same dropdown
-
-**2. `src/components/books/library/BookCardMenu.tsx`** (new) -- Extracted dropdown menu component
-
-- Receives `book` prop and callbacks for each action
-- Contains the DropdownMenu with menu items
-- "Fetch Cover" item calls the Open Library API directly from the client:
-  - Searches `https://openlibrary.org/search.json?title=TITLE&author=AUTHOR&limit=1`
-  - Extracts the `cover_i` field from the first result
-  - Constructs the cover URL: `https://covers.openlibrary.org/b/id/COVER_ID-L.jpg`
-  - Updates the book's `cover_url` in Supabase
-  - Invalidates the books query to refresh the UI
-- "Delete" item shows a confirmation dialog before deleting
-
-**3. No edge function needed** -- Open Library API is free, public, and has no CORS restrictions, so it can be called directly from the browser.
-
-**4. No database changes needed** -- The `books` table already has a `cover_url` column.
+- Add an "Edit Details" menu item with a Pencil icon between "Fetch Cover" and "Delete"
+- Add a new Dialog (using the existing `Dialog` component) that opens when "Edit Details" is clicked
+- The dialog contains a simple form with inputs for:
+  - Title (text input, required)
+  - Author (text input)
+  - Description (textarea)
+  - Tags (text input, comma-separated)
+- On save, update the book record in Supabase and invalidate the books query
+- The dialog uses `onClick={(e) => e.stopPropagation()}` to prevent card navigation
 
 ### Technical Details
 
-Open Library cover fetch logic:
-```text
-1. GET https://openlibrary.org/search.json?title={title}&author={author}&limit=1
-2. Extract docs[0].cover_i from response
-3. If found: cover URL = https://covers.openlibrary.org/b/id/{cover_i}-L.jpg
-4. UPDATE books SET cover_url = coverUrl WHERE id = book.id
-5. Invalidate ["books"] query
-```
+- Uses the existing `Dialog` component from `@/components/ui/dialog`
+- Uses `Input`, `Label`, and `Textarea` components already in the project
+- Updates the `books` table directly via `supabase.from("books").update(...)` -- same pattern as the existing `fetchCover` function
+- Tags are stored as `text[]` in the database, so they're split/joined on commas
+- No database changes needed -- all editable fields already exist on the `books` table
 
-The dropdown uses `modal={false}` to avoid focus-trapping conflicts (per existing project pattern). The gear button in the overlay uses `e.stopPropagation()` and `e.preventDefault()` to prevent the parent button's click-to-navigate behavior.
+### Files Modified
 
-### Files
-
-- `src/components/books/library/BookCard.tsx` -- Add hover overlay with settings trigger
-- `src/components/books/library/BookCardMenu.tsx` -- New dropdown menu with Fetch Cover, Edit, Delete actions
+- `src/components/books/library/BookCardMenu.tsx` -- Add "Edit Details" menu item and edit dialog
 
