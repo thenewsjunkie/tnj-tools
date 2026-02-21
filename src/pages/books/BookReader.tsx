@@ -35,15 +35,22 @@ export default function BookReader() {
   const [toc, setToc] = useState<NavItem[]>([]);
   const [panel, setPanel] = useState<"toc" | "bookmarks" | "highlights" | "settings" | null>(null);
 
+  const [fileError, setFileError] = useState<string | null>(null);
+
   // Get signed URL for private bucket
   useEffect(() => {
     if (!book?.file_url) return;
     supabase.storage
       .from("book_files")
       .createSignedUrl(book.file_url, 3600)
-      .then(({ data }) => {
-        if (data?.signedUrl) setFileUrl(data.signedUrl);
-      });
+      .then(({ data, error }) => {
+        if (error || !data?.signedUrl) {
+          setFileError("Failed to load book file. Please try again.");
+          return;
+        }
+        setFileUrl(data.signedUrl);
+      })
+      .catch(() => setFileError("Failed to load book file."));
   }, [book?.file_url]);
 
   const handleTocSelect = useCallback((href: string) => {
@@ -64,7 +71,7 @@ export default function BookReader() {
   if (!fileUrl) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <p className="text-muted-foreground">Preparing file...</p>
+        <p className="text-muted-foreground">{fileError || "Preparing file..."}</p>
       </div>
     );
   }

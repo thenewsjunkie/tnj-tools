@@ -30,6 +30,7 @@ export default function EpubReader({
   const renditionRef = useRef<Rendition | null>(null);
   const { saveProgress } = useSaveProgress(bookId);
   const [isReady, setIsReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Initialize book
   useEffect(() => {
@@ -62,7 +63,12 @@ export default function EpubReader({
 
     // Display at saved location or beginning
     const loc = initialLocation || undefined;
-    rendition.display(loc).then(() => setIsReady(true));
+    rendition.display(loc)
+      .then(() => setIsReady(true))
+      .catch((err: any) => {
+        console.error("epub display error:", err);
+        setError("Failed to render book. The file may be corrupted.");
+      });
 
     // Track location changes
     rendition.on("relocated", (location: any) => {
@@ -106,8 +112,21 @@ export default function EpubReader({
   const goNext = useCallback(() => renditionRef.current?.next(), []);
   const goPrev = useCallback(() => renditionRef.current?.prev(), []);
 
+  if (error) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <p className="text-destructive">{error}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="relative flex-1 overflow-hidden">
+      {!isReady && (
+        <div className="absolute inset-0 flex items-center justify-center z-20">
+          <p className="text-muted-foreground">Loading book…</p>
+        </div>
+      )}
       {/* Tap regions for mobile */}
       <div
         className="absolute inset-y-0 left-0 w-1/4 z-10 cursor-pointer"
@@ -117,7 +136,7 @@ export default function EpubReader({
         className="absolute inset-y-0 right-0 w-1/4 z-10 cursor-pointer"
         onClick={goNext}
       />
-      <div ref={viewerRef} className="w-full h-full" />
+      <div ref={viewerRef} className="absolute inset-0" />
     </div>
   );
 }
