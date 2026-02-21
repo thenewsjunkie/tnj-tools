@@ -182,6 +182,20 @@ export default function BookReader() {
         onStartReadAloud={isEpub ? () => { play(); } : undefined}
       />
 
+      {isEpub && isReading && (
+        <AudioPlayerBar
+          isPaused={isPaused}
+          onPlay={play}
+          onPause={pause}
+          onStop={stopReadAloud}
+          onPrev={handlePrev}
+          onNext={handleNext}
+          ttsSettings={ttsSettings}
+          onTTSChange={setTTSSettings}
+          chapterLabel={chapterLabel}
+        />
+      )}
+
       {isEpub ? (
         <EpubReader
           ref={epubRef}
@@ -200,21 +214,7 @@ export default function BookReader() {
         />
       )}
 
-      {isEpub && isReading && (
-        <AudioPlayerBar
-          isPaused={isPaused}
-          onPlay={play}
-          onPause={pause}
-          onStop={stopReadAloud}
-          onPrev={handlePrev}
-          onNext={handleNext}
-          ttsSettings={ttsSettings}
-          onTTSChange={setTTSSettings}
-          chapterLabel={chapterLabel}
-        />
-      )}
-
-      {isEpub && !isReading && (
+      {isEpub && (
         <ReaderBottomBar
           percentage={percentage}
           chapterLabel={chapterLabel}
