@@ -61,12 +61,21 @@ export default function EpubReader({
     rendition.themes.fontSize(`${settings.fontSize}px`);
     rendition.themes.font(settings.fontFamily);
 
+    // Loading timeout
+    const loadTimeout = setTimeout(() => {
+      setError("Book took too long to load. The file may be corrupted or unsupported.");
+    }, 15000);
+
     // Display at saved location or beginning
     const loc = initialLocation || undefined;
     rendition.display(loc)
-      .then(() => setIsReady(true))
+      .then(() => {
+        setIsReady(true);
+        clearTimeout(loadTimeout);
+      })
       .catch((err: any) => {
         console.error("epub display error:", err);
+        clearTimeout(loadTimeout);
         setError("Failed to render book. The file may be corrupted.");
       });
 
@@ -86,12 +95,6 @@ export default function EpubReader({
       return book.locations.generate(1024);
     });
 
-    // Loading timeout
-    const timeout = setTimeout(() => {
-      if (!renditionRef.current) return;
-      setError("Book took too long to load. The file may be corrupted or unsupported.");
-    }, 15000);
-
     // Keyboard nav
     rendition.on("keydown", (e: KeyboardEvent) => {
       if (e.key === "ArrowRight" || e.key === " ") rendition.next();
@@ -99,7 +102,7 @@ export default function EpubReader({
     });
 
     return () => {
-      clearTimeout(timeout);
+      clearTimeout(loadTimeout);
       rendition.destroy();
       book.destroy();
     };
