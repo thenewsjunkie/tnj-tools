@@ -2,6 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { ImagePlus } from "lucide-react";
 
 export interface BookMetadata {
   title: string;
@@ -16,6 +17,8 @@ interface MetadataEditorProps {
   onSubmit: () => void;
   isSubmitting: boolean;
   fileName: string;
+  coverPreview?: string | null;
+  onCoverUpload?: (file: File) => void;
 }
 
 export default function MetadataEditor({
@@ -24,12 +27,44 @@ export default function MetadataEditor({
   onSubmit,
   isSubmitting,
   fileName,
+  coverPreview,
+  onCoverUpload,
 }: MetadataEditorProps) {
   return (
     <div className="space-y-4 border border-border rounded-xl p-6 bg-card">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <span>File:</span>
         <span className="font-mono">{fileName}</span>
+      </div>
+
+      {/* Cover preview + upload */}
+      <div className="space-y-2">
+        <Label>Cover</Label>
+        <div className="flex items-start gap-4">
+          <div className="w-24 h-36 rounded-lg border border-border bg-muted flex items-center justify-center overflow-hidden shrink-0">
+            {coverPreview ? (
+              <img src={coverPreview} alt="Cover" className="w-full h-full object-cover" />
+            ) : (
+              <ImagePlus className="w-6 h-6 text-muted-foreground" />
+            )}
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const input = document.createElement("input");
+              input.type = "file";
+              input.accept = "image/*";
+              input.onchange = () => {
+                if (input.files?.[0] && onCoverUpload) onCoverUpload(input.files[0]);
+              };
+              input.click();
+            }}
+          >
+            {coverPreview ? "Replace cover" : "Upload cover"}
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-2">
