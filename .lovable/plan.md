@@ -1,49 +1,48 @@
 
 
-## Fix: Empty EPUB Reader (blank page when opening a book)
-
-The EPUB reader appears blank because epub.js needs a container with a concrete pixel height to render content. Currently, the viewer div relies on CSS `flex-1` + `h-full`, which can resolve to 0px height since epub.js measures the container before layout completes.
+## Fix: EPUB Reader Stuck on "Loading book..."
 
 ### Root Cause
 
-In `EpubReader.tsx`, the `renderTo` call uses `width: "100%", height: "100%"`, and the container div uses Tailwind `h-full`. In a flex column layout, this chain of percentage heights can collapse to zero before epub.js measures the container. epub.js then creates an iframe with 0 height, rendering nothing visible.
+The signed URL works for authenticated requests, but epub.js internally uses `XMLHttpRequest` to fetch the file. This request:
+1. Does not include the Supabase auth headers
+2. May hit CORS restrictions on the private storage bucket
 
-### Fix
+epub.js silently fails to load the file, so `rendition.display()` never resolves and `isReady` stays `false`.
 
-**`src/components/books/reader/EpubReader.tsx`**:
-1. Replace the percentage-based height with a ref-based approach that measures the container's actual pixel dimensions before calling `renderTo`
-2. Alternatively (simpler): use `position: absolute; inset: 0` on the viewer div inside a `relative flex-1` parent, which guarantees concrete dimensions from the parent's flex sizing
-3. Add error handling with a visible error state if epub.js fails to load
+### Solution
 
-Specific changes:
-- Change the outer wrapper to `relative flex-1 overflow-hidden` (already is)
-- Change the viewer div from `w-full h-full` to `absolute inset-0` so it gets concrete pixel dimensions from the positioned parent
-- Add a `.catch()` handler on `rendition.display()` to show an error message
-- Add a loading indicator while the book is initializing
+Instead of passing the signed URL directly to epub.js, fetch the EPUB file as an `ArrayBuffer` first using the browser's `fetch()` API, then pass the ArrayBuffer to `ePub()`. epub.js supports this — `ePub(arrayBuffer)` works without any external network requests.
+
+### Changes
 
 **`src/pages/books/BookReader.tsx`**:
-- Add `.catch()` error handling on the `createSignedUrl` call so failures are surfaced to the user instead of silently leaving `fileUrl` as null (stuck on "Preparing file...")
+- Change the signed URL effect to fetch the actual EPUB/PDF file content as an ArrayBuffer (for EPUBs) or keep the signed URL (for PDFs, since pdf.js handles its own fetch fine with public URLs)
+- For EPUBs: fetch the signed URL, get the ArrayBuffer, and pass it down
+- For PDFs: continue passing the signed URL as before
+
+**`src/components/books/reader/EpubReader.tsx`**:
+- Change the `fileUrl` prop to accept either a string URL or an `ArrayBuffer`
+- Update the `ePub()` call to use the ArrayBuffer when provided
+- Add a timeout fallback so if display hangs for more than 15 seconds, show an error message instead of loading forever
 
 ### Technical Details
 
 ```text
-Current layout chain (broken):
-  div.flex.flex-col.h-screen       -- has height
-    ReaderTopBar                    -- shrinks
-    div.relative.flex-1             -- gets remaining height via flex
-      div.w-full.h-full (viewerRef) -- h-full = 100% of flex-1, but percentage 
-                                       height needs explicit parent height, 
-                                       not flex-computed height
+Current flow (broken):
+  BookReader gets signed URL -> passes URL to EpubReader
+  EpubReader calls ePub(url) -> epub.js tries to fetch URL via XHR
+  XHR fails silently (no auth headers / CORS) -> display() never resolves
 
-Fixed layout chain:
-  div.flex.flex-col.h-screen
-    ReaderTopBar
-    div.relative.flex-1
-      div.absolute.inset-0 (viewerRef) -- absolute positioning gives concrete 
-                                          dimensions from the positioned parent
+Fixed flow:
+  BookReader gets signed URL -> fetches ArrayBuffer via fetch()
+  BookReader passes ArrayBuffer to EpubReader
+  EpubReader calls ePub(arrayBuffer) -> epub.js uses in-memory data
+  No network request needed -> display() resolves immediately
 ```
 
 ### Files Modified
 
-- `src/components/books/reader/EpubReader.tsx` -- Fix viewer div positioning + add error handling + loading state
-- `src/pages/books/BookReader.tsx` -- Add error handling for signed URL generation
+- `src/pages/books/BookReader.tsx` — Fetch EPUB as ArrayBuffer before passing to reader
+- `src/components/books/reader/EpubReader.tsx` — Accept ArrayBuffer, add loading timeout
+
