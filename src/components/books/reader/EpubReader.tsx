@@ -5,7 +5,7 @@ import { useSaveProgress } from "@/hooks/books/useReadingProgress";
 import type { ReaderSettings } from "./ReaderControls";
 
 interface EpubReaderProps {
-  fileUrl: string;
+  bookData: ArrayBuffer;
   bookId: string;
   initialLocation?: string | null;
   settings: ReaderSettings;
@@ -19,7 +19,7 @@ const themeStyles: Record<string, Record<string, string>> = {
 };
 
 export default function EpubReader({
-  fileUrl,
+  bookData,
   bookId,
   initialLocation,
   settings,
@@ -36,7 +36,7 @@ export default function EpubReader({
   useEffect(() => {
     if (!viewerRef.current) return;
 
-    const book = ePub(fileUrl);
+    const book = ePub(bookData);
     bookRef.current = book;
 
     const rendition = book.renderTo(viewerRef.current, {
@@ -86,6 +86,12 @@ export default function EpubReader({
       return book.locations.generate(1024);
     });
 
+    // Loading timeout
+    const timeout = setTimeout(() => {
+      if (!renditionRef.current) return;
+      setError("Book took too long to load. The file may be corrupted or unsupported.");
+    }, 15000);
+
     // Keyboard nav
     rendition.on("keydown", (e: KeyboardEvent) => {
       if (e.key === "ArrowRight" || e.key === " ") rendition.next();
@@ -93,12 +99,13 @@ export default function EpubReader({
     });
 
     return () => {
+      clearTimeout(timeout);
       rendition.destroy();
       book.destroy();
     };
-    // Only re-init on fileUrl change
+    // Only re-init on bookData change
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fileUrl]);
+  }, [bookData]);
 
   // Update settings on the fly
   useEffect(() => {
