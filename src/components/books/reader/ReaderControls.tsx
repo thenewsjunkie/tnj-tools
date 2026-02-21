@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -17,13 +18,31 @@ export interface ReaderSettings {
   mode: "paginated" | "scroll";
 }
 
+export interface TTSSettings {
+  rate: number;
+  voiceURI: string;
+}
+
 interface ReaderControlsProps {
   settings: ReaderSettings;
   onChange: (s: ReaderSettings) => void;
   fileType: string;
+  ttsSettings?: TTSSettings;
+  onTTSChange?: (s: TTSSettings) => void;
 }
 
-export default function ReaderControls({ settings, onChange, fileType }: ReaderControlsProps) {
+export default function ReaderControls({ settings, onChange, fileType, ttsSettings, onTTSChange }: ReaderControlsProps) {
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+
+  useEffect(() => {
+    const loadVoices = () => {
+      const v = window.speechSynthesis.getVoices();
+      setVoices(v);
+    };
+    loadVoices();
+    window.speechSynthesis.addEventListener("voiceschanged", loadVoices);
+    return () => window.speechSynthesis.removeEventListener("voiceschanged", loadVoices);
+  }, []);
   return (
     <div className="space-y-5 p-4">
       <h3 className="font-semibold text-foreground">Reading Settings</h3>
@@ -101,6 +120,45 @@ export default function ReaderControls({ settings, onChange, fileType }: ReaderC
             ))}
           </div>
         </div>
+      )}
+
+      {ttsSettings && onTTSChange && (
+        <>
+          <div className="border-t border-border pt-4">
+            <h3 className="font-semibold text-foreground mb-3">Read Aloud</h3>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Speed: {ttsSettings.rate}x</Label>
+            <Slider
+              min={0.5}
+              max={2}
+              step={0.1}
+              value={[ttsSettings.rate]}
+              onValueChange={([v]) => onTTSChange({ ...ttsSettings, rate: v })}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Voice</Label>
+            <Select
+              value={ttsSettings.voiceURI}
+              onValueChange={(v) => onTTSChange({ ...ttsSettings, voiceURI: v })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Default voice" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Default</SelectItem>
+                {voices.map((v) => (
+                  <SelectItem key={v.voiceURI} value={v.voiceURI}>
+                    {v.name} ({v.lang})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </>
       )}
     </div>
   );

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Bookmark, BookmarkPlus, List, Highlighter, Settings2 } from "lucide-react";
+import { ArrowLeft, Bookmark, BookmarkPlus, List, Highlighter, Settings2, Volume2, VolumeX } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface ReaderTopBarProps {
@@ -9,6 +9,8 @@ interface ReaderTopBarProps {
   onAddBookmark?: () => void;
   onToggleBookmarks?: () => void;
   onToggleSettings?: () => void;
+  isReading?: boolean;
+  onToggleReadAloud?: () => void;
 }
 
 export default function ReaderTopBar({
@@ -18,6 +20,8 @@ export default function ReaderTopBar({
   onAddBookmark,
   onToggleBookmarks,
   onToggleSettings,
+  isReading,
+  onToggleReadAloud,
 }: ReaderTopBarProps) {
   const navigate = useNavigate();
 
@@ -27,6 +31,16 @@ export default function ReaderTopBar({
         <ArrowLeft className="w-5 h-5" />
       </Button>
       <p className="text-sm font-medium text-foreground truncate flex-1 mx-1">{title}</p>
+      {onToggleReadAloud && (
+        <Button
+          variant={isReading ? "default" : "ghost"}
+          size="icon"
+          onClick={onToggleReadAloud}
+          title={isReading ? "Stop reading" : "Read aloud"}
+        >
+          {isReading ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+        </Button>
+      )}
       {onToggleToc && (
         <Button variant="ghost" size="icon" onClick={onToggleToc} title="Table of Contents">
           <List className="w-4 h-4" />
