@@ -1,79 +1,54 @@
 
 
-## Complete EPUB Reading Experience
+## Hover Settings Overlay on Book Cards + Fetch Cover Feature
 
-The book loads but there are no visible controls, no way to navigate chapters, and several panel features are disconnected. Here's everything that needs to be fixed.
+### What You'll Get
 
-### Problems Found
+When you hover over a book in the library, a settings gear icon will appear. Clicking it opens a small menu with options like "Edit details", "Fetch cover", and "Delete". The "Fetch cover" option will search the Open Library API using the book's title and author to find a cover image, then save it to your book record.
 
-1. **No visible page navigation** -- only invisible tap zones on left/right edges; no prev/next buttons
-2. **No progress indicator** -- no way to see how far into the book you are
-3. **Table of Contents doesn't navigate** -- clicking a chapter just closes the panel without going there
-4. **No TOC or Highlights buttons** in the top bar -- only Bookmarks and Settings are accessible
-5. **Bookmarks don't navigate** -- clicking a bookmark closes the panel but doesn't jump to the location
-6. **No way to add a bookmark** at the current position
-7. **EpubReader doesn't expose its rendition** -- external components (TOC, bookmarks, highlights) can't trigger navigation
+### Changes
 
-### Solution
+**1. `src/components/books/library/BookCard.tsx`** -- Add hover overlay
 
-**1. Expose rendition from EpubReader via a ref**
+- In grid view: overlay a semi-transparent dark layer on hover with a settings (gear/ellipsis) icon button in the top-right corner
+- Clicking the settings button opens a dropdown menu (using the existing DropdownMenu component) with:
+  - "Fetch Cover" (only shown when no cover exists) -- searches Open Library for a cover
+  - "Edit" -- navigates to an edit view or opens an inline editor
+  - "Delete" -- deletes the book with confirmation
+- The overlay button uses `e.stopPropagation()` so clicking it doesn't navigate to the reader
+- In list view: show a small ellipsis button on the right side on hover, same dropdown
 
-Add a `React.useImperativeHandle` to EpubReader so the parent (BookReader) can call `navigateTo(cfi)` and `getCurrentLocation()` on it. This enables TOC, bookmarks, and highlights panels to navigate.
+**2. `src/components/books/library/BookCardMenu.tsx`** (new) -- Extracted dropdown menu component
 
-**2. Add a bottom control bar with:**
-- Previous/Next page buttons (visible, always available)
-- A progress bar showing current percentage
-- Current chapter label (from TOC)
-- Page indicator (e.g., "42%")
+- Receives `book` prop and callbacks for each action
+- Contains the DropdownMenu with menu items
+- "Fetch Cover" item calls the Open Library API directly from the client:
+  - Searches `https://openlibrary.org/search.json?title=TITLE&author=AUTHOR&limit=1`
+  - Extracts the `cover_i` field from the first result
+  - Constructs the cover URL: `https://covers.openlibrary.org/b/id/COVER_ID-L.jpg`
+  - Updates the book's `cover_url` in Supabase
+  - Invalidates the books query to refresh the UI
+- "Delete" item shows a confirmation dialog before deleting
 
-**3. Fix the top bar to include all panel toggles:**
-- Add a Table of Contents button (List icon)
-- Add a Highlights/Notes button (Highlighter icon)
-- Add a "Bookmark this page" button that saves the current CFI location
-- Keep existing Settings button
+**3. No edge function needed** -- Open Library API is free, public, and has no CORS restrictions, so it can be called directly from the browser.
 
-**4. Wire up TOC navigation:**
-- When a TOC item is clicked, call `readerRef.navigateTo(href)` then close the panel
-
-**5. Wire up Bookmark navigation:**
-- When a bookmark is clicked, call `readerRef.navigateTo(location)` then close the panel
-
-**6. Wire up Highlight navigation:**
-- When a highlight is clicked, call `readerRef.navigateTo(cfi)` then close the panel
-
-**7. Progress memory already works** via the `relocated` event handler and `useSaveProgress` hook -- the CFI is saved on every page turn and restored on load via `initialLocation`
-
-### Files to Create/Modify
-
-- **`src/components/books/reader/EpubReader.tsx`** -- Add `forwardRef` with imperative handle exposing `navigateTo()` and `getCurrentCfi()`. Add visible prev/next buttons at bottom edges.
-
-- **`src/components/books/reader/ReaderBottomBar.tsx`** (new) -- Bottom control bar with prev/next buttons, progress percentage, and chapter name.
-
-- **`src/components/books/reader/ReaderTopBar.tsx`** -- Add TOC, Highlights, and Add Bookmark buttons alongside existing Bookmarks and Settings buttons.
-
-- **`src/pages/books/BookReader.tsx`** -- Create a ref to EpubReader, wire up TOC/bookmark/highlight navigation callbacks, pass progress state down to bottom bar, add Add Bookmark handler using current CFI.
+**4. No database changes needed** -- The `books` table already has a `cover_url` column.
 
 ### Technical Details
 
-EpubReader imperative handle:
+Open Library cover fetch logic:
 ```text
-useImperativeHandle(ref, () => ({
-  navigateTo: (target: string) => renditionRef.current?.display(target),
-  getCurrentCfi: () => currentCfiRef.current,
-}));
+1. GET https://openlibrary.org/search.json?title={title}&author={author}&limit=1
+2. Extract docs[0].cover_i from response
+3. If found: cover URL = https://covers.openlibrary.org/b/id/{cover_i}-L.jpg
+4. UPDATE books SET cover_url = coverUrl WHERE id = book.id
+5. Invalidate ["books"] query
 ```
 
-Bottom bar receives `percentage` (0-100) and `chapterLabel` from the `relocated` event, which already fires on every page turn.
+The dropdown uses `modal={false}` to avoid focus-trapping conflicts (per existing project pattern). The gear button in the overlay uses `e.stopPropagation()` and `e.preventDefault()` to prevent the parent button's click-to-navigate behavior.
 
-Top bar buttons:
-```text
-[Back] [Title...] [TOC] [Highlights] [Add Bookmark] [Bookmarks] [Settings]
-```
+### Files
 
-Navigation flow for TOC/Bookmarks/Highlights:
-```text
-User clicks item in panel
-  -> parent calls readerRef.current.navigateTo(cfi_or_href)
-  -> panel closes
-  -> relocated event fires -> progress saved
-```
+- `src/components/books/library/BookCard.tsx` -- Add hover overlay with settings trigger
+- `src/components/books/library/BookCardMenu.tsx` -- New dropdown menu with Fetch Cover, Edit, Delete actions
+
