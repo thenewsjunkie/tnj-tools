@@ -1,8 +1,15 @@
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef, useCallback, useState, forwardRef, useImperativeHandle } from "react";
 import ePub, { Book, Rendition } from "epubjs";
 import type { NavItem } from "epubjs/types/navigation";
 import { useSaveProgress } from "@/hooks/books/useReadingProgress";
 import type { ReaderSettings } from "./ReaderControls";
+
+export interface EpubReaderHandle {
+  navigateTo: (target: string) => void;
+  getCurrentCfi: () => string | null;
+  next: () => void;
+  prev: () => void;
+}
 
 interface EpubReaderProps {
   bookData: ArrayBuffer;
@@ -10,6 +17,7 @@ interface EpubReaderProps {
   initialLocation?: string | null;
   settings: ReaderSettings;
   onTocLoaded?: (toc: NavItem[]) => void;
+  onProgressChange?: (percentage: number, chapterLabel: string) => void;
 }
 
 const themeStyles: Record<string, Record<string, string>> = {
@@ -18,19 +26,53 @@ const themeStyles: Record<string, Record<string, string>> = {
   sepia: { body: { background: "#f5e6c8", color: "#5b4636" } } as any,
 };
 
-export default function EpubReader({
-  bookData,
-  bookId,
-  initialLocation,
-  settings,
-  onTocLoaded,
-}: EpubReaderProps) {
+const EpubReader = forwardRef<EpubReaderHandle, EpubReaderProps>(function EpubReader(
+  { bookData, bookId, initialLocation, settings, onTocLoaded, onProgressChange },
+  ref
+) {
   const viewerRef = useRef<HTMLDivElement>(null);
   const bookRef = useRef<Book | null>(null);
   const renditionRef = useRef<Rendition | null>(null);
+  const currentCfiRef = useRef<string | null>(null);
+  const tocRef = useRef<NavItem[]>([]);
   const { saveProgress } = useSaveProgress(bookId);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useImperativeHandle(ref, () => ({
+    navigateTo: (target: string) => {
+      renditionRef.current?.display(target);
+    },
+    getCurrentCfi: () => currentCfiRef.current,
+    next: () => renditionRef.current?.next(),
+    prev: () => renditionRef.current?.prev(),
+  }));
+
+  const goNext = useCallback(() => renditionRef.current?.next(), []);
+  const goPrev = useCallback(() => renditionRef.current?.prev(), []);
+
+  // Find current chapter label from TOC
+  const findChapterLabel = useCallback((cfi: string): string => {
+    // Simple approach: return the last TOC item whose href was passed
+    const toc = tocRef.current;
+    if (!toc.length || !bookRef.current) return "";
+    // epubjs doesn't provide a direct chapter-from-cfi lookup,
+    // so we use the navigation's toc array
+    try {
+      const spineItem = bookRef.current.spine.get(cfi);
+      if (spineItem) {
+        const match = toc.find((t) => {
+          const tocHref = t.href.split("#")[0];
+          const spineHref = spineItem.href?.split("#")[0];
+          return tocHref === spineHref;
+        });
+        if (match) return match.label.trim();
+      }
+    } catch {
+      // ignore
+    }
+    return "";
+  }, []);
 
   // Initialize book
   useEffect(() => {
@@ -50,6 +92,7 @@ export default function EpubReader({
 
     // Load TOC
     book.loaded.navigation.then((nav) => {
+      tocRef.current = nav.toc;
       onTocLoaded?.(nav.toc);
     });
 
@@ -82,11 +125,12 @@ export default function EpubReader({
     // Track location changes
     rendition.on("relocated", (location: any) => {
       const cfi = location.start?.cfi;
-      const pct = book.locations
-        ? location.start?.percentage ?? 0
-        : 0;
+      const pct = location.start?.percentage ?? 0;
       if (cfi) {
+        currentCfiRef.current = cfi;
         saveProgress(cfi, pct);
+        const chapter = findChapterLabel(cfi);
+        onProgressChange?.(Math.round(pct * 100), chapter);
       }
     });
 
@@ -106,7 +150,6 @@ export default function EpubReader({
       rendition.destroy();
       book.destroy();
     };
-    // Only re-init on bookData change
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookData]);
 
@@ -118,9 +161,6 @@ export default function EpubReader({
     r.themes.fontSize(`${settings.fontSize}px`);
     r.themes.font(settings.fontFamily);
   }, [settings.theme, settings.fontSize, settings.fontFamily, isReady]);
-
-  const goNext = useCallback(() => renditionRef.current?.next(), []);
-  const goPrev = useCallback(() => renditionRef.current?.prev(), []);
 
   if (error) {
     return (
@@ -149,8 +189,6 @@ export default function EpubReader({
       <div ref={viewerRef} className="absolute inset-0" />
     </div>
   );
-}
+});
 
-export function navigateToLocation(rendition: Rendition | null, cfi: string) {
-  rendition?.display(cfi);
-}
+export default EpubReader;

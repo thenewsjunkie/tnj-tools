@@ -1,16 +1,18 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { useBook } from "@/hooks/books/useBooks";
 import { useAddBookmark } from "@/hooks/books/useBookmarks";
 import { supabase } from "@/integrations/supabase/client";
 import ReaderTopBar from "@/components/books/reader/ReaderTopBar";
-import EpubReader from "@/components/books/reader/EpubReader";
+import EpubReader, { type EpubReaderHandle } from "@/components/books/reader/EpubReader";
 import PdfReader from "@/components/books/reader/PdfReader";
 import ReaderControls, { ReaderSettings } from "@/components/books/reader/ReaderControls";
+import ReaderBottomBar from "@/components/books/reader/ReaderBottomBar";
 import TableOfContents from "@/components/books/reader/TableOfContents";
 import BookmarksList from "@/components/books/reader/BookmarksList";
 import HighlightsPanel from "@/components/books/reader/HighlightsPanel";
 import type { NavItem } from "epubjs/types/navigation";
+import { toast } from "sonner";
 import {
   Sheet,
   SheetContent,
@@ -30,13 +32,15 @@ export default function BookReader() {
   const { id } = useParams<{ id: string }>();
   const { data: book, isLoading } = useBook(id);
   const addBookmark = useAddBookmark();
+  const epubRef = useRef<EpubReaderHandle>(null);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [bookData, setBookData] = useState<ArrayBuffer | null>(null);
   const [settings, setSettings] = useState<ReaderSettings>(defaultSettings);
   const [toc, setToc] = useState<NavItem[]>([]);
   const [panel, setPanel] = useState<"toc" | "bookmarks" | "highlights" | "settings" | null>(null);
-
   const [fileError, setFileError] = useState<string | null>(null);
+  const [percentage, setPercentage] = useState(0);
+  const [chapterLabel, setChapterLabel] = useState("");
 
   // Get signed URL and fetch book data
   useEffect(() => {
@@ -49,12 +53,10 @@ export default function BookReader() {
           setFileError("Failed to load book file. Please try again.");
           return;
         }
-        // For PDFs, just use the signed URL directly
         if (book.file_type === "pdf") {
           setFileUrl(data.signedUrl);
           return;
         }
-        // For EPUBs, fetch as ArrayBuffer to avoid CORS/auth issues with epub.js
         try {
           const response = await fetch(data.signedUrl);
           if (!response.ok) throw new Error("Failed to fetch book file");
@@ -67,11 +69,45 @@ export default function BookReader() {
       .catch(() => setFileError("Failed to load book file."));
   }, [book?.file_url, book?.file_type]);
 
+  const handleProgressChange = useCallback((pct: number, chapter: string) => {
+    setPercentage(pct);
+    setChapterLabel(chapter);
+  }, []);
+
   const handleTocSelect = useCallback((href: string) => {
-    // For EPUB, epubjs rendition.display(href) is called
-    // We store the href and pass it - but since EpubReader manages its own rendition,
-    // we'd need a ref-based approach. For now, close panel.
+    epubRef.current?.navigateTo(href);
     setPanel(null);
+  }, []);
+
+  const handleBookmarkSelect = useCallback((location: string) => {
+    epubRef.current?.navigateTo(location);
+    setPanel(null);
+  }, []);
+
+  const handleHighlightSelect = useCallback((cfi: string) => {
+    epubRef.current?.navigateTo(cfi);
+    setPanel(null);
+  }, []);
+
+  const handleAddBookmark = useCallback(() => {
+    if (!book?.id) return;
+    const cfi = epubRef.current?.getCurrentCfi();
+    if (!cfi) {
+      toast.error("No position to bookmark");
+      return;
+    }
+    addBookmark.mutate(
+      { book_id: book.id, location: cfi, label: chapterLabel || "Bookmark" },
+      { onSuccess: () => toast.success("Bookmark added") }
+    );
+  }, [book?.id, addBookmark, chapterLabel]);
+
+  const handlePrev = useCallback(() => {
+    epubRef.current?.prev();
+  }, []);
+
+  const handleNext = useCallback(() => {
+    epubRef.current?.next();
   }, []);
 
   if (isLoading || !book) {
@@ -97,23 +133,37 @@ export default function BookReader() {
     <div className="flex flex-col h-screen bg-background">
       <ReaderTopBar
         title={book.title}
+        onToggleToc={isEpub ? () => setPanel(panel === "toc" ? null : "toc") : undefined}
+        onToggleHighlights={isEpub ? () => setPanel(panel === "highlights" ? null : "highlights") : undefined}
+        onAddBookmark={isEpub ? handleAddBookmark : undefined}
         onToggleBookmarks={() => setPanel(panel === "bookmarks" ? null : "bookmarks")}
         onToggleSettings={() => setPanel(panel === "settings" ? null : "settings")}
       />
 
-      {book.file_type === "epub" ? (
+      {isEpub ? (
         <EpubReader
+          ref={epubRef}
           bookData={bookData!}
           bookId={book.id}
           initialLocation={initialLocation}
           settings={settings}
           onTocLoaded={setToc}
+          onProgressChange={handleProgressChange}
         />
       ) : (
         <PdfReader
           fileUrl={fileUrl}
           bookId={book.id}
           initialPage={initialLocation ? parseInt(initialLocation) : undefined}
+        />
+      )}
+
+      {isEpub && (
+        <ReaderBottomBar
+          percentage={percentage}
+          chapterLabel={chapterLabel}
+          onPrev={handlePrev}
+          onNext={handleNext}
         />
       )}
 
@@ -132,10 +182,10 @@ export default function BookReader() {
             <TableOfContents toc={toc} onSelect={handleTocSelect} />
           )}
           {panel === "bookmarks" && (
-            <BookmarksList bookId={book.id} onSelect={() => setPanel(null)} />
+            <BookmarksList bookId={book.id} onSelect={handleBookmarkSelect} />
           )}
           {panel === "highlights" && (
-            <HighlightsPanel bookId={book.id} />
+            <HighlightsPanel bookId={book.id} onSelectHighlight={handleHighlightSelect} />
           )}
           {panel === "settings" && (
             <ReaderControls
