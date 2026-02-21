@@ -1,162 +1,59 @@
 
 
-## Baudible Phase 1: E-book Library + Reader
+## Auto-Extract EPUB Cover Art and Metadata on Upload
 
-Build the e-book reader portion of Baudible under `/books`, using the existing Supabase backend and auth system.
+Currently, when you upload an EPUB, Baudible only grabs the filename as the title. It never opens the EPUB to read metadata (title, author, description, cover image). This plan adds client-side EPUB parsing during the upload step.
 
-### Routes
+### What Changes
 
-- `/books` -- Library page (grid/list of uploaded e-books, search, sort, filters)
-- `/books/upload` -- Upload page (drag-drop EPUB/PDF, metadata editor)
-- `/books/read/:id` -- E-book reader (EPUB via epub.js, PDF via pdf.js)
-- `/books/settings` -- Baudible settings (reading preferences export)
+**`src/pages/books/BooksUpload.tsx`** — After the user drops/selects an EPUB file:
+1. Use `epubjs` to open the file as an `ArrayBuffer`
+2. Extract metadata from the OPF package: title, author (creator), description
+3. Extract the cover image from the EPUB (epub.js provides `book.coverUrl()`)
+4. Upload the extracted cover image to the `book_files` bucket (as a separate image file)
+5. Pre-fill the metadata editor with the extracted title, author, description, and cover preview
+6. Save the `cover_url` when creating the book record
 
-All routes wrapped in `AdminRoute` so only the authenticated admin can access them.
+**`src/components/books/upload/MetadataEditor.tsx`** — Add:
+- A cover image preview (if extracted or manually uploaded)
+- An optional "Upload cover" button for manual override
 
-### Database Tables (Migration)
+**`src/hooks/books/useBooks.ts`** — The `useCreateBook` mutation already supports `cover_url`, so no change needed there.
 
-**books**
-- `id` uuid PK
-- `title` text NOT NULL
-- `author` text
-- `description` text
-- `cover_url` text
-- `language` text DEFAULT 'en'
-- `tags` text[] DEFAULT '{}'
-- `file_type` text NOT NULL (epub | pdf)
-- `file_url` text NOT NULL
-- `file_size` bigint
-- `checksum` text
-- `created_at` timestamptz DEFAULT now()
-- `updated_at` timestamptz DEFAULT now()
+**`src/components/books/library/BookCard.tsx`** — Already handles `cover_url` display, but covers are stored in the private `book_files` bucket. Need to generate signed URLs for cover images the same way book files are served, OR upload covers to a public bucket. Simplest approach: upload cover images to the existing public bucket or make a small `book_covers` public bucket.
 
-**reading_progress**
-- `id` uuid PK
-- `book_id` uuid FK -> books(id) ON DELETE CASCADE
-- `location` text (CFI for EPUB, page number for PDF)
-- `percentage` float DEFAULT 0
-- `last_read_at` timestamptz DEFAULT now()
-- UNIQUE(book_id)
-
-**book_bookmarks**
-- `id` uuid PK
-- `book_id` uuid FK -> books(id) ON DELETE CASCADE
-- `location` text NOT NULL (CFI or page)
-- `label` text
-- `created_at` timestamptz DEFAULT now()
-
-**book_highlights**
-- `id` uuid PK
-- `book_id` uuid FK -> books(id) ON DELETE CASCADE
-- `cfi_range` text NOT NULL
-- `color` text DEFAULT 'yellow'
-- `text_excerpt` text
-- `created_at` timestamptz DEFAULT now()
-
-**book_notes**
-- `id` uuid PK
-- `book_id` uuid FK -> books(id) ON DELETE CASCADE
-- `cfi_range` text (nullable -- can be general note)
-- `text` text NOT NULL
-- `created_at` timestamptz DEFAULT now()
-
-RLS: authenticated-only for all operations (single admin user).
-
-### Storage
-
-New Supabase storage bucket: `book_files` (private, served via authenticated access).
-
-### New NPM Packages
-
-- `epubjs` -- EPUB rendering with CFI-based position tracking
-- `pdfjs-dist` -- PDF rendering
-
-### File Structure
+### Technical Details
 
 ```text
-src/
-  pages/
-    books/
-      BooksLibrary.tsx         -- grid/list, search, sort, filters
-      BooksUpload.tsx          -- drag-drop upload + metadata editor
-      BookReader.tsx           -- EPUB/PDF reader shell
-      BooksSettings.tsx        -- export data, reading prefs
-  components/
-    books/
-      library/
-        BookCard.tsx           -- cover, title, author, progress bar
-        LibraryToolbar.tsx     -- search, sort, view toggle, filters
-      upload/
-        FileDropzone.tsx       -- drag-drop area
-        MetadataEditor.tsx     -- edit title/author/tags/cover after upload
-      reader/
-        EpubReader.tsx         -- epub.js wrapper with controls
-        PdfReader.tsx          -- pdf.js wrapper with controls
-        ReaderControls.tsx     -- font, theme, layout toggles
-        TableOfContents.tsx    -- TOC drawer
-        BookmarksList.tsx      -- bookmark management
-        HighlightsPanel.tsx    -- highlights + notes panel
-        ReaderTopBar.tsx       -- back button, title, settings icon
-      shared/
-        ProgressBar.tsx        -- reading progress indicator
-  hooks/
-    books/
-      useBooks.ts             -- CRUD queries for books table
-      useReadingProgress.ts   -- save/load progress (debounced)
-      useBookmarks.ts         -- bookmark CRUD
-      useHighlights.ts        -- highlight CRUD
-      useNotes.ts             -- note CRUD
+Upload Flow (updated):
+
+1. User drops EPUB file
+2. epubjs opens the file in-memory (no server needed)
+3. Extract: book.packaging.metadata -> title, creator, description
+4. Extract: book.coverUrl() -> blob URL of cover image
+5. Convert cover blob to File, upload to storage as `covers/{uuid}.jpg`
+6. Pre-fill metadata form with extracted values + cover preview
+7. User reviews/edits, clicks "Add to Library"
+8. Book record saved with cover_url pointing to uploaded cover
 ```
 
-### Key Implementation Details
+### Storage for Covers
 
-**EPUB Reader (epub.js)**
-- Renders reflowable EPUB content
-- Stores position as CFI string
-- Supports font family (serif/sans), font size, line height, margins
-- Themes: light / dark / sepia (CSS injection)
-- Paginated vs scroll mode toggle
-- TOC from epub.js navigation
-- Search within book via epub.js search API
-- Tap regions for prev/next on mobile
-- Keyboard shortcuts (arrow keys, space) on desktop
+Create a new **public** `book_covers` bucket (or reuse `book_files` and make covers accessible via signed URL). A public bucket is simpler since covers are not sensitive and avoids signed URL overhead for the library grid.
 
-**PDF Reader (pdf.js)**
-- Page-by-page rendering on canvas
-- Stores position as page number
-- Zoom controls
-- Keyboard navigation
+### Migration
 
-**Progress Saving**
-- Debounced save (2 second delay) on location change
-- Saves CFI/page + percentage + timestamp
-- Optimistic UI updates via React Query
+One SQL migration to create the `book_covers` public storage bucket with appropriate policies.
 
-**Upload Flow**
-1. User drops EPUB or PDF file
-2. Client computes SHA-256 checksum, checks for duplicates
-3. File uploaded to `book_files` bucket
-4. For EPUB: client-side metadata extraction (title, author, cover from OPF)
-5. Metadata editor shown for review/edit
-6. Book record inserted into `books` table
+### Files Modified
 
-**Library Features**
-- Grid (cover art cards) and list view toggle
-- Search by title/author
-- Sort: recently read, title, author, date added, progress
-- Filter by tags
-- Progress bar on each card
+- `src/pages/books/BooksUpload.tsx` — Add EPUB metadata extraction logic
+- `src/components/books/upload/MetadataEditor.tsx` — Add cover preview and manual cover upload
+- `src/components/books/library/BookCard.tsx` — Use public cover URL (may need minor adjustment)
+- New migration for `book_covers` bucket
 
-**Export**
-- Export all highlights/notes/bookmarks for a single book as JSON
-- Export entire library metadata as JSON (from settings page)
+### Edge Cases
 
-### What's Deferred to Phase 2
-
-- Audiobook player (upload, chapters, playback, sleep timer)
-- Offline/PWA support
-- Brightness overlay slider
-- Highlight colors (phase 1 uses single color)
-- Password change in settings
-- Storage usage overview
-
+- PDFs: No automatic cover extraction (pdf.js can render page 1 as a thumbnail — deferred for now, but worth noting)
+- EPUBs without embedded covers: Gracefully skip, show default icon
+- Large cover images: Resize client-side before upload (optional optimization)
