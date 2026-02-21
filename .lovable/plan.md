@@ -1,59 +1,49 @@
 
 
-## Auto-Extract EPUB Cover Art and Metadata on Upload
+## Fix: Empty EPUB Reader (blank page when opening a book)
 
-Currently, when you upload an EPUB, Baudible only grabs the filename as the title. It never opens the EPUB to read metadata (title, author, description, cover image). This plan adds client-side EPUB parsing during the upload step.
+The EPUB reader appears blank because epub.js needs a container with a concrete pixel height to render content. Currently, the viewer div relies on CSS `flex-1` + `h-full`, which can resolve to 0px height since epub.js measures the container before layout completes.
 
-### What Changes
+### Root Cause
 
-**`src/pages/books/BooksUpload.tsx`** — After the user drops/selects an EPUB file:
-1. Use `epubjs` to open the file as an `ArrayBuffer`
-2. Extract metadata from the OPF package: title, author (creator), description
-3. Extract the cover image from the EPUB (epub.js provides `book.coverUrl()`)
-4. Upload the extracted cover image to the `book_files` bucket (as a separate image file)
-5. Pre-fill the metadata editor with the extracted title, author, description, and cover preview
-6. Save the `cover_url` when creating the book record
+In `EpubReader.tsx`, the `renderTo` call uses `width: "100%", height: "100%"`, and the container div uses Tailwind `h-full`. In a flex column layout, this chain of percentage heights can collapse to zero before epub.js measures the container. epub.js then creates an iframe with 0 height, rendering nothing visible.
 
-**`src/components/books/upload/MetadataEditor.tsx`** — Add:
-- A cover image preview (if extracted or manually uploaded)
-- An optional "Upload cover" button for manual override
+### Fix
 
-**`src/hooks/books/useBooks.ts`** — The `useCreateBook` mutation already supports `cover_url`, so no change needed there.
+**`src/components/books/reader/EpubReader.tsx`**:
+1. Replace the percentage-based height with a ref-based approach that measures the container's actual pixel dimensions before calling `renderTo`
+2. Alternatively (simpler): use `position: absolute; inset: 0` on the viewer div inside a `relative flex-1` parent, which guarantees concrete dimensions from the parent's flex sizing
+3. Add error handling with a visible error state if epub.js fails to load
 
-**`src/components/books/library/BookCard.tsx`** — Already handles `cover_url` display, but covers are stored in the private `book_files` bucket. Need to generate signed URLs for cover images the same way book files are served, OR upload covers to a public bucket. Simplest approach: upload cover images to the existing public bucket or make a small `book_covers` public bucket.
+Specific changes:
+- Change the outer wrapper to `relative flex-1 overflow-hidden` (already is)
+- Change the viewer div from `w-full h-full` to `absolute inset-0` so it gets concrete pixel dimensions from the positioned parent
+- Add a `.catch()` handler on `rendition.display()` to show an error message
+- Add a loading indicator while the book is initializing
+
+**`src/pages/books/BookReader.tsx`**:
+- Add `.catch()` error handling on the `createSignedUrl` call so failures are surfaced to the user instead of silently leaving `fileUrl` as null (stuck on "Preparing file...")
 
 ### Technical Details
 
 ```text
-Upload Flow (updated):
+Current layout chain (broken):
+  div.flex.flex-col.h-screen       -- has height
+    ReaderTopBar                    -- shrinks
+    div.relative.flex-1             -- gets remaining height via flex
+      div.w-full.h-full (viewerRef) -- h-full = 100% of flex-1, but percentage 
+                                       height needs explicit parent height, 
+                                       not flex-computed height
 
-1. User drops EPUB file
-2. epubjs opens the file in-memory (no server needed)
-3. Extract: book.packaging.metadata -> title, creator, description
-4. Extract: book.coverUrl() -> blob URL of cover image
-5. Convert cover blob to File, upload to storage as `covers/{uuid}.jpg`
-6. Pre-fill metadata form with extracted values + cover preview
-7. User reviews/edits, clicks "Add to Library"
-8. Book record saved with cover_url pointing to uploaded cover
+Fixed layout chain:
+  div.flex.flex-col.h-screen
+    ReaderTopBar
+    div.relative.flex-1
+      div.absolute.inset-0 (viewerRef) -- absolute positioning gives concrete 
+                                          dimensions from the positioned parent
 ```
-
-### Storage for Covers
-
-Create a new **public** `book_covers` bucket (or reuse `book_files` and make covers accessible via signed URL). A public bucket is simpler since covers are not sensitive and avoids signed URL overhead for the library grid.
-
-### Migration
-
-One SQL migration to create the `book_covers` public storage bucket with appropriate policies.
 
 ### Files Modified
 
-- `src/pages/books/BooksUpload.tsx` — Add EPUB metadata extraction logic
-- `src/components/books/upload/MetadataEditor.tsx` — Add cover preview and manual cover upload
-- `src/components/books/library/BookCard.tsx` — Use public cover URL (may need minor adjustment)
-- New migration for `book_covers` bucket
-
-### Edge Cases
-
-- PDFs: No automatic cover extraction (pdf.js can render page 1 as a thumbnail — deferred for now, but worth noting)
-- EPUBs without embedded covers: Gracefully skip, show default icon
-- Large cover images: Resize client-side before upload (optional optimization)
+- `src/components/books/reader/EpubReader.tsx` -- Fix viewer div positioning + add error handling + loading state
+- `src/pages/books/BookReader.tsx` -- Add error handling for signed URL generation
