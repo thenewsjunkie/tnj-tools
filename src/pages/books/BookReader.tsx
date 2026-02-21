@@ -8,6 +8,7 @@ import EpubReader, { type EpubReaderHandle } from "@/components/books/reader/Epu
 import PdfReader from "@/components/books/reader/PdfReader";
 import ReaderControls, { ReaderSettings, TTSSettings } from "@/components/books/reader/ReaderControls";
 import ReaderBottomBar from "@/components/books/reader/ReaderBottomBar";
+import AudioPlayerBar from "@/components/books/reader/AudioPlayerBar";
 import TableOfContents from "@/components/books/reader/TableOfContents";
 import BookmarksList from "@/components/books/reader/BookmarksList";
 import HighlightsPanel from "@/components/books/reader/HighlightsPanel";
@@ -57,9 +58,19 @@ export default function BookReader() {
     epubRef.current?.next();
   }, []);
 
-  const { isReading, isPaused, toggle: toggleReadAloud, stop: stopReadAloud } = useReadAloud({
+  const onWordBoundary = useCallback((charIndex: number, charLength: number) => {
+    epubRef.current?.highlightWord(charIndex, charLength);
+  }, []);
+
+  const onReadAloudStop = useCallback(() => {
+    epubRef.current?.clearHighlight();
+  }, []);
+
+  const { isReading, isPaused, play, pause, toggle: toggleReadAloud, stop: stopReadAloud } = useReadAloud({
     getVisibleText,
     onPageFinished,
+    onWordBoundary,
+    onStop: onReadAloudStop,
     settings: ttsSettings,
   });
 
@@ -167,8 +178,8 @@ export default function BookReader() {
         onAddBookmark={isEpub ? handleAddBookmark : undefined}
         onToggleBookmarks={() => setPanel(panel === "bookmarks" ? null : "bookmarks")}
         onToggleSettings={() => setPanel(panel === "settings" ? null : "settings")}
-        isReading={isReading && !isPaused}
-        onToggleReadAloud={isEpub ? toggleReadAloud : undefined}
+        isReading={isReading}
+        onStartReadAloud={isEpub ? () => { play(); } : undefined}
       />
 
       {isEpub ? (
@@ -189,7 +200,21 @@ export default function BookReader() {
         />
       )}
 
-      {isEpub && (
+      {isEpub && isReading && (
+        <AudioPlayerBar
+          isPaused={isPaused}
+          onPlay={play}
+          onPause={pause}
+          onStop={stopReadAloud}
+          onPrev={handlePrev}
+          onNext={handleNext}
+          ttsSettings={ttsSettings}
+          onTTSChange={setTTSSettings}
+          chapterLabel={chapterLabel}
+        />
+      )}
+
+      {isEpub && !isReading && (
         <ReaderBottomBar
           percentage={percentage}
           chapterLabel={chapterLabel}
