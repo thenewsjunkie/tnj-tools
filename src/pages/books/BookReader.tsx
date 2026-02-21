@@ -32,7 +32,7 @@ const defaultSettings: ReaderSettings = {
 
 const defaultTTSSettings: TTSSettings = {
   rate: 1,
-  voiceURI: "",
+  voiceURI: "__default",
 };
 
 export default function BookReader() {

@@ -42,7 +42,7 @@ export function useReadAloud({ getVisibleText, onPageFinished, onWordBoundary, o
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = settingsRef.current.rate;
 
-    if (settingsRef.current.voiceURI) {
+    if (settingsRef.current.voiceURI && settingsRef.current.voiceURI !== "__default") {
       const voices = window.speechSynthesis.getVoices();
       const voice = voices.find((v) => v.voiceURI === settingsRef.current.voiceURI);
       if (voice) utterance.voice = voice;
