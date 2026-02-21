@@ -1,48 +1,39 @@
 
 
-## Fix: EPUB Reader Stuck on "Loading book..."
+## Fix: Timeout fires even after successful book load
 
 ### Root Cause
 
-The signed URL works for authenticated requests, but epub.js internally uses `XMLHttpRequest` to fetch the file. This request:
-1. Does not include the Supabase auth headers
-2. May hit CORS restrictions on the private storage bucket
+In `EpubReader.tsx`, the 15-second timeout sets an error message unconditionally. It does not check whether `isReady` has already been set to `true`. Since `setError` is called after the book has rendered, it overwrites the working state and hides the content.
 
-epub.js silently fails to load the file, so `rendition.display()` never resolves and `isReady` stays `false`.
+### Fix
 
-### Solution
-
-Instead of passing the signed URL directly to epub.js, fetch the EPUB file as an `ArrayBuffer` first using the browser's `fetch()` API, then pass the ArrayBuffer to `ePub()`. epub.js supports this — `ePub(arrayBuffer)` works without any external network requests.
+In the timeout callback, check if the book has already loaded before showing the error. The simplest approach: clear the timeout when `isReady` becomes `true`.
 
 ### Changes
 
-**`src/pages/books/BookReader.tsx`**:
-- Change the signed URL effect to fetch the actual EPUB/PDF file content as an ArrayBuffer (for EPUBs) or keep the signed URL (for PDFs, since pdf.js handles its own fetch fine with public URLs)
-- For EPUBs: fetch the signed URL, get the ArrayBuffer, and pass it down
-- For PDFs: continue passing the signed URL as before
-
 **`src/components/books/reader/EpubReader.tsx`**:
-- Change the `fileUrl` prop to accept either a string URL or an `ArrayBuffer`
-- Update the `ePub()` call to use the ArrayBuffer when provided
-- Add a timeout fallback so if display hangs for more than 15 seconds, show an error message instead of loading forever
+- Store the timeout ID in a ref so it persists across renders
+- Add a second `useEffect` that clears the timeout when `isReady` becomes `true`
+- Alternatively (simpler): in the `.then()` callback of `rendition.display()` where `setIsReady(true)` is called, also call `clearTimeout(timeout)` — but this requires the timeout to be declared before `display()` is called, which it already is after the last edit
 
-### Technical Details
+Looking at the current code structure: the timeout is declared after `rendition.display().then(() => setIsReady(true))`, so the timeout variable is in scope. The fix is to clear the timeout inside the `.then()` callback.
+
+### Technical Detail
 
 ```text
-Current flow (broken):
-  BookReader gets signed URL -> passes URL to EpubReader
-  EpubReader calls ePub(url) -> epub.js tries to fetch URL via XHR
-  XHR fails silently (no auth headers / CORS) -> display() never resolves
+Current flow:
+  rendition.display() -> .then(() => setIsReady(true))  // book loads at ~3s
+  setTimeout(() => setError("..."), 15000)               // fires at 15s, overwrites
 
 Fixed flow:
-  BookReader gets signed URL -> fetches ArrayBuffer via fetch()
-  BookReader passes ArrayBuffer to EpubReader
-  EpubReader calls ePub(arrayBuffer) -> epub.js uses in-memory data
-  No network request needed -> display() resolves immediately
+  const timeout = setTimeout(() => setError("..."), 15000)
+  rendition.display() -> .then(() => { setIsReady(true); clearTimeout(timeout); })
 ```
+
+The timeout declaration needs to be moved before the `rendition.display()` call, and `clearTimeout(timeout)` added to the `.then()` success handler.
 
 ### Files Modified
 
-- `src/pages/books/BookReader.tsx` — Fetch EPUB as ArrayBuffer before passing to reader
-- `src/components/books/reader/EpubReader.tsx` — Accept ArrayBuffer, add loading timeout
+- `src/components/books/reader/EpubReader.tsx` — Move timeout before display(), clear it on successful load
 
