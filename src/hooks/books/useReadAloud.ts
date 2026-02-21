@@ -18,6 +18,7 @@ export function useReadAloud({ getVisibleText, onPageFinished, onWordBoundary, o
   const [isPaused, setIsPaused] = useState(false);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const isReadingRef = useRef(false);
+  const textRef = useRef("");
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
 
@@ -39,6 +40,7 @@ export function useReadAloud({ getVisibleText, onPageFinished, onWordBoundary, o
 
     window.speechSynthesis.cancel();
 
+    textRef.current = text;
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = settingsRef.current.rate;
 
@@ -50,7 +52,9 @@ export function useReadAloud({ getVisibleText, onPageFinished, onWordBoundary, o
 
     utterance.onboundary = (e) => {
       if (e.name === "word") {
-        onWordBoundary?.(e.charIndex, e.charLength ?? 0);
+        const match = textRef.current.slice(e.charIndex).match(/^\S+/);
+        const wordLength = match ? match[0].length : (e.charLength || 1);
+        onWordBoundary?.(e.charIndex, wordLength);
       }
     };
 
