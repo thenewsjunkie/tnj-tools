@@ -13,6 +13,7 @@ import TableOfContents from "@/components/books/reader/TableOfContents";
 import BookmarksList from "@/components/books/reader/BookmarksList";
 import HighlightsPanel from "@/components/books/reader/HighlightsPanel";
 import { useReadAloud } from "@/hooks/books/useReadAloud";
+import { getBestVoice } from "@/utils/voiceUtils";
 import type { NavItem } from "epubjs/types/navigation";
 import { toast } from "sonner";
 import {
@@ -105,6 +106,18 @@ export default function BookReader() {
   useEffect(() => {
     return () => stopReadAloud();
   }, [stopReadAloud]);
+
+  // Auto-select best voice on mount
+  useEffect(() => {
+    const pickBest = () => {
+      if (ttsSettings.voiceURI !== "__default") return;
+      const best = getBestVoice();
+      if (best) setTTSSettings((prev) => ({ ...prev, voiceURI: best.voiceURI }));
+    };
+    pickBest();
+    window.speechSynthesis.addEventListener("voiceschanged", pickBest);
+    return () => window.speechSynthesis.removeEventListener("voiceschanged", pickBest);
+  }, []);
 
   const handleProgressChange = useCallback((pct: number, chapter: string) => {
     setPercentage(pct);

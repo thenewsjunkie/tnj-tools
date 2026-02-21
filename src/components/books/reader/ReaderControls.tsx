@@ -4,11 +4,14 @@ import { Slider } from "@/components/ui/slider";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { scoreVoice, cleanVoiceName, RECOMMENDED_THRESHOLD } from "@/utils/voiceUtils";
 
 export interface ReaderSettings {
   fontFamily: string;
@@ -35,14 +38,15 @@ export default function ReaderControls({ settings, onChange, fileType, ttsSettin
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
 
   useEffect(() => {
-    const loadVoices = () => {
-      const v = window.speechSynthesis.getVoices();
-      setVoices(v);
-    };
+    const loadVoices = () => setVoices(window.speechSynthesis.getVoices());
     loadVoices();
     window.speechSynthesis.addEventListener("voiceschanged", loadVoices);
     return () => window.speechSynthesis.removeEventListener("voiceschanged", loadVoices);
   }, []);
+
+  const recommended = voices.filter((v) => scoreVoice(v) >= RECOMMENDED_THRESHOLD);
+  const others = voices.filter((v) => scoreVoice(v) < RECOMMENDED_THRESHOLD);
+
   return (
     <div className="space-y-5 p-4">
       <h3 className="font-semibold text-foreground">Reading Settings</h3>
@@ -149,12 +153,27 @@ export default function ReaderControls({ settings, onChange, fileType, ttsSettin
                 <SelectValue placeholder="Default voice" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Default</SelectItem>
-                {voices.map((v) => (
-                  <SelectItem key={v.voiceURI} value={v.voiceURI}>
-                    {v.name} ({v.lang})
-                  </SelectItem>
-                ))}
+                <SelectItem value="__default">Default</SelectItem>
+                {recommended.length > 0 && (
+                  <SelectGroup>
+                    <SelectLabel>Recommended</SelectLabel>
+                    {recommended.map((v) => (
+                      <SelectItem key={v.voiceURI} value={v.voiceURI}>
+                        {cleanVoiceName(v.name)}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                )}
+                {others.length > 0 && (
+                  <SelectGroup>
+                    <SelectLabel>All Voices</SelectLabel>
+                    {others.map((v) => (
+                      <SelectItem key={v.voiceURI} value={v.voiceURI}>
+                        {cleanVoiceName(v.name)} ({v.lang})
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                )}
               </SelectContent>
             </Select>
           </div>
