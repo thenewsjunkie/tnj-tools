@@ -68,6 +68,24 @@ const EpubReader = forwardRef<EpubReaderHandle, EpubReaderProps>(function EpubRe
         const doc = (contents as any)[0]?.document as Document;
         if (!doc?.body) return;
 
+        // Inject highlight CSS once
+        if (!doc.getElementById("tts-highlight-style")) {
+          const style = doc.createElement("style");
+          style.id = "tts-highlight-style";
+          style.textContent = `
+            .tts-highlight {
+              background: rgba(59, 130, 246, 0.2);
+              box-shadow: 0 2px 0 0 rgba(59, 130, 246, 0.6);
+              transition: all 0.1s ease;
+              border-radius: 3px;
+              padding: 1px 2px;
+              margin: -1px -2px;
+              color: inherit;
+            }
+          `;
+          doc.head.appendChild(style);
+        }
+
         // Remove previous highlight
         doc.querySelectorAll("mark.tts-highlight").forEach((el) => {
           const parent = el.parentNode;
@@ -103,10 +121,8 @@ const EpubReader = forwardRef<EpubReaderHandle, EpubReaderProps>(function EpubRe
 
         const mark = doc.createElement("mark");
         mark.className = "tts-highlight";
-        mark.style.backgroundColor = "rgba(59, 130, 246, 0.35)";
-        mark.style.borderRadius = "2px";
-        mark.style.color = "inherit";
         range.surroundContents(mark);
+        mark.scrollIntoView({ behavior: "smooth", block: "nearest" });
       } catch {
         // ignore highlight errors
       }
