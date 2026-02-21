@@ -9,6 +9,7 @@ export interface EpubReaderHandle {
   getCurrentCfi: () => string | null;
   next: () => void;
   prev: () => void;
+  getVisibleText: () => string | null;
 }
 
 interface EpubReaderProps {
@@ -46,6 +47,18 @@ const EpubReader = forwardRef<EpubReaderHandle, EpubReaderProps>(function EpubRe
     getCurrentCfi: () => currentCfiRef.current,
     next: () => renditionRef.current?.next(),
     prev: () => renditionRef.current?.prev(),
+    getVisibleText: () => {
+      try {
+        const contents = renditionRef.current?.getContents();
+        if (contents && (contents as any).length > 0) {
+          const doc = (contents as any)[0]?.document;
+          return doc?.body?.innerText || null;
+        }
+      } catch {
+        // ignore
+      }
+      return null;
+    },
   }));
 
   const goNext = useCallback(() => renditionRef.current?.next(), []);
