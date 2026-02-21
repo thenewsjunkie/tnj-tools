@@ -56,7 +56,9 @@ export function useBooks(search?: string, sort?: string) {
 
       return (data as any[]).map((b) => ({
         ...b,
-        reading_progress: b.reading_progress?.[0] ?? null,
+        reading_progress: Array.isArray(b.reading_progress)
+          ? b.reading_progress[0] ?? null
+          : b.reading_progress ?? null,
       })) as Book[];
     },
   });
@@ -73,9 +75,10 @@ export function useBook(id: string | undefined) {
         .eq("id", id!)
         .single();
       if (error) throw error;
+      const rp = (data as any).reading_progress;
       return {
         ...data,
-        reading_progress: (data as any).reading_progress?.[0] ?? null,
+        reading_progress: Array.isArray(rp) ? rp[0] ?? null : rp ?? null,
       } as Book;
     },
   });
