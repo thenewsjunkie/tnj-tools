@@ -31,27 +31,41 @@ export default function BookReader() {
   const { data: book, isLoading } = useBook(id);
   const addBookmark = useAddBookmark();
   const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [bookData, setBookData] = useState<ArrayBuffer | null>(null);
   const [settings, setSettings] = useState<ReaderSettings>(defaultSettings);
   const [toc, setToc] = useState<NavItem[]>([]);
   const [panel, setPanel] = useState<"toc" | "bookmarks" | "highlights" | "settings" | null>(null);
 
   const [fileError, setFileError] = useState<string | null>(null);
 
-  // Get signed URL for private bucket
+  // Get signed URL and fetch book data
   useEffect(() => {
     if (!book?.file_url) return;
     supabase.storage
       .from("book_files")
       .createSignedUrl(book.file_url, 3600)
-      .then(({ data, error }) => {
+      .then(async ({ data, error }) => {
         if (error || !data?.signedUrl) {
           setFileError("Failed to load book file. Please try again.");
           return;
         }
-        setFileUrl(data.signedUrl);
+        // For PDFs, just use the signed URL directly
+        if (book.file_type === "pdf") {
+          setFileUrl(data.signedUrl);
+          return;
+        }
+        // For EPUBs, fetch as ArrayBuffer to avoid CORS/auth issues with epub.js
+        try {
+          const response = await fetch(data.signedUrl);
+          if (!response.ok) throw new Error("Failed to fetch book file");
+          const buffer = await response.arrayBuffer();
+          setBookData(buffer);
+        } catch {
+          setFileError("Failed to download book file.");
+        }
       })
       .catch(() => setFileError("Failed to load book file."));
-  }, [book?.file_url]);
+  }, [book?.file_url, book?.file_type]);
 
   const handleTocSelect = useCallback((href: string) => {
     // For EPUB, epubjs rendition.display(href) is called
@@ -68,7 +82,8 @@ export default function BookReader() {
     );
   }
 
-  if (!fileUrl) {
+  const isEpub = book.file_type === "epub";
+  if (isEpub ? !bookData : !fileUrl) {
     return (
       <div className="flex items-center justify-center h-screen">
         <p className="text-muted-foreground">{fileError || "Preparing file..."}</p>
@@ -88,7 +103,7 @@ export default function BookReader() {
 
       {book.file_type === "epub" ? (
         <EpubReader
-          fileUrl={fileUrl}
+          bookData={bookData!}
           bookId={book.id}
           initialLocation={initialLocation}
           settings={settings}
