@@ -1,79 +1,57 @@
 
 
-## Improve Read Aloud with Smart Browser Voice Selection (Free)
+## Remove /books (Baudible) Feature
 
-Modern browsers include high-quality neural/natural voices, but the current implementation defaults to the lowest-quality one. This plan auto-selects the best available voice and organizes the voice picker so users can easily find good options.
+Delete all files and routes related to the Baudible e-book reader feature.
 
-### What Changes
+### Files to Delete (22 files)
 
-**1. New utility: voice scoring and sorting**
+**Pages (4):**
+- `src/pages/books/BookReader.tsx`
+- `src/pages/books/BooksLibrary.tsx`
+- `src/pages/books/BooksSettings.tsx`
+- `src/pages/books/BooksUpload.tsx`
 
-Create `src/utils/voiceUtils.ts` with:
-- `scoreVoice(voice)` -- ranks voices by quality indicators
-- `getSortedVoices()` -- returns voices sorted best-first
-- `getBestVoice()` -- returns the top-scored voice
+**Components (14):**
+- `src/components/books/library/BookCard.tsx`
+- `src/components/books/library/BookCardMenu.tsx`
+- `src/components/books/library/LibraryToolbar.tsx`
+- `src/components/books/reader/AudioPlayerBar.tsx`
+- `src/components/books/reader/BookmarksList.tsx`
+- `src/components/books/reader/EpubReader.tsx`
+- `src/components/books/reader/HighlightsPanel.tsx`
+- `src/components/books/reader/PdfReader.tsx`
+- `src/components/books/reader/ReaderBottomBar.tsx`
+- `src/components/books/reader/ReaderControls.tsx`
+- `src/components/books/reader/ReaderTopBar.tsx`
+- `src/components/books/reader/TableOfContents.tsx`
+- `src/components/books/upload/FileDropzone.tsx`
+- `src/components/books/upload/MetadataEditor.tsx`
 
-Scoring rules:
-- +100 for "Natural" or "Neural" in name (Microsoft Edge voices)
-- +80 for "Google" English voices (Chrome)
-- +70 for known premium Apple voices (Samantha, Karen, Daniel)
-- +50 for "Enhanced" or "Premium" in name
-- +20 for English language
-- +10 for non-local (cloud-based) voices
+**Hooks (6):**
+- `src/hooks/books/useBookmarks.ts`
+- `src/hooks/books/useBooks.ts`
+- `src/hooks/books/useHighlights.ts`
+- `src/hooks/books/useNotes.ts`
+- `src/hooks/books/useReadAloud.ts`
+- `src/hooks/books/useReadingProgress.ts`
 
-**2. Auto-select best voice on load**
+### Files to Modify (1)
 
-Update `BookReader.tsx` to detect voices on mount and set `ttsSettings.voiceURI` to the best available voice automatically, instead of `"__default"`.
+**`src/components/routing/routes.tsx`** -- Remove the 4 book routes (`/books`, `/books/upload`, `/books/read/:id`, `/books/settings`) and their lazy imports.
 
-**3. Grouped voice dropdown in AudioPlayerBar and ReaderControls**
+### Database Tables
 
-Replace the flat voice list with two groups:
-- "Recommended" -- voices scoring 50+ (the good ones)
-- "All Voices" -- everything else
+The following tables will remain in the database but will no longer be used by the app:
+- `books`
+- `reading_progress`
+- `book_bookmarks`
+- `book_highlights`
+- `book_notes`
 
-Show cleaner display names (strip "Microsoft" prefix, etc.).
+These can be dropped later via a migration if desired.
 
-**4. No other changes needed**
+### Note on voiceUtils
 
-The `useReadAloud.ts` hook already handles voice selection via `settingsRef.current.voiceURI` -- no changes required there.
-
-### Files
-
-| File | Action |
-|------|--------|
-| `src/utils/voiceUtils.ts` | Create -- voice scoring utility |
-| `src/components/books/reader/AudioPlayerBar.tsx` | Update -- grouped voice dropdown, auto-select |
-| `src/components/books/reader/ReaderControls.tsx` | Update -- grouped voice dropdown |
-| `src/pages/books/BookReader.tsx` | Update -- auto-select best voice on mount |
-
-### Technical Details
-
-**Voice scoring function:**
-```text
-scoreVoice(voice: SpeechSynthesisVoice): number
-  name matches /Natural|Neural/i   -> +100
-  name includes "Google", en lang   -> +80
-  name matches /Samantha|Karen|Daniel/ -> +70
-  name matches /Enhanced|Premium/i  -> +50
-  lang starts with "en"             -> +20
-  localService === false            -> +10
-```
-
-**Auto-select logic in BookReader:**
-- Listen for `voiceschanged` event
-- If `voiceURI` is still `"__default"`, call `getBestVoice()` and update TTS settings
-- This runs once on mount so users hear a good voice immediately
-
-**Grouped dropdown rendering:**
-- Split `voices` array into `recommended` (score >= 50) and `others`
-- Render with `SelectGroup` + `SelectLabel` for clear separation
-- Truncate long voice names for cleaner UI
-
-### User Experience
-
-- On Edge/Windows: automatically picks a Microsoft Natural voice (excellent quality)
-- On Chrome: picks the best Google English voice
-- On macOS: picks a premium Siri voice
-- Users can still manually pick any voice from the full list
-- Zero cost, no API keys, works offline
+`src/utils/voiceUtils.ts` was created for Baudible's read-aloud feature. It will be kept since it contains general-purpose voice utilities, but can be removed too if not needed elsewhere.
 
