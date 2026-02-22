@@ -43,10 +43,6 @@ const FullTruthViewer = lazy(() => import("@/pages/FullTruthViewer"));
 const Timer = lazy(() => import("@/pages/Timer"));
 const NotepadPage = lazy(() => import("@/pages/NotepadPage"));
 const RundownPage = lazy(() => import("@/pages/RundownPage"));
-const BooksLibrary = lazy(() => import("@/pages/books/BooksLibrary"));
-const BooksUpload = lazy(() => import("@/pages/books/BooksUpload"));
-const BookReader = lazy(() => import("@/pages/books/BookReader"));
-const BooksSettings = lazy(() => import("@/pages/books/BooksSettings"));
 
 export const router = createBrowserRouter([
   {
@@ -232,22 +228,6 @@ export const router = createBrowserRouter([
       {
         path: "admin/rundown/:date/:topicId",
         element: <AdminRoute><RundownPage /></AdminRoute>,
-      },
-      {
-        path: "books",
-        element: <AdminRoute><BooksLibrary /></AdminRoute>,
-      },
-      {
-        path: "books/upload",
-        element: <AdminRoute><BooksUpload /></AdminRoute>,
-      },
-      {
-        path: "books/read/:id",
-        element: <AdminRoute><BookReader /></AdminRoute>,
-      },
-      {
-        path: "books/settings",
-        element: <AdminRoute><BooksSettings /></AdminRoute>,
       },
     ]
   }
