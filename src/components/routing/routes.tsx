@@ -43,6 +43,7 @@ const FullTruthViewer = lazy(() => import("@/pages/FullTruthViewer"));
 const Timer = lazy(() => import("@/pages/Timer"));
 const NotepadPage = lazy(() => import("@/pages/NotepadPage"));
 const RundownPage = lazy(() => import("@/pages/RundownPage"));
+const StudioScreen = lazy(() => import("@/pages/Admin/StudioScreen"));
 
 export const router = createBrowserRouter([
   {
@@ -228,6 +229,10 @@ export const router = createBrowserRouter([
       {
         path: "admin/rundown/:date/:topicId",
         element: <AdminRoute><RundownPage /></AdminRoute>,
+      },
+      {
+        path: "admin/studio",
+        element: <AdminRoute><StudioScreen /></AdminRoute>,
       },
     ]
   }
