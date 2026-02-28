@@ -1,50 +1,58 @@
 
-## Fix: OBS Overlay White Flash (Cross-Fade Bug)
 
-### Root Cause
-In `transitionTo()`, `currentIndex` is only updated after a 600ms timeout. During the fade:
-- `activeModule = enabledModules[currentIndex]` -- still the OLD module
-- `prevModule = enabledModules[prevIndex]` -- also the OLD module (same value)
-- Result: old module fades to opacity-0, new module isn't rendered, white flash appears
+## Fix: Leaderboard Flash on OBS Overlay Transition
 
-### Fix (single file: `src/pages/OBSOverlay.tsx`)
+### Root Cause (two issues)
 
-Update `transitionTo()` to set `currentIndex` immediately:
+**1. Cross-fade CSS transitions don't work on mount**
+The outgoing component (`PrevComponent`) is freshly mounted with `opacity-0`, so there's no transition from visible to invisible -- it just appears invisible. Both layers sit at `opacity-0` simultaneously, showing the bare background (flash).
 
-```typescript
-const transitionTo = (nextIndex: number) => {
-  if (nextIndex === currentIndex) return;
-  setPrevIndex(currentIndex);   // keep old module visible
-  setCurrentIndex(nextIndex);   // render new module immediately
-  setFading(true);
-  clearTimeout(timeoutRef.current);
-  timeoutRef.current = setTimeout(() => {
-    setPrevIndex(null);          // remove old module
-    setFading(false);
-  }, 600);
-};
-```
+**2. Component remounts cause data refetch**
+Every time the overlay cycles to the leaderboard, `SecretShowsLeaderboard` unmounts and remounts. This triggers a new `useSecretShowsGifters` query, which briefly shows "Loading leaderboard..." before data arrives -- another source of flash.
 
-Update the JSX so during the fade:
-- **Prev component** renders at `opacity-100` and transitions to `opacity-0` (fading out)
-- **Active component** renders at `opacity-0` and transitions to `opacity-100` (fading in)
+### Solution: Keep all modules mounted, toggle visibility
 
+Instead of conditionally rendering only the active module, keep **all enabled modules mounted at all times** (hidden via `opacity-0` / `pointer-events-none`). This:
+- Eliminates remounting and refetching
+- Allows real CSS transitions (element is already in the DOM)
+- Produces a true cross-fade with no empty frame
+
+### Changes (single file: `src/pages/OBSOverlay.tsx`)
+
+**Replace the current conditional render with a persistent mount approach:**
+
+- Render all `enabledModules` simultaneously, each in an absolutely-positioned layer
+- The active module gets `opacity-100`; all others get `opacity-0 pointer-events-none`
+- CSS `transition-opacity duration-500` handles the animation
+- Remove `prevIndex`, `fading`, and `transitionTo` state entirely -- no longer needed
+
+**Simplified structure:**
 ```tsx
-{/* Outgoing module -- visible, fading out */}
-{fading && PrevComponent && (
-  <div className="absolute inset-0 transition-opacity duration-500 opacity-0">
-    <PrevComponent />
+return (
+  <div className="h-screen w-screen overflow-hidden relative" style={{ background: "transparent" }}>
+    {enabledModules.map((moduleId, index) => {
+      const Component = MODULE_COMPONENTS[moduleId];
+      if (!Component) return null;
+      const isActive = index === currentIndex;
+      return (
+        <div
+          key={moduleId}
+          className={`absolute inset-0 transition-opacity duration-500 ${
+            isActive ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
+        >
+          <Component />
+        </div>
+      );
+    })}
   </div>
-)}
-
-{/* Active module -- fading in */}
-{ActiveComponent && (
-  <div className={`absolute inset-0 transition-opacity duration-500 ${
-    fading ? "opacity-0" : "opacity-100"
-  }`}>
-    <ActiveComponent />
-  </div>
-)}
+);
 ```
 
-The prev component starts mounted at full opacity and the CSS transition animates it to `opacity-0`. The key difference is that now `ActiveComponent` is actually the NEW module (not the old one), so both sides of the cross-fade are correct.
+**Simplify the cycling logic:**
+- Remove `prevIndex`, `fading`, `timeoutRef`, and `transitionTo`
+- Auto-cycle just updates `currentIndex` directly
+- Pinned mode just sets `currentIndex` to the pinned module's index
+
+This is simpler, eliminates the flash entirely, and keeps module data warm across cycles.
+
