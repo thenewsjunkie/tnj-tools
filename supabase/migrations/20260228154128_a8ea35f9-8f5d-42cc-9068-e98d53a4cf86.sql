@@ -1,0 +1,1 @@
+ALTER PUBLICATION supabase_realtime ADD TABLE secret_shows_gifters;
