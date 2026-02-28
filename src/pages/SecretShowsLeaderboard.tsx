@@ -107,7 +107,7 @@ const SecretShowsLeaderboard = () => {
         </div>
 
         <h1 className="text-center text-base sm:text-2xl font-bold text-amber-400 mb-1 tracking-wide">
-          Secret Shows Gift Leaders
+          Secret Shows Gifts
         </h1>
         <p className="text-center text-gray-500 text-[10px] sm:text-sm mb-4 sm:mb-8">
           Top supporters gifting Secret Shows subscriptions
