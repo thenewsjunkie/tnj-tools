@@ -149,7 +149,7 @@ const HallOfFrame = () => {
           onDrop={(e) => { e.preventDefault(); setDragOver(false); handleUpload(e.dataTransfer.files); }}
         >
           <Upload className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground mb-2">Drop photos here or click to upload</p>
+          <p className="text-sm text-muted-foreground mb-2">Drop photos or GIFs here or click to upload</p>
           <div className="flex gap-2 justify-center items-end">
             <Input
               placeholder="Caption (optional)"
@@ -169,7 +169,7 @@ const HallOfFrame = () => {
           <input
             ref={fileRef}
             type="file"
-            accept="image/*"
+            accept="image/*,.gif"
             multiple
             className="hidden"
             onChange={(e) => handleUpload(e.target.files)}
