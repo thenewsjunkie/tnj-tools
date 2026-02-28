@@ -62,6 +62,7 @@ const Output = () => {
   const fullVideos = videoFeeds.filter((v) => v.placement === "full");
   const leftVideos = videoFeeds.filter((v) => v.placement === "left");
   const rightVideos = videoFeeds.filter((v) => v.placement === "right");
+  const pipVideos = videoFeeds.filter((v) => v.placement === "pip");
 
   const chatInLeft = left.includes("live-chat");
   const chatInRight = right.includes("live-chat");
@@ -86,6 +87,17 @@ const Output = () => {
           {hasLeft && <OutputColumn modules={left} videos={leftVideos} chatVisible={chatInLeft} />}
           {hasLeft && hasRight && <div className="w-px bg-white/10" />}
           {hasRight && <OutputColumn modules={right} videos={rightVideos} chatVisible={chatInRight} />}
+        </div>
+      )}
+
+      {/* PiP overlay videos */}
+      {pipVideos.length > 0 && (
+        <div className="fixed top-4 right-4 z-50 flex flex-col gap-4">
+          {pipVideos.map((v, i) => (
+            <div key={`pip-${i}`} className="w-80 aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10">
+              <YouTubeEmbed url={v.url} />
+            </div>
+          ))}
         </div>
       )}
 

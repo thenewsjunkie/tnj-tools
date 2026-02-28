@@ -11,7 +11,7 @@ export const STUDIO_MODULES: { id: StudioModule; label: string }[] = [
   { id: "ads", label: "Ads" },
 ];
 
-export type VideoPlacement = "left" | "right" | "full";
+export type VideoPlacement = "left" | "right" | "full" | "pip";
 
 export interface VideoFeed {
   url: string;

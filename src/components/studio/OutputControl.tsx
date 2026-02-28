@@ -19,6 +19,7 @@ const PLACEMENT_OPTIONS: { value: VideoPlacement; label: string }[] = [
   { value: "left", label: "Left" },
   { value: "right", label: "Right" },
   { value: "full", label: "Full Width" },
+  { value: "pip", label: "PiP" },
 ];
 
 const OutputControl = () => {
