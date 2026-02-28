@@ -4,17 +4,44 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Pause, Play } from "lucide-react";
 
+// Fisher-Yates shuffle, optionally avoiding a specific index at position 0
+const shuffleIndices = (length: number, avoidFirst?: number): number[] => {
+  const arr = Array.from({ length }, (_, i) => i);
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  // If the first element matches avoidFirst, swap it with a random other position
+  if (avoidFirst !== undefined && arr.length > 1 && arr[0] === avoidFirst) {
+    const swapIdx = 1 + Math.floor(Math.random() * (arr.length - 1));
+    [arr[0], arr[swapIdx]] = [arr[swapIdx], arr[0]];
+  }
+  return arr;
+};
+
 const HallOfFrame = () => {
   const { data: photos = [] } = useHallOfFramePhotos();
   const { data: settings } = useHallOfFrameSettings();
   const queryClient = useQueryClient();
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [shuffledOrder, setShuffledOrder] = useState<number[]>([]);
+  const [posInOrder, setPosInOrder] = useState(0);
   const [paused, setPaused] = useState(false);
   const [showControls, setShowControls] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
 
   const interval = (settings?.interval_seconds ?? 8) * 1000;
   const transition = settings?.transition ?? "fade";
+
+  // Generate shuffled order when photos.length changes
+  useEffect(() => {
+    if (photos.length > 0) {
+      setShuffledOrder(shuffleIndices(photos.length));
+      setPosInOrder(0);
+    } else {
+      setShuffledOrder([]);
+      setPosInOrder(0);
+    }
+  }, [photos.length]);
 
   // Real-time subscription
   useEffect(() => {
@@ -30,30 +57,33 @@ const HallOfFrame = () => {
     return () => { supabase.removeChannel(channel); };
   }, [queryClient]);
 
-  const photosLengthRef = useRef(photos.length);
-  photosLengthRef.current = photos.length;
+  const shuffledOrderRef = useRef(shuffledOrder);
+  shuffledOrderRef.current = shuffledOrder;
   const intervalRef = useRef(interval);
   intervalRef.current = interval;
 
   // Auto-advance using recursive setTimeout
   useEffect(() => {
-    if (paused || photosLengthRef.current <= 1) return;
+    if (paused || shuffledOrderRef.current.length <= 1) return;
     const timer = setTimeout(() => {
       setTransitioning(true);
       setTimeout(() => {
-        setCurrentIndex((prev) => (prev + 1) % photosLengthRef.current);
+        setPosInOrder((prev) => {
+          const next = prev + 1;
+          if (next >= shuffledOrderRef.current.length) {
+            // Reshuffle, avoiding the last shown photo as the first of the new cycle
+            const lastShown = shuffledOrderRef.current[prev];
+            const newOrder = shuffleIndices(shuffledOrderRef.current.length, lastShown);
+            setShuffledOrder(newOrder);
+            return 0;
+          }
+          return next;
+        });
         setTransitioning(false);
       }, 800);
     }, intervalRef.current);
     return () => clearTimeout(timer);
-  }, [paused, currentIndex]);
-
-  // Keep index in bounds
-  useEffect(() => {
-    if (currentIndex >= photos.length && photos.length > 0) {
-      setCurrentIndex(0);
-    }
-  }, [photos.length, currentIndex]);
+  }, [paused, posInOrder]);
 
   const handleClick = useCallback(() => {
     setPaused((p) => !p);
@@ -69,6 +99,7 @@ const HallOfFrame = () => {
     );
   }
 
+  const currentIndex = shuffledOrder.length > 0 ? shuffledOrder[posInOrder] : 0;
   const photo = photos[currentIndex] as HallOfFramePhoto | undefined;
   if (!photo) return null;
 
