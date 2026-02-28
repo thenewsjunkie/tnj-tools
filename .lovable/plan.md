@@ -1,66 +1,38 @@
 
 
-## Secret Shows Subscription Leaderboard
+## Bulk Import Secret Shows Gifter Data
 
-Build a leaderboard for gifted Secret Shows premium subscriptions, integrated into the Studio Screen with the Secret Shows logo.
+Import all 107 gifters from the provided CSV into the `secret_shows_gifters` database table.
 
-### Database
+### Approach
 
-**New table: `secret_shows_gifters`**
-- `id` (uuid, PK, default gen_random_uuid())
-- `username` (text, not null, unique)
-- `total_gifts` (integer, default 0)
-- `monthly_gifts` (jsonb, default '{}') -- e.g. {"2026-02": 5}
-- `last_gift_date` (timestamptz, nullable)
-- `created_at` (timestamptz, default now())
-- `updated_at` (timestamptz, default now())
+Use the Supabase insert tool to run a single SQL statement that inserts all rows from the CSV. Since usernames may already exist in the table, the query will use `ON CONFLICT (username)` to update existing entries with the CSV totals.
 
-RLS: public SELECT, authenticated INSERT/UPDATE/DELETE.
+### Data Summary
+- 107 unique gifters
+- Top gifter: SunState Jon with 225 gifts
+- Range: 1 to 225 gifts
+- Special characters in some usernames (e.g. `Sean Patrick's Day`) will be properly escaped
 
-### Files
+### Steps
 
-**1. Copy logo to project**
-- Copy `user-uploads://SECRET_SHOWS_LOGO_1-2.png` to `src/assets/secret-shows-logo.png`
+1. Run a bulk INSERT into `secret_shows_gifters` with all 107 rows, setting `total_gifts` from the CSV and `monthly_gifts` to `{}` (since we don't have monthly breakdowns from this historical data)
+2. Use `ON CONFLICT (username) DO UPDATE` to handle any duplicates, replacing the total with the CSV value
+3. Verify the data was inserted correctly
 
-**2. New: `src/components/studio/SecretShowsLeaderboard.tsx`**
-- Admin control panel card on Studio Screen
-- Shows top 5 gifters in a compact preview with the Secret Shows logo
-- "View Full Leaderboard" link to `/secret-shows-leaderboard`
-- Buttons to add/edit gifter entries (username + gift count)
-- Dark themed card with gold/amber accents matching the Secret Shows branding
+### Technical Details
 
-**3. New: `src/pages/SecretShowsLeaderboard.tsx`**
-- Public-facing page at `/secret-shows-leaderboard`
-- Shows top 20 gifters with the Secret Shows logo prominently displayed
-- Dark background with a premium, branded look
-- Ranked list with gold/silver/bronze styling for top 3
-- Displays username, total gifts, and monthly gifts
+The SQL will look like:
+```sql
+INSERT INTO secret_shows_gifters (username, total_gifts, monthly_gifts, last_gift_date)
+VALUES
+  ('SunState Jon', 225, '{}', now()),
+  ('Dj Rage', 24, '{}', now()),
+  ... (all 107 rows)
+ON CONFLICT (username) DO UPDATE SET
+  total_gifts = EXCLUDED.total_gifts,
+  updated_at = now();
+```
 
-**4. New: `src/hooks/useSecretShowsGifters.ts`**
-- React Query hook to fetch and manage secret shows gifter data
-- Functions: fetch top N gifters, add gifter, update gift count
-
-**5. Update: `src/pages/Admin/StudioScreen.tsx`**
-- Replace placeholder "Control Panel" with the SecretShowsLeaderboard component
-- Import and render the admin leaderboard card
-
-**6. Update: `src/components/routing/routes.tsx`**
-- Add route for `/secret-shows-leaderboard` (public, no auth required)
-
-### Visual Design
-
-The leaderboard page will feature:
-- The Secret Shows logo centered at the top
-- Dark background (#0a0a0a / #1a1a2e gradient)
-- Gold (#FFD700) rank numbers for top 3, amber for the rest
-- Each row: rank number, username, gift count with a subtle glow effect
-- Responsive grid layout
-
-### Studio Screen Control Panel
-
-The admin card will include:
-- Secret Shows logo (small)
-- Quick-add form: username input + gift count + "Add" button
-- Top 5 preview list
-- Link to full leaderboard page
+No code file changes are needed -- this is purely a data import operation.
 
