@@ -1,29 +1,29 @@
 
-## Make Hall of Frame Photos Fill the Column on /output
 
-### Problem
-Currently, the Hall of Frame uses `object-contain` with max-height constraints, which leaves empty space around photos that don't match the container's aspect ratio. On the Output page, you want photos to zoom in and fill the entire column space.
+## Add Brightness/Contrast Controls to Output Page
 
 ### Approach
-Pass a prop to the HallOfFrame component so it renders in a "fill" mode when used on the Output page. In fill mode, the image uses `object-cover` (which crops/zooms to fill) and expands to 100% of the container, instead of being constrained with `object-contain` and max-height.
+Add brightness and contrast sliders to the OutputControl card in Studio Screen admin. The values will be stored in the existing `OutputConfig` in `system_settings`, and applied as CSS `filter: brightness() contrast()` on the `/output` page container. Real-time sync is already in place.
 
 ### Changes
 
-**`src/pages/HallOfFrame.tsx`**
-- Add an optional `fillContainer` prop to the component
-- When `fillContainer` is true:
-  - Remove the padding, max-height constraints, and museum frame decorations
-  - Make the image container fill the entire parent with `w-full h-full`
-  - Use `object-cover` on the `<img>` tag so photos zoom/crop to fill
-  - Keep the caption as a subtle overlay at the bottom
-  - Keep transitions and slideshow logic unchanged
-- When `fillContainer` is false (default): no changes, existing museum-frame look is preserved
+**`src/hooks/useOutputConfig.ts`**
+- Add `brightness` (default 100) and `contrast` (default 100) fields to the `OutputConfig` interface
+
+**`src/components/studio/OutputControl.tsx`**
+- Add two Slider components (from existing ui/slider) below the existing controls:
+  - Brightness: range 50-200, default 100
+  - Contrast: range 50-200, default 100
+- Each slider updates the config on change via the existing `save()` helper
+- Show current percentage value next to each slider
 
 **`src/pages/Output.tsx`**
-- Change the hall-of-frame module component from rendering `HallOfFramePage` directly to a wrapper that passes `fillContainer={true}`:
-  ```
-  const OutputHallOfFrame = () => <HallOfFramePage fillContainer />;
-  ```
+- Read `brightness` and `contrast` from config
+- Apply `style={{ filter: \`brightness(\${b}%) contrast(\${c}%)\` }}` to the root `div`
 
-### Result
-On /output, every photo -- portrait, landscape, or square -- will zoom to completely fill its column. On standalone /hall-of-frame and OBS, the museum-frame style remains unchanged.
+### Technical Details
+- No database migration needed -- values are stored as JSON in the existing `system_settings` row
+- Defaults to 100% (no change) when not set
+- Real-time subscription already handles syncing changes to the output page instantly
+- Slider component already exists at `src/components/ui/slider.tsx`
+
