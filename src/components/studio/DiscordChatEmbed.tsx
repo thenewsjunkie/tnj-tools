@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface DiscordMessage {
@@ -18,18 +18,32 @@ const DiscordChatEmbed = ({ zoom = 100 }: DiscordChatEmbedProps) => {
   const bottomRef = useRef<HTMLDivElement>(null);
   const scale = zoom / 100;
 
-  // Initial fetch
+  const mergeMessages = useCallback((existing: DiscordMessage[], incoming: DiscordMessage[]) => {
+    const map = new Map<string, DiscordMessage>();
+    for (const m of existing) map.set(m.id, m);
+    for (const m of incoming) map.set(m.id, m);
+    return Array.from(map.values())
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+      .slice(-200);
+  }, []);
+
+  // Initial fetch + polling fallback
   useEffect(() => {
     const fetchMessages = async () => {
       const { data } = await supabase
         .from("discord_messages")
         .select("id, author_name, author_avatar, content, created_at")
-        .order("created_at", { ascending: true })
+        .order("created_at", { ascending: false })
         .limit(100);
-      if (data) setMessages(data);
+      if (data) {
+        setMessages((prev) => mergeMessages(prev, data));
+      }
     };
+
     fetchMessages();
-  }, []);
+    const interval = setInterval(fetchMessages, 3000);
+    return () => clearInterval(interval);
+  }, [mergeMessages]);
 
   // Realtime subscription
   useEffect(() => {
@@ -40,11 +54,7 @@ const DiscordChatEmbed = ({ zoom = 100 }: DiscordChatEmbedProps) => {
         { event: "INSERT", schema: "public", table: "discord_messages" },
         (payload) => {
           const msg = payload.new as DiscordMessage;
-          setMessages((prev) => {
-            const updated = [...prev, msg];
-            // Keep last 200 to prevent memory bloat
-            return updated.length > 200 ? updated.slice(-200) : updated;
-          });
+          setMessages((prev) => mergeMessages(prev, [msg]));
         }
       )
       .subscribe();
@@ -52,7 +62,7 @@ const DiscordChatEmbed = ({ zoom = 100 }: DiscordChatEmbedProps) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [mergeMessages]);
 
   // Auto-scroll on new messages
   useEffect(() => {
@@ -64,15 +74,10 @@ const DiscordChatEmbed = ({ zoom = 100 }: DiscordChatEmbedProps) => {
     return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
-  const getAvatarUrl = (msg: DiscordMessage) => {
-    if (msg.author_avatar) return msg.author_avatar;
-    return null;
-  };
-
   return (
     <div className="w-full h-full min-h-[400px] bg-black overflow-hidden">
       <div
-        className="h-full overflow-y-auto p-3 space-y-1"
+        className="h-full overflow-y-auto flex flex-col justify-end"
         style={{
           transformOrigin: "top left",
           transform: `scale(${scale})`,
@@ -80,13 +85,12 @@ const DiscordChatEmbed = ({ zoom = 100 }: DiscordChatEmbedProps) => {
           height: `${100 / scale}%`,
         }}
       >
-        {messages.map((msg) => {
-          const avatar = getAvatarUrl(msg);
-          return (
+        <div className="p-3 space-y-1">
+          {messages.map((msg) => (
             <div key={msg.id} className="flex items-start gap-2 py-1 hover:bg-white/5 rounded px-1">
-              {avatar ? (
+              {msg.author_avatar ? (
                 <img
-                  src={avatar}
+                  src={msg.author_avatar}
                   alt=""
                   className="w-6 h-6 rounded-full shrink-0 mt-0.5"
                 />
@@ -101,13 +105,12 @@ const DiscordChatEmbed = ({ zoom = 100 }: DiscordChatEmbedProps) => {
                 <p className="text-sm text-gray-200 break-words">{msg.content}</p>
               </div>
             </div>
-          );
-        })}
-        <div ref={bottomRef} />
+          ))}
+          <div ref={bottomRef} />
+        </div>
       </div>
     </div>
   );
 };
 
 export default DiscordChatEmbed;
-
