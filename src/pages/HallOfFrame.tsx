@@ -58,7 +58,7 @@ const HallOfFrame = () => {
 
   if (photos.length === 0) {
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center">
+      <div className="h-full min-h-screen bg-black flex items-center justify-center">
         <p className="text-white/50 text-lg">No photos to display</p>
       </div>
     );
@@ -82,7 +82,7 @@ const HallOfFrame = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black cursor-pointer select-none" onClick={handleClick}>
+    <div className="relative h-full min-h-screen bg-black cursor-pointer select-none" onClick={handleClick}>
       <div className="w-full h-full flex items-center justify-center overflow-hidden" style={getTransitionStyle()}>
         <img
           src={photo.image_url}
