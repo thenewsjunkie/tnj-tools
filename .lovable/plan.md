@@ -1,17 +1,29 @@
 
+## Make Hall of Frame Photos Fill the Column on /output
 
-## Support Animated GIFs in Hall of Frame
+### Problem
+Currently, the Hall of Frame uses `object-contain` with max-height constraints, which leaves empty space around photos that don't match the container's aspect ratio. On the Output page, you want photos to zoom in and fill the entire column space.
 
-Animated GIFs are actually already technically supported -- the upload accepts `image/*` (which includes GIF), preserves the `.gif` extension, and the `<img>` tag renders animated GIFs natively. However, the UI doesn't make this obvious. Here's what we'll update:
+### Approach
+Pass a prop to the HallOfFrame component so it renders in a "fill" mode when used on the Output page. In fill mode, the image uses `object-cover` (which crops/zooms to fill) and expands to 100% of the container, instead of being constrained with `object-contain` and max-height.
 
-### Changes (2 files)
+### Changes
 
-**`src/components/studio/HallOfFrame.tsx`** (Admin upload panel)
-- Update the file input `accept` attribute to explicitly list GIF: `accept="image/*,.gif"`
-- Update the drop zone text from "Drop photos here or click to upload" to "Drop photos or GIFs here or click to upload"
+**`src/pages/HallOfFrame.tsx`**
+- Add an optional `fillContainer` prop to the component
+- When `fillContainer` is true:
+  - Remove the padding, max-height constraints, and museum frame decorations
+  - Make the image container fill the entire parent with `w-full h-full`
+  - Use `object-cover` on the `<img>` tag so photos zoom/crop to fill
+  - Keep the caption as a subtle overlay at the bottom
+  - Keep transitions and slideshow logic unchanged
+- When `fillContainer` is false (default): no changes, existing museum-frame look is preserved
 
-**`src/pages/HallOfFrame.tsx`** (Display page)
-- No changes needed -- the `<img>` tag already plays animated GIFs automatically
+**`src/pages/Output.tsx`**
+- Change the hall-of-frame module component from rendering `HallOfFramePage` directly to a wrapper that passes `fillContainer={true}`:
+  ```
+  const OutputHallOfFrame = () => <HallOfFramePage fillContainer />;
+  ```
 
-That's it. The storage and database layers already handle GIFs correctly since they're just image files with no server-side processing.
-
+### Result
+On /output, every photo -- portrait, landscape, or square -- will zoom to completely fill its column. On standalone /hall-of-frame and OBS, the museum-frame style remains unchanged.
