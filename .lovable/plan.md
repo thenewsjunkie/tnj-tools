@@ -1,30 +1,51 @@
 
 
-## Add Shuffle Mode to Hall of Frame
+## Add Rotation/Cycling Mode for Output Columns
 
-### What Changes
-Instead of cycling through photos in order (1, 2, 3, ..., 10, 1, 2, ...), the slideshow will play photos in a randomized order. Each cycle will show every photo exactly once in a shuffled sequence before reshuffling for the next cycle -- so no photo repeats until all have been shown.
+### What It Does
+When you assign multiple modules to a column (e.g., Leaderboard + Hall of Frame in the left column), instead of stacking them both at once, the Output page will show one at a time and cycle between them on a timer -- similar to how the Hall of Frame cycles through photos.
 
-### Changes (1 file)
+### How It Works (Admin Side)
+Add a "Rotate" toggle per column in the Output Control card. When enabled for a column:
+- Only one module is visible at a time, filling the full column height
+- It cycles to the next module on a configurable interval (default: 30 seconds)
+- A smooth fade transition between modules
 
-**`src/pages/HallOfFrame.tsx`**
+When "Rotate" is off (the default), the current behavior stays -- all modules stack vertically.
 
-- Add a `shuffledOrder` state that holds a shuffled array of indices (e.g. `[4, 1, 7, 0, 9, ...]`)
-- Add a `posInOrder` state tracking position within the shuffled sequence (instead of `currentIndex` directly indexing `photos`)
-- On mount and whenever `photos.length` changes, generate a new shuffled order using Fisher-Yates shuffle
-- When advancing, increment `posInOrder`; when it reaches the end of the shuffled array, reshuffle and reset to 0
-- The displayed photo becomes `photos[shuffledOrder[posInOrder]]`
-- Ensures no photo is shown twice in a row across reshuffles (the last photo of one cycle won't be first of next)
+### Changes (3 files)
 
-### How It Works
+**1. `src/hooks/useOutputConfig.ts`**
+- Add two optional fields to `OutputConfig`:
+  - `leftRotate?: boolean` -- whether the left column cycles
+  - `rightRotate?: boolean` -- whether the right column cycles
+  - `rotateInterval?: number` -- seconds between rotations (default 30, shared by both columns)
+
+**2. `src/components/studio/OutputControl.tsx`**
+- Add a "Rotate" toggle button next to each column header (Left Column / Right Column)
+- Add a rotation interval input (only shown when at least one column has rotation enabled)
+- Toggling saves to the config immediately like existing controls
+
+**3. `src/pages/Output.tsx`**
+- Update `OutputColumn` to accept a `rotate` prop
+- When `rotate` is true and multiple non-chat modules exist:
+  - Track a `visibleIndex` state that increments on a timer
+  - Render all modules but only show the current one (using CSS visibility or conditional rendering)
+  - Apply a fade transition between swaps
+  - Chat module is excluded from rotation (always shown or hidden based on its own logic)
+- When `rotate` is false, keep current stacking behavior
+
+### Technical Detail
 
 ```text
-Photos: [A, B, C, D, E]
+Column config: [leaderboard, hall-of-frame, ads]  +  rotate: true
 
-Cycle 1 (shuffled): [C, A, E, B, D]  -- shows C, A, E, B, D
-Cycle 2 (reshuffled, avoiding D first): [B, E, A, C, D]  -- shows B, E, A, C, D
+Time 0-30s:   Show leaderboard (full height)
+Time 30-60s:  Fade to hall-of-frame (full height)
+Time 60-90s:  Fade to ads (full height)
+Time 90-120s: Back to leaderboard
 ...and so on
 ```
 
-Each photo gets equal screen time, no repeats until the full set has been displayed.
+Chat is always treated separately -- if it's in the column, it gets its own space below the rotating module (or is hidden per existing logic). Only non-chat modules participate in rotation.
 
