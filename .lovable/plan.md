@@ -1,43 +1,41 @@
 
 
-## Rotate Full-Screen Content for Horizontal Monitor
+## Fix: Hall of Frame Showing Deleted Photos in OBS Overlay
 
-### What Changes
-When the output page is in full-screen mode, apply a CSS rotation so the content displays correctly on a horizontally-mounted monitor. This adds a "Rotate" toggle to the admin Output Control that rotates the full-screen content 90 degrees using a CSS transform.
+### Problem
+When photos are deleted from the admin, the Hall of Frame slideshow (used in OBS Overlay) continues trying to display them. This happens because:
 
-### How It Works
-- A new `rotation` field in the config stores the rotation angle: `0` (default), `90`, `180`, or `270`
-- When full-screen mode is active, the entire content container gets a CSS `transform: rotate(Xdeg)` along with swapped width/height so it fills the rotated viewport correctly
-- The admin UI gets a simple rotation control (a dropdown or cycle button) next to the orientation toggle
+1. The `shuffledOrder` array stores indices into the `photos` array, but it only regenerates when `photos.length` changes
+2. If the query refetches while the slideshow is mid-cycle, the `posInOrder` state can point to an index that maps to a photo that no longer exists
+3. The realtime subscription correctly invalidates the query, but the shuffle state is not properly synchronized with the new data
+
+### Fix
+
+**`src/pages/HallOfFrame.tsx`** -- Two changes:
+
+1. **Use `photos` (not just `photos.length`) as the dependency for shuffled order regeneration.** Currently the effect at line ~60 uses `photos.length` as its dependency. If 3 photos become 3 different photos (unlikely but possible), or if the data updates in a way that length stays the same, the indices become stale. Change dependency to a stable key derived from the photo IDs.
+
+2. **Add a safety guard for out-of-bounds indices.** If `shuffledOrder` references an index >= the current `photos.length`, reset to 0 and regenerate the shuffle. This is the defensive fix that prevents broken images even during race conditions.
+
+### Technical Detail
+
+```text
+Current flow (broken):
+  photos.length changes -> regenerate shuffledOrder -> reset posInOrder to 0
+  BUT: posInOrder can advance BEFORE the effect runs, pointing to a stale index
+
+Fixed flow:
+  photos (by ID) changes -> regenerate shuffledOrder -> reset posInOrder to 0
+  PLUS: before rendering, if currentIndex >= photos.length, clamp to 0
+  PLUS: if photo at currentIndex is undefined, skip rendering
+```
 
 ### Changes
 
-**`src/hooks/useOutputConfig.ts`**
-- Add `rotation?: number` to the `OutputConfig` interface (values: 0, 90, 180, 270; default 0)
+**`src/pages/HallOfFrame.tsx`**
+- Change the `useEffect` dependency from `photos.length` to a string of joined photo IDs (e.g., `photos.map(p => p.id).join(',')`) so that any change in the photo list triggers a reshuffle
+- Add a bounds check: if `currentIndex >= photos.length`, immediately reset `posInOrder` to 0 and regenerate the shuffle
+- Keep the existing `if (!photo) return null` guard as a final safety net
 
-**`src/components/studio/OutputControl.tsx`**
-- Add a "Rotation" control below the Layout section with four options: 0, 90, 180, 270 degrees
-- Each button saves the chosen rotation value via the existing `save()` helper
-
-**`src/pages/Output.tsx`**
-- In the full-screen rendering branch, wrap the content in a container that applies:
-  - `transform: rotate(Xdeg)` based on the rotation value
-  - For 90/270 degree rotations: swap width and height (`width: 100vh; height: 100vw`) and use `transform-origin: center` so the rotated content fills the viewport correctly
-  - For 0/180: no dimension swapping needed
-- This also applies to the non-full-screen (column) layout so it works in all modes
-
-### Technical Details
-- For 90/270 rotation, the CSS will be:
-  ```css
-  transform: rotate(90deg);
-  transform-origin: center center;
-  width: 100vh;
-  height: 100vw;
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  translate: -50% -50%;
-  ```
-- No migration needed -- stored in existing `system_settings` JSON
-- Real-time sync pushes rotation changes instantly to the output page
+This is a small, targeted fix -- no new files, no database changes.
 
