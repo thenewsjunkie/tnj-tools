@@ -170,20 +170,6 @@ const HallOfFrame = () => {
             {photo.caption}
           </p>
         )}
-
-        {/* Progress dots */}
-        {photos.length > 1 && (
-          <div className="flex gap-1.5">
-            {photos.map((_, i) => (
-              <div
-                key={i}
-                className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full transition-all ${
-                  i === currentIndex ? "bg-amber-400 scale-125" : "bg-white/20"
-                }`}
-              />
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Pause/Play indicator */}
