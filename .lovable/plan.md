@@ -1,46 +1,24 @@
 
 
-## Fix: Hall of Frame First Photo Still Cut Short
+## Add Picture-in-Picture Placement for YouTube Video Feeds
 
-### Root Cause
+### What Changes
+Add a new "PiP" (Picture-in-Picture) placement option for video feeds. When selected, the video will appear as a small overlay in the top-right corner of the Output page, floating above other content.
 
-The `setTimeout` effect depends on `interval` (line 47). Here's what happens:
+### Changes (3 files)
 
-1. Component mounts -- `settings` is `undefined`, so `interval` = default `8000`
-2. Timer starts for photo 1
-3. Settings query resolves -- `interval` recalculates (even if still 8000, React sees a new render cycle)
-4. Real-time subscription fires on the settings table, triggering another refetch
-5. Each time `interval` reference updates in the dependency array, the effect restarts, resetting the timer
+**1. `src/hooks/useOutputConfig.ts`**
+- Add `"pip"` to the `VideoPlacement` type union (currently `"left" | "right" | "full"`, becomes `"left" | "right" | "full" | "pip"`)
 
-### Fix (1 file)
+**2. `src/components/studio/OutputControl.tsx`**
+- Add `{ value: "pip", label: "PiP" }` to the `PLACEMENT_OPTIONS` array so admins can select it when adding or updating a video feed
 
-**`src/pages/HallOfFrame.tsx`** -- lines 16, 33-47
-
-- Store `interval` in a ref (`intervalRef`) alongside `photosLengthRef`
-- Remove `interval` from the effect's dependency array
-- Use `intervalRef.current` inside the `setTimeout` call
-- The effect will only depend on `[paused, currentIndex]` -- meaning it only restarts when we deliberately advance to the next photo or toggle pause
-
-```
-// Refs
-const photosLengthRef = useRef(photos.length);
-photosLengthRef.current = photos.length;
-const intervalRef = useRef(interval);
-intervalRef.current = interval;
-
-// Effect deps: only [paused, currentIndex]
-useEffect(() => {
-  if (paused || photosLengthRef.current <= 1) return;
-  const timer = setTimeout(() => {
-    setTransitioning(true);
-    setTimeout(() => {
-      setCurrentIndex((prev) => (prev + 1) % photosLengthRef.current);
-      setTransitioning(false);
-    }, 800);
-  }, intervalRef.current);
-  return () => clearTimeout(timer);
-}, [paused, currentIndex]);
-```
-
-This ensures the timer is never restarted by background data fetches -- only by actual photo transitions or pause/unpause actions.
+**3. `src/pages/Output.tsx`**
+- Filter video feeds with `placement === "pip"` separately from the other placements
+- Render PiP videos as fixed-position overlays in the top-right corner, styled with:
+  - `fixed top-4 right-4` positioning
+  - A compact size (~320x180px, 16:9 aspect ratio)
+  - `z-50` to float above all other content
+  - Rounded corners and a subtle shadow for visibility
+  - If multiple PiP videos exist, stack them vertically with spacing
 
