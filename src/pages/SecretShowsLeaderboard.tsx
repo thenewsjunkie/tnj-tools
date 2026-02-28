@@ -102,7 +102,7 @@ const SecretShowsLeaderboard = () => {
     <div className="secret-shows-leaderboard min-h-screen bg-gradient-to-b from-[#0a0a0a] via-[#1a1a2e] to-[#0a0a0a] px-2 sm:px-4 py-4 sm:py-8">
       <div className="max-w-2xl mx-auto">
         {/* Logo */}
-        <div className="flex justify-center mb-4 sm:mb-8">
+        <div className="flex justify-center mb-2 sm:mb-4">
           <img src={secretShowsLogo} alt="Secret Shows" className="h-14 sm:h-24 w-auto drop-shadow-[0_0_20px_rgba(255,215,0,0.2)]" />
         </div>
 
