@@ -143,7 +143,10 @@ const Output = () => {
   const chatOrphan = !chatInLeft && !chatInRight;
 
   return (
-    <div className="h-screen bg-black flex flex-col">
+    <div
+      className="h-screen bg-black flex flex-col"
+      style={{ filter: `brightness(${config?.brightness ?? 100}%) contrast(${config?.contrast ?? 100}%)` }}
+    >
       {fullVideos.map((v, i) => (
         <div key={`full-${i}`} className="flex-1 min-h-[300px]">
           <YouTubeEmbed url={v.url} />
