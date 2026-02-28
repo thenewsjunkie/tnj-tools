@@ -193,7 +193,7 @@ const Output = () => {
       ))}
 
       {(hasLeft || hasRight) && (
-        <div className="flex-1 flex min-h-0">
+        <div className={`flex-1 flex min-h-0 ${(config?.orientation ?? "horizontal") === "vertical" ? "flex-col" : "flex-row"}`}>
           {hasLeft && (
             <OutputColumn
               modules={left}
