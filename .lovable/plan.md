@@ -1,29 +1,17 @@
 
 
-## Add Brightness/Contrast Controls to Output Page
+## Fix Secret Shows Gifters Realtime on OBS Overlay
 
-### Approach
-Add brightness and contrast sliders to the OutputControl card in Studio Screen admin. The values will be stored in the existing `OutputConfig` in `system_settings`, and applied as CSS `filter: brightness() contrast()` on the `/output` page container. Real-time sync is already in place.
+### Problem
+The `secret_shows_gifters` table is not added to the Supabase Realtime publication (`supabase_realtime`). This means the `postgres_changes` subscription in `useSecretShowsGifters` never receives any events, so the OBS Overlay leaderboard doesn't update when gifts are added.
 
-### Changes
+### Fix
+Run a single SQL migration to add the table to the realtime publication:
 
-**`src/hooks/useOutputConfig.ts`**
-- Add `brightness` (default 100) and `contrast` (default 100) fields to the `OutputConfig` interface
+```sql
+ALTER PUBLICATION supabase_realtime ADD TABLE secret_shows_gifters;
+```
 
-**`src/components/studio/OutputControl.tsx`**
-- Add two Slider components (from existing ui/slider) below the existing controls:
-  - Brightness: range 50-200, default 100
-  - Contrast: range 50-200, default 100
-- Each slider updates the config on change via the existing `save()` helper
-- Show current percentage value next to each slider
-
-**`src/pages/Output.tsx`**
-- Read `brightness` and `contrast` from config
-- Apply `style={{ filter: \`brightness(\${b}%) contrast(\${c}%)\` }}` to the root `div`
-
-### Technical Details
-- No database migration needed -- values are stored as JSON in the existing `system_settings` row
-- Defaults to 100% (no change) when not set
-- Real-time subscription already handles syncing changes to the output page instantly
-- Slider component already exists at `src/components/ui/slider.tsx`
+### No Code Changes Needed
+The existing `useSecretShowsGifters` hook already has the correct realtime subscription code -- it subscribes to `postgres_changes` on the `secret_shows_gifters` table and invalidates the React Query cache on any change. Once the table is in the publication, everything will work automatically with the flashy animations and confetti already built into the leaderboard.
 
