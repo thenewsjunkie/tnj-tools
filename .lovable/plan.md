@@ -1,37 +1,63 @@
 
 
-## Add Subtract Ability to Subscription Gifters
+## Hall of Frame - Digital Photo Frame Module
 
-Allow subtracting gifted subs from a user's count in the admin SecretShowsLeaderboard card.
+A new module on the Studio Screen page for managing and displaying photos in a slideshow, similar to a Frameo digital photo frame.
 
-### Approach
+### What You Get
 
-Add a +/- toggle next to the gift count input so you can switch between adding and subtracting gifts from a user's total.
+**Admin Card (on /admin/studio)**
+- Upload photos via file picker or drag-and-drop
+- Delete photos
+- Reorder photos via drag-and-drop
+- Set slideshow interval (seconds between photos)
+- Set transition style (fade, slide, zoom)
+- Link to the display page
 
-### Changes
+**Display Page (/hall-of-frame)**
+- Full-screen photo slideshow with smooth transitions
+- Auto-advances based on configured interval
+- Pause on click/tap, resume on second click
+- Shows photo caption if one exists
+- Clean black background, suitable for OBS browser source or a dedicated screen
 
-**1. `src/components/studio/SecretShowsLeaderboard.tsx`**
+### Database
 
-- Add a toggle button (or +/- button) next to the number input that switches between "add" and "subtract" mode
-- Pass a negative or positive `giftCount` to the mutation based on the mode
-- Visual indicator: green/+ for adding, red/- for subtracting
+New table: `hall_of_frame_photos`
+- `id` (uuid, PK)
+- `image_url` (text, not null) -- stored in a new `hall_of_frame` storage bucket
+- `caption` (text, nullable) -- optional caption overlay
+- `display_order` (integer, not null, default 0)
+- `created_at` (timestamptz)
+- `updated_at` (timestamptz)
 
-**2. `src/hooks/useSecretShowsGifters.ts`**
+New table: `hall_of_frame_settings`
+- `id` (uuid, PK)
+- `interval_seconds` (integer, default 8) -- time between photos
+- `transition` (text, default 'fade') -- fade, slide, or zoom
+- `updated_at` (timestamptz)
 
-- Update `useAddSecretShowsGifter` mutation to handle negative gift counts:
-  - When subtracting, clamp `total_gifts` to a minimum of 0 (prevent negative totals)
-  - Update the monthly_gifts entry accordingly
-  - Toast confirmation will show "Removed X gift(s) from username"
+New storage bucket: `hall_of_frame` (public)
 
-### UI Layout
+RLS: Public SELECT on both tables, authenticated INSERT/UPDATE/DELETE.
 
-The form row will change from:
+### New Files
 
-`[Username] [Count] [+]`
+1. **`src/hooks/useHallOfFrame.ts`** -- hooks for CRUD on photos and settings (useHallOfFramePhotos, useAddHallOfFramePhoto, useDeleteHallOfFramePhoto, useReorderHallOfFramePhotos, useHallOfFrameSettings, useUpdateHallOfFrameSettings)
+2. **`src/components/studio/HallOfFrame.tsx`** -- admin card with upload, delete, reorder, and settings controls
+3. **`src/pages/HallOfFrame.tsx`** -- the display page with full-screen slideshow
 
-to:
+### Modified Files
 
-`[Username] [Count] [+/-] [Submit]`
+4. **`src/pages/Admin/StudioScreen.tsx`** -- import and render the HallOfFrame card below SecretShowsLeaderboard
+5. **`src/components/routing/routes.tsx`** -- add `/hall-of-frame` route
 
-Where +/- is a small toggle button that switches between add (green) and subtract (red) modes.
+### Technical Details
+
+- Photo upload uses supabase storage (`hall_of_frame` bucket) with direct client upload
+- Drag-and-drop reordering uses `@dnd-kit/sortable` (already installed), updating `display_order` in batch
+- Slideshow uses a `useEffect` interval timer, cycling through photos ordered by `display_order`
+- Transitions via CSS (opacity fade, translateX slide, or scale zoom) with `transition` duration matching interval
+- Settings stored as a single row in `hall_of_frame_settings`, upserted on change
+- Real-time subscription on `hall_of_frame_photos` so the display page picks up new uploads immediately without refresh
 
