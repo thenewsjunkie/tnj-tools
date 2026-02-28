@@ -46,6 +46,7 @@ const RundownPage = lazy(() => import("@/pages/RundownPage"));
 const StudioScreen = lazy(() => import("@/pages/Admin/StudioScreen"));
 const SecretShowsLeaderboard = lazy(() => import("@/pages/SecretShowsLeaderboard"));
 const HallOfFramePage = lazy(() => import("@/pages/HallOfFrame"));
+const Output = lazy(() => import("@/pages/Output"));
 
 export const router = createBrowserRouter([
   {
@@ -243,6 +244,10 @@ export const router = createBrowserRouter([
       {
         path: "hall-of-frame",
         element: <HallOfFramePage />,
+      },
+      {
+        path: "output",
+        element: <Output />,
       },
     ]
   }
