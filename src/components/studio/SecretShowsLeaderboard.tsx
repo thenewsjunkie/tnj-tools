@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trophy, Plus, Trash2, ExternalLink } from "lucide-react";
+import { Trophy, Plus, Minus, Trash2, ExternalLink } from "lucide-react";
 import { useSecretShowsGifters, useAddSecretShowsGifter, useDeleteSecretShowsGifter, useAllSecretShowsGifterNames } from "@/hooks/useSecretShowsGifters";
 import { toast } from "sonner";
 import secretShowsLogo from "@/assets/secret-shows-logo.png";
@@ -15,6 +15,7 @@ const SecretShowsLeaderboard = () => {
   const deleteGifter = useDeleteSecretShowsGifter();
   const [username, setUsername] = useState("");
   const [giftCount, setGiftCount] = useState(1);
+  const [isSubtract, setIsSubtract] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const blurTimeout = useRef<ReturnType<typeof setTimeout>>();
 
@@ -25,11 +26,12 @@ const SecretShowsLeaderboard = () => {
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!username.trim()) return;
+    const effectiveCount = isSubtract ? -giftCount : giftCount;
     addGifter.mutate(
-      { username: username.trim(), giftCount },
+      { username: username.trim(), giftCount: effectiveCount },
       {
         onSuccess: () => {
-          toast.success(`Added ${giftCount} gift(s) for ${username}`);
+          toast.success(isSubtract ? `Removed ${giftCount} gift(s) from ${username}` : `Added ${giftCount} gift(s) for ${username}`);
           setUsername("");
           setGiftCount(1);
         },
@@ -82,8 +84,16 @@ const SecretShowsLeaderboard = () => {
             onChange={(e) => setGiftCount(parseInt(e.target.value) || 1)}
             className="bg-black/30 border-amber-500/20 text-white w-16"
           />
-          <Button type="submit" size="sm" disabled={addGifter.isPending} className="bg-amber-600 hover:bg-amber-700 text-black">
-            <Plus className="h-4 w-4" />
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => setIsSubtract(!isSubtract)}
+            className={isSubtract ? "bg-red-600 hover:bg-red-700 text-white" : "bg-green-600 hover:bg-green-700 text-white"}
+          >
+            {isSubtract ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+          </Button>
+          <Button type="submit" size="sm" disabled={addGifter.isPending} className={isSubtract ? "bg-red-600 hover:bg-red-700 text-white" : "bg-amber-600 hover:bg-amber-700 text-black"}>
+            {isSubtract ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
           </Button>
         </form>
 
