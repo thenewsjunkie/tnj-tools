@@ -1,58 +1,41 @@
 
 
-## Fix: Leaderboard Flash on OBS Overlay Transition
+## Fix: Leaderboard Readability in OBS Overlay
 
-### Root Cause (two issues)
+### Problem
+The `SecretShowsLeaderboard` uses Tailwind's `sm:` breakpoint (640px) for readable text sizes. In your OBS setup, the panel is ~300px wide, so it never hits those breakpoints -- you're stuck with the tiny base sizes (`text-sm`, `text-base`, etc.).
 
-**1. Cross-fade CSS transitions don't work on mount**
-The outgoing component (`PrevComponent`) is freshly mounted with `opacity-0`, so there's no transition from visible to invisible -- it just appears invisible. Both layers sit at `opacity-0` simultaneously, showing the bare background (flash).
+### Solution
+Add an OBS-specific CSS override in `src/index.css` that targets the leaderboard when rendered inside the OBS overlay context (the `body.obs-overlay` class is already applied). This avoids changing anything on the standalone `/secret-shows-leaderboard` page.
 
-**2. Component remounts cause data refetch**
-Every time the overlay cycles to the leaderboard, `SecretShowsLeaderboard` unmounts and remounts. This triggers a new `useSecretShowsGifters` query, which briefly shows "Loading leaderboard..." before data arrives -- another source of flash.
+### Changes
 
-### Solution: Keep all modules mounted, toggle visibility
+**`src/index.css`** -- Add a new CSS block:
+- Target `body.obs-overlay` descendants to boost leaderboard readability
+- Increase font sizes for rank numbers, usernames, and gift counts
+- Increase row padding for better spacing
+- Slightly increase logo size
+- Make the subtitle text larger
+- Reduce the `min-h-screen` to just fill available space without forcing scroll
 
-Instead of conditionally rendering only the active module, keep **all enabled modules mounted at all times** (hidden via `opacity-0` / `pointer-events-none`). This:
-- Eliminates remounting and refetching
-- Allows real CSS transitions (element is already in the DOM)
-- Produces a true cross-fade with no empty frame
+**`src/pages/SecretShowsLeaderboard.tsx`** -- Add a CSS class to the outer container:
+- Add a class like `secret-shows-leaderboard` to the root div so the CSS can target it specifically (rather than using fragile descendant selectors)
 
-### Changes (single file: `src/pages/OBSOverlay.tsx`)
+This keeps the standalone leaderboard page unchanged while making the OBS overlay version significantly more readable with larger, bolder text.
 
-**Replace the current conditional render with a persistent mount approach:**
+### Technical Details
 
-- Render all `enabledModules` simultaneously, each in an absolutely-positioned layer
-- The active module gets `opacity-100`; all others get `opacity-0 pointer-events-none`
-- CSS `transition-opacity duration-500` handles the animation
-- Remove `prevIndex`, `fading`, and `transitionTo` state entirely -- no longer needed
-
-**Simplified structure:**
-```tsx
-return (
-  <div className="h-screen w-screen overflow-hidden relative" style={{ background: "transparent" }}>
-    {enabledModules.map((moduleId, index) => {
-      const Component = MODULE_COMPONENTS[moduleId];
-      if (!Component) return null;
-      const isActive = index === currentIndex;
-      return (
-        <div
-          key={moduleId}
-          className={`absolute inset-0 transition-opacity duration-500 ${
-            isActive ? "opacity-100" : "opacity-0 pointer-events-none"
-          }`}
-        >
-          <Component />
-        </div>
-      );
-    })}
-  </div>
-);
+CSS overrides will include:
+```css
+body.obs-overlay .secret-shows-leaderboard {
+  min-height: auto;
+  padding: 0.5rem;
+}
+body.obs-overlay .secret-shows-leaderboard .leaderboard-rank { font-size: 1.5rem; }
+body.obs-overlay .secret-shows-leaderboard .leaderboard-username { font-size: 1.1rem; }
+body.obs-overlay .secret-shows-leaderboard .leaderboard-score { font-size: 1.25rem; }
+body.obs-overlay .secret-shows-leaderboard .leaderboard-row { padding: 0.625rem 0.75rem; }
 ```
 
-**Simplify the cycling logic:**
-- Remove `prevIndex`, `fading`, `timeoutRef`, and `transitionTo`
-- Auto-cycle just updates `currentIndex` directly
-- Pinned mode just sets `currentIndex` to the pinned module's index
-
-This is simpler, eliminates the flash entirely, and keeps module data warm across cycles.
+We'll add these semantic class names alongside the existing Tailwind classes in the component (no visual change on its own -- only activated by the CSS when inside OBS overlay).
 
