@@ -99,17 +99,17 @@ const SecretShowsLeaderboard = () => {
   }, [gifters, fireConfetti]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] via-[#1a1a2e] to-[#0a0a0a] px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] via-[#1a1a2e] to-[#0a0a0a] px-2 sm:px-4 py-4 sm:py-8">
       <div className="max-w-2xl mx-auto">
         {/* Logo */}
-        <div className="flex justify-center mb-8">
-          <img src={secretShowsLogo} alt="Secret Shows" className="h-24 w-auto drop-shadow-[0_0_20px_rgba(255,215,0,0.2)]" />
+        <div className="flex justify-center mb-4 sm:mb-8">
+          <img src={secretShowsLogo} alt="Secret Shows" className="h-14 sm:h-24 w-auto drop-shadow-[0_0_20px_rgba(255,215,0,0.2)]" />
         </div>
 
-        <h1 className="text-center text-2xl font-bold text-amber-400 mb-1 tracking-wide">
+        <h1 className="text-center text-base sm:text-2xl font-bold text-amber-400 mb-1 tracking-wide">
           Secret Shows Gift Leaders
         </h1>
-        <p className="text-center text-gray-500 text-sm mb-8">
+        <p className="text-center text-gray-500 text-[10px] sm:text-sm mb-4 sm:mb-8">
           Top supporters gifting Secret Shows subscriptions
         </p>
 
@@ -118,7 +118,7 @@ const SecretShowsLeaderboard = () => {
         ) : gifters.length === 0 ? (
           <p className="text-gray-500 text-center py-12">No gifters yet. Be the first!</p>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-1.5 sm:space-y-2">
             {gifters.map((gifter, i) => {
               const monthlyCount = (gifter.monthly_gifts as Record<string, number>)?.[currentMonth] || 0;
               const isUpdated = updatedIds.has(gifter.id);
@@ -129,7 +129,7 @@ const SecretShowsLeaderboard = () => {
                 <div
                   key={gifter.id}
                   className={`
-                    flex items-center gap-4 px-4 py-3 rounded-lg
+                    flex items-center gap-2 sm:gap-4 px-2 sm:px-4 py-2 sm:py-3 rounded-lg
                     transition-all duration-500 ease-out
                     ${i < 3
                       ? "bg-gradient-to-r from-amber-500/10 to-transparent border border-amber-500/20"
@@ -140,33 +140,32 @@ const SecretShowsLeaderboard = () => {
                     ${isRankChanged && !isNew ? "animate-leaderboard-shift" : ""}
                   `}
                   style={{
-                    // Smooth reordering
                     transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
                   }}
                 >
                   {/* Rank */}
-                  <span className={`text-2xl font-black w-8 text-center transition-all duration-300 ${
+                  <span className={`text-lg sm:text-2xl font-black w-6 sm:w-8 text-center transition-all duration-300 ${
                     rankStyles[i] || "text-gray-500"
                   } ${isRankChanged ? "scale-125" : ""}`}>
                     {i + 1}
                   </span>
 
                   {/* Username */}
-                  <span className={`flex-1 font-semibold truncate transition-all duration-300 ${
+                  <span className={`flex-1 font-semibold truncate text-sm sm:text-base transition-all duration-300 ${
                     i < 3 ? "text-white" : "text-gray-300"
                   } ${isNew ? "text-amber-300" : ""}`}>
                     {gifter.username}
                   </span>
 
-                  {/* Monthly */}
+                  {/* Monthly - hidden on very narrow */}
                   {monthlyCount > 0 && (
-                    <span className="text-xs text-amber-500/70 bg-amber-500/10 px-2 py-0.5 rounded">
+                    <span className="hidden sm:inline text-xs text-amber-500/70 bg-amber-500/10 px-2 py-0.5 rounded">
                       +{monthlyCount} this month
                     </span>
                   )}
 
                   {/* Total with flash effect */}
-                  <span className={`font-mono font-bold text-lg transition-all duration-300 ${
+                  <span className={`font-mono font-bold text-base sm:text-lg transition-all duration-300 ${
                     i < 3 ? "text-amber-400" : "text-amber-500/80"
                   } ${isUpdated ? "scale-150 text-yellow-300 drop-shadow-[0_0_16px_rgba(255,215,0,1)]" : ""}`}>
                     {gifter.total_gifts}

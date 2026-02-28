@@ -83,7 +83,7 @@ const HallOfFrame = () => {
 
   return (
     <div className="relative h-full min-h-screen bg-black cursor-pointer select-none" onClick={handleClick}>
-      <div className="w-full h-full flex items-center justify-center overflow-hidden" style={getTransitionStyle()}>
+      <div className="w-full h-full flex items-center justify-center overflow-hidden p-1 sm:p-0" style={getTransitionStyle()}>
         <img
           src={photo.image_url}
           alt={photo.caption || ""}
@@ -92,8 +92,8 @@ const HallOfFrame = () => {
       </div>
 
       {photo.caption && (
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6 pt-16">
-          <p className="text-white text-xl text-center">{photo.caption}</p>
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3 sm:p-6 pt-8 sm:pt-16">
+          <p className="text-white text-sm sm:text-xl text-center">{photo.caption}</p>
         </div>
       )}
 
