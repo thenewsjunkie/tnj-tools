@@ -3,6 +3,7 @@ import SecretShowsLeaderboard from "@/components/studio/SecretShowsLeaderboard";
 import HallOfFrame from "@/components/studio/HallOfFrame";
 import OutputControl from "@/components/studio/OutputControl";
 import RestreamChat from "@/components/studio/RestreamChat";
+import AdsManager from "@/components/studio/AdsManager";
 
 const StudioScreen = () => {
   return (
@@ -19,6 +20,7 @@ const StudioScreen = () => {
       </nav>
       <div className="max-w-2xl mx-auto space-y-6">
         <OutputControl />
+        <AdsManager />
         <SecretShowsLeaderboard />
         <HallOfFrame />
         <RestreamChat />
