@@ -167,8 +167,8 @@ const HallOfFrame = () => {
           font-weight: 700;
           letter-spacing: 0.15em;
           text-transform: uppercase;
-          padding: 4px 16px;
-          font-size: 9px;
+          padding: 6px 24px;
+          font-size: 12px;
           border-radius: 2px;
           box-shadow:
             0 2px 8px rgba(0,0,0,0.5),
@@ -179,8 +179,8 @@ const HallOfFrame = () => {
         }
         @media (min-width: 640px) {
           .nameplate {
-            padding: 6px 28px;
-            font-size: 11px;
+            padding: 8px 40px;
+            font-size: 14px;
           }
         }
       `}</style>
