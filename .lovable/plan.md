@@ -1,17 +1,41 @@
 
 
-## Fix Secret Shows Gifters Realtime on OBS Overlay
+## Add Full-Screen Module Option to Output
 
-### Problem
-The `secret_shows_gifters` table is not added to the Supabase Realtime publication (`supabase_realtime`). This means the `postgres_changes` subscription in `useSecretShowsGifters` never receives any events, so the OBS Overlay leaderboard doesn't update when gifts are added.
+### What Changes
+Add a third placement option -- "Full Screen" -- for modules, so any module (like Live Chat) can span the entire output display instead of being limited to the left or right column.
 
-### Fix
-Run a single SQL migration to add the table to the realtime publication:
+### How It Works
+- A new `fullScreen` field in the config stores which module (if any) is in full-screen mode
+- When a module is set to full-screen, it takes over the entire `/output` page, hiding the two-column layout
+- In the admin UI, each module gets a third "Full" button alongside Left and Right
+- Only one module can be full-screen at a time (selecting full-screen for one clears any previous)
+- For Live Chat specifically, the always-mounted iframe approach is preserved
 
-```sql
-ALTER PUBLICATION supabase_realtime ADD TABLE secret_shows_gifters;
+### Changes
+
+**`src/hooks/useOutputConfig.ts`**
+- Add `fullScreen?: StudioModule | null` to the `OutputConfig` interface
+
+**`src/components/studio/OutputControl.tsx`**
+- Replace the two-column grid with a three-column layout: Left | Full | Right
+- Add a "Full" column in the middle (or a "Full Screen" button per module row)
+- When a module is toggled to Full, it gets set as `config.fullScreen` and removed from left/right columns
+- When toggled off Full, it clears `config.fullScreen`
+- Visual: full-screen modules highlighted in a distinct color (e.g., green/purple) to differentiate from column assignments
+
+**`src/pages/Output.tsx`**
+- Check `config.fullScreen` first
+- If a full-screen module is set, render only that module's component filling the entire screen (`w-full h-full`)
+- Skip the two-column layout entirely when full-screen is active
+- Still mount orphan chat hidden if Live Chat isn't the full-screen module
+
+### Admin UI Layout
+The module buttons will look like this for each module:
+
+```text
+Module Name:  [Left]  [Full]  [Right]
 ```
 
-### No Code Changes Needed
-The existing `useSecretShowsGifters` hook already has the correct realtime subscription code -- it subscribes to `postgres_changes` on the `secret_shows_gifters` table and invalidates the React Query cache on any change. Once the table is in the publication, everything will work automatically with the flashy animations and confetti already built into the leaderboard.
+Each button toggles independently. Selecting "Full" clears the module from Left/Right and sets it as the sole full-screen module.
 
