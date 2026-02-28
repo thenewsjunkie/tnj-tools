@@ -20,10 +20,10 @@ const SecretShowsLeaderboard = () => {
         </div>
 
         <h1 className="text-center text-2xl font-bold text-amber-400 mb-1 tracking-wide">
-          Subscription Gifter Leaderboard
+          Secret Shows Gift Leaders
         </h1>
         <p className="text-center text-gray-500 text-sm mb-8">
-          Top supporters who gift Secret Shows subscriptions
+          Top supporters gifting Secret Shows subscriptions
         </p>
 
         {isLoading ? (
