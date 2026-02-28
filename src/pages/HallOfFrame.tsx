@@ -83,7 +83,7 @@ const HallOfFrame = () => {
       }, 800);
     }, intervalRef.current);
     return () => clearTimeout(timer);
-  }, [paused, posInOrder]);
+  }, [paused, posInOrder, shuffledOrder]);
 
   const handleClick = useCallback(() => {
     setPaused((p) => !p);
