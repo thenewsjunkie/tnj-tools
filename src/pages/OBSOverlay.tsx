@@ -43,10 +43,10 @@ const OBSOverlay = () => {
   const transitionTo = (nextIndex: number) => {
     if (nextIndex === currentIndex) return;
     setPrevIndex(currentIndex);
+    setCurrentIndex(nextIndex);
     setFading(true);
     clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
-      setCurrentIndex(nextIndex);
       setPrevIndex(null);
       setFading(false);
     }, 600);
