@@ -4,6 +4,7 @@ import { useOutputConfig, StudioModule } from "@/hooks/useOutputConfig";
 import SecretShowsLeaderboard from "@/pages/SecretShowsLeaderboard";
 import HallOfFramePage from "@/pages/HallOfFrame";
 import RestreamChatEmbed from "@/components/studio/RestreamChatEmbed";
+import DiscordChatEmbed from "@/components/studio/DiscordChatEmbed";
 import AdsDisplay from "@/components/studio/AdsDisplay";
 
 const OBSLeaderboard = () => <SecretShowsLeaderboard limit={10} showGiftCTA />;
@@ -20,6 +21,7 @@ const OBSOverlay = () => {
   const { data: outputConfig } = useOutputConfig();
   const [currentIndex, setCurrentIndex] = useState(0);
   const chatZoom = outputConfig?.chatZoom;
+  const chatSource = outputConfig?.chatSource ?? "restream";
 
   const enabledModules = config?.enabledModules ?? [];
   const mode = config?.mode ?? "auto";
@@ -68,7 +70,11 @@ const OBSOverlay = () => {
   return (
     <div className="h-screen w-screen overflow-hidden relative" style={{ background: "transparent" }}>
       {enabledModules.map((moduleId, index) => {
-        const Component = MODULE_COMPONENTS[moduleId];
+        let Component: React.ComponentType<any> = MODULE_COMPONENTS[moduleId];
+        // Swap chat component based on source setting
+        if (moduleId === "live-chat" && chatSource === "discord") {
+          Component = DiscordChatEmbed;
+        }
         if (!Component) return null;
         const isActive = index === currentIndex;
         return (
