@@ -1,24 +1,46 @@
 
 
-## Fix Hall of Frame First Photo Getting Cut Short
+## Fix: Hall of Frame First Photo Still Cut Short
 
 ### Root Cause
-The auto-advance timer uses `setInterval` with `photos.length` in the dependency array. Shortly after mount, the real-time subscription triggers a query invalidation, causing `photos` to refetch. Even though the data hasn't changed, the effect restarts and resets the interval timer -- cutting the first photo's display time short.
+
+The `setTimeout` effect depends on `interval` (line 47). Here's what happens:
+
+1. Component mounts -- `settings` is `undefined`, so `interval` = default `8000`
+2. Timer starts for photo 1
+3. Settings query resolves -- `interval` recalculates (even if still 8000, React sees a new render cycle)
+4. Real-time subscription fires on the settings table, triggering another refetch
+5. Each time `interval` reference updates in the dependency array, the effect restarts, resetting the timer
 
 ### Fix (1 file)
 
-**`src/pages/HallOfFrame.tsx`** -- lines 33-44
+**`src/pages/HallOfFrame.tsx`** -- lines 16, 33-47
 
-Replace `setInterval` with recursive `setTimeout`. After each photo finishes displaying for the full interval duration, schedule the next transition. This way, every photo -- including the first -- always gets the complete display time, even if the effect re-runs due to dependency changes.
+- Store `interval` in a ref (`intervalRef`) alongside `photosLengthRef`
+- Remove `interval` from the effect's dependency array
+- Use `intervalRef.current` inside the `setTimeout` call
+- The effect will only depend on `[paused, currentIndex]` -- meaning it only restarts when we deliberately advance to the next photo or toggle pause
 
-```text
-Before (setInterval):
-  mount -> interval starts -> query refetch -> effect restarts -> timer reset -> photo 1 cut short
+```
+// Refs
+const photosLengthRef = useRef(photos.length);
+photosLengthRef.current = photos.length;
+const intervalRef = useRef(interval);
+intervalRef.current = interval;
 
-After (setTimeout):  
-  mount -> setTimeout(full interval) -> transition -> setTimeout(full interval) -> ...
-  If effect re-runs mid-wait, cleanup clears the old timeout, and a NEW full-duration timeout starts -- so the current photo still gets a full display cycle.
+// Effect deps: only [paused, currentIndex]
+useEffect(() => {
+  if (paused || photosLengthRef.current <= 1) return;
+  const timer = setTimeout(() => {
+    setTransitioning(true);
+    setTimeout(() => {
+      setCurrentIndex((prev) => (prev + 1) % photosLengthRef.current);
+      setTransitioning(false);
+    }, 800);
+  }, intervalRef.current);
+  return () => clearTimeout(timer);
+}, [paused, currentIndex]);
 ```
 
-Additionally, store `photos.length` in a ref so the effect doesn't re-run when the query refetches with the same number of photos.
+This ensures the timer is never restarted by background data fetches -- only by actual photo transitions or pause/unpause actions.
 
