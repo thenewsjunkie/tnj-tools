@@ -45,7 +45,7 @@ const SecretShowsLeaderboard = () => {
       <CardHeader className="pb-3">
         <div className="flex items-center gap-3">
           <img src={secretShowsLogo} alt="Secret Shows" className="h-10 w-auto" />
-          <CardTitle className="text-amber-400 text-lg">Subscription Gifters</CardTitle>
+          <CardTitle className="text-amber-400 text-lg">Secret Shows Gift Leaders</CardTitle>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
