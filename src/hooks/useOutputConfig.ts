@@ -9,14 +9,23 @@ export const STUDIO_MODULES: { id: StudioModule; label: string }[] = [
   { id: "hall-of-frame", label: "Hall of Frame" },
 ];
 
+export type VideoPlacement = "left" | "right" | "full";
+
+export interface VideoFeed {
+  url: string;
+  placement: VideoPlacement;
+}
+
 export interface OutputConfig {
   leftColumn: StudioModule[];
   rightColumn: StudioModule[];
+  videoFeeds?: VideoFeed[];
 }
 
 const DEFAULT_CONFIG: OutputConfig = {
   leftColumn: ["leaderboard"],
   rightColumn: ["hall-of-frame"],
+  videoFeeds: [],
 };
 
 const CONFIG_KEY = "studio_output_config";
@@ -72,4 +81,31 @@ export const useUpdateOutputConfig = () => {
       queryClient.invalidateQueries({ queryKey: ["output-config"] });
     },
   });
+};
+
+/** Extract a YouTube embed URL from various YouTube link formats */
+export const getYouTubeEmbedUrl = (url: string): string | null => {
+  try {
+    const parsed = new URL(url);
+    let videoId: string | null = null;
+
+    if (parsed.hostname.includes("youtu.be")) {
+      videoId = parsed.pathname.slice(1);
+    } else if (parsed.hostname.includes("youtube.com")) {
+      if (parsed.pathname === "/watch") {
+        videoId = parsed.searchParams.get("v");
+      } else if (parsed.pathname.startsWith("/live/")) {
+        videoId = parsed.pathname.split("/live/")[1];
+      } else if (parsed.pathname.startsWith("/embed/")) {
+        videoId = parsed.pathname.split("/embed/")[1];
+      }
+    }
+
+    if (videoId) {
+      return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`;
+    }
+  } catch {
+    // invalid URL
+  }
+  return null;
 };
