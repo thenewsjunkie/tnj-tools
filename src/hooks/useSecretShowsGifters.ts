@@ -1,0 +1,88 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+export interface SecretShowsGifter {
+  id: string;
+  username: string;
+  total_gifts: number;
+  monthly_gifts: Record<string, number>;
+  last_gift_date: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export const useSecretShowsGifters = (limit = 20) => {
+  return useQuery({
+    queryKey: ["secret-shows-gifters", limit],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("secret_shows_gifters" as any)
+        .select("*")
+        .order("total_gifts", { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      return (data as unknown as SecretShowsGifter[]) || [];
+    },
+  });
+};
+
+export const useAddSecretShowsGifter = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ username, giftCount }: { username: string; giftCount: number }) => {
+      const monthKey = new Date().toISOString().slice(0, 7);
+      
+      // Check if user exists
+      const { data: existing } = await supabase
+        .from("secret_shows_gifters" as any)
+        .select("*")
+        .eq("username", username)
+        .maybeSingle();
+
+      if (existing) {
+        const gifter = existing as unknown as SecretShowsGifter;
+        const monthlyGifts = { ...gifter.monthly_gifts };
+        monthlyGifts[monthKey] = (monthlyGifts[monthKey] || 0) + giftCount;
+        
+        const { error } = await supabase
+          .from("secret_shows_gifters" as any)
+          .update({
+            total_gifts: gifter.total_gifts + giftCount,
+            monthly_gifts: monthlyGifts,
+            last_gift_date: new Date().toISOString(),
+          } as any)
+          .eq("id", gifter.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("secret_shows_gifters" as any)
+          .insert({
+            username,
+            total_gifts: giftCount,
+            monthly_gifts: { [monthKey]: giftCount },
+            last_gift_date: new Date().toISOString(),
+          } as any);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["secret-shows-gifters"] });
+    },
+  });
+};
+
+export const useDeleteSecretShowsGifter = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("secret_shows_gifters" as any)
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["secret-shows-gifters"] });
+    },
+  });
+};

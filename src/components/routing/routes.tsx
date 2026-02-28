@@ -44,6 +44,7 @@ const Timer = lazy(() => import("@/pages/Timer"));
 const NotepadPage = lazy(() => import("@/pages/NotepadPage"));
 const RundownPage = lazy(() => import("@/pages/RundownPage"));
 const StudioScreen = lazy(() => import("@/pages/Admin/StudioScreen"));
+const SecretShowsLeaderboard = lazy(() => import("@/pages/SecretShowsLeaderboard"));
 
 export const router = createBrowserRouter([
   {
@@ -229,6 +230,10 @@ export const router = createBrowserRouter([
       {
         path: "admin/rundown/:date/:topicId",
         element: <AdminRoute><RundownPage /></AdminRoute>,
+      },
+      {
+        path: "secret-shows-leaderboard",
+        element: <SecretShowsLeaderboard />,
       },
       {
         path: "admin/studio",
