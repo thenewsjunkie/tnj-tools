@@ -42,18 +42,19 @@ export const useAddSecretShowsGifter = () => {
       if (existing) {
         const gifter = existing as unknown as SecretShowsGifter;
         const monthlyGifts = { ...gifter.monthly_gifts };
-        monthlyGifts[monthKey] = (monthlyGifts[monthKey] || 0) + giftCount;
+        monthlyGifts[monthKey] = Math.max(0, (monthlyGifts[monthKey] || 0) + giftCount);
         
         const { error } = await supabase
           .from("secret_shows_gifters" as any)
           .update({
-            total_gifts: gifter.total_gifts + giftCount,
+            total_gifts: Math.max(0, gifter.total_gifts + giftCount),
             monthly_gifts: monthlyGifts,
             last_gift_date: new Date().toISOString(),
           } as any)
           .eq("id", gifter.id);
         if (error) throw error;
       } else {
+        if (giftCount <= 0) throw new Error("Cannot subtract from a user that doesn't exist");
         const { error } = await supabase
           .from("secret_shows_gifters" as any)
           .insert({
