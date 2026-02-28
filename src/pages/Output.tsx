@@ -1,10 +1,12 @@
 import { useOutputConfig, StudioModule, VideoFeed, getYouTubeEmbedUrl } from "@/hooks/useOutputConfig";
 import SecretShowsLeaderboard from "@/pages/SecretShowsLeaderboard";
 import HallOfFramePage from "@/pages/HallOfFrame";
+import RestreamChatEmbed from "@/components/studio/RestreamChatEmbed";
 
 const MODULE_COMPONENTS: Record<StudioModule, React.ComponentType> = {
   "leaderboard": SecretShowsLeaderboard,
   "hall-of-frame": HallOfFramePage,
+  "live-chat": RestreamChatEmbed,
 };
 
 const YouTubeEmbed = ({ url }: { url: string }) => {

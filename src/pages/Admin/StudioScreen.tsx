@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import SecretShowsLeaderboard from "@/components/studio/SecretShowsLeaderboard";
 import HallOfFrame from "@/components/studio/HallOfFrame";
 import OutputControl from "@/components/studio/OutputControl";
+import RestreamChat from "@/components/studio/RestreamChat";
 
 const StudioScreen = () => {
   return (
@@ -20,6 +21,7 @@ const StudioScreen = () => {
         <OutputControl />
         <SecretShowsLeaderboard />
         <HallOfFrame />
+        <RestreamChat />
       </div>
     </div>
   );
