@@ -47,6 +47,7 @@ const StudioScreen = lazy(() => import("@/pages/Admin/StudioScreen"));
 const SecretShowsLeaderboard = lazy(() => import("@/pages/SecretShowsLeaderboard"));
 const HallOfFramePage = lazy(() => import("@/pages/HallOfFrame"));
 const Output = lazy(() => import("@/pages/Output"));
+const OBSOverlay = lazy(() => import("@/pages/OBSOverlay"));
 
 export const router = createBrowserRouter([
   {
@@ -248,6 +249,10 @@ export const router = createBrowserRouter([
       {
         path: "output",
         element: <Output />,
+      },
+      {
+        path: "obs-overlay",
+        element: <OBSOverlay />,
       },
     ]
   }
