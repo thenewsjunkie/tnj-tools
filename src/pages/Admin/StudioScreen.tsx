@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import SecretShowsLeaderboard from "@/components/studio/SecretShowsLeaderboard";
 
 const StudioScreen = () => {
   return (
@@ -13,8 +14,8 @@ const StudioScreen = () => {
         <h1 className="text-foreground text-xl sm:text-2xl digital">Studio Screen</h1>
         <div className="w-16" />
       </nav>
-      <div className="border border-border rounded-lg p-8 text-center text-muted-foreground">
-        Control Panel
+      <div className="max-w-2xl mx-auto">
+        <SecretShowsLeaderboard />
       </div>
     </div>
   );

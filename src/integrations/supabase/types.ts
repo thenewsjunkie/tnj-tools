@@ -1033,6 +1033,36 @@ export type Database = {
         }
         Relationships: []
       }
+      secret_shows_gifters: {
+        Row: {
+          created_at: string
+          id: string
+          last_gift_date: string | null
+          monthly_gifts: Json
+          total_gifts: number
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_gift_date?: string | null
+          monthly_gifts?: Json
+          total_gifts?: number
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_gift_date?: string | null
+          monthly_gifts?: Json
+          total_gifts?: number
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
       show_member_socials: {
         Row: {
           created_at: string | null
