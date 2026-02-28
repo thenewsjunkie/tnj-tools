@@ -71,6 +71,20 @@ export const useAddSecretShowsGifter = () => {
   });
 };
 
+export const useAllSecretShowsGifterNames = () => {
+  return useQuery({
+    queryKey: ["secret-shows-gifters", "all-names"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("secret_shows_gifters" as any)
+        .select("username, total_gifts")
+        .order("total_gifts", { ascending: false });
+      if (error) throw error;
+      return (data as unknown as { username: string; total_gifts: number }[]) || [];
+    },
+  });
+};
+
 export const useDeleteSecretShowsGifter = () => {
   const queryClient = useQueryClient();
   return useMutation({

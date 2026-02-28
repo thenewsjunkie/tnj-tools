@@ -1,19 +1,26 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Trophy, Plus, Trash2, ExternalLink } from "lucide-react";
-import { useSecretShowsGifters, useAddSecretShowsGifter, useDeleteSecretShowsGifter } from "@/hooks/useSecretShowsGifters";
+import { useSecretShowsGifters, useAddSecretShowsGifter, useDeleteSecretShowsGifter, useAllSecretShowsGifterNames } from "@/hooks/useSecretShowsGifters";
 import { toast } from "sonner";
 import secretShowsLogo from "@/assets/secret-shows-logo.png";
 
 const SecretShowsLeaderboard = () => {
   const { data: gifters = [], isLoading } = useSecretShowsGifters(5);
+  const { data: allGifters = [] } = useAllSecretShowsGifterNames();
   const addGifter = useAddSecretShowsGifter();
   const deleteGifter = useDeleteSecretShowsGifter();
   const [username, setUsername] = useState("");
   const [giftCount, setGiftCount] = useState(1);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const blurTimeout = useRef<ReturnType<typeof setTimeout>>();
+
+  const suggestions = username.length > 0
+    ? allGifters.filter(g => g.username.toLowerCase().includes(username.toLowerCase())).slice(0, 8)
+    : [];
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,12 +49,32 @@ const SecretShowsLeaderboard = () => {
       <CardContent className="space-y-4">
         {/* Quick add form */}
         <form onSubmit={handleAdd} className="flex gap-2">
-          <Input
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="bg-black/30 border-amber-500/20 text-white placeholder:text-gray-500 flex-1"
-          />
+          <div className="relative flex-1">
+            <Input
+              placeholder="Username"
+              value={username}
+              onChange={(e) => { setUsername(e.target.value); setShowSuggestions(true); }}
+              onFocus={() => setShowSuggestions(true)}
+              onBlur={() => { blurTimeout.current = setTimeout(() => setShowSuggestions(false), 150); }}
+              className="bg-black/30 border-amber-500/20 text-white placeholder:text-gray-500"
+              autoComplete="off"
+            />
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-[#1a1a2e] border border-amber-500/30 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                {suggestions.map(s => (
+                  <button
+                    key={s.username}
+                    type="button"
+                    className="w-full text-left px-3 py-1.5 hover:bg-amber-500/10 flex justify-between items-center text-sm"
+                    onMouseDown={() => { clearTimeout(blurTimeout.current); setUsername(s.username); setShowSuggestions(false); }}
+                  >
+                    <span className="text-white truncate">{s.username}</span>
+                    <span className="text-amber-400/70 font-mono ml-2">{s.total_gifts}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <Input
             type="number"
             min={1}
