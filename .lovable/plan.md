@@ -1,29 +1,13 @@
 
 
-## Fix: Hall of Frame Shuffle Not Advancing
+## Make Hall of Frame Nameplate Bigger and Wider
 
-### The Bug
-The auto-advance timer never starts. Here's why:
+### Change (1 file)
 
-1. On mount, `shuffledOrder` starts as an empty array `[]`
-2. The timer effect checks `shuffledOrderRef.current.length <= 1` and exits early (length is 0)
-3. The shuffle effect then populates `shuffledOrder` and sets `posInOrder` to 0
-4. But `posInOrder` was already 0, so the timer effect's dependency array `[paused, posInOrder]` hasn't changed -- the effect never re-runs
-5. Result: the slideshow is permanently stuck on one photo
+**`src/pages/HallOfFrame.tsx`** -- Update the `.nameplate` CSS styles:
 
-### The Fix (1 file)
+- **Mobile (default)**: Increase `font-size` from `9px` to `12px`, and `padding` from `4px 16px` to `6px 24px`
+- **Desktop (`@media min-width: 640px`)**: Increase `font-size` from `11px` to `14px`, and `padding` from `6px 28px` to `8px 40px`
 
-**`src/pages/HallOfFrame.tsx`**
-
-Add `shuffledOrder` to the timer effect's dependency array (line 86):
-
-```
-// Before
-}, [paused, posInOrder]);
-
-// After
-}, [paused, posInOrder, shuffledOrder]);
-```
-
-This ensures the timer effect re-runs when the shuffled order is first populated (and on any reshuffle), so the auto-advance timer actually starts.
+This keeps the museum brass nameplate aesthetic but makes the "Hall of Frame" title more prominent and wider at all screen sizes.
 
