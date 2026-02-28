@@ -19,7 +19,7 @@ const shuffleIndices = (length: number, avoidFirst?: number): number[] => {
   return arr;
 };
 
-const HallOfFrame = () => {
+const HallOfFrame = ({ fillContainer = false }: { fillContainer?: boolean }) => {
   const { data: photos = [] } = useHallOfFramePhotos();
   const { data: settings } = useHallOfFrameSettings();
   const queryClient = useQueryClient();
@@ -117,6 +117,34 @@ const HallOfFrame = () => {
     return base;
   };
 
+  if (fillContainer) {
+    return (
+      <div className="relative w-full h-full bg-black cursor-pointer select-none" onClick={handleClick}>
+        <div className="absolute inset-0" style={getTransitionStyle()}>
+          <img
+            src={photo.image_url}
+            alt={photo.caption || ""}
+            className="w-full h-full object-cover"
+          />
+        </div>
+        {photo.caption && (
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 pointer-events-none">
+            <p className="text-white/90 text-sm text-center italic">{photo.caption}</p>
+          </div>
+        )}
+        <div
+          className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-500 ${
+            showControls ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          <div className="bg-black/60 rounded-full p-4">
+            {paused ? <Play className="h-8 w-8 text-white" /> : <Pause className="h-8 w-8 text-white" />}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative h-full min-h-screen bg-black cursor-pointer select-none flex items-center justify-center" onClick={handleClick}>
       {/* Museum frame styles */}
@@ -186,7 +214,6 @@ const HallOfFrame = () => {
       `}</style>
 
       <div className="flex flex-col items-center gap-3 sm:gap-4 p-3 sm:p-6 max-h-screen">
-        {/* The frame */}
         <div className="museum-frame max-w-full" style={getTransitionStyle()}>
           <div className="museum-inner flex items-center justify-center">
             <img
@@ -196,11 +223,7 @@ const HallOfFrame = () => {
             />
           </div>
         </div>
-
-        {/* Nameplate */}
         <div className="nameplate">Hall of Frame</div>
-
-        {/* Caption */}
         {photo.caption && (
           <p className="text-white/70 text-xs sm:text-sm text-center italic max-w-md">
             {photo.caption}
@@ -208,7 +231,6 @@ const HallOfFrame = () => {
         )}
       </div>
 
-      {/* Pause/Play indicator */}
       <div
         className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-500 ${
           showControls ? "opacity-100" : "opacity-0"
