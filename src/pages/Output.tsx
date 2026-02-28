@@ -127,6 +127,18 @@ const Output = () => {
   const left = config?.leftColumn ?? [];
   const right = config?.rightColumn ?? [];
   const videoFeeds = config?.videoFeeds ?? [];
+  const rotation = config?.rotation ?? 0;
+
+  const isRotated90or270 = rotation === 90 || rotation === 270;
+  const rotationStyle: React.CSSProperties = rotation !== 0 ? {
+    transform: `rotate(${rotation}deg)`,
+    transformOrigin: "center center",
+    ...(isRotated90or270 ? { width: "100vh", height: "100vw" } : {}),
+    position: "fixed",
+    top: "50%",
+    left: "50%",
+    translate: "-50% -50%",
+  } : {};
 
   const fullVideos = videoFeeds.filter((v) => v.placement === "full");
   const leftVideos = videoFeeds.filter((v) => v.placement === "left");
@@ -150,7 +162,7 @@ const Output = () => {
     return (
       <div
         className="h-screen bg-black flex flex-col"
-        style={{ filter: `brightness(${config?.brightness ?? 100}%) contrast(${config?.contrast ?? 100}%)` }}
+        style={{ filter: `brightness(${config?.brightness ?? 100}%) contrast(${config?.contrast ?? 100}%)`, ...rotationStyle }}
       >
         {fullScreenModule === "live-chat" ? (
           <div className="flex-1 min-h-0">
@@ -161,13 +173,11 @@ const Output = () => {
             <div className="flex-1 min-h-0">
               {FullComponent && <FullComponent />}
             </div>
-            {/* Keep chat mounted hidden */}
             <div className="hidden">
               <RestreamChatEmbed />
             </div>
           </>
         )}
-        {/* PiP overlay videos */}
         {pipVideos.length > 0 && (
           <div className="fixed top-4 right-4 z-50 flex flex-col gap-4">
             {pipVideos.map((v, i) => (
@@ -184,7 +194,7 @@ const Output = () => {
   return (
     <div
       className="h-screen bg-black flex flex-col"
-      style={{ filter: `brightness(${config?.brightness ?? 100}%) contrast(${config?.contrast ?? 100}%)` }}
+      style={{ filter: `brightness(${config?.brightness ?? 100}%) contrast(${config?.contrast ?? 100}%)`, ...rotationStyle }}
     >
       {fullVideos.map((v, i) => (
         <div key={`full-${i}`} className="flex-1 min-h-[300px]">

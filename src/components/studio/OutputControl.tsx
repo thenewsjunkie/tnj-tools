@@ -218,6 +218,26 @@ const OutputControl = () => {
               </div>
             </div>
 
+            {/* Rotation control */}
+            <div className="flex items-center gap-3 text-xs text-gray-400">
+              <span className="text-xs font-semibold text-blue-300/70 uppercase tracking-wider">Rotation</span>
+              <div className="flex gap-1">
+                {[0, 90, 180, 270].map((deg) => (
+                  <button
+                    key={deg}
+                    onClick={() => save({ ...config!, rotation: deg })}
+                    className={`px-3 py-1.5 rounded text-[10px] font-medium transition-colors ${
+                      (config?.rotation ?? 0) === deg
+                        ? "bg-blue-500/20 text-blue-300 border border-blue-500/40"
+                        : "bg-black/20 text-gray-500 hover:text-gray-300 border border-transparent"
+                    }`}
+                  >
+                    {deg}°
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Rotate controls */}
             <div className="flex items-center gap-4 text-xs text-gray-400">
               <span className="flex items-center gap-1.5">
