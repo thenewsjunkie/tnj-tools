@@ -1,17 +1,41 @@
 
-
-## Fix Plus/Minus Button Confusion in Secret Shows Gift Leaders
+## Fix: White Flash Between OBS Overlay Scene Changes
 
 ### Problem
-There are two buttons next to each other that both show the same icon (both Plus or both Minus). The first is a toggle button to switch between add/subtract mode, and the second is the submit button. This is confusing because they look nearly identical.
+When the OBS overlay cycles between modules (e.g., Leaderboard to Hall of Frame), there's a brief white flash. This happens because:
+1. The transition fades opacity to 0, unmounts the old component, mounts the new one, then fades back in
+2. During that gap, the page background shows through -- and the transparent override only exists in the component's inline `<style>` tag, which may not override the base CSS fast enough
+3. There's no persistent CSS rule (like the alerts page has) to force transparency on the OBS overlay route
 
 ### Solution
-- Change the **toggle button** to always show both Plus and Minus with a slash (or use a `ArrowUpDown`/`RefreshCw` icon) to indicate it's a mode switcher -- or better, replace it with a small visual label like "+/-"
-- Change the **submit button** to show a clear action: "Add" text when adding, "Remove" text when subtracting, keeping the colored styling to indicate which mode is active
 
-### Changes
+**1. Add a persistent CSS rule in `index.css`** (like the alerts page already has)
+- Add `body.obs-overlay` class rules alongside the existing `body.alerts-overlay` rules
+- This ensures transparency at the CSS level before any React renders
 
-**`src/components/studio/SecretShowsLeaderboard.tsx`**
-- Toggle button (line 87-94): Change content to "+/−" text so it's clearly a mode switcher, not an action button
-- Submit button (line 95-97): Keep the Plus/Minus icon but also add "Add"/"Remove" text label for clarity
+**2. Add the body class in `OBSOverlay.tsx`**
+- On mount, add `obs-overlay` class to `document.body`
+- On unmount, remove it
+- Remove the inline `<style>` tag that currently tries to do this
 
+**3. Keep both components mounted during transition**
+- Instead of relying on `key={activeModule}` (which unmounts/remounts), render both the outgoing and incoming components simultaneously
+- Cross-fade between them: old fades out while new fades in
+- This eliminates the empty frame that causes the flash
+
+### Files to Change
+
+**`src/index.css`** -- Add OBS overlay transparent background rules:
+```css
+html:has(body.obs-overlay) {
+  background-color: transparent !important;
+}
+body.obs-overlay {
+  background-color: transparent !important;
+}
+```
+
+**`src/pages/OBSOverlay.tsx`** -- Two changes:
+- Add/remove `obs-overlay` class on body (useEffect on mount/unmount)
+- Remove the inline style tag for background transparency
+- Implement cross-fade: render both outgoing and incoming components stacked via absolute positioning, so there's never a bare frame between swaps
