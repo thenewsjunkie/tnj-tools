@@ -1,38 +1,31 @@
 
 
-## Discord Chat Integration into Studio Output
+## Fix Discord Chat: Realtime Updates and Bottom-Anchored Messages
 
-### What we're building
-A **chat source switcher** that lets you toggle between the existing Restream chat embed and a new Discord chat display (reading from the `discord_messages` table your bot is populating).
+### Problem 1: No realtime updates
+The `discord_messages` table is **not added to the Supabase Realtime publication**. This means the `postgres_changes` subscription silently receives nothing. A database migration is needed:
 
-### How it works
+```sql
+ALTER PUBLICATION supabase_realtime ADD TABLE public.discord_messages;
+```
 
-1. **Add a `chatSource` setting** to the `OutputConfig` type (`"restream"` or `"discord"`, default `"restream"`)
+As a safety net, a **polling fallback** will also be added so messages still appear even if Realtime has hiccups.
 
-2. **Create a `DiscordChatEmbed` component** that:
-   - Queries the `discord_messages` table for the latest messages (e.g., last 100)
-   - Subscribes to realtime inserts so new messages appear instantly
-   - Displays messages in a chat-like scrolling list (author avatar, name, message, timestamp)
-   - Styled to match the dark studio aesthetic
-   - Supports the existing `zoom` prop for the Chat Zoom slider
+### Problem 2: Messages stuck at top
+The Restream iframe naturally anchors chat to the bottom (newest messages at bottom, filling upward). The Discord component currently renders messages top-down in a scrollable container. Fix: use `flex-col justify-end` layout so messages anchor to the bottom of the container, matching Restream's behavior.
 
-3. **Update `RestreamChatEmbed` usage in Output/OBS** to conditionally render either the Restream iframe or the new Discord chat based on the `chatSource` config value
+---
 
-4. **Add a chat source toggle** in the `OutputControl` admin panel -- a simple "Restream / Discord" switcher near the existing Chat Zoom slider
+### Changes
 
-### Files to create
-- `src/components/studio/DiscordChatEmbed.tsx` -- realtime Discord chat display component
+**1. Database migration** -- Add `discord_messages` to realtime publication
+```sql
+ALTER PUBLICATION supabase_realtime ADD TABLE public.discord_messages;
+```
 
-### Files to modify
-- `src/hooks/useOutputConfig.ts` -- add `chatSource?: "restream" | "discord"` to `OutputConfig`
-- `src/pages/Output.tsx` -- use `chatSource` to pick which chat component to render
-- `src/pages/OBSOverlay.tsx` -- same conditional for OBS
-- `src/components/studio/OutputControl.tsx` -- add Restream/Discord toggle button
-
-### Technical details
-
-- **No database migration needed** -- the `discord_messages` table already exists with RLS disabled (public read). The `chatSource` setting is stored in the existing `system_settings` JSON config.
-- **Realtime subscription** on `discord_messages` table for `INSERT` events keeps the chat live.
-- The Restream iframe will still be always-mounted (hidden) when Discord is active, preserving its message history for when you switch back.
-- The Discord component auto-scrolls to the bottom on new messages, similar to a typical chat window.
+**2. Update `src/components/studio/DiscordChatEmbed.tsx`**
+- Add a polling fallback (every 3 seconds, with backoff) alongside the existing realtime subscription
+- Deduplicate messages by ID when merging realtime and polled data
+- Change the layout to `flex flex-col justify-end` so messages stack from the bottom up, matching Restream's behavior
+- Keep auto-scroll to bottom on new messages
 
