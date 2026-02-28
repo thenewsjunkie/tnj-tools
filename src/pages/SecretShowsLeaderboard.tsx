@@ -176,9 +176,9 @@ const SecretShowsLeaderboard = ({ limit = 20, showGiftCTA = false }: { limit?: n
 
         {/* Gift CTA - OBS only */}
         {showGiftCTA && (
-          <div className="flex flex-col items-center gap-1 mt-3 sm:mt-4">
-            <Gift className="h-6 w-6 sm:h-8 sm:w-8 text-amber-400 drop-shadow-[0_0_8px_rgba(255,215,0,0.5)]" />
-            <p className="text-amber-300/90 text-xs sm:text-sm font-semibold tracking-wide">
+          <div className="flex flex-col items-center gap-2 mt-4 sm:mt-6">
+            <Gift className="h-10 w-10 sm:h-12 sm:w-12 text-amber-400 drop-shadow-[0_0_8px_rgba(255,215,0,0.5)]" />
+            <p className="text-amber-300/90 text-base sm:text-lg font-semibold tracking-wide">
               Gift Now @ thenewsjunkie.com
             </p>
           </div>
