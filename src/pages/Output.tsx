@@ -3,6 +3,7 @@ import { useOutputConfig, StudioModule, VideoFeed, getYouTubeEmbedUrl } from "@/
 import SecretShowsLeaderboard from "@/pages/SecretShowsLeaderboard";
 import HallOfFramePage from "@/pages/HallOfFrame";
 import RestreamChatEmbed from "@/components/studio/RestreamChatEmbed";
+import DiscordChatEmbed from "@/components/studio/DiscordChatEmbed";
 import AdsDisplay from "@/components/studio/AdsDisplay";
 
 const OutputLeaderboard = () => <SecretShowsLeaderboard limit={10} />;
@@ -84,6 +85,7 @@ const OutputColumn = ({
   rotate,
   rotateInterval,
   chatZoom,
+  chatSource,
 }: {
   modules: StudioModule[];
   videos: VideoFeed[];
@@ -91,9 +93,13 @@ const OutputColumn = ({
   rotate?: boolean;
   rotateInterval?: number;
   chatZoom?: number;
+  chatSource?: "restream" | "discord";
 }) => {
   const nonChatModules = modules.filter((id) => id !== "live-chat");
   const intervalMs = (rotateInterval ?? 30) * 1000;
+  const useDiscord = chatSource === "discord";
+
+  const ChatComponent = useDiscord ? DiscordChatEmbed : RestreamChatEmbed;
 
   return (
     <div className="flex-1 flex flex-col overflow-auto">
@@ -110,10 +116,16 @@ const OutputColumn = ({
           return Component ? <Component key={id} /> : null;
         })
       )}
-      {/* Chat is always mounted here but hidden via CSS to preserve message history */}
+      {/* Active chat source */}
       <div className={chatVisible ? "flex-1 min-h-[400px]" : "hidden"}>
-        <RestreamChatEmbed zoom={chatZoom} />
+        <ChatComponent zoom={chatZoom} />
       </div>
+      {/* Keep Restream always mounted (hidden) when using Discord to preserve history */}
+      {useDiscord && (
+        <div className="hidden">
+          <RestreamChatEmbed zoom={chatZoom} />
+        </div>
+      )}
     </div>
   );
 };
@@ -131,6 +143,9 @@ const Output = () => {
   const videoFeeds = config?.videoFeeds ?? [];
   const rotation = config?.rotation ?? 0;
   const chatZoom = config?.chatZoom;
+  const chatSource = config?.chatSource ?? "restream";
+  const useDiscord = chatSource === "discord";
+  const ActiveChat = useDiscord ? DiscordChatEmbed : RestreamChatEmbed;
 
   const isRotated90or270 = rotation === 90 || rotation === 270;
   const rotationStyle: React.CSSProperties = rotation !== 0 ? {
@@ -169,17 +184,20 @@ const Output = () => {
       >
         {fullScreenModule === "live-chat" ? (
           <div className="flex-1 min-h-0">
-            <RestreamChatEmbed zoom={chatZoom} />
+            <ActiveChat zoom={chatZoom} />
           </div>
         ) : (
           <>
             <div className="flex-1 min-h-0">
               {FullComponent && <FullComponent />}
             </div>
-            <div className="hidden">
-              <RestreamChatEmbed zoom={chatZoom} />
-            </div>
           </>
+        )}
+        {/* Always keep Restream mounted when using Discord */}
+        {(fullScreenModule !== "live-chat" || useDiscord) && (
+          <div className="hidden">
+            <RestreamChatEmbed zoom={chatZoom} />
+          </div>
         )}
         {pipVideos.length > 0 && (
           <div className="fixed top-4 right-4 z-50 flex flex-col gap-4">
@@ -215,6 +233,7 @@ const Output = () => {
               rotate={config?.leftRotate}
               rotateInterval={config?.rotateInterval}
               chatZoom={chatZoom}
+              chatSource={chatSource}
             />
           )}
           {hasLeft && hasRight && <div className={`${(config?.orientation ?? "horizontal") === "vertical" ? "h-px" : "w-px"} bg-white/10`} />}
@@ -226,6 +245,7 @@ const Output = () => {
               rotate={config?.rightRotate}
               rotateInterval={config?.rotateInterval}
               chatZoom={chatZoom}
+              chatSource={chatSource}
             />
           )}
         </div>

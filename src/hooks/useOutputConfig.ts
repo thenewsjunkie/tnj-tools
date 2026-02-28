@@ -28,6 +28,7 @@ export interface OutputConfig {
   brightness?: number; // percentage, default 100
   contrast?: number; // percentage, default 100
   chatZoom?: number; // percentage, default 100 (range 100-300)
+  chatSource?: "restream" | "discord"; // default "restream"
   fullScreen?: StudioModule | null;
   orientation?: "horizontal" | "vertical";
   rotation?: number; // 0, 90, 180, 270 degrees

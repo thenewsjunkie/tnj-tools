@@ -457,6 +457,36 @@ export type Database = {
         }
         Relationships: []
       }
+      discord_messages: {
+        Row: {
+          author_avatar: string | null
+          author_id: string
+          author_name: string
+          channel_id: string
+          content: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          author_avatar?: string | null
+          author_id: string
+          author_name: string
+          channel_id: string
+          content: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          author_avatar?: string | null
+          author_id?: string
+          author_name?: string
+          channel_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
       fritz_contestants: {
         Row: {
           auth_token: string | null
