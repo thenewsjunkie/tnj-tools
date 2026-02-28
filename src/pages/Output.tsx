@@ -203,7 +203,7 @@ const Output = () => {
               rotateInterval={config?.rotateInterval}
             />
           )}
-          {hasLeft && hasRight && <div className="w-px bg-white/10" />}
+          {hasLeft && hasRight && <div className={`${(config?.orientation ?? "horizontal") === "vertical" ? "h-px" : "w-px"} bg-white/10`} />}
           {hasRight && (
             <OutputColumn
               modules={right}

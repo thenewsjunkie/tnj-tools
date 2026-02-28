@@ -28,6 +28,7 @@ export interface OutputConfig {
   brightness?: number; // percentage, default 100
   contrast?: number; // percentage, default 100
   fullScreen?: StudioModule | null;
+  orientation?: "horizontal" | "vertical";
 }
 
 const DEFAULT_CONFIG: OutputConfig = {
