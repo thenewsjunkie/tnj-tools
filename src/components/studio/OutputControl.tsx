@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Monitor, ArrowLeft, ArrowRight, ExternalLink, Plus, Trash2, Video, Sun, Contrast } from "lucide-react";
+import { Monitor, ExternalLink, Plus, Trash2, Video, Sun, Contrast, Maximize } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Link } from "react-router-dom";
 import {
@@ -33,9 +33,11 @@ const OutputControl = () => {
   const leftColumn = config?.leftColumn ?? [];
   const rightColumn = config?.rightColumn ?? [];
   const videoFeeds = config?.videoFeeds ?? [];
+  const fullScreenModule = config?.fullScreen ?? null;
 
   const isInLeft = (id: StudioModule) => leftColumn.includes(id);
   const isInRight = (id: StudioModule) => rightColumn.includes(id);
+  const isFullScreen = (id: StudioModule) => fullScreenModule === id;
 
   const save = (newConfig: typeof config) => {
     if (!newConfig) return;
@@ -48,6 +50,11 @@ const OutputControl = () => {
     if (!config) return;
     const newConfig = { ...config };
 
+    // If currently full-screen, clear it first
+    if (newConfig.fullScreen === id) {
+      newConfig.fullScreen = null;
+    }
+
     if (column === "left") {
       newConfig.leftColumn = isInLeft(id)
         ? leftColumn.filter((m) => m !== id)
@@ -56,6 +63,22 @@ const OutputControl = () => {
       newConfig.rightColumn = isInRight(id)
         ? rightColumn.filter((m) => m !== id)
         : [...rightColumn, id];
+    }
+
+    save(newConfig);
+  };
+
+  const toggleFullScreen = (id: StudioModule) => {
+    if (!config) return;
+    const newConfig = { ...config };
+
+    if (newConfig.fullScreen === id) {
+      newConfig.fullScreen = null;
+    } else {
+      newConfig.fullScreen = id;
+      // Remove from columns
+      newConfig.leftColumn = newConfig.leftColumn.filter((m) => m !== id);
+      newConfig.rightColumn = newConfig.rightColumn.filter((m) => m !== id);
     }
 
     save(newConfig);
@@ -129,65 +152,62 @@ const OutputControl = () => {
           <p className="text-gray-500 text-sm">Loading...</p>
         ) : (
           <>
-            {/* Module columns */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <h3 className="text-xs font-semibold text-blue-300/70 uppercase tracking-wider mb-2 flex items-center gap-1">
-                  <ArrowLeft className="h-3 w-3" /> Left Column
-                  <span className="ml-auto flex items-center gap-1.5 normal-case tracking-normal">
-                    <span className="text-[10px] text-gray-400">Rotate</span>
-                    <Switch
-                      checked={!!config?.leftRotate}
-                      onCheckedChange={() => toggleRotate("left")}
-                      className="scale-75"
-                    />
-                  </span>
-                </h3>
-                <div className="space-y-1.5">
-                  {STUDIO_MODULES.map((mod) => (
-                    <button
-                      key={mod.id}
-                      onClick={() => toggleModule(mod.id, "left")}
-                      className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
-                        isInLeft(mod.id)
-                          ? "bg-blue-500/20 text-blue-300 border border-blue-500/40"
-                          : "bg-black/20 text-gray-400 hover:bg-black/30 border border-transparent"
-                      }`}
-                    >
-                      {mod.label}
-                    </button>
-                  ))}
-                </div>
+            {/* Module placement */}
+            <div className="space-y-1.5">
+              <div className="grid grid-cols-[1fr_auto_auto_auto] gap-2 items-center mb-2">
+                <span className="text-xs font-semibold text-blue-300/70 uppercase tracking-wider">Module</span>
+                <span className="text-[10px] font-semibold text-blue-300/50 uppercase tracking-wider w-14 text-center">Left</span>
+                <span className="text-[10px] font-semibold text-green-300/50 uppercase tracking-wider w-14 text-center">Full</span>
+                <span className="text-[10px] font-semibold text-blue-300/50 uppercase tracking-wider w-14 text-center">Right</span>
               </div>
+              {STUDIO_MODULES.map((mod) => (
+                <div key={mod.id} className="grid grid-cols-[1fr_auto_auto_auto] gap-2 items-center">
+                  <span className="text-sm text-gray-300">{mod.label}</span>
+                  <button
+                    onClick={() => toggleModule(mod.id, "left")}
+                    className={`w-14 py-1.5 rounded text-[10px] font-medium transition-colors ${
+                      isInLeft(mod.id)
+                        ? "bg-blue-500/20 text-blue-300 border border-blue-500/40"
+                        : "bg-black/20 text-gray-500 hover:text-gray-300 border border-transparent"
+                    }`}
+                  >
+                    Left
+                  </button>
+                  <button
+                    onClick={() => toggleFullScreen(mod.id)}
+                    className={`w-14 py-1.5 rounded text-[10px] font-medium transition-colors flex items-center justify-center gap-0.5 ${
+                      isFullScreen(mod.id)
+                        ? "bg-green-500/20 text-green-300 border border-green-500/40"
+                        : "bg-black/20 text-gray-500 hover:text-gray-300 border border-transparent"
+                    }`}
+                  >
+                    <Maximize className="h-2.5 w-2.5" />
+                    Full
+                  </button>
+                  <button
+                    onClick={() => toggleModule(mod.id, "right")}
+                    className={`w-14 py-1.5 rounded text-[10px] font-medium transition-colors ${
+                      isInRight(mod.id)
+                        ? "bg-blue-500/20 text-blue-300 border border-blue-500/40"
+                        : "bg-black/20 text-gray-500 hover:text-gray-300 border border-transparent"
+                    }`}
+                  >
+                    Right
+                  </button>
+                </div>
+              ))}
+            </div>
 
-              <div>
-                <h3 className="text-xs font-semibold text-blue-300/70 uppercase tracking-wider mb-2 flex items-center gap-1">
-                  <ArrowRight className="h-3 w-3" /> Right Column
-                  <span className="ml-auto flex items-center gap-1.5 normal-case tracking-normal">
-                    <span className="text-[10px] text-gray-400">Rotate</span>
-                    <Switch
-                      checked={!!config?.rightRotate}
-                      onCheckedChange={() => toggleRotate("right")}
-                      className="scale-75"
-                    />
-                  </span>
-                </h3>
-                <div className="space-y-1.5">
-                  {STUDIO_MODULES.map((mod) => (
-                    <button
-                      key={mod.id}
-                      onClick={() => toggleModule(mod.id, "right")}
-                      className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
-                        isInRight(mod.id)
-                          ? "bg-blue-500/20 text-blue-300 border border-blue-500/40"
-                          : "bg-black/20 text-gray-400 hover:bg-black/30 border border-transparent"
-                      }`}
-                    >
-                      {mod.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+            {/* Rotate controls */}
+            <div className="flex items-center gap-4 text-xs text-gray-400">
+              <span className="flex items-center gap-1.5">
+                Rotate Left
+                <Switch checked={!!config?.leftRotate} onCheckedChange={() => toggleRotate("left")} className="scale-75" />
+              </span>
+              <span className="flex items-center gap-1.5">
+                Rotate Right
+                <Switch checked={!!config?.rightRotate} onCheckedChange={() => toggleRotate("right")} className="scale-75" />
+              </span>
             </div>
 
             {/* Rotation interval */}
@@ -241,7 +261,6 @@ const OutputControl = () => {
                 <Video className="h-3 w-3" /> Live Video Feeds
               </h3>
 
-              {/* Existing feeds */}
               {videoFeeds.length > 0 && (
                 <div className="space-y-2 mb-3">
                   {videoFeeds.map((feed, i) => (
@@ -273,7 +292,6 @@ const OutputControl = () => {
                 </div>
               )}
 
-              {/* Add new feed */}
               <div className="flex gap-2">
                 <Input
                   placeholder="YouTube URL"

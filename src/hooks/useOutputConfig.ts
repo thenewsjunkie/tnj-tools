@@ -27,6 +27,7 @@ export interface OutputConfig {
   rotateInterval?: number; // seconds, default 30
   brightness?: number; // percentage, default 100
   contrast?: number; // percentage, default 100
+  fullScreen?: StudioModule | null;
 }
 
 const DEFAULT_CONFIG: OutputConfig = {
