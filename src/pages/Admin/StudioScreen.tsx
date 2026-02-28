@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import SecretShowsLeaderboard from "@/components/studio/SecretShowsLeaderboard";
+import HallOfFrame from "@/components/studio/HallOfFrame";
 
 const StudioScreen = () => {
   return (
@@ -14,8 +15,9 @@ const StudioScreen = () => {
         <h1 className="text-foreground text-xl sm:text-2xl digital">Studio Screen</h1>
         <div className="w-16" />
       </nav>
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-2xl mx-auto space-y-6">
         <SecretShowsLeaderboard />
+        <HallOfFrame />
       </div>
     </div>
   );

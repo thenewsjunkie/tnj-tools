@@ -612,6 +612,54 @@ export type Database = {
         }
         Relationships: []
       }
+      hall_of_frame_photos: {
+        Row: {
+          caption: string | null
+          created_at: string
+          display_order: number
+          id: string
+          image_url: string
+          updated_at: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url: string
+          updated_at?: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      hall_of_frame_settings: {
+        Row: {
+          id: string
+          interval_seconds: number
+          transition: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          interval_seconds?: number
+          transition?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          interval_seconds?: number
+          transition?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       hopper_groups: {
         Row: {
           created_at: string
