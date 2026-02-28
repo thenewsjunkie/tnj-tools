@@ -32,19 +32,21 @@ const HallOfFrame = () => {
 
   const photosLengthRef = useRef(photos.length);
   photosLengthRef.current = photos.length;
+  const intervalRef = useRef(interval);
+  intervalRef.current = interval;
 
   // Auto-advance using recursive setTimeout
   useEffect(() => {
-    if (paused || photos.length <= 1) return;
+    if (paused || photosLengthRef.current <= 1) return;
     const timer = setTimeout(() => {
       setTransitioning(true);
       setTimeout(() => {
         setCurrentIndex((prev) => (prev + 1) % photosLengthRef.current);
         setTransitioning(false);
       }, 800);
-    }, interval);
+    }, intervalRef.current);
     return () => clearTimeout(timer);
-  }, [paused, currentIndex, interval]);
+  }, [paused, currentIndex]);
 
   // Keep index in bounds
   useEffect(() => {
