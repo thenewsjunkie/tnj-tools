@@ -1,15 +1,24 @@
 
 
-## Make Leaderboard Background Transparent
+## Fix Hall of Frame First Photo Getting Cut Short
 
-### Problem
-The outer container has a solid dark gradient background (`bg-gradient-to-b from-[#0a0a0a] via-[#1a1a2e] to-[#0a0a0a]`), which is visible in OBS. The background should be fully transparent so only the logo, title, and row cards are visible.
+### Root Cause
+The auto-advance timer uses `setInterval` with `photos.length` in the dependency array. Shortly after mount, the real-time subscription triggers a query invalidation, causing `photos` to refetch. Even though the data hasn't changed, the effect restarts and resets the interval timer -- cutting the first photo's display time short.
 
-### Change (1 file)
+### Fix (1 file)
 
-**`src/pages/SecretShowsLeaderboard.tsx`** (line 102)
-- Remove the `bg-gradient-to-b from-[#0a0a0a] via-[#1a1a2e] to-[#0a0a0a]` classes from the outer container div
-- Replace with `bg-transparent`
-- The individual leaderboard rows already have their own background (`bg-gradient-to-r from-amber-500/10` for top 3, `bg-white/[0.03]` for others) so they'll retain their subtle card styling against the transparent backdrop
-- The logo and title text will float over the transparent background as expected
+**`src/pages/HallOfFrame.tsx`** -- lines 33-44
+
+Replace `setInterval` with recursive `setTimeout`. After each photo finishes displaying for the full interval duration, schedule the next transition. This way, every photo -- including the first -- always gets the complete display time, even if the effect re-runs due to dependency changes.
+
+```text
+Before (setInterval):
+  mount -> interval starts -> query refetch -> effect restarts -> timer reset -> photo 1 cut short
+
+After (setTimeout):  
+  mount -> setTimeout(full interval) -> transition -> setTimeout(full interval) -> ...
+  If effect re-runs mid-wait, cleanup clears the old timeout, and a NEW full-duration timeout starts -- so the current photo still gets a full display cycle.
+```
+
+Additionally, store `photos.length` in a ref so the effect doesn't re-run when the query refetches with the same number of photos.
 
