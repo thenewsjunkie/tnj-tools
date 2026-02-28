@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import { useSecretShowsGifters, SecretShowsGifter } from "@/hooks/useSecretShowsGifters";
+import { Gift } from "lucide-react";
 import secretShowsLogo from "@/assets/secret-shows-logo.png";
 import confetti from "canvas-confetti";
 
@@ -9,7 +10,7 @@ const rankStyles = [
   "text-amber-600 drop-shadow-[0_0_8px_rgba(205,127,50,0.6)]",
 ];
 
-const SecretShowsLeaderboard = ({ limit = 20 }: { limit?: number }) => {
+const SecretShowsLeaderboard = ({ limit = 20, showGiftCTA = false }: { limit?: number; showGiftCTA?: boolean }) => {
   const { data: gifters = [], isLoading } = useSecretShowsGifters(limit);
   const currentMonth = new Date().toISOString().slice(0, 7);
 
@@ -170,6 +171,16 @@ const SecretShowsLeaderboard = ({ limit = 20 }: { limit?: number }) => {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Gift CTA - OBS only */}
+        {showGiftCTA && (
+          <div className="flex flex-col items-center gap-1 mt-3 sm:mt-4">
+            <Gift className="h-6 w-6 sm:h-8 sm:w-8 text-amber-400 drop-shadow-[0_0_8px_rgba(255,215,0,0.5)]" />
+            <p className="text-amber-300/90 text-xs sm:text-sm font-semibold tracking-wide">
+              Gift Now @ thenewsjunkie.com
+            </p>
           </div>
         )}
       </div>

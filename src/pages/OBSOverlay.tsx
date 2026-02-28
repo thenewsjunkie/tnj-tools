@@ -6,7 +6,7 @@ import HallOfFramePage from "@/pages/HallOfFrame";
 import RestreamChatEmbed from "@/components/studio/RestreamChatEmbed";
 import AdsDisplay from "@/components/studio/AdsDisplay";
 
-const OBSLeaderboard = () => <SecretShowsLeaderboard limit={10} />;
+const OBSLeaderboard = () => <SecretShowsLeaderboard limit={10} showGiftCTA />;
 
 const MODULE_COMPONENTS: Record<StudioModule, React.ComponentType> = {
   leaderboard: OBSLeaderboard,
