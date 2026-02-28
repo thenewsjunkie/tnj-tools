@@ -87,13 +87,15 @@ const SecretShowsLeaderboard = () => {
           <Button
             type="button"
             size="sm"
+            variant="outline"
             onClick={() => setIsSubtract(!isSubtract)}
-            className={isSubtract ? "bg-red-600 hover:bg-red-700 text-white" : "bg-green-600 hover:bg-green-700 text-white"}
+            className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10 font-mono text-xs px-2"
           >
-            {isSubtract ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+            +/−
           </Button>
           <Button type="submit" size="sm" disabled={addGifter.isPending} className={isSubtract ? "bg-red-600 hover:bg-red-700 text-white" : "bg-amber-600 hover:bg-amber-700 text-black"}>
-            {isSubtract ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+            {isSubtract ? <Minus className="h-4 w-4 mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
+            {isSubtract ? "Remove" : "Add"}
           </Button>
         </form>
 
