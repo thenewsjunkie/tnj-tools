@@ -265,7 +265,7 @@ const OutputControl = () => {
               </div>
             )}
 
-            {/* Brightness & Contrast */}
+            {/* Brightness, Contrast & Chat Zoom */}
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <Sun className="h-4 w-4 text-yellow-400 shrink-0" />
@@ -292,6 +292,19 @@ const OutputControl = () => {
                   className="flex-1"
                 />
                 <span className="text-xs text-white w-10 text-right">{config?.contrast ?? 100}%</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Monitor className="h-4 w-4 text-green-400 shrink-0" />
+                <span className="text-xs text-gray-400 w-16">Chat Zoom</span>
+                <Slider
+                  min={100}
+                  max={300}
+                  step={10}
+                  value={[config?.chatZoom ?? 100]}
+                  onValueChange={([v]) => save({ ...config!, chatZoom: v })}
+                  className="flex-1"
+                />
+                <span className="text-xs text-white w-10 text-right">{config?.chatZoom ?? 100}%</span>
               </div>
             </div>
 

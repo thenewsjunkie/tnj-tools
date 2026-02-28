@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useOBSOverlayConfig } from "@/hooks/useOBSOverlayConfig";
-import { StudioModule } from "@/hooks/useOutputConfig";
+import { useOutputConfig, StudioModule } from "@/hooks/useOutputConfig";
 import SecretShowsLeaderboard from "@/pages/SecretShowsLeaderboard";
 import HallOfFramePage from "@/pages/HallOfFrame";
 import RestreamChatEmbed from "@/components/studio/RestreamChatEmbed";
@@ -8,7 +8,7 @@ import AdsDisplay from "@/components/studio/AdsDisplay";
 
 const OBSLeaderboard = () => <SecretShowsLeaderboard limit={10} showGiftCTA />;
 
-const MODULE_COMPONENTS: Record<StudioModule, React.ComponentType> = {
+const MODULE_COMPONENTS: Record<StudioModule, React.ComponentType<any>> = {
   leaderboard: OBSLeaderboard,
   "hall-of-frame": HallOfFramePage,
   "live-chat": RestreamChatEmbed,
@@ -17,7 +17,9 @@ const MODULE_COMPONENTS: Record<StudioModule, React.ComponentType> = {
 
 const OBSOverlay = () => {
   const { data: config, isLoading } = useOBSOverlayConfig();
+  const { data: outputConfig } = useOutputConfig();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const chatZoom = outputConfig?.chatZoom;
 
   const enabledModules = config?.enabledModules ?? [];
   const mode = config?.mode ?? "auto";
@@ -76,7 +78,7 @@ const OBSOverlay = () => {
               isActive ? "opacity-100" : "opacity-0 pointer-events-none"
             }`}
           >
-            <Component />
+            <Component zoom={moduleId === "live-chat" ? chatZoom : undefined} />
           </div>
         );
       })}
