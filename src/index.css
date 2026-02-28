@@ -13,10 +13,12 @@ html.light {
 }
 
 /* Alerts overlay needs transparent background for OBS */
-html:has(body.alerts-overlay) {
+html:has(body.alerts-overlay),
+html:has(body.obs-overlay) {
   background-color: transparent !important;
 }
-body.alerts-overlay {
+body.alerts-overlay,
+body.obs-overlay {
   background-color: transparent !important;
 }
 
