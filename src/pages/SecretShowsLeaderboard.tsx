@@ -99,7 +99,7 @@ const SecretShowsLeaderboard = () => {
   }, [gifters, fireConfetti]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] via-[#1a1a2e] to-[#0a0a0a] px-2 sm:px-4 py-4 sm:py-8">
+    <div className="secret-shows-leaderboard min-h-screen bg-gradient-to-b from-[#0a0a0a] via-[#1a1a2e] to-[#0a0a0a] px-2 sm:px-4 py-4 sm:py-8">
       <div className="max-w-2xl mx-auto">
         {/* Logo */}
         <div className="flex justify-center mb-4 sm:mb-8">
@@ -126,10 +126,10 @@ const SecretShowsLeaderboard = () => {
               const isRankChanged = rankChangedIds.has(gifter.id);
 
               return (
-                <div
+              <div
                   key={gifter.id}
                   className={`
-                    flex items-center gap-2 sm:gap-4 px-2 sm:px-4 py-2 sm:py-3 rounded-lg
+                    leaderboard-row flex items-center gap-2 sm:gap-4 px-2 sm:px-4 py-2 sm:py-3 rounded-lg
                     transition-all duration-500 ease-out
                     ${i < 3
                       ? "bg-gradient-to-r from-amber-500/10 to-transparent border border-amber-500/20"
@@ -144,14 +144,14 @@ const SecretShowsLeaderboard = () => {
                   }}
                 >
                   {/* Rank */}
-                  <span className={`text-lg sm:text-2xl font-black w-6 sm:w-8 text-center transition-all duration-300 ${
+                  <span className={`leaderboard-rank text-lg sm:text-2xl font-black w-6 sm:w-8 text-center transition-all duration-300 ${
                     rankStyles[i] || "text-gray-500"
                   } ${isRankChanged ? "scale-125" : ""}`}>
                     {i + 1}
                   </span>
 
                   {/* Username */}
-                  <span className={`flex-1 font-semibold truncate text-sm sm:text-base transition-all duration-300 ${
+                  <span className={`leaderboard-username flex-1 font-semibold truncate text-sm sm:text-base transition-all duration-300 ${
                     i < 3 ? "text-white" : "text-gray-300"
                   } ${isNew ? "text-amber-300" : ""}`}>
                     {gifter.username}
@@ -165,7 +165,7 @@ const SecretShowsLeaderboard = () => {
                   )}
 
                   {/* Total with flash effect */}
-                  <span className={`font-mono font-bold text-base sm:text-lg transition-all duration-300 ${
+                  <span className={`leaderboard-score font-mono font-bold text-base sm:text-lg transition-all duration-300 ${
                     i < 3 ? "text-amber-400" : "text-amber-500/80"
                   } ${isUpdated ? "scale-150 text-yellow-300 drop-shadow-[0_0_16px_rgba(255,215,0,1)]" : ""}`}>
                     {gifter.total_gifts}
