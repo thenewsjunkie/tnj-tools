@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Monitor, ArrowLeft, ArrowRight, ExternalLink, Plus, Trash2, Video } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
@@ -59,6 +60,20 @@ const OutputControl = () => {
     save(newConfig);
   };
 
+  const toggleRotate = (column: "left" | "right") => {
+    if (!config) return;
+    if (column === "left") {
+      save({ ...config, leftRotate: !config.leftRotate });
+    } else {
+      save({ ...config, rightRotate: !config.rightRotate });
+    }
+  };
+
+  const updateRotateInterval = (seconds: number) => {
+    if (!config) return;
+    save({ ...config, rotateInterval: Math.max(5, seconds) });
+  };
+
   const addVideo = () => {
     if (!config) return;
     const trimmed = newVideoUrl.trim();
@@ -89,6 +104,8 @@ const OutputControl = () => {
     save({ ...config, videoFeeds: newFeeds });
   };
 
+  const anyRotateEnabled = config?.leftRotate || config?.rightRotate;
+
   return (
     <Card className="border-blue-500/30 bg-gradient-to-br from-[#1a1a2e] to-[#16213e]">
       <CardHeader className="pb-3">
@@ -116,6 +133,14 @@ const OutputControl = () => {
               <div>
                 <h3 className="text-xs font-semibold text-blue-300/70 uppercase tracking-wider mb-2 flex items-center gap-1">
                   <ArrowLeft className="h-3 w-3" /> Left Column
+                  <span className="ml-auto flex items-center gap-1.5 normal-case tracking-normal">
+                    <span className="text-[10px] text-gray-400">Rotate</span>
+                    <Switch
+                      checked={!!config?.leftRotate}
+                      onCheckedChange={() => toggleRotate("left")}
+                      className="scale-75"
+                    />
+                  </span>
                 </h3>
                 <div className="space-y-1.5">
                   {STUDIO_MODULES.map((mod) => (
@@ -137,6 +162,14 @@ const OutputControl = () => {
               <div>
                 <h3 className="text-xs font-semibold text-blue-300/70 uppercase tracking-wider mb-2 flex items-center gap-1">
                   <ArrowRight className="h-3 w-3" /> Right Column
+                  <span className="ml-auto flex items-center gap-1.5 normal-case tracking-normal">
+                    <span className="text-[10px] text-gray-400">Rotate</span>
+                    <Switch
+                      checked={!!config?.rightRotate}
+                      onCheckedChange={() => toggleRotate("right")}
+                      className="scale-75"
+                    />
+                  </span>
                 </h3>
                 <div className="space-y-1.5">
                   {STUDIO_MODULES.map((mod) => (
@@ -155,6 +188,21 @@ const OutputControl = () => {
                 </div>
               </div>
             </div>
+
+            {/* Rotation interval */}
+            {anyRotateEnabled && (
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-gray-400">Rotate every</span>
+                <Input
+                  type="number"
+                  min={5}
+                  value={config?.rotateInterval ?? 30}
+                  onChange={(e) => updateRotateInterval(Number(e.target.value))}
+                  className="w-20 bg-black/30 border-blue-500/20 text-white text-sm text-center"
+                />
+                <span className="text-xs text-gray-400">seconds</span>
+              </div>
+            )}
 
             {/* Video feeds */}
             <div>
