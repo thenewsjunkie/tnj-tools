@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useHallOfFramePhotos, useHallOfFrameSettings, HallOfFramePhoto } from "@/hooks/useHallOfFrame";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -30,18 +30,21 @@ const HallOfFrame = () => {
     return () => { supabase.removeChannel(channel); };
   }, [queryClient]);
 
-  // Auto-advance
+  const photosLengthRef = useRef(photos.length);
+  photosLengthRef.current = photos.length;
+
+  // Auto-advance using recursive setTimeout
   useEffect(() => {
     if (paused || photos.length <= 1) return;
-    const timer = setInterval(() => {
+    const timer = setTimeout(() => {
       setTransitioning(true);
       setTimeout(() => {
-        setCurrentIndex((prev) => (prev + 1) % photos.length);
+        setCurrentIndex((prev) => (prev + 1) % photosLengthRef.current);
         setTransitioning(false);
       }, 800);
     }, interval);
-    return () => clearInterval(timer);
-  }, [paused, photos.length, interval]);
+    return () => clearTimeout(timer);
+  }, [paused, currentIndex, interval]);
 
   // Keep index in bounds
   useEffect(() => {
