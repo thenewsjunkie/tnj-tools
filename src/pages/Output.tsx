@@ -83,12 +83,14 @@ const OutputColumn = ({
   chatVisible,
   rotate,
   rotateInterval,
+  chatZoom,
 }: {
   modules: StudioModule[];
   videos: VideoFeed[];
   chatVisible?: boolean;
   rotate?: boolean;
   rotateInterval?: number;
+  chatZoom?: number;
 }) => {
   const nonChatModules = modules.filter((id) => id !== "live-chat");
   const intervalMs = (rotateInterval ?? 30) * 1000;
@@ -110,7 +112,7 @@ const OutputColumn = ({
       )}
       {/* Chat is always mounted here but hidden via CSS to preserve message history */}
       <div className={chatVisible ? "flex-1 min-h-[400px]" : "hidden"}>
-        <RestreamChatEmbed />
+        <RestreamChatEmbed zoom={chatZoom} />
       </div>
     </div>
   );
@@ -128,6 +130,7 @@ const Output = () => {
   const right = config?.rightColumn ?? [];
   const videoFeeds = config?.videoFeeds ?? [];
   const rotation = config?.rotation ?? 0;
+  const chatZoom = config?.chatZoom;
 
   const isRotated90or270 = rotation === 90 || rotation === 270;
   const rotationStyle: React.CSSProperties = rotation !== 0 ? {
@@ -166,7 +169,7 @@ const Output = () => {
       >
         {fullScreenModule === "live-chat" ? (
           <div className="flex-1 min-h-0">
-            <RestreamChatEmbed />
+            <RestreamChatEmbed zoom={chatZoom} />
           </div>
         ) : (
           <>
@@ -174,7 +177,7 @@ const Output = () => {
               {FullComponent && <FullComponent />}
             </div>
             <div className="hidden">
-              <RestreamChatEmbed />
+              <RestreamChatEmbed zoom={chatZoom} />
             </div>
           </>
         )}
@@ -211,6 +214,7 @@ const Output = () => {
               chatVisible={chatInLeft}
               rotate={config?.leftRotate}
               rotateInterval={config?.rotateInterval}
+              chatZoom={chatZoom}
             />
           )}
           {hasLeft && hasRight && <div className={`${(config?.orientation ?? "horizontal") === "vertical" ? "h-px" : "w-px"} bg-white/10`} />}
@@ -221,6 +225,7 @@ const Output = () => {
               chatVisible={chatInRight}
               rotate={config?.rightRotate}
               rotateInterval={config?.rotateInterval}
+              chatZoom={chatZoom}
             />
           )}
         </div>
@@ -240,7 +245,7 @@ const Output = () => {
       {/* Always-mounted orphan chat when not assigned to any column */}
       {chatOrphan && (
         <div className="hidden">
-          <RestreamChatEmbed />
+          <RestreamChatEmbed zoom={chatZoom} />
         </div>
       )}
 
