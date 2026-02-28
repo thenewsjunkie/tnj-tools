@@ -29,6 +29,7 @@ export interface OutputConfig {
   contrast?: number; // percentage, default 100
   fullScreen?: StudioModule | null;
   orientation?: "horizontal" | "vertical";
+  rotation?: number; // 0, 90, 180, 270 degrees
 }
 
 const DEFAULT_CONFIG: OutputConfig = {
