@@ -1,11 +1,11 @@
 
-## Remove Subtitle Line from Leaderboard
 
-### What
-Remove the "Top supporters gifting Secret Shows subscriptions" subtitle text from the Secret Shows leaderboard component.
+## Reduce Space Under Logo
+
+The logo container has `mb-4 sm:mb-8` (16px / 32px margin-bottom), which creates noticeable gap before the title. Since the subtitle was just removed, this spacing feels even more pronounced.
 
 ### Change (1 file)
 
-**`src/pages/SecretShowsLeaderboard.tsx`** (lines 112-114)
-- Delete the `<p>` element containing the subtitle text
-- This single change removes it everywhere the component is rendered: standalone page, Output page, and OBS overlay
+**`src/pages/SecretShowsLeaderboard.tsx`** (line 105)
+- Change `mb-4 sm:mb-8` to `mb-2 sm:mb-4` on the logo wrapper div, cutting the gap in half
+
