@@ -22,6 +22,9 @@ export interface OutputConfig {
   leftColumn: StudioModule[];
   rightColumn: StudioModule[];
   videoFeeds?: VideoFeed[];
+  leftRotate?: boolean;
+  rightRotate?: boolean;
+  rotateInterval?: number; // seconds, default 30
 }
 
 const DEFAULT_CONFIG: OutputConfig = {

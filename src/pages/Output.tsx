@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from "react";
 import { useOutputConfig, StudioModule, VideoFeed, getYouTubeEmbedUrl } from "@/hooks/useOutputConfig";
 import SecretShowsLeaderboard from "@/pages/SecretShowsLeaderboard";
 import HallOfFramePage from "@/pages/HallOfFrame";
@@ -30,23 +31,89 @@ const YouTubeEmbed = ({ url }: { url: string }) => {
   );
 };
 
-const OutputColumn = ({ modules, videos, chatVisible }: { modules: StudioModule[]; videos: VideoFeed[]; chatVisible?: boolean }) => (
-  <div className="flex-1 flex flex-col overflow-auto">
-    {videos.map((v, i) => (
-      <div key={`video-${i}`} className="flex-1 min-h-[300px]">
-        <YouTubeEmbed url={v.url} />
-      </div>
-    ))}
-    {modules.filter((id) => id !== "live-chat").map((id) => {
-      const Component = MODULE_COMPONENTS[id];
-      return Component ? <Component key={id} /> : null;
-    })}
-    {/* Chat is always mounted here but hidden via CSS to preserve message history */}
-    <div className={chatVisible ? "flex-1 min-h-[400px]" : "hidden"}>
-      <RestreamChatEmbed />
+const RotatingModules = ({ modules, intervalMs }: { modules: StudioModule[]; intervalMs: number }) => {
+  const [visibleIndex, setVisibleIndex] = useState(0);
+  const [opacity, setOpacity] = useState(1);
+  const countRef = useRef(modules.length);
+  countRef.current = modules.length;
+
+  useEffect(() => {
+    if (modules.length <= 1) return;
+    const timer = setInterval(() => {
+      setOpacity(0);
+      setTimeout(() => {
+        setVisibleIndex((prev) => (prev + 1) % countRef.current);
+        setOpacity(1);
+      }, 400);
+    }, intervalMs);
+    return () => clearInterval(timer);
+  }, [intervalMs, modules.length]);
+
+  // Keep index in bounds
+  useEffect(() => {
+    setVisibleIndex((prev) => (modules.length > 0 ? prev % modules.length : 0));
+  }, [modules.length]);
+
+  return (
+    <div className="flex-1 relative overflow-hidden">
+      {modules.map((id, i) => {
+        const Component = MODULE_COMPONENTS[id];
+        if (!Component) return null;
+        return (
+          <div
+            key={id}
+            className="absolute inset-0 transition-opacity duration-400"
+            style={{
+              opacity: i === visibleIndex ? opacity : 0,
+              pointerEvents: i === visibleIndex ? "auto" : "none",
+            }}
+          >
+            <Component />
+          </div>
+        );
+      })}
     </div>
-  </div>
-);
+  );
+};
+
+const OutputColumn = ({
+  modules,
+  videos,
+  chatVisible,
+  rotate,
+  rotateInterval,
+}: {
+  modules: StudioModule[];
+  videos: VideoFeed[];
+  chatVisible?: boolean;
+  rotate?: boolean;
+  rotateInterval?: number;
+}) => {
+  const nonChatModules = modules.filter((id) => id !== "live-chat");
+  const intervalMs = (rotateInterval ?? 30) * 1000;
+
+  return (
+    <div className="flex-1 flex flex-col overflow-auto">
+      {videos.map((v, i) => (
+        <div key={`video-${i}`} className="flex-1 min-h-[300px]">
+          <YouTubeEmbed url={v.url} />
+        </div>
+      ))}
+      {rotate && nonChatModules.length > 1 ? (
+        <RotatingModules modules={nonChatModules} intervalMs={intervalMs} />
+      ) : (
+        nonChatModules.map((id) => {
+          const Component = MODULE_COMPONENTS[id];
+          return Component ? <Component key={id} /> : null;
+        })
+      )}
+      {/* Chat is always mounted here but hidden via CSS to preserve message history */}
+      <div className={chatVisible ? "flex-1 min-h-[400px]" : "hidden"}>
+        <RestreamChatEmbed />
+      </div>
+    </div>
+  );
+};
 
 const Output = () => {
   const { data: config, isLoading } = useOutputConfig();
@@ -84,9 +151,25 @@ const Output = () => {
 
       {(hasLeft || hasRight) && (
         <div className="flex-1 flex min-h-0">
-          {hasLeft && <OutputColumn modules={left} videos={leftVideos} chatVisible={chatInLeft} />}
+          {hasLeft && (
+            <OutputColumn
+              modules={left}
+              videos={leftVideos}
+              chatVisible={chatInLeft}
+              rotate={config?.leftRotate}
+              rotateInterval={config?.rotateInterval}
+            />
+          )}
           {hasLeft && hasRight && <div className="w-px bg-white/10" />}
-          {hasRight && <OutputColumn modules={right} videos={rightVideos} chatVisible={chatInRight} />}
+          {hasRight && (
+            <OutputColumn
+              modules={right}
+              videos={rightVideos}
+              chatVisible={chatInRight}
+              rotate={config?.rightRotate}
+              rotateInterval={config?.rotateInterval}
+            />
+          )}
         </div>
       )}
 
