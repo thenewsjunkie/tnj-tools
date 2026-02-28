@@ -25,6 +25,8 @@ export interface OutputConfig {
   leftRotate?: boolean;
   rightRotate?: boolean;
   rotateInterval?: number; // seconds, default 30
+  brightness?: number; // percentage, default 100
+  contrast?: number; // percentage, default 100
 }
 
 const DEFAULT_CONFIG: OutputConfig = {

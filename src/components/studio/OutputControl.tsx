@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Monitor, ArrowLeft, ArrowRight, ExternalLink, Plus, Trash2, Video } from "lucide-react";
+import { Monitor, ArrowLeft, ArrowRight, ExternalLink, Plus, Trash2, Video, Sun, Contrast } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
 import { Link } from "react-router-dom";
 import {
   useOutputConfig,
@@ -203,6 +204,36 @@ const OutputControl = () => {
                 <span className="text-xs text-gray-400">seconds</span>
               </div>
             )}
+
+            {/* Brightness & Contrast */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <Sun className="h-4 w-4 text-yellow-400 shrink-0" />
+                <span className="text-xs text-gray-400 w-16">Brightness</span>
+                <Slider
+                  min={50}
+                  max={200}
+                  step={5}
+                  value={[config?.brightness ?? 100]}
+                  onValueChange={([v]) => save({ ...config!, brightness: v })}
+                  className="flex-1"
+                />
+                <span className="text-xs text-white w-10 text-right">{config?.brightness ?? 100}%</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Contrast className="h-4 w-4 text-blue-400 shrink-0" />
+                <span className="text-xs text-gray-400 w-16">Contrast</span>
+                <Slider
+                  min={50}
+                  max={200}
+                  step={5}
+                  value={[config?.contrast ?? 100]}
+                  onValueChange={([v]) => save({ ...config!, contrast: v })}
+                  className="flex-1"
+                />
+                <span className="text-xs text-white w-10 text-right">{config?.contrast ?? 100}%</span>
+              </div>
+            </div>
 
             {/* Video feeds */}
             <div>
