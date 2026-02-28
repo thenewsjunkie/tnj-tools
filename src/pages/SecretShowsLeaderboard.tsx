@@ -99,7 +99,7 @@ const SecretShowsLeaderboard = ({ limit = 20 }: { limit?: number }) => {
   }, [gifters, fireConfetti]);
 
   return (
-    <div className="secret-shows-leaderboard h-screen flex flex-col bg-gradient-to-b from-[#0a0a0a] via-[#1a1a2e] to-[#0a0a0a] px-2 sm:px-4 py-4 sm:py-8 overflow-hidden">
+    <div className="secret-shows-leaderboard h-screen flex flex-col bg-transparent px-2 sm:px-4 py-4 sm:py-8 overflow-hidden">
       <div className="max-w-2xl mx-auto w-full flex flex-col flex-1 min-h-0">
         {/* Logo */}
         <div className="flex justify-center mb-2 sm:mb-4">
