@@ -129,6 +129,24 @@ export const useHallOfFrameSettings = () => {
   });
 };
 
+export const useUpdateHallOfFrameCaption = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, caption }: { id: string; caption: string | null }) => {
+      const { error } = await supabase
+        .from("hall_of_frame_photos" as any)
+        .update({ caption } as any)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["hall-of-frame-photos"] });
+      toast.success("Caption updated");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+};
+
 export const useUpdateHallOfFrameSettings = () => {
   const queryClient = useQueryClient();
   return useMutation({

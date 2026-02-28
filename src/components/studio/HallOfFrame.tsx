@@ -1,10 +1,10 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Image, Trash2, ExternalLink, Upload, GripVertical } from "lucide-react";
+import { Image, Trash2, ExternalLink, Upload, GripVertical, Pencil } from "lucide-react";
 import {
   useHallOfFramePhotos,
   useAddHallOfFramePhoto,
@@ -12,6 +12,7 @@ import {
   useReorderHallOfFramePhotos,
   useHallOfFrameSettings,
   useUpdateHallOfFrameSettings,
+  useUpdateHallOfFrameCaption,
   HallOfFramePhoto,
 } from "@/hooks/useHallOfFrame";
 import {
@@ -33,9 +34,27 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { Link } from "react-router-dom";
 
-const SortablePhoto = ({ photo, onDelete }: { photo: HallOfFramePhoto; onDelete: (p: HallOfFramePhoto) => void }) => {
+const SortablePhoto = ({ photo, onDelete, onUpdateCaption }: { photo: HallOfFramePhoto; onDelete: (p: HallOfFramePhoto) => void; onUpdateCaption: (id: string, caption: string | null) => void }) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: photo.id });
   const style = { transform: CSS.Transform.toString(transform), transition };
+  const [editing, setEditing] = useState(false);
+  const [editValue, setEditValue] = useState(photo.caption || "");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editing) inputRef.current?.focus();
+  }, [editing]);
+
+  const save = () => {
+    const trimmed = editValue.trim();
+    onUpdateCaption(photo.id, trimmed || null);
+    setEditing(false);
+  };
+
+  const cancel = () => {
+    setEditValue(photo.caption || "");
+    setEditing(false);
+  };
 
   return (
     <div ref={setNodeRef} style={style} className="flex items-center gap-2 bg-black/20 rounded p-2">
@@ -43,7 +62,21 @@ const SortablePhoto = ({ photo, onDelete }: { photo: HallOfFramePhoto; onDelete:
         <GripVertical className="h-4 w-4" />
       </button>
       <img src={photo.image_url} alt={photo.caption || "Photo"} className="h-12 w-12 object-cover rounded" />
-      <span className="text-sm text-foreground truncate flex-1">{photo.caption || "No caption"}</span>
+      {editing ? (
+        <input
+          ref={inputRef}
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onBlur={save}
+          onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") cancel(); }}
+          className="text-sm bg-black/30 border border-blue-500/30 rounded px-2 py-1 text-foreground flex-1 outline-none focus:border-blue-400"
+        />
+      ) : (
+        <button onClick={() => { setEditValue(photo.caption || ""); setEditing(true); }} className="text-sm text-foreground truncate flex-1 text-left flex items-center gap-1 hover:text-blue-300 transition-colors">
+          <span className="truncate">{photo.caption || "No caption"}</span>
+          <Pencil className="h-3 w-3 opacity-50 shrink-0" />
+        </button>
+      )}
       <Button variant="ghost" size="sm" onClick={() => onDelete(photo)} className="text-destructive hover:text-destructive">
         <Trash2 className="h-4 w-4" />
       </Button>
@@ -58,6 +91,7 @@ const HallOfFrame = () => {
   const deletePhoto = useDeleteHallOfFramePhoto();
   const reorder = useReorderHallOfFramePhotos();
   const updateSettings = useUpdateHallOfFrameSettings();
+  const updateCaption = useUpdateHallOfFrameCaption();
 
   const [caption, setCaption] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -179,7 +213,7 @@ const HallOfFrame = () => {
             <SortableContext items={photos.map((p) => p.id)} strategy={verticalListSortingStrategy}>
               <div className="space-y-1 max-h-64 overflow-y-auto">
                 {photos.map((photo) => (
-                  <SortablePhoto key={photo.id} photo={photo} onDelete={(p) => deletePhoto.mutate(p)} />
+                  <SortablePhoto key={photo.id} photo={photo} onDelete={(p) => deletePhoto.mutate(p)} onUpdateCaption={(id, caption) => updateCaption.mutate({ id, caption })} />
                 ))}
               </div>
             </SortableContext>
