@@ -4,8 +4,10 @@ import HallOfFramePage from "@/pages/HallOfFrame";
 import RestreamChatEmbed from "@/components/studio/RestreamChatEmbed";
 import AdsDisplay from "@/components/studio/AdsDisplay";
 
+const OutputLeaderboard = () => <SecretShowsLeaderboard limit={10} />;
+
 const MODULE_COMPONENTS: Record<StudioModule, React.ComponentType> = {
-  "leaderboard": SecretShowsLeaderboard,
+  "leaderboard": OutputLeaderboard,
   "hall-of-frame": HallOfFramePage,
   "live-chat": RestreamChatEmbed,
   "ads": AdsDisplay,

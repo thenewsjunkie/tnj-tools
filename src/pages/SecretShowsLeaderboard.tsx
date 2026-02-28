@@ -9,8 +9,8 @@ const rankStyles = [
   "text-amber-600 drop-shadow-[0_0_8px_rgba(205,127,50,0.6)]",
 ];
 
-const SecretShowsLeaderboard = () => {
-  const { data: gifters = [], isLoading } = useSecretShowsGifters(20);
+const SecretShowsLeaderboard = ({ limit = 20 }: { limit?: number }) => {
+  const { data: gifters = [], isLoading } = useSecretShowsGifters(limit);
   const currentMonth = new Date().toISOString().slice(0, 7);
 
   // Track previous state to detect changes
@@ -99,8 +99,8 @@ const SecretShowsLeaderboard = () => {
   }, [gifters, fireConfetti]);
 
   return (
-    <div className="secret-shows-leaderboard min-h-screen bg-gradient-to-b from-[#0a0a0a] via-[#1a1a2e] to-[#0a0a0a] px-2 sm:px-4 py-4 sm:py-8">
-      <div className="max-w-2xl mx-auto">
+    <div className="secret-shows-leaderboard h-screen flex flex-col bg-gradient-to-b from-[#0a0a0a] via-[#1a1a2e] to-[#0a0a0a] px-2 sm:px-4 py-4 sm:py-8 overflow-hidden">
+      <div className="max-w-2xl mx-auto w-full flex flex-col flex-1 min-h-0">
         {/* Logo */}
         <div className="flex justify-center mb-2 sm:mb-4">
           <img src={secretShowsLogo} alt="Secret Shows" className="h-14 sm:h-24 w-auto drop-shadow-[0_0_20px_rgba(255,215,0,0.2)]" />
@@ -115,7 +115,7 @@ const SecretShowsLeaderboard = () => {
         ) : gifters.length === 0 ? (
           <p className="text-gray-500 text-center py-12">No gifters yet. Be the first!</p>
         ) : (
-          <div className="space-y-1.5 sm:space-y-2">
+          <div className="flex-1 flex flex-col gap-1.5 sm:gap-2 min-h-0">
             {gifters.map((gifter, i) => {
               const monthlyCount = (gifter.monthly_gifts as Record<string, number>)?.[currentMonth] || 0;
               const isUpdated = updatedIds.has(gifter.id);
@@ -126,7 +126,7 @@ const SecretShowsLeaderboard = () => {
               <div
                   key={gifter.id}
                   className={`
-                    leaderboard-row flex items-center gap-2 sm:gap-4 px-2 sm:px-4 py-2 sm:py-3 rounded-lg
+                    leaderboard-row flex-1 flex items-center gap-2 sm:gap-4 px-2 sm:px-4 rounded-lg min-h-0
                     transition-all duration-500 ease-out
                     ${i < 3
                       ? "bg-gradient-to-r from-amber-500/10 to-transparent border border-amber-500/20"
