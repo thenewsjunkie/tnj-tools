@@ -123,6 +123,7 @@ const Output = () => {
     return <div className="h-screen bg-black flex items-center justify-center text-muted-foreground">Loading...</div>;
   }
 
+  const fullScreenModule = config?.fullScreen ?? null;
   const left = config?.leftColumn ?? [];
   const right = config?.rightColumn ?? [];
   const videoFeeds = config?.videoFeeds ?? [];
@@ -134,13 +135,51 @@ const Output = () => {
 
   const chatInLeft = left.includes("live-chat");
   const chatInRight = right.includes("live-chat");
+  const chatIsFullScreen = fullScreenModule === "live-chat";
 
   const hasLeft = left.length > 0 || leftVideos.length > 0;
   const hasRight = right.length > 0 || rightVideos.length > 0;
-  const hasContent = hasLeft || hasRight || fullVideos.length > 0;
+  const hasContent = hasLeft || hasRight || fullVideos.length > 0 || !!fullScreenModule;
 
-  // If chat is not in any column, we still mount it hidden to preserve state
-  const chatOrphan = !chatInLeft && !chatInRight;
+  // Chat is orphan if not in any column and not full-screen
+  const chatOrphan = !chatInLeft && !chatInRight && !chatIsFullScreen;
+
+  // Full-screen mode: render only that module
+  if (fullScreenModule) {
+    const FullComponent = MODULE_COMPONENTS[fullScreenModule];
+    return (
+      <div
+        className="h-screen bg-black flex flex-col"
+        style={{ filter: `brightness(${config?.brightness ?? 100}%) contrast(${config?.contrast ?? 100}%)` }}
+      >
+        {fullScreenModule === "live-chat" ? (
+          <div className="flex-1 min-h-0">
+            <RestreamChatEmbed />
+          </div>
+        ) : (
+          <>
+            <div className="flex-1 min-h-0">
+              {FullComponent && <FullComponent />}
+            </div>
+            {/* Keep chat mounted hidden */}
+            <div className="hidden">
+              <RestreamChatEmbed />
+            </div>
+          </>
+        )}
+        {/* PiP overlay videos */}
+        {pipVideos.length > 0 && (
+          <div className="fixed top-4 right-4 z-50 flex flex-col gap-4">
+            {pipVideos.map((v, i) => (
+              <div key={`pip-${i}`} className="w-80 aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10">
+                <YouTubeEmbed url={v.url} />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
