@@ -32,7 +32,9 @@ const HallOfFrame = ({ fillContainer = false }: { fillContainer?: boolean }) => 
   const interval = (settings?.interval_seconds ?? 8) * 1000;
   const transition = settings?.transition ?? "fade";
 
-  // Generate shuffled order when photos.length changes
+  const photosKey = photos.map(p => p.id).join(',');
+
+  // Regenerate shuffled order when photo list changes
   useEffect(() => {
     if (photos.length > 0) {
       setShuffledOrder(shuffleIndices(photos.length));
@@ -41,7 +43,7 @@ const HallOfFrame = ({ fillContainer = false }: { fillContainer?: boolean }) => 
       setShuffledOrder([]);
       setPosInOrder(0);
     }
-  }, [photos.length]);
+  }, [photosKey]);
 
   // Real-time subscription
   useEffect(() => {
@@ -99,7 +101,10 @@ const HallOfFrame = ({ fillContainer = false }: { fillContainer?: boolean }) => 
     );
   }
 
-  const currentIndex = shuffledOrder.length > 0 ? shuffledOrder[posInOrder] : 0;
+  let currentIndex = shuffledOrder.length > 0 ? shuffledOrder[posInOrder] : 0;
+  if (currentIndex >= photos.length) {
+    currentIndex = 0;
+  }
   const photo = photos[currentIndex] as HallOfFramePhoto | undefined;
   if (!photo) return null;
 
