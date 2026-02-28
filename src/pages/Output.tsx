@@ -28,17 +28,21 @@ const YouTubeEmbed = ({ url }: { url: string }) => {
   );
 };
 
-const OutputColumn = ({ modules, videos }: { modules: StudioModule[]; videos: VideoFeed[] }) => (
+const OutputColumn = ({ modules, videos, chatVisible }: { modules: StudioModule[]; videos: VideoFeed[]; chatVisible?: boolean }) => (
   <div className="flex-1 flex flex-col overflow-auto">
     {videos.map((v, i) => (
       <div key={`video-${i}`} className="flex-1 min-h-[300px]">
         <YouTubeEmbed url={v.url} />
       </div>
     ))}
-    {modules.map((id) => {
+    {modules.filter((id) => id !== "live-chat").map((id) => {
       const Component = MODULE_COMPONENTS[id];
       return Component ? <Component key={id} /> : null;
     })}
+    {/* Chat is always mounted here but hidden via CSS to preserve message history */}
+    <div className={chatVisible ? "flex-1 min-h-[400px]" : "hidden"}>
+      <RestreamChatEmbed />
+    </div>
   </div>
 );
 
@@ -57,25 +61,36 @@ const Output = () => {
   const leftVideos = videoFeeds.filter((v) => v.placement === "left");
   const rightVideos = videoFeeds.filter((v) => v.placement === "right");
 
+  const chatInLeft = left.includes("live-chat");
+  const chatInRight = right.includes("live-chat");
+
   const hasLeft = left.length > 0 || leftVideos.length > 0;
   const hasRight = right.length > 0 || rightVideos.length > 0;
   const hasContent = hasLeft || hasRight || fullVideos.length > 0;
 
+  // If chat is not in any column, we still mount it hidden to preserve state
+  const chatOrphan = !chatInLeft && !chatInRight;
+
   return (
     <div className="h-screen bg-black flex flex-col">
-      {/* Full-width videos */}
       {fullVideos.map((v, i) => (
         <div key={`full-${i}`} className="flex-1 min-h-[300px]">
           <YouTubeEmbed url={v.url} />
         </div>
       ))}
 
-      {/* Columns */}
       {(hasLeft || hasRight) && (
         <div className="flex-1 flex min-h-0">
-          {hasLeft && <OutputColumn modules={left} videos={leftVideos} />}
+          {hasLeft && <OutputColumn modules={left} videos={leftVideos} chatVisible={chatInLeft} />}
           {hasLeft && hasRight && <div className="w-px bg-white/10" />}
-          {hasRight && <OutputColumn modules={right} videos={rightVideos} />}
+          {hasRight && <OutputColumn modules={right} videos={rightVideos} chatVisible={chatInRight} />}
+        </div>
+      )}
+
+      {/* Always-mounted orphan chat when not assigned to any column */}
+      {chatOrphan && (
+        <div className="hidden">
+          <RestreamChatEmbed />
         </div>
       )}
 
