@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface SecretShowsGifter {
@@ -12,6 +13,23 @@ export interface SecretShowsGifter {
 }
 
 export const useSecretShowsGifters = (limit = 20) => {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("secret-shows-gifters-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "secret_shows_gifters" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["secret-shows-gifters"] });
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [queryClient]);
+
   return useQuery({
     queryKey: ["secret-shows-gifters", limit],
     queryFn: async () => {
