@@ -5,6 +5,7 @@ import HallOfFramePage from "@/pages/HallOfFrame";
 import RestreamChatEmbed from "@/components/studio/RestreamChatEmbed";
 import DiscordChatEmbed from "@/components/studio/DiscordChatEmbed";
 import AdsDisplay from "@/components/studio/AdsDisplay";
+import TelePrompterPage from "@/pages/TelePrompter";
 
 const OutputLeaderboard = () => <SecretShowsLeaderboard limit={10} />;
 const OutputHallOfFrame = () => <HallOfFramePage fillContainer />;
@@ -14,6 +15,7 @@ const MODULE_COMPONENTS: Record<StudioModule, React.ComponentType> = {
   "hall-of-frame": OutputHallOfFrame,
   "live-chat": RestreamChatEmbed,
   "ads": AdsDisplay,
+  "teleprompter": TelePrompterPage,
 };
 
 const YouTubeEmbed = ({ url }: { url: string }) => {
