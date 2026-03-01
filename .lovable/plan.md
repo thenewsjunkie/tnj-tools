@@ -1,57 +1,24 @@
 
-## New Module: Art Mode
 
-A new "Art Mode" module that displays uploaded images in an elegant frame style, with configurable display duration and transition effects. It follows the same patterns as the existing Ads module.
+## Consolidate Output Control Layout
 
-### 1. Add Storage Bucket
-Create a `art_mode` public storage bucket via SQL migration for storing uploaded art images.
+Merge four separate rows into two combined rows to save vertical space.
 
-### 2. New Hook: `src/hooks/useArtMode.ts`
-- Stores config in `system_settings` under key `studio_art_mode_config`
-- Config shape:
-  ```text
-  ArtModeConfig {
-    images: ArtModeImage[]       // { id, imageUrl, label }
-    intervalSeconds: number      // display duration per image (default 30)
-    permanent: boolean           // if true, no rotation (show first/selected image)
-    transition: "fade" | "slide" | "zoom" | "none"  // transition effect
-    frameStyle: "gold" | "dark" | "minimal" | "none" // decorative frame style
-  }
-  ```
-- Realtime subscription on system_settings for live updates
-- `useArtModeConfig()` query hook + `useUpdateArtModeConfig()` mutation hook
+### Changes (single file: `src/components/studio/OutputControl.tsx`)
 
-### 3. New Component: `src/components/studio/ArtModeManager.tsx`
-Admin card (styled like AdsManager) with:
-- Image grid with upload (reusing `upload-show-note-image` edge function) and delete
-- Label input for each image
-- Interval slider/input (seconds, min 5) with a "Permanent" toggle that locks to the first image
-- Transition effect selector (fade/slide/zoom/none)
-- Frame style selector (gold/dark/minimal/none)
+**Row 1: Layout + Rotation (lines 200-238)**
+Replace the two separate sections (Layout buttons and Rotation buttons) with a single `flex` row:
+```
+Layout [Horizontal] [Vertical]  |  Rotation [0°] [90°] [180°] [270°]
+```
+Uses `flex items-center gap-3` with a visual separator or just spacing between the two groups.
 
-### 4. New Component: `src/components/studio/ArtModeDisplay.tsx`
-Display component for the /output page:
-- Full-container image display with `object-contain` to show the entire artwork
-- Decorative CSS frame border based on `frameStyle` setting
-- Auto-rotation with the selected transition effect
-- When `permanent` is true, shows first image without cycling
-- Black background for gallery feel
+**Row 2: Chat Source + Chat Zoom (lines 267-301)**
+Replace the two separate rows (Chat Zoom slider and Chat Source buttons) with a single `flex` row:
+```
+Chat Source [Restream] [Discord]  |  Chat Zoom [====slider====] 150%
+```
+Remove the Monitor icons to save horizontal space; combine into one `flex items-center gap-3` row.
 
-### 5. Register as Studio Module
-- **`src/hooks/useOutputConfig.ts`**: Add `"art-mode"` to the `StudioModule` union type and `STUDIO_MODULES` array with label "Art Mode"
-- **`src/pages/Output.tsx`**: Import `ArtModeDisplay` and add to `MODULE_COMPONENTS` map
-- **`src/pages/OBSOverlay.tsx`**: Same import and registration
-
-### 6. Add Manager to Studio Screen
-- **`src/pages/Admin/StudioScreen.tsx`**: Import and render `<ArtModeManager />` alongside the other manager cards
-
-### Files Created
-- `src/hooks/useArtMode.ts`
-- `src/components/studio/ArtModeManager.tsx`
-- `src/components/studio/ArtModeDisplay.tsx`
-
-### Files Modified
-- `src/hooks/useOutputConfig.ts` (add "art-mode" to type + modules list)
-- `src/pages/Output.tsx` (register component)
-- `src/pages/OBSOverlay.tsx` (register component)
-- `src/pages/Admin/StudioScreen.tsx` (add manager card)
+### No other files affected
+Only `src/components/studio/OutputControl.tsx` is modified -- purely a layout/template change with no logic changes.
