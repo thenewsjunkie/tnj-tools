@@ -197,7 +197,7 @@ const OutputControl = () => {
               ))}
             </div>
 
-            {/* Orientation toggle */}
+            {/* Layout + Rotation */}
             <div className="flex items-center gap-3 text-xs text-gray-400">
               <span className="text-xs font-semibold text-blue-300/70 uppercase tracking-wider">Layout</span>
               <div className="flex gap-1">
@@ -215,10 +215,7 @@ const OutputControl = () => {
                   </button>
                 ))}
               </div>
-            </div>
-
-            {/* Rotation control */}
-            <div className="flex items-center gap-3 text-xs text-gray-400">
+              <div className="w-px h-5 bg-blue-500/20" />
               <span className="text-xs font-semibold text-blue-300/70 uppercase tracking-wider">Rotation</span>
               <div className="flex gap-1">
                 {[0, 90, 180, 270].map((deg) => (
@@ -264,40 +261,35 @@ const OutputControl = () => {
               </div>
             )}
 
-            {/* Brightness, Contrast & Chat Zoom */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <Monitor className="h-4 w-4 text-green-400 shrink-0" />
-                <span className="text-xs text-gray-400 w-16">Chat Zoom</span>
-                <Slider
-                  min={100}
-                  max={300}
-                  step={10}
-                  value={[config?.chatZoom ?? 100]}
-                  onValueChange={([v]) => save({ ...config!, chatZoom: v })}
-                  className="flex-1"
-                />
-                <span className="text-xs text-white w-10 text-right">{config?.chatZoom ?? 100}%</span>
+            {/* Chat Source + Chat Zoom */}
+            <div className="flex items-center gap-3 text-xs text-gray-400">
+              <span className="text-xs font-semibold text-blue-300/70 uppercase tracking-wider whitespace-nowrap">Chat Source</span>
+              <div className="flex gap-1">
+                {(["restream", "discord"] as const).map((src) => (
+                  <button
+                    key={src}
+                    onClick={() => save({ ...config!, chatSource: src })}
+                    className={`px-3 py-1.5 rounded text-[10px] font-medium transition-colors capitalize ${
+                      (config?.chatSource ?? "restream") === src
+                        ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/40"
+                        : "bg-black/20 text-gray-500 hover:text-gray-300 border border-transparent"
+                    }`}
+                  >
+                    {src}
+                  </button>
+                ))}
               </div>
-              <div className="flex items-center gap-3">
-                <Monitor className="h-4 w-4 text-indigo-400 shrink-0" />
-                <span className="text-xs text-gray-400 w-16">Chat Source</span>
-                <div className="flex gap-1">
-                  {(["restream", "discord"] as const).map((src) => (
-                    <button
-                      key={src}
-                      onClick={() => save({ ...config!, chatSource: src })}
-                      className={`px-3 py-1.5 rounded text-[10px] font-medium transition-colors capitalize ${
-                        (config?.chatSource ?? "restream") === src
-                          ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/40"
-                          : "bg-black/20 text-gray-500 hover:text-gray-300 border border-transparent"
-                      }`}
-                    >
-                      {src}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <div className="w-px h-5 bg-blue-500/20" />
+              <span className="text-xs text-gray-400 whitespace-nowrap">Zoom</span>
+              <Slider
+                min={100}
+                max={300}
+                step={10}
+                value={[config?.chatZoom ?? 100]}
+                onValueChange={([v]) => save({ ...config!, chatZoom: v })}
+                className="flex-1"
+              />
+              <span className="text-xs text-white w-10 text-right">{config?.chatZoom ?? 100}%</span>
             </div>
 
             {/* Video feeds */}
