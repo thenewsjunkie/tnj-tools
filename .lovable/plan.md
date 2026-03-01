@@ -1,38 +1,41 @@
 
 
-## Consolidate Studio Screen Layout
+## Fix Art Mode Full-Screen Display
 
-Two changes: consolidate the rotate controls row in Output Control, and wrap every module in collapsible sections (collapsed by default) on the Studio Screen.
+After investigating the code, I found two issues that prevent Art Mode from displaying properly in full-screen mode on the Output page:
 
-### 1. OutputControl.tsx -- Merge rotate controls onto one line
+### Issue 1: Layout height not resolving for ArtModeDisplay
 
-Combine "Rotate Left", "Rotate Right" switches and the "Rotate every X seconds" input into a single row:
+In `Output.tsx`, the full-screen container uses `flex-1 min-h-0`, but `ArtModeDisplay` relies on `h-full` which can fail to resolve when nested inside flex containers without explicit height propagation. The fix is to ensure the ArtModeDisplay fills its container using absolute positioning instead.
 
-```text
-Rotate Left [toggle]  Rotate Right [toggle]  |  Every [30] seconds
+### Issue 2: ArtModeDisplay not filling flex container
+
+The `ArtModeDisplay` root div uses `w-full h-full` but doesn't have any flex-grow or absolute positioning to ensure it fills the available space in all container contexts.
+
+### Changes
+
+**File: `src/components/studio/ArtModeDisplay.tsx`**
+- Change the root container from `w-full h-full` to `absolute inset-0` so it fills any positioned parent regardless of flex chain
+- Alternatively, add both `w-full h-full` and `min-h-0 flex-1` for robustness
+
+**File: `src/pages/Output.tsx`**
+- Ensure the full-screen module container has `relative` positioning (it already does) and is set up so child components can fill it with `absolute inset-0`
+- Add `overflow-hidden` to the full-screen container to prevent art mode from overflowing
+
+### Technical Details
+
+In `ArtModeDisplay.tsx`, the root div will change from:
+```
+className="w-full h-full bg-black flex items-center justify-center p-6"
+```
+to:
+```
+className="absolute inset-0 bg-black flex items-center justify-center p-6"
 ```
 
-- Remove the separate `{anyRotateEnabled && ...}` conditional block for interval
-- Always show the interval input inline (just visually muted when no rotation is enabled)
-- Lines 237-261 replaced with a single `flex items-center gap-3` row
+In `Output.tsx`, the full-screen module wrapper (around line 175) will add `overflow-hidden` to ensure proper containment:
+```
+className="flex-1 min-h-0 relative z-10 overflow-hidden"
+```
 
-### 2. StudioScreen.tsx -- Wrap all modules in CollapsibleModule
-
-Use the existing `CollapsibleModule` component (from `src/components/admin/CollapsibleModule.tsx`) to wrap each studio component. All default to collapsed (`defaultOpen={false}`).
-
-Each module gets a unique `id` for localStorage persistence:
-- `studio-output` -- Output Control
-- `studio-obs` -- OBS Overlay
-- `studio-ads` -- Ads Manager
-- `studio-art-mode` -- Art Mode
-- `studio-leaderboard` -- Secret Shows Leaderboard
-- `studio-hall-of-frame` -- Hall of Frame
-- `studio-teleprompter` -- TelePrompter
-- `studio-chat` -- Live Chat
-
-The children components keep their existing Card styling inside the collapsible wrapper.
-
-### Files Modified
-- `src/components/studio/OutputControl.tsx` -- merge rotate row
-- `src/pages/Admin/StudioScreen.tsx` -- wrap all modules in CollapsibleModule with `defaultOpen={false}`
-
+These are small, targeted CSS fixes that ensure the Art Mode display fills its container in all layout contexts (full-screen, column, OBS overlay).
