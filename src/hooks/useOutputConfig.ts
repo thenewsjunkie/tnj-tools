@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 
-export type StudioModule = "leaderboard" | "hall-of-frame" | "live-chat" | "ads" | "teleprompter";
+export type StudioModule = "leaderboard" | "hall-of-frame" | "live-chat" | "ads" | "teleprompter" | "art-mode";
 
 export const STUDIO_MODULES: { id: StudioModule; label: string }[] = [
   { id: "leaderboard", label: "Secret Shows Gifts" },
@@ -10,6 +10,7 @@ export const STUDIO_MODULES: { id: StudioModule; label: string }[] = [
   { id: "live-chat", label: "Live Chat" },
   { id: "ads", label: "Ads" },
   { id: "teleprompter", label: "TelePrompter" },
+  { id: "art-mode", label: "Art Mode" },
 ];
 
 export type VideoPlacement = "center" | "pip-left" | "pip-right";
