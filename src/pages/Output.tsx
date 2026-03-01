@@ -158,18 +158,17 @@ const Output = () => {
     translate: "-50% -50%",
   } : {};
 
-  const fullVideos = videoFeeds.filter((v) => v.placement === "full");
-  const leftVideos = videoFeeds.filter((v) => v.placement === "left");
-  const rightVideos = videoFeeds.filter((v) => v.placement === "right");
-  const pipVideos = videoFeeds.filter((v) => v.placement === "pip");
+  const centerVideos = videoFeeds.filter((v) => v.placement === "center" || v.placement === ("full" as any));
+  const pipLeftVideos = videoFeeds.filter((v) => v.placement === "pip-left");
+  const pipRightVideos = videoFeeds.filter((v) => v.placement === "pip-right" || v.placement === ("pip" as any));
 
   const chatInLeft = left.includes("live-chat");
   const chatInRight = right.includes("live-chat");
   const chatIsFullScreen = fullScreenModule === "live-chat";
 
-  const hasLeft = left.length > 0 || leftVideos.length > 0;
-  const hasRight = right.length > 0 || rightVideos.length > 0;
-  const hasContent = hasLeft || hasRight || fullVideos.length > 0 || !!fullScreenModule;
+  const hasLeft = left.length > 0;
+  const hasRight = right.length > 0;
+  const hasContent = hasLeft || hasRight || centerVideos.length > 0 || !!fullScreenModule;
 
   // Chat is orphan if not in any column and not full-screen
   const chatOrphan = !chatInLeft && !chatInRight && !chatIsFullScreen;
@@ -199,10 +198,19 @@ const Output = () => {
             <RestreamChatEmbed zoom={chatZoom} />
           </div>
         )}
-        {pipVideos.length > 0 && (
+        {pipLeftVideos.length > 0 && (
+          <div className="fixed top-4 left-4 z-50 flex flex-col gap-4">
+            {pipLeftVideos.map((v, i) => (
+              <div key={`pip-l-${i}`} className="w-[640px] aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10">
+                <YouTubeEmbed url={v.url} />
+              </div>
+            ))}
+          </div>
+        )}
+        {pipRightVideos.length > 0 && (
           <div className="fixed top-4 right-4 z-50 flex flex-col gap-4">
-            {pipVideos.map((v, i) => (
-              <div key={`pip-${i}`} className="w-80 aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10">
+            {pipRightVideos.map((v, i) => (
+              <div key={`pip-r-${i}`} className="w-[640px] aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10">
                 <YouTubeEmbed url={v.url} />
               </div>
             ))}
@@ -217,8 +225,8 @@ const Output = () => {
       className="h-screen bg-black flex flex-col"
       style={{ filter: `brightness(${config?.brightness ?? 100}%) contrast(${config?.contrast ?? 100}%)`, ...rotationStyle }}
     >
-      {fullVideos.map((v, i) => (
-        <div key={`full-${i}`} className="flex-1 min-h-[300px]">
+      {centerVideos.map((v, i) => (
+        <div key={`center-${i}`} className="flex-1 min-h-[300px]">
           <YouTubeEmbed url={v.url} />
         </div>
       ))}
@@ -228,7 +236,7 @@ const Output = () => {
           {hasLeft && (
             <OutputColumn
               modules={left}
-              videos={leftVideos}
+              videos={[]}
               chatVisible={chatInLeft}
               rotate={config?.leftRotate}
               rotateInterval={config?.rotateInterval}
@@ -240,7 +248,7 @@ const Output = () => {
           {hasRight && (
             <OutputColumn
               modules={right}
-              videos={rightVideos}
+              videos={[]}
               chatVisible={chatInRight}
               rotate={config?.rightRotate}
               rotateInterval={config?.rotateInterval}
@@ -252,10 +260,19 @@ const Output = () => {
       )}
 
       {/* PiP overlay videos */}
-      {pipVideos.length > 0 && (
+      {pipLeftVideos.length > 0 && (
+        <div className="fixed top-4 left-4 z-50 flex flex-col gap-4">
+          {pipLeftVideos.map((v, i) => (
+            <div key={`pip-l-${i}`} className="w-[640px] aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10">
+              <YouTubeEmbed url={v.url} />
+            </div>
+          ))}
+        </div>
+      )}
+      {pipRightVideos.length > 0 && (
         <div className="fixed top-4 right-4 z-50 flex flex-col gap-4">
-          {pipVideos.map((v, i) => (
-            <div key={`pip-${i}`} className="w-80 aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10">
+          {pipRightVideos.map((v, i) => (
+            <div key={`pip-r-${i}`} className="w-[640px] aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10">
               <YouTubeEmbed url={v.url} />
             </div>
           ))}

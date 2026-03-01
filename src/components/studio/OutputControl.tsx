@@ -18,17 +18,16 @@ import {
 import { toast } from "sonner";
 
 const PLACEMENT_OPTIONS: { value: VideoPlacement; label: string }[] = [
-  { value: "left", label: "Left" },
-  { value: "right", label: "Right" },
-  { value: "full", label: "Full Width" },
-  { value: "pip", label: "PiP" },
+  { value: "center", label: "Center" },
+  { value: "pip-left", label: "PiP Left" },
+  { value: "pip-right", label: "PiP Right" },
 ];
 
 const OutputControl = () => {
   const { data: config, isLoading } = useOutputConfig();
   const updateConfig = useUpdateOutputConfig();
   const [newVideoUrl, setNewVideoUrl] = useState("");
-  const [newVideoPlacement, setNewVideoPlacement] = useState<VideoPlacement>("full");
+  const [newVideoPlacement, setNewVideoPlacement] = useState<VideoPlacement>("center");
 
   const leftColumn = config?.leftColumn ?? [];
   const rightColumn = config?.rightColumn ?? [];
