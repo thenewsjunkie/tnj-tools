@@ -235,7 +235,7 @@ const OutputControl = () => {
             </div>
 
             {/* Rotate controls */}
-            <div className="flex items-center gap-4 text-xs text-gray-400">
+            <div className="flex items-center gap-3 text-xs text-gray-400">
               <span className="flex items-center gap-1.5">
                 Rotate Left
                 <Switch checked={!!config?.leftRotate} onCheckedChange={() => toggleRotate("left")} className="scale-75" />
@@ -244,22 +244,20 @@ const OutputControl = () => {
                 Rotate Right
                 <Switch checked={!!config?.rightRotate} onCheckedChange={() => toggleRotate("right")} className="scale-75" />
               </span>
-            </div>
-
-            {/* Rotation interval */}
-            {anyRotateEnabled && (
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-gray-400">Rotate every</span>
+              <div className="w-px h-5 bg-blue-500/20" />
+              <span className={`flex items-center gap-1.5 ${!anyRotateEnabled ? 'opacity-40' : ''}`}>
+                Every
                 <Input
                   type="number"
                   min={5}
                   value={config?.rotateInterval ?? 30}
                   onChange={(e) => updateRotateInterval(Number(e.target.value))}
-                  className="w-20 bg-black/30 border-blue-500/20 text-white text-sm text-center"
+                  disabled={!anyRotateEnabled}
+                  className="w-14 h-7 bg-black/30 border-blue-500/20 text-white text-xs text-center"
                 />
-                <span className="text-xs text-gray-400">seconds</span>
-              </div>
-            )}
+                sec
+              </span>
+            </div>
 
             {/* Chat Source + Chat Zoom */}
             <div className="flex items-center gap-3 text-xs text-gray-400">
