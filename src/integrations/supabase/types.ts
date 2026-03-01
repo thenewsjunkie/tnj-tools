@@ -1317,6 +1317,57 @@ export type Database = {
         }
         Relationships: []
       }
+      studio_schedules: {
+        Row: {
+          action_payload: Json
+          action_type: string
+          created_at: string
+          day_of_month: number | null
+          day_of_week: number | null
+          id: string
+          is_active: boolean
+          label: string | null
+          last_triggered_at: string | null
+          schedule_type: string
+          scheduled_date: string | null
+          scheduled_time: string
+          timezone: string
+          updated_at: string
+        }
+        Insert: {
+          action_payload?: Json
+          action_type: string
+          created_at?: string
+          day_of_month?: number | null
+          day_of_week?: number | null
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          last_triggered_at?: string | null
+          schedule_type?: string
+          scheduled_date?: string | null
+          scheduled_time?: string
+          timezone?: string
+          updated_at?: string
+        }
+        Update: {
+          action_payload?: Json
+          action_type?: string
+          created_at?: string
+          day_of_month?: number | null
+          day_of_week?: number | null
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          last_triggered_at?: string | null
+          schedule_type?: string
+          scheduled_date?: string | null
+          scheduled_time?: string
+          timezone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
           key: string

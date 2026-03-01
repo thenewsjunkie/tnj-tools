@@ -7,6 +7,7 @@ import AdsManager from "@/components/studio/AdsManager";
 import ArtModeManager from "@/components/studio/ArtModeManager";
 import OBSOverlayControl from "@/components/studio/OBSOverlayControl";
 import TelePrompterControl from "@/components/studio/TelePrompterControl";
+import Scheduler from "@/components/studio/Scheduler";
 import CollapsibleModule from "@/components/admin/CollapsibleModule";
 
 const StudioScreen = () => {
@@ -43,6 +44,9 @@ const StudioScreen = () => {
         </CollapsibleModule>
         <CollapsibleModule id="studio-teleprompter" title="TelePrompter" defaultOpen={false}>
           <TelePrompterControl />
+        </CollapsibleModule>
+        <CollapsibleModule id="studio-scheduler" title="Scheduler" defaultOpen={false}>
+          <Scheduler />
         </CollapsibleModule>
         <CollapsibleModule id="studio-chat" title="Live Chat" defaultOpen={false}>
           <RestreamChat />
