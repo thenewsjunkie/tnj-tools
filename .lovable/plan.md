@@ -1,24 +1,38 @@
 
 
-## Consolidate Output Control Layout
+## Consolidate Studio Screen Layout
 
-Merge four separate rows into two combined rows to save vertical space.
+Two changes: consolidate the rotate controls row in Output Control, and wrap every module in collapsible sections (collapsed by default) on the Studio Screen.
 
-### Changes (single file: `src/components/studio/OutputControl.tsx`)
+### 1. OutputControl.tsx -- Merge rotate controls onto one line
 
-**Row 1: Layout + Rotation (lines 200-238)**
-Replace the two separate sections (Layout buttons and Rotation buttons) with a single `flex` row:
+Combine "Rotate Left", "Rotate Right" switches and the "Rotate every X seconds" input into a single row:
+
+```text
+Rotate Left [toggle]  Rotate Right [toggle]  |  Every [30] seconds
 ```
-Layout [Horizontal] [Vertical]  |  Rotation [0°] [90°] [180°] [270°]
-```
-Uses `flex items-center gap-3` with a visual separator or just spacing between the two groups.
 
-**Row 2: Chat Source + Chat Zoom (lines 267-301)**
-Replace the two separate rows (Chat Zoom slider and Chat Source buttons) with a single `flex` row:
-```
-Chat Source [Restream] [Discord]  |  Chat Zoom [====slider====] 150%
-```
-Remove the Monitor icons to save horizontal space; combine into one `flex items-center gap-3` row.
+- Remove the separate `{anyRotateEnabled && ...}` conditional block for interval
+- Always show the interval input inline (just visually muted when no rotation is enabled)
+- Lines 237-261 replaced with a single `flex items-center gap-3` row
 
-### No other files affected
-Only `src/components/studio/OutputControl.tsx` is modified -- purely a layout/template change with no logic changes.
+### 2. StudioScreen.tsx -- Wrap all modules in CollapsibleModule
+
+Use the existing `CollapsibleModule` component (from `src/components/admin/CollapsibleModule.tsx`) to wrap each studio component. All default to collapsed (`defaultOpen={false}`).
+
+Each module gets a unique `id` for localStorage persistence:
+- `studio-output` -- Output Control
+- `studio-obs` -- OBS Overlay
+- `studio-ads` -- Ads Manager
+- `studio-art-mode` -- Art Mode
+- `studio-leaderboard` -- Secret Shows Leaderboard
+- `studio-hall-of-frame` -- Hall of Frame
+- `studio-teleprompter` -- TelePrompter
+- `studio-chat` -- Live Chat
+
+The children components keep their existing Card styling inside the collapsible wrapper.
+
+### Files Modified
+- `src/components/studio/OutputControl.tsx` -- merge rotate row
+- `src/pages/Admin/StudioScreen.tsx` -- wrap all modules in CollapsibleModule with `defaultOpen={false}`
+
