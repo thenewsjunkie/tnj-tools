@@ -64,7 +64,7 @@ const TelePrompterControl = () => {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => update({ isPlaying: false, scrollPosition: 0 })}
+            onClick={() => update({ isPlaying: false, scrollPosition: Date.now() })}
             className="gap-1"
           >
             <RotateCcw className="h-4 w-4" /> Reset
