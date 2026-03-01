@@ -6,6 +6,7 @@ import HallOfFramePage from "@/pages/HallOfFrame";
 import RestreamChatEmbed from "@/components/studio/RestreamChatEmbed";
 import DiscordChatEmbed from "@/components/studio/DiscordChatEmbed";
 import AdsDisplay from "@/components/studio/AdsDisplay";
+import TelePrompterPage from "@/pages/TelePrompter";
 
 const OBSLeaderboard = () => <SecretShowsLeaderboard limit={10} showGiftCTA />;
 
@@ -14,6 +15,7 @@ const MODULE_COMPONENTS: Record<StudioModule, React.ComponentType<any>> = {
   "hall-of-frame": HallOfFramePage,
   "live-chat": RestreamChatEmbed,
   ads: AdsDisplay,
+  teleprompter: TelePrompterPage,
 };
 
 const OBSOverlay = () => {
