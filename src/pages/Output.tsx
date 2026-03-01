@@ -194,7 +194,7 @@ const Output = () => {
           </div>
         )}
         {/* Full-screen module above center video */}
-        <div className="flex-1 min-h-0 relative z-10">
+        <div className="flex-1 min-h-0 relative z-10" style={{ isolation: 'isolate' }}>
           {fullScreenModule === "live-chat" ? (
             <ActiveChat zoom={chatZoom} />
           ) : (
@@ -209,7 +209,7 @@ const Output = () => {
         )}
         {/* PiP overlays */}
         {pipLeftVideos.length > 0 && (
-          <div className="fixed top-4 left-4 z-50 flex flex-col gap-4 pointer-events-none">
+          <div className="fixed top-4 left-4 z-[9999] flex flex-col gap-4 pointer-events-none">
             {pipLeftVideos.map((v, i) => (
               <div key={`pip-l-${i}`} className="w-[640px] aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10 pointer-events-auto">
                 <YouTubeEmbed url={v.url} />
@@ -218,7 +218,7 @@ const Output = () => {
           </div>
         )}
         {pipRightVideos.length > 0 && (
-          <div className="fixed top-4 right-4 z-50 flex flex-col gap-4 pointer-events-none">
+          <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-4 pointer-events-none">
             {pipRightVideos.map((v, i) => (
               <div key={`pip-r-${i}`} className="w-[640px] aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10 pointer-events-auto">
                 <YouTubeEmbed url={v.url} />
@@ -271,7 +271,7 @@ const Output = () => {
 
       {/* PiP overlay videos */}
       {pipLeftVideos.length > 0 && (
-        <div className="fixed top-4 left-4 z-50 flex flex-col gap-4">
+        <div className="fixed top-4 left-4 z-[9999] flex flex-col gap-4 pointer-events-none">
           {pipLeftVideos.map((v, i) => (
             <div key={`pip-l-${i}`} className="w-[640px] aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10">
               <YouTubeEmbed url={v.url} />
@@ -280,7 +280,7 @@ const Output = () => {
         </div>
       )}
       {pipRightVideos.length > 0 && (
-        <div className="fixed top-4 right-4 z-50 flex flex-col gap-4">
+        <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-4 pointer-events-none">
           {pipRightVideos.map((v, i) => (
             <div key={`pip-r-${i}`} className="w-[640px] aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10">
               <YouTubeEmbed url={v.url} />
