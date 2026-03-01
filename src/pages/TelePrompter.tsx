@@ -15,10 +15,12 @@ const TelePrompter = () => {
   const script = config?.script ?? "";
   const scrollPosition = config?.scrollPosition ?? 0;
 
-  // Reset scroll when scrollPosition resets to 0
+  // Reset scroll when scrollPosition changes (timestamp-based)
+  const lastResetRef = useRef(scrollPosition);
   useEffect(() => {
-    if (scrollPosition === 0 && scrollRef.current) {
+    if (scrollPosition !== lastResetRef.current && scrollRef.current) {
       scrollRef.current.scrollTop = 0;
+      lastResetRef.current = scrollPosition;
     }
   }, [scrollPosition]);
 
@@ -63,7 +65,7 @@ const TelePrompter = () => {
         save({ ...config, speed: Math.max(1, config.speed - 1) });
       } else if (e.code === "KeyR") {
         e.preventDefault();
-        save({ ...config, isPlaying: false, scrollPosition: 0 });
+        save({ ...config, isPlaying: false, scrollPosition: Date.now() });
       }
     };
     window.addEventListener("keydown", handler);
