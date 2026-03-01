@@ -53,7 +53,7 @@ const ArtModeDisplay = () => {
 
   if (images.length === 0) {
     return (
-      <div className="w-full h-full bg-black flex items-center justify-center">
+      <div className="absolute inset-0 bg-black flex items-center justify-center">
         <p className="text-muted-foreground text-sm">No art images configured</p>
       </div>
     );
@@ -81,7 +81,7 @@ const ArtModeDisplay = () => {
       : {};
 
   return (
-    <div className="w-full h-full bg-black flex items-center justify-center p-6">
+    <div className="absolute inset-0 bg-black flex items-center justify-center p-6">
       <div
         className={`relative max-w-full max-h-full ${transitionClass}`}
         style={{ ...frame, ...transitionStyle }}
