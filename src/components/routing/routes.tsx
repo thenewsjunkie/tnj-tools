@@ -48,6 +48,7 @@ const SecretShowsLeaderboard = lazy(() => import("@/pages/SecretShowsLeaderboard
 const HallOfFramePage = lazy(() => import("@/pages/HallOfFrame"));
 const Output = lazy(() => import("@/pages/Output"));
 const OBSOverlay = lazy(() => import("@/pages/OBSOverlay"));
+const TelePrompter = lazy(() => import("@/pages/TelePrompter"));
 
 export const router = createBrowserRouter([
   {
@@ -253,6 +254,10 @@ export const router = createBrowserRouter([
       {
         path: "obs-overlay",
         element: <OBSOverlay />,
+      },
+      {
+        path: "teleprompter",
+        element: <TelePrompter />,
       },
     ]
   }

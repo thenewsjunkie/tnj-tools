@@ -5,6 +5,7 @@ import OutputControl from "@/components/studio/OutputControl";
 import RestreamChat from "@/components/studio/RestreamChat";
 import AdsManager from "@/components/studio/AdsManager";
 import OBSOverlayControl from "@/components/studio/OBSOverlayControl";
+import TelePrompterControl from "@/components/studio/TelePrompterControl";
 
 const StudioScreen = () => {
   return (
@@ -25,6 +26,7 @@ const StudioScreen = () => {
         <AdsManager />
         <SecretShowsLeaderboard />
         <HallOfFrame />
+        <TelePrompterControl />
         <RestreamChat />
       </div>
     </div>
