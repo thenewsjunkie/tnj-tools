@@ -1,36 +1,57 @@
 
+## New Module: Art Mode
 
-## Fix: TelePrompter Reset Not Scrolling Back to Top
+A new "Art Mode" module that displays uploaded images in an elegant frame style, with configurable display duration and transition effects. It follows the same patterns as the existing Ads module.
 
-### Root Cause
-The reset button sets `scrollPosition: 0` in the config. The display page has a `useEffect` that watches `scrollPosition` and scrolls to top when it equals `0`. However, if `scrollPosition` is **already** `0` from a previous reset, React sees no change and the effect doesn't re-fire -- so the scroll position stays put.
+### 1. Add Storage Bucket
+Create a `art_mode` public storage bucket via SQL migration for storing uploaded art images.
 
-### Solution
-Change `scrollPosition` from a fixed `0` value to a **timestamp** (e.g., `Date.now()`). This guarantees the value changes every time reset is pressed, triggering the effect reliably.
-
-### Files to Modify
-
-**`src/components/studio/TelePrompterControl.tsx`**
-- Change the Reset button's `onClick` from `scrollPosition: 0` to `scrollPosition: Date.now()`
-
-**`src/pages/TelePrompter.tsx`**
-- Update the reset `useEffect` (line 19-23): instead of checking `scrollPosition === 0`, use a ref to track the previous value and scroll to top whenever `scrollPosition` changes (any new value means "reset was pressed")
-- Update the keyboard shortcut handler (line 66): change `scrollPosition: 0` to `scrollPosition: Date.now()`
-
-### Technical Detail
-```text
-// Before (broken - same value doesn't trigger effect):
-update({ isPlaying: false, scrollPosition: 0 })
-
-// After (always triggers effect):
-update({ isPlaying: false, scrollPosition: Date.now() })
-
-// Effect becomes:
-const lastResetRef = useRef(scrollPosition);
-useEffect(() => {
-  if (scrollPosition !== lastResetRef.current && scrollRef.current) {
-    scrollRef.current.scrollTop = 0;
-    lastResetRef.current = scrollPosition;
+### 2. New Hook: `src/hooks/useArtMode.ts`
+- Stores config in `system_settings` under key `studio_art_mode_config`
+- Config shape:
+  ```text
+  ArtModeConfig {
+    images: ArtModeImage[]       // { id, imageUrl, label }
+    intervalSeconds: number      // display duration per image (default 30)
+    permanent: boolean           // if true, no rotation (show first/selected image)
+    transition: "fade" | "slide" | "zoom" | "none"  // transition effect
+    frameStyle: "gold" | "dark" | "minimal" | "none" // decorative frame style
   }
-}, [scrollPosition]);
-```
+  ```
+- Realtime subscription on system_settings for live updates
+- `useArtModeConfig()` query hook + `useUpdateArtModeConfig()` mutation hook
+
+### 3. New Component: `src/components/studio/ArtModeManager.tsx`
+Admin card (styled like AdsManager) with:
+- Image grid with upload (reusing `upload-show-note-image` edge function) and delete
+- Label input for each image
+- Interval slider/input (seconds, min 5) with a "Permanent" toggle that locks to the first image
+- Transition effect selector (fade/slide/zoom/none)
+- Frame style selector (gold/dark/minimal/none)
+
+### 4. New Component: `src/components/studio/ArtModeDisplay.tsx`
+Display component for the /output page:
+- Full-container image display with `object-contain` to show the entire artwork
+- Decorative CSS frame border based on `frameStyle` setting
+- Auto-rotation with the selected transition effect
+- When `permanent` is true, shows first image without cycling
+- Black background for gallery feel
+
+### 5. Register as Studio Module
+- **`src/hooks/useOutputConfig.ts`**: Add `"art-mode"` to the `StudioModule` union type and `STUDIO_MODULES` array with label "Art Mode"
+- **`src/pages/Output.tsx`**: Import `ArtModeDisplay` and add to `MODULE_COMPONENTS` map
+- **`src/pages/OBSOverlay.tsx`**: Same import and registration
+
+### 6. Add Manager to Studio Screen
+- **`src/pages/Admin/StudioScreen.tsx`**: Import and render `<ArtModeManager />` alongside the other manager cards
+
+### Files Created
+- `src/hooks/useArtMode.ts`
+- `src/components/studio/ArtModeManager.tsx`
+- `src/components/studio/ArtModeDisplay.tsx`
+
+### Files Modified
+- `src/hooks/useOutputConfig.ts` (add "art-mode" to type + modules list)
+- `src/pages/Output.tsx` (register component)
+- `src/pages/OBSOverlay.tsx` (register component)
+- `src/pages/Admin/StudioScreen.tsx` (add manager card)
