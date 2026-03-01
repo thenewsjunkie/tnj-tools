@@ -179,7 +179,7 @@ const Output = () => {
     return (
       <div
         className="h-screen bg-black flex flex-col"
-        style={{ filter: `brightness(${config?.brightness ?? 100}%) contrast(${config?.contrast ?? 100}%)`, ...rotationStyle }}
+        style={rotationStyle}
       >
         {fullScreenModule === "live-chat" ? (
           <div className="flex-1 min-h-0">
@@ -223,7 +223,7 @@ const Output = () => {
   return (
     <div
       className="h-screen bg-black flex flex-col"
-      style={{ filter: `brightness(${config?.brightness ?? 100}%) contrast(${config?.contrast ?? 100}%)`, ...rotationStyle }}
+      style={rotationStyle}
     >
       {centerVideos.map((v, i) => (
         <div key={`center-${i}`} className="flex-1 min-h-[300px]">
