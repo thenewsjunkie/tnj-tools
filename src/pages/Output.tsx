@@ -178,39 +178,47 @@ const Output = () => {
     const FullComponent = MODULE_COMPONENTS[fullScreenModule];
     return (
       <div
-        className="h-screen bg-black flex flex-col"
+        className="h-screen bg-black flex flex-col relative"
         style={rotationStyle}
       >
-        {fullScreenModule === "live-chat" ? (
-          <div className="flex-1 min-h-0">
-            <ActiveChat zoom={chatZoom} />
+        {/* Center videos as background layer */}
+        {centerVideos.length > 0 && (
+          <div className="absolute inset-0 z-0">
+            {centerVideos.map((v, i) => (
+              <div key={`center-fs-${i}`} className="w-full h-full">
+                <YouTubeEmbed url={v.url} />
+              </div>
+            ))}
           </div>
-        ) : (
-          <>
-            <div className="flex-1 min-h-0">
-              {FullComponent && <FullComponent />}
-            </div>
-          </>
         )}
+        {/* Full-screen module above center video */}
+        <div className="flex-1 min-h-0 relative z-10">
+          {fullScreenModule === "live-chat" ? (
+            <ActiveChat zoom={chatZoom} />
+          ) : (
+            FullComponent && <FullComponent />
+          )}
+        </div>
         {/* Always keep Restream mounted when using Discord */}
         {(fullScreenModule !== "live-chat" || useDiscord) && (
           <div className="hidden">
             <RestreamChatEmbed zoom={chatZoom} />
           </div>
         )}
+        {/* PiP overlays */}
         {pipLeftVideos.length > 0 && (
-          <div className="fixed top-4 left-4 z-50 flex flex-col gap-4">
+          <div className="fixed top-4 left-4 z-50 flex flex-col gap-4 pointer-events-none">
             {pipLeftVideos.map((v, i) => (
-              <div key={`pip-l-${i}`} className="w-[640px] aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10">
+              <div key={`pip-l-${i}`} className="w-[640px] aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10 pointer-events-auto">
                 <YouTubeEmbed url={v.url} />
               </div>
             ))}
           </div>
         )}
         {pipRightVideos.length > 0 && (
-          <div className="fixed top-4 right-4 z-50 flex flex-col gap-4">
+          <div className="fixed top-4 right-4 z-50 flex flex-col gap-4 pointer-events-none">
             {pipRightVideos.map((v, i) => (
-              <div key={`pip-r-${i}`} className="w-[640px] aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10">
+              <div key={`pip-r-${i}`} className="w-[640px] aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10 pointer-events-auto">
                 <YouTubeEmbed url={v.url} />
               </div>
             ))}
