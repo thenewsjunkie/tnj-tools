@@ -196,7 +196,7 @@ const Output = () => {
           </div>
         )}
         {/* Full-screen module above center video */}
-        <div className="flex-1 min-h-0 relative z-10" style={{ isolation: 'isolate' }}>
+        <div className="flex-1 min-h-0 relative z-10 overflow-hidden" style={{ isolation: 'isolate' }}>
           {fullScreenModule === "live-chat" ? (
             <ActiveChat zoom={chatZoom} />
           ) : (
