@@ -1,41 +1,91 @@
 
 
-## Fix Art Mode Full-Screen Display
+## Scheduler Module for Studio Screen
 
-After investigating the code, I found two issues that prevent Art Mode from displaying properly in full-screen mode on the Output page:
+Add a new "Scheduler" collapsible module to the Studio Screen that lets you schedule studio actions (switching output layouts, enabling art mode, toggling ads, etc.) on a one-time, daily, weekly, monthly, or recurring basis.
 
-### Issue 1: Layout height not resolving for ArtModeDisplay
+### What You Can Schedule
 
-In `Output.tsx`, the full-screen container uses `flex-1 min-h-0`, but `ArtModeDisplay` relies on `h-full` which can fail to resolve when nested inside flex containers without explicit height propagation. The fix is to ensure the ArtModeDisplay fills its container using absolute positioning instead.
+- **Output layout changes** (switch full-screen module, toggle columns)
+- **Art Mode** on/off
+- **Ads** on/off
+- **TelePrompter** on/off
+- Any other studio module toggle
 
-### Issue 2: ArtModeDisplay not filling flex container
+Each scheduled event has: a target action, a schedule type (one-time / daily / weekly / monthly), a time, and an optional label.
 
-The `ArtModeDisplay` root div uses `w-full h-full` but doesn't have any flex-grow or absolute positioning to ensure it fills the available space in all container contexts.
+### New Database Table: `studio_schedules`
 
-### Changes
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid | PK, auto |
+| label | text | Optional friendly name |
+| action_type | text | e.g. "set_full_screen", "toggle_art_mode", "toggle_ads" |
+| action_payload | jsonb | Parameters for the action (e.g. `{"module": "art-mode"}`) |
+| schedule_type | text | "one_time", "daily", "weekly", "monthly" |
+| scheduled_time | time | Time of day (HH:MM) |
+| scheduled_date | date | For one-time events |
+| day_of_week | integer | 0-6, for weekly |
+| day_of_month | integer | 1-31, for monthly |
+| timezone | text | IANA timezone, default "America/New_York" |
+| is_active | boolean | Enable/disable without deleting |
+| last_triggered_at | timestamptz | Track last execution |
+| created_at | timestamptz | Auto |
+| updated_at | timestamptz | Auto |
 
-**File: `src/components/studio/ArtModeDisplay.tsx`**
-- Change the root container from `w-full h-full` to `absolute inset-0` so it fills any positioned parent regardless of flex chain
-- Alternatively, add both `w-full h-full` and `min-h-0 flex-1` for robustness
+RLS: public read, authenticated insert/update/delete (matches existing patterns).
 
-**File: `src/pages/Output.tsx`**
-- Ensure the full-screen module container has `relative` positioning (it already does) and is set up so child components can fill it with `absolute inset-0`
-- Add `overflow-hidden` to the full-screen container to prevent art mode from overflowing
+### New Files
 
-### Technical Details
+1. **`src/components/studio/Scheduler.tsx`** -- The main manager UI
+   - Lists all scheduled events in a compact table/list
+   - Add/edit dialog with fields for action type, schedule, time, timezone
+   - Toggle active/inactive per schedule
+   - Delete schedules
+   - Uses the same Card + dark gradient styling as other studio modules
 
-In `ArtModeDisplay.tsx`, the root div will change from:
+2. **`src/hooks/useScheduler.ts`** -- Data hook
+   - `useSchedules()` -- fetches from `studio_schedules` with realtime subscription
+   - `useCreateSchedule()`, `useUpdateSchedule()`, `useDeleteSchedule()` mutations
+   - `useScheduleExecutor()` -- runs on a 1-minute interval, checks if any active schedules match the current time, triggers the corresponding action by updating `system_settings` (same pattern used by Output Control, Ads, Art Mode)
+
+### Integration into Studio Screen
+
+Add a new `CollapsibleModule` in `StudioScreen.tsx`:
+```text
+<CollapsibleModule id="studio-scheduler" title="Scheduler" defaultOpen={false}>
+  <Scheduler />
+</CollapsibleModule>
 ```
-className="w-full h-full bg-black flex items-center justify-center p-6"
-```
-to:
-```
-className="absolute inset-0 bg-black flex items-center justify-center p-6"
-```
 
-In `Output.tsx`, the full-screen module wrapper (around line 175) will add `overflow-hidden` to ensure proper containment:
-```
-className="flex-1 min-h-0 relative z-10 overflow-hidden"
-```
+### How Scheduled Actions Execute
 
-These are small, targeted CSS fixes that ensure the Art Mode display fills its container in all layout contexts (full-screen, column, OBS overlay).
+The `useScheduleExecutor` hook (running in the browser on the Studio Screen page) checks every 60 seconds:
+1. Gets all active schedules
+2. For each, checks if current time/day matches and hasn't been triggered yet today
+3. If matched, performs the action by calling the same mutation hooks (e.g. `useUpdateOutputConfig`, `useUpdateAdsConfig`, `useUpdateArtModeConfig`)
+4. Updates `last_triggered_at` to prevent duplicate triggers
+
+This keeps execution client-side (no edge function needed) and reuses all existing config update patterns.
+
+### UI Layout
+
+The add/edit form will include:
+- **Label** -- text input
+- **Action** -- dropdown (Full Screen Module, Art Mode On/Off, Ads On/Off, Layout Change)
+- **Action Details** -- conditional fields based on action type
+- **Schedule Type** -- radio/select (One-time, Daily, Weekly, Monthly)
+- **Time** -- time picker
+- **Date/Day** -- conditional: date picker for one-time, day-of-week for weekly, day-of-month for monthly
+- **Timezone** -- select with common timezones
+- **Active** -- switch toggle
+
+### Files Changed
+
+| File | Change |
+|------|--------|
+| `src/components/studio/Scheduler.tsx` | New -- scheduler manager UI |
+| `src/hooks/useScheduler.ts` | New -- data hooks + executor |
+| `src/pages/Admin/StudioScreen.tsx` | Add Scheduler CollapsibleModule |
+| Migration | New `studio_schedules` table with RLS |
+
