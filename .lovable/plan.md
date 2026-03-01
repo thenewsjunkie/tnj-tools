@@ -1,31 +1,32 @@
 
 
-## Fix Discord Chat: Realtime Updates and Bottom-Anchored Messages
-
-### Problem 1: No realtime updates
-The `discord_messages` table is **not added to the Supabase Realtime publication**. This means the `postgres_changes` subscription silently receives nothing. A database migration is needed:
-
-```sql
-ALTER PUBLICATION supabase_realtime ADD TABLE public.discord_messages;
-```
-
-As a safety net, a **polling fallback** will also be added so messages still appear even if Realtime has hiccups.
-
-### Problem 2: Messages stuck at top
-The Restream iframe naturally anchors chat to the bottom (newest messages at bottom, filling upward). The Discord component currently renders messages top-down in a scrollable container. Fix: use `flex-col justify-end` layout so messages anchor to the bottom of the container, matching Restream's behavior.
-
----
+## Update YouTube Video Feed Placement Options
 
 ### Changes
 
-**1. Database migration** -- Add `discord_messages` to realtime publication
-```sql
-ALTER PUBLICATION supabase_realtime ADD TABLE public.discord_messages;
+**1. Update `VideoPlacement` type** in `src/hooks/useOutputConfig.ts`
+- Remove `"left"` and `"right"` placements
+- Rename `"full"` to `"center"` (full-screen behavior)
+- Replace `"pip"` with `"pip-left"` and `"pip-right"`
+- New type: `"center" | "pip-left" | "pip-right"`
+
+**2. Update placement options** in `src/components/studio/OutputControl.tsx`
+- Replace the 4-option list with 3 options: **Center**, **PiP Left**, **PiP Right**
+
+**3. Update `src/pages/Output.tsx`** rendering logic
+- **Center**: renders full-screen (same as current `"full"` behavior)
+- **PiP Left**: fixed overlay in top-left corner, 2x current size (w-[640px] instead of w-80)
+- **PiP Right**: fixed overlay in top-right corner, 2x current size
+- Remove all references to `leftVideos` and `rightVideos` filtering
+
+### Technical details
+
+**Type change:**
+```
+"left" | "right" | "full" | "pip"  -->  "center" | "pip-left" | "pip-right"
 ```
 
-**2. Update `src/components/studio/DiscordChatEmbed.tsx`**
-- Add a polling fallback (every 3 seconds, with backoff) alongside the existing realtime subscription
-- Deduplicate messages by ID when merging realtime and polled data
-- Change the layout to `flex flex-col justify-end` so messages stack from the bottom up, matching Restream's behavior
-- Keep auto-scroll to bottom on new messages
+**PiP sizing:** Current PiP is `w-80` (320px). Doubling to `w-[640px]` with `aspect-video` gives a 640x360 overlay.
+
+**Migration:** Any existing video feeds with old placements (`left`, `right`, `full`, `pip`) will be handled gracefully -- `full` maps to `center` behavior, and `pip` defaults to `pip-right`. The `left`/`right` placements simply won't match any filter and won't render (user can reassign them).
 
