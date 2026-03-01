@@ -1832,6 +1832,7 @@ export type Database = {
         Args: { option_id: string }
         Returns: undefined
       }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_digital_client_admin: { Args: { _user_id: string }; Returns: boolean }
       manage_conversation_queue: { Args: never; Returns: undefined }
       mark_as_displayed: {
