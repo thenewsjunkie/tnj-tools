@@ -204,6 +204,23 @@ body.obs-overlay {
     }
   }
 
+  @keyframes slideDown {
+    from { transform: translateY(-100%); }
+    to { transform: translateY(0); }
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  @keyframes slideUpOut {
+    from { transform: translateY(0); }
+    to { transform: translateY(-100%); }
+  }
+  @keyframes slideDownOut {
+    from { transform: translateY(0); }
+    to { transform: translateY(100%); }
+  }
+
   /* OBS overlay: boost leaderboard readability in narrow panels */
   body.obs-overlay .secret-shows-leaderboard {
     min-height: auto;
