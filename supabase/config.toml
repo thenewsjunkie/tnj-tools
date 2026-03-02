@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.fetch-topic-image]
 verify_jwt = false
+
+[functions.fetch-news-alerts]
+verify_jwt = false

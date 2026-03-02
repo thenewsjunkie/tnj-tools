@@ -24,6 +24,7 @@ export type OverlayPosition = "top-left" | "top-right" | "bottom-left" | "bottom
 
 export interface OverlayConfig {
   clock?: { enabled: boolean; position: OverlayPosition };
+  newsAlert?: { enabled: boolean; position: "top" | "bottom"; pollInterval?: number };
 }
 
 export interface OutputConfig {

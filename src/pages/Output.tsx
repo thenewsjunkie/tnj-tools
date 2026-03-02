@@ -8,6 +8,8 @@ import AdsDisplay from "@/components/studio/AdsDisplay";
 import ArtModeDisplay from "@/components/studio/ArtModeDisplay";
 import TelePrompterPage from "@/pages/TelePrompter";
 import ClockOverlay from "@/components/studio/overlays/ClockOverlay";
+import NewsAlertOverlay from "@/components/studio/overlays/NewsAlertOverlay";
+import { supabase } from "@/integrations/supabase/client";
 
 const OutputLeaderboard = () => <SecretShowsLeaderboard limit={10} />;
 const OutputHallOfFrame = () => <HallOfFramePage fillContainer />;
@@ -138,6 +140,27 @@ const OutputColumn = ({
 const Output = () => {
   const { data: config, isLoading } = useOutputConfig();
 
+  // Poll for news alerts
+  useEffect(() => {
+    if (!config?.overlays?.newsAlert?.enabled) return;
+    const intervalMs = (config.overlays.newsAlert.pollInterval ?? 60) * 1000;
+
+    const poll = () => {
+      fetch(
+        `https://gpmandlkcdompmdvethh.supabase.co/functions/v1/fetch-news-alerts`,
+        {
+          headers: {
+            apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwbWFuZGxrY2RvbXBtZHZldGhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI0NjM2NjcsImV4cCI6MjA0ODAzOTY2N30.KxzySIkXxhNgBWUdSpaASLZWjq8AAMeXgPmaBdnYfHI",
+          },
+        }
+      ).catch(() => {});
+    };
+
+    poll(); // initial poll
+    const timer = setInterval(poll, intervalMs);
+    return () => clearInterval(timer);
+  }, [config?.overlays?.newsAlert?.enabled, config?.overlays?.newsAlert?.pollInterval]);
+
   if (isLoading) {
     return <div className="h-screen bg-black flex items-center justify-center text-muted-foreground">Loading...</div>;
   }
@@ -188,7 +211,7 @@ const Output = () => {
         style={rotationStyle}
       >
         {overlays?.clock?.enabled && <ClockOverlay position={overlays.clock.position} />}
-        {/* Center videos as background layer */}
+        {overlays?.newsAlert?.enabled && <NewsAlertOverlay position={overlays.newsAlert.position} />}
         {centerVideos.length > 0 && (
           <div className="absolute inset-0 z-0">
             {centerVideos.map((v, i) => (
@@ -241,6 +264,7 @@ const Output = () => {
       style={rotationStyle}
     >
       {overlays?.clock?.enabled && <ClockOverlay position={overlays.clock.position} />}
+      {overlays?.newsAlert?.enabled && <NewsAlertOverlay position={overlays.newsAlert.position} />}
       {centerVideos.map((v, i) => (
         <div key={`center-${i}`} className="flex-1 min-h-[300px]">
           <YouTubeEmbed url={v.url} />

@@ -47,6 +47,32 @@ export interface Database {
       code_versions: CodeVersionsTable
       fritz_contestants: FritzContestantsTable
       interview_requests: InterviewRequestsTable
+      news_alerts: {
+        Row: {
+          id: string
+          tweet_id: string
+          text: string
+          author: string
+          created_at: string
+          displayed: boolean
+        }
+        Insert: {
+          id?: string
+          tweet_id: string
+          text: string
+          author?: string
+          created_at?: string
+          displayed?: boolean
+        }
+        Update: {
+          id?: string
+          tweet_id?: string
+          text?: string
+          author?: string
+          created_at?: string
+          displayed?: boolean
+        }
+      }
       news_roundups: NewsRoundupsTable
       news_sources: NewsSourcesTable
       profiles: ProfilesTable
