@@ -1,12 +1,15 @@
 
 
-## Adjust Clock Overlay Size, Spacing, and Add Seconds
+## Resize and Top-Align the AM/PM Indicator on Clock Overlay
 
 ### Changes
 
-**File: `src/components/studio/overlays/ClockOverlay.tsx`** -- 3 tweaks:
+**File: `src/components/studio/overlays/ClockOverlay.tsx`**
 
-1. **Reduce font size by 1x**: Change `text-7xl` to `text-5xl` (bringing it down one step)
-2. **Add top spacing**: Increase the position offset from `top-4` to `top-8` in the `POSITION_CLASSES` for the two top positions
-3. **Add seconds to the format**: Change the time format from `"h:mmaa"` to `"h:mm:ssaa"` so seconds are displayed
+Split the time display into two parts so the AM/PM indicator can be styled independently:
+
+1. Change the single `format(time, "h:mm:ssaa")` call into two parts: `format(time, "h:mm:ss")` for the time and `format(time, "aa")` for the AM/PM
+2. Wrap the AM/PM in a separate `<span>` with roughly half the font size (`text-2xl`) and `align-top` / `leading-none` to top-align it next to the time digits
+
+Result: the time numbers stay at `text-5xl` while "am"/"pm" appears at about half size, aligned to the top of the time text.
 
