@@ -8,7 +8,7 @@ import DiscordChatEmbed from "@/components/studio/DiscordChatEmbed";
 import AdsDisplay from "@/components/studio/AdsDisplay";
 import ArtModeDisplay from "@/components/studio/ArtModeDisplay";
 import TelePrompterPage from "@/pages/TelePrompter";
-import ClockOverlay from "@/components/studio/overlays/ClockOverlay";
+
 
 const OBSLeaderboard = () => <SecretShowsLeaderboard limit={10} showGiftCTA />;
 
@@ -27,7 +27,7 @@ const OBSOverlay = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const chatZoom = outputConfig?.chatZoom;
   const chatSource = outputConfig?.chatSource ?? "restream";
-  const overlays = outputConfig?.overlays;
+  
 
   const enabledModules = config?.enabledModules ?? [];
   const mode = config?.mode ?? "auto";
@@ -75,7 +75,6 @@ const OBSOverlay = () => {
 
   return (
     <div className="h-screen w-screen overflow-hidden relative" style={{ background: "transparent" }}>
-      {overlays?.clock?.enabled && <ClockOverlay position={overlays.clock.position} />}
       {enabledModules.map((moduleId, index) => {
         let Component: React.ComponentType<any> = MODULE_COMPONENTS[moduleId];
         // Swap chat component based on source setting
