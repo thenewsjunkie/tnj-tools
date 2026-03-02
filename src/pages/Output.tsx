@@ -138,6 +138,11 @@ const OutputColumn = ({
 const Output = () => {
   const { data: config, isLoading } = useOutputConfig();
 
+  useEffect(() => {
+    document.body.style.cursor = 'none';
+    return () => { document.body.style.cursor = 'auto'; };
+  }, []);
+
 
   if (isLoading) {
     return <div className="h-screen bg-black flex items-center justify-center text-muted-foreground">Loading...</div>;
