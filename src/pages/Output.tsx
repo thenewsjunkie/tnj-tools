@@ -213,7 +213,7 @@ const Output = () => {
         {pipLeftVideos.length > 0 && (
           <div className="fixed top-4 left-4 z-[9999] flex flex-col gap-4 pointer-events-none">
             {pipLeftVideos.map((v, i) => (
-              <div key={`pip-l-${i}`} className="w-[640px] aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10 pointer-events-auto">
+              <div key={`pip-l-${i}`} className="w-[1280px] aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10 pointer-events-auto">
                 <YouTubeEmbed url={v.url} />
               </div>
             ))}
@@ -222,7 +222,7 @@ const Output = () => {
         {pipRightVideos.length > 0 && (
           <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-4 pointer-events-none">
             {pipRightVideos.map((v, i) => (
-              <div key={`pip-r-${i}`} className="w-[640px] aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10 pointer-events-auto">
+              <div key={`pip-r-${i}`} className="w-[1280px] aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10 pointer-events-auto">
                 <YouTubeEmbed url={v.url} />
               </div>
             ))}
@@ -275,7 +275,7 @@ const Output = () => {
       {pipLeftVideos.length > 0 && (
         <div className="fixed top-4 left-4 z-[9999] flex flex-col gap-4 pointer-events-none">
           {pipLeftVideos.map((v, i) => (
-            <div key={`pip-l-${i}`} className="w-[640px] aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10">
+            <div key={`pip-l-${i}`} className="w-[1280px] aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10">
               <YouTubeEmbed url={v.url} />
             </div>
           ))}
@@ -284,7 +284,7 @@ const Output = () => {
       {pipRightVideos.length > 0 && (
         <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-4 pointer-events-none">
           {pipRightVideos.map((v, i) => (
-            <div key={`pip-r-${i}`} className="w-[640px] aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10">
+            <div key={`pip-r-${i}`} className="w-[1280px] aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10">
               <YouTubeEmbed url={v.url} />
             </div>
           ))}
