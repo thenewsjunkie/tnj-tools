@@ -87,7 +87,7 @@ const DiscordChatEmbed = ({ zoom = 100 }: DiscordChatEmbedProps) => {
       >
         <div className="p-3 space-y-1">
           {messages.map((msg) => (
-            <div key={msg.id} className="flex items-start gap-2 py-1 hover:bg-white/5 rounded px-1">
+            <div key={msg.id} className="w-full flex items-start gap-2 py-1 hover:bg-white/5 rounded px-1">
               {msg.author_avatar ? (
                 <img
                   src={msg.author_avatar}
