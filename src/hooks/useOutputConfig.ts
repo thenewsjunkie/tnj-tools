@@ -98,7 +98,7 @@ export const useUpdateOutputConfig = () => {
 };
 
 /** Extract a YouTube embed URL from various YouTube link formats */
-export const getYouTubeEmbedUrl = (url: string, muted: boolean = true): string | null => {
+export const getYouTubeEmbedUrl = (url: string): string | null => {
   try {
     const parsed = new URL(url);
     let videoId: string | null = null;
@@ -116,7 +116,7 @@ export const getYouTubeEmbedUrl = (url: string, muted: boolean = true): string |
     }
 
     if (videoId) {
-      return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${muted ? 1 : 0}`;
+      return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`;
     }
   } catch {
     // invalid URL

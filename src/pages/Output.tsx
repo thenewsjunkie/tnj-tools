@@ -20,8 +20,8 @@ const MODULE_COMPONENTS: Record<StudioModule, React.ComponentType> = {
   "art-mode": ArtModeDisplay,
 };
 
-const YouTubeEmbed = ({ url, muted = true }: { url: string; muted?: boolean }) => {
-  const embedUrl = getYouTubeEmbedUrl(url, muted);
+const YouTubeEmbed = ({ url }: { url: string }) => {
+  const embedUrl = getYouTubeEmbedUrl(url);
   if (!embedUrl) return null;
 
   return (
@@ -214,7 +214,7 @@ const Output = () => {
           <div className="fixed top-4 left-4 z-[9999] flex flex-col gap-4 pointer-events-none">
             {pipLeftVideos.map((v, i) => (
               <div key={`pip-l-${i}`} className="w-[1280px] aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10 pointer-events-auto">
-                <YouTubeEmbed url={v.url} muted={false} />
+                <YouTubeEmbed url={v.url} />
               </div>
             ))}
           </div>
@@ -223,7 +223,7 @@ const Output = () => {
           <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-4 pointer-events-none">
             {pipRightVideos.map((v, i) => (
               <div key={`pip-r-${i}`} className="w-[1280px] aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10 pointer-events-auto">
-                <YouTubeEmbed url={v.url} muted={false} />
+                <YouTubeEmbed url={v.url} />
               </div>
             ))}
           </div>
@@ -276,7 +276,7 @@ const Output = () => {
         <div className="fixed top-4 left-4 z-[9999] flex flex-col gap-4 pointer-events-none">
           {pipLeftVideos.map((v, i) => (
             <div key={`pip-l-${i}`} className="w-[1280px] aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10">
-              <YouTubeEmbed url={v.url} muted={false} />
+              <YouTubeEmbed url={v.url} />
             </div>
           ))}
         </div>
@@ -285,7 +285,7 @@ const Output = () => {
         <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-4 pointer-events-none">
           {pipRightVideos.map((v, i) => (
             <div key={`pip-r-${i}`} className="w-[1280px] aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10">
-              <YouTubeEmbed url={v.url} muted={false} />
+              <YouTubeEmbed url={v.url} />
             </div>
           ))}
         </div>
