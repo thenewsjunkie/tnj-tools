@@ -1,27 +1,15 @@
 
 
-## Simplify Art Mode to Full-Screen Images Only
+## Double PiP Size (640px to 1280px)
 
-Remove all decorative elements from Art Mode so images display edge-to-edge with no frame, no label, and no padding.
+Change all four PiP container widths from `w-[640px]` to `w-[1280px]` in `src/pages/Output.tsx`.
 
-### Changes
-
-**File: `src/components/studio/ArtModeDisplay.tsx`**
-
-1. Remove the `FRAME_STYLES` object and all frame-related logic
-2. Remove the `p-6` / `p-3` padding from the root container so images go edge-to-edge
-3. Remove the label overlay (`current.label` bottom gradient section) entirely
-4. Change the image to fill the entire container using `w-full h-full object-cover` (or `object-contain` to preserve aspect ratio without cropping -- will use `object-contain` to avoid cutting off artwork)
-5. Remove the intermediate wrapper div that applied frame styles -- render the image directly inside the root container
-
-The result: a black background with the image centered and filling the screen, nothing else.
-
-### Before vs After
-
-**Before**: Padded container, gold/dark border frame, label text at bottom
-**After**: Full-screen black background, image fills the space, no text or borders
+There are 4 occurrences across two rendering paths (full-screen module mode and standard mode), covering both PiP Left and PiP Right positions. The `aspect-video` class ensures the height scales proportionally.
 
 ### Technical Detail
 
-The component simplifies from ~90 lines to ~50 lines. The transition logic (fade/slide/zoom) stays intact -- only the visual decoration is removed. The root container remains `absolute inset-0 bg-black` with the image using `w-full h-full object-contain` to fill the space while preserving aspect ratio.
+**File: `src/pages/Output.tsx`** -- 4 edits, all identical:
+- Lines 216, 225, 278, 287: Replace `w-[640px]` with `w-[1280px]`
+
+No other files are affected.
 
