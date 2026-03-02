@@ -20,6 +20,12 @@ export interface VideoFeed {
   placement: VideoPlacement;
 }
 
+export type OverlayPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right";
+
+export interface OverlayConfig {
+  clock?: { enabled: boolean; position: OverlayPosition };
+}
+
 export interface OutputConfig {
   leftColumn: StudioModule[];
   rightColumn: StudioModule[];
@@ -34,6 +40,7 @@ export interface OutputConfig {
   fullScreen?: StudioModule | null;
   orientation?: "horizontal" | "vertical";
   rotation?: number; // 0, 90, 180, 270 degrees
+  overlays?: OverlayConfig;
 }
 
 const DEFAULT_CONFIG: OutputConfig = {

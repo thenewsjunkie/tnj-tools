@@ -7,6 +7,7 @@ import DiscordChatEmbed from "@/components/studio/DiscordChatEmbed";
 import AdsDisplay from "@/components/studio/AdsDisplay";
 import ArtModeDisplay from "@/components/studio/ArtModeDisplay";
 import TelePrompterPage from "@/pages/TelePrompter";
+import ClockOverlay from "@/components/studio/overlays/ClockOverlay";
 
 const OutputLeaderboard = () => <SecretShowsLeaderboard limit={10} />;
 const OutputHallOfFrame = () => <HallOfFramePage fillContainer />;
@@ -148,6 +149,7 @@ const Output = () => {
   const rotation = config?.rotation ?? 0;
   const chatZoom = config?.chatZoom;
   const chatSource = config?.chatSource ?? "restream";
+  const overlays = config?.overlays;
   const useDiscord = chatSource === "discord";
   const ActiveChat = useDiscord ? DiscordChatEmbed : RestreamChatEmbed;
 
@@ -185,6 +187,7 @@ const Output = () => {
         className="h-screen bg-black flex flex-col relative"
         style={rotationStyle}
       >
+        {overlays?.clock?.enabled && <ClockOverlay position={overlays.clock.position} />}
         {/* Center videos as background layer */}
         {centerVideos.length > 0 && (
           <div className="absolute inset-0 z-0">
@@ -234,9 +237,10 @@ const Output = () => {
 
   return (
     <div
-      className="h-screen bg-black flex flex-col"
+      className="h-screen bg-black flex flex-col relative"
       style={rotationStyle}
     >
+      {overlays?.clock?.enabled && <ClockOverlay position={overlays.clock.position} />}
       {centerVideos.map((v, i) => (
         <div key={`center-${i}`} className="flex-1 min-h-[300px]">
           <YouTubeEmbed url={v.url} />
