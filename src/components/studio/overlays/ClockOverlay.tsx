@@ -21,7 +21,7 @@ const ClockOverlay = ({ position = "top-left" }: { position?: OverlayPosition })
     <div
       className={`absolute ${POSITION_CLASSES[position]} z-[5000] pointer-events-none`}
     >
-      <span className="text-red-500 font-bold text-2xl tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] bg-black/40 px-3 py-1 rounded-md">
+      <span className="text-red-500 font-bold text-7xl tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] bg-black/40 px-8 py-3 rounded-full border-2 border-red-500/60 backdrop-blur-sm">
         {format(time, "h:mmaa")}
       </span>
     </div>
