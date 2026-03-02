@@ -831,33 +831,6 @@ export type Database = {
         }
         Relationships: []
       }
-      news_alerts: {
-        Row: {
-          author: string
-          created_at: string
-          displayed: boolean
-          id: string
-          text: string
-          tweet_id: string
-        }
-        Insert: {
-          author?: string
-          created_at?: string
-          displayed?: boolean
-          id?: string
-          text: string
-          tweet_id: string
-        }
-        Update: {
-          author?: string
-          created_at?: string
-          displayed?: boolean
-          id?: string
-          text?: string
-          tweet_id?: string
-        }
-        Relationships: []
-      }
       poll_options: {
         Row: {
           created_at: string | null
