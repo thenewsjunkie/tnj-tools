@@ -1,26 +1,21 @@
 
 
-## Fix Discord Chat Messages Not Filling Full Width
+## Enable Sound on PiP YouTube Videos
 
-**Problem**: When Discord is selected as the chat source, short messages only take up as much horizontal space as the text needs, leaving the right side of the container empty. The layout looks lopsided.
+Currently, all YouTube embeds use `?autoplay=1&mute=1`, which forces them to be silent. We can make muting optional so PiP videos play with sound.
 
-**Root Cause**: The message text wraps tightly around the content. The outer message row doesn't stretch to fill the container width.
+### Changes
 
-**Solution**: Make each message row span the full width of the container by adding `w-full` to the message row div. This ensures the row stretches edge-to-edge regardless of how short the message text is. The content inside already uses `flex-1` so it will fill correctly once the parent is full-width.
+**File: `src/hooks/useOutputConfig.ts`**
+- Update `getYouTubeEmbedUrl` to accept an optional `muted` parameter (default `true` for backward compatibility)
+- When `muted` is `false`, the URL will use `mute=0` instead of `mute=1`
 
-### Technical Detail
+**File: `src/pages/Output.tsx`**
+- Update the `YouTubeEmbed` component to accept a `muted` prop
+- Pass `muted={false}` for PiP Left and PiP Right video embeds (all 4 occurrences across full-screen and standard modes)
+- Center videos remain muted to avoid interfering with other audio sources
 
-**File: `src/components/studio/DiscordChatEmbed.tsx`** -- 1 edit:
-
-- **Line 90**: Add `w-full` to the message row's className so each chat line stretches across the entire container width instead of shrinking to fit content.
-
-```tsx
-// From:
-<div key={msg.id} className="flex items-start gap-2 py-1 hover:bg-white/5 rounded px-1">
-
-// To:
-<div key={msg.id} className="w-full flex items-start gap-2 py-1 hover:bg-white/5 rounded px-1">
-```
-
-This is a single-line CSS fix. No other files need changes.
+### Notes
+- Browsers may still block unmuted autoplay depending on user interaction history with the site. The `allow="autoplay"` attribute on the iframe helps, but some browsers require a user gesture first.
+- Only PiP videos will be unmuted; center/background videos stay muted to avoid audio conflicts.
 
