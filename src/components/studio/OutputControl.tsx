@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Monitor, ExternalLink, Plus, Trash2, Video, Maximize, Clock, Newspaper } from "lucide-react";
+import { Monitor, ExternalLink, Plus, Trash2, Video, Maximize, Clock } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 
 import { Link } from "react-router-dom";
@@ -406,114 +406,6 @@ const OutputControl = () => {
                 </div>
               </div>
 
-              {/* News Alerts Overlay */}
-              <div className="mt-3 space-y-2">
-                <div className="flex items-center gap-3 text-xs text-gray-400">
-                  <span className="flex items-center gap-1.5">
-                    <Newspaper className="h-3 w-3 text-red-400" />
-                    News Alerts
-                    <Switch
-                      checked={!!config?.overlays?.newsAlert?.enabled}
-                      onCheckedChange={(checked) =>
-                        save({
-                          ...config!,
-                          overlays: {
-                            ...config!.overlays,
-                            newsAlert: {
-                              enabled: checked,
-                              position: config?.overlays?.newsAlert?.position ?? "bottom",
-                              pollInterval: config?.overlays?.newsAlert?.pollInterval ?? 60,
-                            },
-                          },
-                        })
-                      }
-                      className="scale-75"
-                    />
-                  </span>
-                  <div className="w-px h-5 bg-blue-500/20" />
-                  <div className={`flex gap-1 ${!config?.overlays?.newsAlert?.enabled ? "opacity-40 pointer-events-none" : ""}`}>
-                    {(["top", "bottom"] as const).map((pos) => (
-                      <button
-                        key={pos}
-                        onClick={() =>
-                          save({
-                            ...config!,
-                            overlays: {
-                              ...config!.overlays,
-                              newsAlert: {
-                                ...config!.overlays?.newsAlert!,
-                                enabled: true,
-                                position: pos,
-                              },
-                            },
-                          })
-                        }
-                        className={`px-2 py-1 rounded text-[10px] font-medium transition-colors capitalize ${
-                          (config?.overlays?.newsAlert?.position ?? "bottom") === pos
-                            ? "bg-red-500/20 text-red-300 border border-red-500/40"
-                            : "bg-black/20 text-gray-500 hover:text-gray-300 border border-transparent"
-                        }`}
-                      >
-                        {pos}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="w-px h-5 bg-blue-500/20" />
-                  <span className={`flex items-center gap-1.5 ${!config?.overlays?.newsAlert?.enabled ? "opacity-40" : ""}`}>
-                    Poll
-                    <Input
-                      type="number"
-                      min={15}
-                      value={config?.overlays?.newsAlert?.pollInterval ?? 60}
-                      onChange={(e) =>
-                        save({
-                          ...config!,
-                          overlays: {
-                            ...config!.overlays,
-                            newsAlert: {
-                              ...config!.overlays?.newsAlert!,
-                              enabled: config?.overlays?.newsAlert?.enabled ?? true,
-                              position: config?.overlays?.newsAlert?.position ?? "bottom",
-                              pollInterval: Math.max(15, Number(e.target.value)),
-                            },
-                          },
-                        })
-                      }
-                      disabled={!config?.overlays?.newsAlert?.enabled}
-                      className="w-14 h-7 bg-black/30 border-red-500/20 text-white text-xs text-center"
-                    />
-                    sec
-                  </span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={!config?.overlays?.newsAlert?.enabled}
-                    className="h-7 text-[10px] border-red-500/30 text-red-300 hover:bg-red-500/10"
-                    onClick={async () => {
-                      try {
-                        const res = await fetch(
-                          `https://gpmandlkcdompmdvethh.supabase.co/functions/v1/fetch-news-alerts?test=true`,
-                          {
-                            headers: {
-                              apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwbWFuZGxrY2RvbXBtZHZldGhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI0NjM2NjcsImV4cCI6MjA0ODAzOTY2N30.KxzySIkXxhNgBWUdSpaASLZWjq8AAMeXgPmaBdnYfHI",
-                            },
-                          }
-                        );
-                        const result = await res.json();
-                        if (result.success) {
-                          toast.success("Test alert sent!");
-                        } else {
-                          toast.error(result.error || "Failed to send test alert");
-                        }
-                      } catch (err: any) {
-                        toast.error(err.message || "Failed");
-                      }
-                    }}
-                  >
-                    Test
-                  </Button>
-                </div>
-              </div>
             </div>
           </>
         )}
