@@ -1,12 +1,13 @@
 
 
-## Make Clock Overlay 50% Larger
+## Hide Mouse Cursor on Output Page
 
-Increase the clock text size by 50% in `src/components/studio/overlays/ClockOverlay.tsx`:
+Add a CSS rule to hide the mouse cursor on the `/output` page after it loads, so the TV display looks clean.
 
-- Time text: `text-5xl` (3rem) -> `text-7xl` (4.5rem)
-- AM/PM text: `text-2xl` (1.5rem) -> `text-4xl` (2.25rem)
-- Padding: `px-8 py-3` -> `px-12 py-5`
+### Change
 
-Single file edit, no other changes needed.
+**Edit `src/pages/Output.tsx`**
+- Add a `useEffect` that sets `document.body.style.cursor = 'none'` on mount and restores it on unmount.
+
+This is a single-line addition. The cursor will be hidden as soon as the Output page loads and restored when navigating away.
 
