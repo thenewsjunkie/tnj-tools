@@ -1,34 +1,38 @@
 
 
-## Add VDO.Ninja Feeds + Resizable PiP for Both Feed Types
+## TelePrompter: Clear Button, Fix Editing, Add Highlight Tool
 
-### Overview
-Add a new "VDO.Ninja Feeds" section below "Live Video Feeds" in Output Control, working identically (URL input, placement options, remove). Also add a width slider to each video feed (YouTube and VDO.Ninja) so PiP sizes can be controlled from the admin panel.
+### Problem
+1. No way to clear the script text
+2. Editing text jumps cursor to end (every keystroke saves to Supabase, triggers realtime invalidation, resets the textarea)
+3. No way to highlight words/phrases with color
 
-### Data Model Changes (`src/hooks/useOutputConfig.ts`)
+### Solution
+Replace the plain `<Textarea>` with a **TipTap rich text editor** (already used in the Notepad component) and add a highlight extension. Use local state with debounced saves to fix the cursor issue.
 
-- Add `vdoNinjaFeeds?: VdoNinjaFeed[]` to `OutputConfig`
-- Add `width?: number` (pixels, default 1280) to `VideoFeed` interface
-- Create `VdoNinjaFeed` interface identical to `VideoFeed`: `{ url: string; placement: VideoPlacement; width?: number }`
-- Add a `getVdoNinjaEmbedUrl(url: string)` helper that normalizes VDO.Ninja URLs (handles `vdo.ninja` links, ensures `&autoplay=1&mute&cleanoutput`)
+### Changes
 
-### Admin Panel Changes (`src/components/studio/OutputControl.tsx`)
+**`src/hooks/useTelePrompter.ts`**
+- No schema changes needed. The `script` field will now store HTML strings instead of plain text (backward compatible).
 
-- Add state for `newVdoUrl` and `newVdoPlacement`
-- Add a new "VDO.Ninja Feeds" section (styled with a purple/violet accent to differentiate from the red YouTube section), with the same add/remove/placement UI pattern
-- For **both** YouTube and VDO.Ninja feed lists, add a width slider (range 320–1920px, step 10, default 1280) per feed item that saves to the feed's `width` property
+**`src/components/studio/TelePrompterControl.tsx`**
+- Replace `<Textarea>` with a TipTap editor instance using `StarterKit`, `Underline`, `Placeholder`, and `@tiptap/extension-highlight` (with `multicolor: true`)
+- Use **local editor state** with a debounced `save()` (e.g., 500ms) on `onUpdate` to prevent cursor jumps. Only sync external changes back to editor when they differ (same pattern as Notepad).
+- Add a **Clear** button (Trash2 icon) next to Play/Reset that sets `script: ""`
+- Add a **highlight toolbar row** with 4-5 color swatches (yellow, green, cyan, pink, orange). Clicking a color applies/toggles highlight on the current selection. Add a "remove highlight" button.
+- Keep existing speed/fontSize/mirror controls unchanged.
 
-### Output Page Changes (`src/pages/Output.tsx`)
+**`src/pages/TelePrompter.tsx`**
+- Change from rendering `{script}` as plain text to rendering with `dangerouslySetInnerHTML` so HTML tags (bold, highlights, etc.) display correctly.
+- Add CSS for `mark` elements with the highlight colors so they render visibly against the black background.
 
-- Add a `VdoNinjaEmbed` component that renders an iframe with the VDO.Ninja URL (similar to `YouTubeEmbed`)
-- Merge VDO.Ninja feeds into the same PiP left/right/center rendering logic alongside YouTube feeds
-- Use each feed's `width` value (default 1280) instead of the hardcoded `w-[1280px]` class — apply via inline `style={{ width: feed.width ?? 1280 }}`
+### Dependencies
+- Install `@tiptap/extension-highlight` (new dependency)
 
-### File Changes Summary
+### File Summary
 
 | File | Change |
 |------|--------|
-| `src/hooks/useOutputConfig.ts` | Add `VdoNinjaFeed` type, `vdoNinjaFeeds` to config, `getVdoNinjaEmbedUrl` helper, `width` to `VideoFeed` |
-| `src/components/studio/OutputControl.tsx` | Add VDO.Ninja section, add width slider to each feed row (YouTube + VDO.Ninja) |
-| `src/pages/Output.tsx` | Add `VdoNinjaEmbed`, render VDO.Ninja feeds in PiP/center slots, use per-feed width |
+| `src/components/studio/TelePrompterControl.tsx` | Replace Textarea with TipTap editor, add clear button, add highlight color picker toolbar, debounced saves |
+| `src/pages/TelePrompter.tsx` | Render script as HTML with `dangerouslySetInnerHTML`, add highlight color CSS |
 
