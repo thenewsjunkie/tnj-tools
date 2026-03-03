@@ -30,7 +30,6 @@ const TelePrompter = () => {
       if (!scrollRef.current) return;
       if (lastTimeRef.current) {
         const delta = time - lastTimeRef.current;
-        // speed 1 = 20px/s, speed 10 = 200px/s
         const pxPerMs = (speed * 20) / 1000;
         scrollRef.current.scrollTop += pxPerMs * delta;
       }
@@ -74,6 +73,24 @@ const TelePrompter = () => {
 
   return (
     <div className="fixed inset-0 bg-black overflow-hidden">
+      {/* Highlight color styles for mark elements */}
+      <style>{`
+        .teleprompter-content mark {
+          background-color: #fde047;
+          color: black;
+          padding: 0 2px;
+          border-radius: 2px;
+        }
+        .teleprompter-content mark[data-color="#fde047"] { background-color: #fde047; }
+        .teleprompter-content mark[data-color="#86efac"] { background-color: #86efac; }
+        .teleprompter-content mark[data-color="#67e8f9"] { background-color: #67e8f9; }
+        .teleprompter-content mark[data-color="#f9a8d4"] { background-color: #f9a8d4; }
+        .teleprompter-content mark[data-color="#fdba74"] { background-color: #fdba74; }
+        .teleprompter-content mark[style*="background-color"] { color: black; }
+        .teleprompter-content p { margin: 0.25em 0; }
+        .teleprompter-content ul, .teleprompter-content ol { margin-left: 1.5em; }
+      `}</style>
+
       {/* Guide line */}
       <div className="absolute left-0 right-0 top-1/2 -translate-y-px h-[2px] bg-red-500/60 z-10 pointer-events-none" />
 
@@ -87,11 +104,12 @@ const TelePrompter = () => {
         {/* Top padding so text starts at bottom */}
         <div className="h-[50vh]" />
         <div
-          className="max-w-[80ch] mx-auto px-8 pb-[50vh] text-white font-sans leading-relaxed whitespace-pre-wrap"
+          className="teleprompter-content max-w-[80ch] mx-auto px-8 pb-[50vh] text-white font-sans leading-relaxed"
           style={{ fontSize: `${fontSize}px`, lineHeight: 1.5 }}
-        >
-          {script || "No script loaded. Paste a script in the Studio Screen TelePrompter control."}
-        </div>
+          dangerouslySetInnerHTML={{
+            __html: script || "No script loaded. Paste a script in the Studio Screen TelePrompter control.",
+          }}
+        />
       </div>
     </div>
   );
