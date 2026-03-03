@@ -1,22 +1,20 @@
 
 
-## Fix: TipTap Extension-Highlight Version Conflict
+## Fix: Remove conflicting override for @tiptap/extension-highlight
 
-### Root Cause
-`@tiptap/extension-highlight@3.20.0` requires `@tiptap/core@^3.20.0`, but all other `@tiptap/*` packages in the project are at v2.27.2. npm cannot resolve this peer dependency conflict.
+npm does not allow an `overrides` entry for a package that is also a direct dependency. The fix is to remove `@tiptap/extension-highlight` from the `overrides` block (it's already pinned to `^2.27.2` in `dependencies`, so the override is redundant).
 
-### Fix
+### Change
 
-**`package.json`**
-1. Change `@tiptap/extension-highlight` version from `^3.20.0` to `^2.27.2`
-2. Add an `overrides` block to pin TipTap core versions and prevent future drift:
+**`package.json`** — Update the `overrides` block:
 
 ```json
 "overrides": {
-  "@tiptap/core": "2.27.2",
-  "@tiptap/extension-highlight": "2.27.2"
+  "@tiptap/core": "2.27.2"
 }
 ```
 
-This is a one-file, two-line fix. No code changes needed — only the dependency version alignment.
+Remove `"@tiptap/extension-highlight": "2.27.2"` from overrides. The direct dependency `"@tiptap/extension-highlight": "^2.27.2"` already controls its version.
+
+One-line fix, no code changes.
 
