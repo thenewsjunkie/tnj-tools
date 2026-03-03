@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useOutputConfig, StudioModule, VideoFeed, getYouTubeEmbedUrl } from "@/hooks/useOutputConfig";
+import { useOutputConfig, StudioModule, VideoFeed, VdoNinjaFeed, getYouTubeEmbedUrl, getVdoNinjaEmbedUrl } from "@/hooks/useOutputConfig";
 import SecretShowsLeaderboard from "@/pages/SecretShowsLeaderboard";
 import HallOfFramePage from "@/pages/HallOfFrame";
 import RestreamChatEmbed from "@/components/studio/RestreamChatEmbed";
@@ -31,6 +31,23 @@ const YouTubeEmbed = ({ url }: { url: string }) => {
         src={embedUrl}
         className="w-full h-full"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        style={{ border: 0 }}
+      />
+    </div>
+  );
+};
+
+const VdoNinjaEmbed = ({ url }: { url: string }) => {
+  const embedUrl = getVdoNinjaEmbedUrl(url);
+  if (!embedUrl) return null;
+
+  return (
+    <div className="w-full h-full">
+      <iframe
+        src={embedUrl}
+        className="w-full h-full"
+        allow="autoplay; camera; microphone; fullscreen; picture-in-picture"
         allowFullScreen
         style={{ border: 0 }}
       />
@@ -152,6 +169,7 @@ const Output = () => {
   const left = config?.leftColumn ?? [];
   const right = config?.rightColumn ?? [];
   const videoFeeds = config?.videoFeeds ?? [];
+  const vdoNinjaFeeds = config?.vdoNinjaFeeds ?? [];
   const rotation = config?.rotation ?? 0;
   const chatZoom = config?.chatZoom;
   const chatSource = config?.chatSource ?? "restream";
@@ -170,9 +188,16 @@ const Output = () => {
     translate: "-50% -50%",
   } : {};
 
-  const centerVideos = videoFeeds.filter((v) => v.placement === "center" || v.placement === ("full" as any));
-  const pipLeftVideos = videoFeeds.filter((v) => v.placement === "pip-left");
-  const pipRightVideos = videoFeeds.filter((v) => v.placement === "pip-right" || v.placement === ("pip" as any));
+  // Merge all feeds into a unified list with a type tag for rendering
+  type TaggedFeed = { url: string; placement: string; width?: number; type: "youtube" | "vdo" };
+  const allFeeds: TaggedFeed[] = [
+    ...videoFeeds.map((f) => ({ ...f, type: "youtube" as const })),
+    ...vdoNinjaFeeds.map((f) => ({ ...f, type: "vdo" as const })),
+  ];
+
+  const centerVideos = allFeeds.filter((v) => v.placement === "center" || v.placement === ("full" as any));
+  const pipLeftVideos = allFeeds.filter((v) => v.placement === "pip-left");
+  const pipRightVideos = allFeeds.filter((v) => v.placement === "pip-right" || v.placement === ("pip" as any));
 
   const chatInLeft = left.includes("live-chat");
   const chatInRight = right.includes("live-chat");
@@ -184,6 +209,9 @@ const Output = () => {
 
   // Chat is orphan if not in any column and not full-screen
   const chatOrphan = !chatInLeft && !chatInRight && !chatIsFullScreen;
+
+  const FeedEmbed = ({ feed }: { feed: TaggedFeed }) =>
+    feed.type === "vdo" ? <VdoNinjaEmbed url={feed.url} /> : <YouTubeEmbed url={feed.url} />;
 
   // Full-screen mode: render only that module
   if (fullScreenModule) {
@@ -198,7 +226,7 @@ const Output = () => {
           <div className="absolute inset-0 z-0">
             {centerVideos.map((v, i) => (
               <div key={`center-fs-${i}`} className="w-full h-full">
-                <YouTubeEmbed url={v.url} />
+                <FeedEmbed feed={v} />
               </div>
             ))}
           </div>
@@ -221,8 +249,8 @@ const Output = () => {
         {pipLeftVideos.length > 0 && (
           <div className="fixed top-4 left-4 z-[9999] flex flex-col gap-4 pointer-events-none">
             {pipLeftVideos.map((v, i) => (
-              <div key={`pip-l-${i}`} className="w-[1280px] aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10 pointer-events-auto">
-                <YouTubeEmbed url={v.url} />
+              <div key={`pip-l-${i}`} style={{ width: v.width ?? 1280 }} className="aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10 pointer-events-auto">
+                <FeedEmbed feed={v} />
               </div>
             ))}
           </div>
@@ -230,8 +258,8 @@ const Output = () => {
         {pipRightVideos.length > 0 && (
           <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-4 pointer-events-none">
             {pipRightVideos.map((v, i) => (
-              <div key={`pip-r-${i}`} className="w-[1280px] aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10 pointer-events-auto">
-                <YouTubeEmbed url={v.url} />
+              <div key={`pip-r-${i}`} style={{ width: v.width ?? 1280 }} className="aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10 pointer-events-auto">
+                <FeedEmbed feed={v} />
               </div>
             ))}
           </div>
@@ -248,7 +276,7 @@ const Output = () => {
       {overlays?.clock?.enabled && <ClockOverlay position={overlays.clock.position} />}
       {centerVideos.map((v, i) => (
         <div key={`center-${i}`} className="flex-1 min-h-[300px]">
-          <YouTubeEmbed url={v.url} />
+          <FeedEmbed feed={v} />
         </div>
       ))}
 
@@ -284,8 +312,8 @@ const Output = () => {
       {pipLeftVideos.length > 0 && (
         <div className="fixed top-4 left-4 z-[9999] flex flex-col gap-4 pointer-events-none">
           {pipLeftVideos.map((v, i) => (
-            <div key={`pip-l-${i}`} className="w-[1280px] aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10">
-              <YouTubeEmbed url={v.url} />
+            <div key={`pip-l-${i}`} style={{ width: v.width ?? 1280 }} className="aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10">
+              <FeedEmbed feed={v} />
             </div>
           ))}
         </div>
@@ -293,8 +321,8 @@ const Output = () => {
       {pipRightVideos.length > 0 && (
         <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-4 pointer-events-none">
           {pipRightVideos.map((v, i) => (
-            <div key={`pip-r-${i}`} className="w-[1280px] aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10">
-              <YouTubeEmbed url={v.url} />
+            <div key={`pip-r-${i}`} style={{ width: v.width ?? 1280 }} className="aspect-video rounded-lg shadow-2xl overflow-hidden border border-white/10">
+              <FeedEmbed feed={v} />
             </div>
           ))}
         </div>

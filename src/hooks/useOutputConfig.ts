@@ -18,6 +18,13 @@ export type VideoPlacement = "center" | "pip-left" | "pip-right";
 export interface VideoFeed {
   url: string;
   placement: VideoPlacement;
+  width?: number; // pixels, default 1280
+}
+
+export interface VdoNinjaFeed {
+  url: string;
+  placement: VideoPlacement;
+  width?: number; // pixels, default 1280
 }
 
 export type OverlayPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right";
@@ -30,16 +37,17 @@ export interface OutputConfig {
   leftColumn: StudioModule[];
   rightColumn: StudioModule[];
   videoFeeds?: VideoFeed[];
+  vdoNinjaFeeds?: VdoNinjaFeed[];
   leftRotate?: boolean;
   rightRotate?: boolean;
-  rotateInterval?: number; // seconds, default 30
-  brightness?: number; // percentage, default 100
-  contrast?: number; // percentage, default 100
-  chatZoom?: number; // percentage, default 100 (range 100-300)
-  chatSource?: "restream" | "discord"; // default "restream"
+  rotateInterval?: number;
+  brightness?: number;
+  contrast?: number;
+  chatZoom?: number;
+  chatSource?: "restream" | "discord";
   fullScreen?: StudioModule | null;
   orientation?: "horizontal" | "vertical";
-  rotation?: number; // 0, 90, 180, 270 degrees
+  rotation?: number;
   overlays?: OverlayConfig;
 }
 
@@ -47,6 +55,7 @@ const DEFAULT_CONFIG: OutputConfig = {
   leftColumn: ["leaderboard"],
   rightColumn: ["hall-of-frame"],
   videoFeeds: [],
+  vdoNinjaFeeds: [],
 };
 
 const CONFIG_KEY = "studio_output_config";
@@ -129,4 +138,21 @@ export const getYouTubeEmbedUrl = (url: string): string | null => {
     // invalid URL
   }
   return null;
+};
+
+/** Normalize a VDO.Ninja URL into an embeddable format */
+export const getVdoNinjaEmbedUrl = (url: string): string | null => {
+  try {
+    const parsed = new URL(url);
+    if (!parsed.hostname.includes("vdo.ninja") && !parsed.hostname.includes("obs.ninja")) {
+      return null;
+    }
+    // Ensure clean output params
+    if (!parsed.searchParams.has("cleanoutput")) parsed.searchParams.set("cleanoutput", "");
+    if (!parsed.searchParams.has("autoplay")) parsed.searchParams.set("autoplay", "");
+    if (!parsed.searchParams.has("mute")) parsed.searchParams.set("mute", "");
+    return parsed.toString();
+  } catch {
+    return null;
+  }
 };

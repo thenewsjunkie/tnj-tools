@@ -14,8 +14,10 @@ import {
   StudioModule,
   VideoPlacement,
   VideoFeed,
+  VdoNinjaFeed,
   OverlayPosition,
   getYouTubeEmbedUrl,
+  getVdoNinjaEmbedUrl,
 } from "@/hooks/useOutputConfig";
 import { toast } from "sonner";
 
@@ -30,10 +32,13 @@ const OutputControl = () => {
   const updateConfig = useUpdateOutputConfig();
   const [newVideoUrl, setNewVideoUrl] = useState("");
   const [newVideoPlacement, setNewVideoPlacement] = useState<VideoPlacement>("center");
+  const [newVdoUrl, setNewVdoUrl] = useState("");
+  const [newVdoPlacement, setNewVdoPlacement] = useState<VideoPlacement>("center");
 
   const leftColumn = config?.leftColumn ?? [];
   const rightColumn = config?.rightColumn ?? [];
   const videoFeeds = config?.videoFeeds ?? [];
+  const vdoNinjaFeeds = config?.vdoNinjaFeeds ?? [];
   const fullScreenModule = config?.fullScreen ?? null;
 
   const isInLeft = (id: StudioModule) => leftColumn.includes(id);
@@ -127,6 +132,47 @@ const OutputControl = () => {
     if (!config) return;
     const newFeeds = videoFeeds.map((f, i) => (i === index ? { ...f, placement } : f));
     save({ ...config, videoFeeds: newFeeds });
+  };
+
+  const updateVideoWidth = (index: number, width: number) => {
+    if (!config) return;
+    const newFeeds = videoFeeds.map((f, i) => (i === index ? { ...f, width } : f));
+    save({ ...config, videoFeeds: newFeeds });
+  };
+
+  // VDO.Ninja feed management
+  const addVdoFeed = () => {
+    if (!config) return;
+    const trimmed = newVdoUrl.trim();
+    if (!trimmed) return;
+    const embedUrl = getVdoNinjaEmbedUrl(trimmed);
+    if (!embedUrl) {
+      toast.error("Invalid VDO.Ninja URL");
+      return;
+    }
+    const newFeeds: VdoNinjaFeed[] = [...vdoNinjaFeeds, { url: trimmed, placement: newVdoPlacement }];
+    save({ ...config, vdoNinjaFeeds: newFeeds });
+    setNewVdoUrl("");
+    toast.success("VDO.Ninja feed added");
+  };
+
+  const removeVdoFeed = (index: number) => {
+    if (!config) return;
+    const newFeeds = vdoNinjaFeeds.filter((_, i) => i !== index);
+    save({ ...config, vdoNinjaFeeds: newFeeds });
+    toast.success("VDO.Ninja feed removed");
+  };
+
+  const updateVdoPlacement = (index: number, placement: VideoPlacement) => {
+    if (!config) return;
+    const newFeeds = vdoNinjaFeeds.map((f, i) => (i === index ? { ...f, placement } : f));
+    save({ ...config, vdoNinjaFeeds: newFeeds });
+  };
+
+  const updateVdoWidth = (index: number, width: number) => {
+    if (!config) return;
+    const newFeeds = vdoNinjaFeeds.map((f, i) => (i === index ? { ...f, width } : f));
+    save({ ...config, vdoNinjaFeeds: newFeeds });
   };
 
   const anyRotateEnabled = config?.leftRotate || config?.rightRotate;
@@ -301,29 +347,43 @@ const OutputControl = () => {
               {videoFeeds.length > 0 && (
                 <div className="space-y-2 mb-3">
                   {videoFeeds.map((feed, i) => (
-                    <div key={i} className="flex items-center gap-2 bg-black/20 rounded px-3 py-2">
-                      <span className="text-white text-xs truncate flex-1">{feed.url}</span>
-                      <div className="flex gap-1">
-                        {PLACEMENT_OPTIONS.map((opt) => (
-                          <button
-                            key={opt.value}
-                            onClick={() => updateVideoPlacement(i, opt.value)}
-                            className={`text-[10px] px-2 py-0.5 rounded transition-colors ${
-                              feed.placement === opt.value
-                                ? "bg-red-500/30 text-red-300 border border-red-500/40"
-                                : "bg-black/30 text-gray-500 hover:text-gray-300 border border-transparent"
-                            }`}
-                          >
-                            {opt.label}
-                          </button>
-                        ))}
+                    <div key={i} className="bg-black/20 rounded px-3 py-2 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-white text-xs truncate flex-1">{feed.url}</span>
+                        <div className="flex gap-1">
+                          {PLACEMENT_OPTIONS.map((opt) => (
+                            <button
+                              key={opt.value}
+                              onClick={() => updateVideoPlacement(i, opt.value)}
+                              className={`text-[10px] px-2 py-0.5 rounded transition-colors ${
+                                feed.placement === opt.value
+                                  ? "bg-red-500/30 text-red-300 border border-red-500/40"
+                                  : "bg-black/30 text-gray-500 hover:text-gray-300 border border-transparent"
+                              }`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                        <button
+                          onClick={() => removeVideo(i)}
+                          className="text-red-400/50 hover:text-red-400 transition-colors"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                       </div>
-                      <button
-                        onClick={() => removeVideo(i)}
-                        className="text-red-400/50 hover:text-red-400 transition-colors"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-gray-500 w-8">Size</span>
+                        <Slider
+                          min={320}
+                          max={1920}
+                          step={10}
+                          value={[feed.width ?? 1280]}
+                          onValueChange={([v]) => updateVideoWidth(i, v)}
+                          className="flex-1"
+                        />
+                        <span className="text-[10px] text-white w-12 text-right">{feed.width ?? 1280}px</span>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -352,6 +412,86 @@ const OutputControl = () => {
                   size="sm"
                   onClick={addVideo}
                   className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* VDO.Ninja Feeds */}
+            <div>
+              <h3 className="text-xs font-semibold text-purple-300/70 uppercase tracking-wider mb-2 flex items-center gap-1">
+                <Video className="h-3 w-3" /> VDO.Ninja Feeds
+              </h3>
+
+              {vdoNinjaFeeds.length > 0 && (
+                <div className="space-y-2 mb-3">
+                  {vdoNinjaFeeds.map((feed, i) => (
+                    <div key={i} className="bg-black/20 rounded px-3 py-2 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-white text-xs truncate flex-1">{feed.url}</span>
+                        <div className="flex gap-1">
+                          {PLACEMENT_OPTIONS.map((opt) => (
+                            <button
+                              key={opt.value}
+                              onClick={() => updateVdoPlacement(i, opt.value)}
+                              className={`text-[10px] px-2 py-0.5 rounded transition-colors ${
+                                feed.placement === opt.value
+                                  ? "bg-purple-500/30 text-purple-300 border border-purple-500/40"
+                                  : "bg-black/30 text-gray-500 hover:text-gray-300 border border-transparent"
+                              }`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                        <button
+                          onClick={() => removeVdoFeed(i)}
+                          className="text-purple-400/50 hover:text-purple-400 transition-colors"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-gray-500 w-8">Size</span>
+                        <Slider
+                          min={320}
+                          max={1920}
+                          step={10}
+                          value={[feed.width ?? 1280]}
+                          onValueChange={([v]) => updateVdoWidth(i, v)}
+                          className="flex-1"
+                        />
+                        <span className="text-[10px] text-white w-12 text-right">{feed.width ?? 1280}px</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <Input
+                  placeholder="VDO.Ninja URL"
+                  value={newVdoUrl}
+                  onChange={(e) => setNewVdoUrl(e.target.value)}
+                  className="bg-black/30 border-purple-500/20 text-white placeholder:text-gray-500 flex-1 text-sm"
+                  onKeyDown={(e) => e.key === "Enter" && addVdoFeed()}
+                />
+                <select
+                  value={newVdoPlacement}
+                  onChange={(e) => setNewVdoPlacement(e.target.value as VideoPlacement)}
+                  className="bg-black/30 border border-purple-500/20 text-white rounded px-2 text-xs"
+                >
+                  {PLACEMENT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+                <Button
+                  size="sm"
+                  onClick={addVdoFeed}
+                  className="bg-purple-600 hover:bg-purple-700 text-white"
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
