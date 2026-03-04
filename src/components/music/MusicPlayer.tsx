@@ -174,14 +174,29 @@ const MusicPlayer = ({ songs, initialIndex = 0 }: MusicPlayerProps) => {
       </div>
 
       {/* Download */}
-      <a
-        href={currentSong.audio_url}
-        download={`${currentSong.title}.mp3`}
+      <button
+        onClick={async () => {
+          try {
+            const resp = await fetch(currentSong.audio_url);
+            const blob = await resp.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${currentSong.title}.mp3`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          } catch {
+            // Fallback: open in new tab
+            window.open(currentSong.audio_url, "_blank");
+          }
+        }}
         className="absolute bottom-4 right-4 p-1.5 text-[hsl(0,0%,50%)] hover:text-[hsl(0,84%,50%)] transition-colors"
         title="Download song"
       >
         <Download className="h-4 w-4" />
-      </a>
+      </button>
 
       <audio
         ref={audioRef}

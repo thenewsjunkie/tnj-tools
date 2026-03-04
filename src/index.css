@@ -22,6 +22,12 @@ body.obs-overlay {
   background-color: transparent !important;
 }
 
+/* Music embed needs white background */
+html:has(body.music-embed),
+body.music-embed {
+  background-color: white !important;
+}
+
 @font-face {
   font-family: 'Digital-7';
   src: url('/digital-7.mono.ttf') format('truetype');

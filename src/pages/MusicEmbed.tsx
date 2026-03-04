@@ -7,31 +7,27 @@ const MusicEmbed = () => {
   const { id } = useParams<{ id?: string }>();
   const { songs, isLoading } = useShowSongs();
 
-  // Force light background on html/body for embed context
+  // Add body class so CSS can override the dark background
   useEffect(() => {
-    document.documentElement.style.background = "white";
-    document.body.style.background = "white";
+    document.body.classList.add("music-embed");
     return () => {
-      document.documentElement.style.background = "";
-      document.body.style.background = "";
+      document.body.classList.remove("music-embed");
     };
   }, []);
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center bg-white p-4">
+      <div className="flex items-center justify-center p-4" style={{ background: "white" }}>
         <p className="text-muted-foreground">Loading...</p>
       </div>
     );
   }
 
-  // Single song or full playlist
   const filtered = id ? songs.filter((s) => s.id === id) : songs;
-  const initialIndex = 0;
 
   return (
-    <div className="flex items-center justify-center bg-white p-4">
-      <MusicPlayer songs={filtered} initialIndex={initialIndex} />
+    <div className="flex items-center justify-center p-4" style={{ background: "white" }}>
+      <MusicPlayer songs={filtered} initialIndex={0} />
     </div>
   );
 };
