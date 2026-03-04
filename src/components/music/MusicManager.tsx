@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Upload, Trash2, Link, Music, Loader2 } from "lucide-react";
+import { Upload, Trash2, Code, Music, Loader2 } from "lucide-react";
 
 const MusicManager = () => {
   const { songs, isLoading, addSong, deleteSong } = useShowSongs();
@@ -57,10 +57,10 @@ const MusicManager = () => {
     }
   };
 
-  const copyEmbedUrl = (id: string) => {
-    const url = `${window.location.origin}/music-embed/${id}`;
-    navigator.clipboard.writeText(url);
-    toast.success("Embed URL copied");
+  const copyEmbedCode = (id: string) => {
+    const code = `<iframe src="https://tnjtools.com/music-embed/${id}" width="100%" height="200" style="border:0;border-radius:8px;" allowfullscreen></iframe>`;
+    navigator.clipboard.writeText(code);
+    toast.success("Embed code copied");
   };
 
   const handleDelete = async (id: string, audioUrl: string) => {
@@ -151,10 +151,10 @@ const MusicManager = () => {
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7 shrink-0"
-                onClick={() => copyEmbedUrl(song.id)}
-                title="Copy embed URL"
+                onClick={() => copyEmbedCode(song.id)}
+                title="Copy embed code"
               >
-                <Link className="h-3.5 w-3.5" />
+                <Code className="h-3.5 w-3.5" />
               </Button>
               <Button
                 variant="ghost"
@@ -176,12 +176,13 @@ const MusicManager = () => {
           size="sm"
           className="w-full"
           onClick={() => {
-            navigator.clipboard.writeText(`${window.location.origin}/music-embed`);
-            toast.success("Playlist embed URL copied");
+            const code = `<iframe src="https://tnjtools.com/music-embed" width="100%" height="200" style="border:0;border-radius:8px;" allowfullscreen></iframe>`;
+            navigator.clipboard.writeText(code);
+            toast.success("Playlist embed code copied");
           }}
         >
-          <Link className="h-4 w-4 mr-2" />
-          Copy Playlist Embed URL
+          <Code className="h-4 w-4 mr-2" />
+          Copy Playlist Embed Code
         </Button>
       )}
     </div>
