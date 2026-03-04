@@ -101,64 +101,24 @@ const MusicPlayer = ({ songs, initialIndex = 0 }: MusicPlayerProps) => {
   }
 
   return (
-    <div className="rounded-2xl shadow-lg border border-[hsl(0,0%,88%)] bg-[hsl(0,0%,96%)] p-4 max-w-lg w-full">
-      {/* Top row */}
-      <div className="flex items-center gap-3">
-        {/* Cover art */}
-        <div className="w-20 h-20 rounded-lg bg-[hsl(0,0%,88%)] flex-shrink-0 overflow-hidden flex items-center justify-center">
-          {currentSong.cover_url ? (
-            <img src={currentSong.cover_url} alt={currentSong.title} className="w-full h-full object-cover" />
-          ) : (
-            <span className="text-3xl text-[hsl(0,0%,60%)]">♪</span>
-          )}
-        </div>
+    <div className="rounded-2xl shadow-lg border border-[hsl(0,0%,88%)] bg-[hsl(0,0%,96%)] p-5 max-w-xs w-full flex flex-col items-center gap-3">
+      {/* Logo */}
+      <img
+        src="/images/newsjunkie-logo.png"
+        alt="NewsJunkie"
+        className="w-16 h-16 rounded-xl object-contain"
+      />
 
-        {/* Title / Artist */}
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-sm text-[hsl(0,0%,15%)] truncate">{currentSong.title}</h3>
-          {currentSong.artist && (
-            <p className="text-xs text-[hsl(0,0%,50%)] truncate">{currentSong.artist}</p>
-          )}
-        </div>
-
-        {/* Skip / Play controls */}
-        <div className="flex items-center gap-1">
-          {songs.length > 1 && (
-            <button onClick={prev} className="p-1 text-[hsl(0,0%,50%)] hover:text-[hsl(0,0%,25%)] transition-colors" disabled={currentIndex === 0}>
-              <SkipBack className="h-4 w-4" />
-            </button>
-          )}
-          <button
-            onClick={togglePlay}
-            className="w-12 h-12 rounded-full bg-gradient-to-b from-[hsl(0,0%,90%)] to-[hsl(0,0%,72%)] shadow-md border border-[hsl(0,0%,78%)] flex items-center justify-center hover:from-[hsl(0,0%,88%)] hover:to-[hsl(0,0%,68%)] transition-all active:scale-95"
-          >
-            {isPlaying ? (
-              <Pause className="h-5 w-5 text-[hsl(0,0%,25%)]" />
-            ) : (
-              <Play className="h-5 w-5 text-[hsl(0,0%,25%)] ml-0.5" />
-            )}
-          </button>
-          {songs.length > 1 && (
-            <button onClick={next} className="p-1 text-[hsl(0,0%,50%)] hover:text-[hsl(0,0%,25%)] transition-colors" disabled={currentIndex === songs.length - 1}>
-              <SkipForward className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-
-        {/* Volume */}
-        <div className="flex items-center gap-1.5 w-24 flex-shrink-0">
-          <Volume2 className="h-3.5 w-3.5 text-[hsl(0,0%,50%)] flex-shrink-0" />
-          <VolumeSlider
-            value={[volume * 100]}
-            max={100}
-            step={1}
-            onValueChange={(v) => setVolume(v[0] / 100)}
-          />
-        </div>
+      {/* Song info */}
+      <div className="text-center min-w-0 w-full">
+        <h3 className="font-semibold text-sm text-[hsl(0,0%,15%)] truncate">{currentSong.title}</h3>
+        {currentSong.artist && (
+          <p className="text-xs text-[hsl(0,0%,50%)] truncate">{currentSong.artist}</p>
+        )}
       </div>
 
-      {/* Bottom row — progress */}
-      <div className="flex items-center gap-2 mt-3">
+      {/* Progress bar */}
+      <div className="flex items-center gap-2 w-full">
         <span className="text-[10px] font-mono text-[hsl(0,0%,50%)] w-8 text-right tabular-nums">{fmt(currentTime)}</span>
         <RedSlider
           value={[progress]}
@@ -168,6 +128,41 @@ const MusicPlayer = ({ songs, initialIndex = 0 }: MusicPlayerProps) => {
           className="flex-1"
         />
         <span className="text-[10px] font-mono text-[hsl(0,0%,50%)] w-8 tabular-nums">{fmt(duration || currentSong.duration || 0)}</span>
+      </div>
+
+      {/* Controls */}
+      <div className="flex items-center gap-3">
+        {songs.length > 1 && (
+          <button onClick={prev} className="p-1.5 text-[hsl(0,0%,50%)] hover:text-[hsl(0,0%,25%)] transition-colors" disabled={currentIndex === 0}>
+            <SkipBack className="h-5 w-5" />
+          </button>
+        )}
+        <button
+          onClick={togglePlay}
+          className="w-14 h-14 rounded-full bg-gradient-to-b from-[hsl(0,0%,90%)] to-[hsl(0,0%,72%)] shadow-md border border-[hsl(0,0%,78%)] flex items-center justify-center hover:from-[hsl(0,0%,88%)] hover:to-[hsl(0,0%,68%)] transition-all active:scale-95"
+        >
+          {isPlaying ? (
+            <Pause className="h-6 w-6 text-[hsl(0,0%,25%)]" />
+          ) : (
+            <Play className="h-6 w-6 text-[hsl(0,0%,25%)] ml-0.5" />
+          )}
+        </button>
+        {songs.length > 1 && (
+          <button onClick={next} className="p-1.5 text-[hsl(0,0%,50%)] hover:text-[hsl(0,0%,25%)] transition-colors" disabled={currentIndex === songs.length - 1}>
+            <SkipForward className="h-5 w-5" />
+          </button>
+        )}
+      </div>
+
+      {/* Volume */}
+      <div className="flex items-center gap-2 w-28">
+        <Volume2 className="h-3.5 w-3.5 text-[hsl(0,0%,50%)] flex-shrink-0" />
+        <VolumeSlider
+          value={[volume * 100]}
+          max={100}
+          step={1}
+          onValueChange={(v) => setVolume(v[0] / 100)}
+        />
       </div>
 
       <audio
