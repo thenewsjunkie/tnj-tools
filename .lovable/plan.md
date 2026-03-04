@@ -1,13 +1,8 @@
 
 
-## Replace Music Player Logo with Uploaded JPG
+## Move Download Button to Bottom-Right
 
-### Changes
+**File**: `src/components/music/MusicPlayer.tsx`
 
-1. **Copy asset**: Copy `user-uploads://NewsJunkie_AppIcon_1.jpg` to `public/images/newsjunkie-logo.png` (overwrite the broken .ai file)
-
-2. **`src/components/music/MusicPlayer.tsx`**: No code changes needed — the `<img>` already references `/images/newsjunkie-logo.png` with the `onError` fallback. Replacing the file is sufficient.
-
-### Files
-- **Copy**: `user-uploads://NewsJunkie_AppIcon_1.jpg` → `public/images/newsjunkie-logo.png`
+Move the download `<a>` element from its current standalone centered position to the bottom-right corner of the player card. Change the outer container to `relative` positioning and absolutely position the download button at `bottom-right`, or alternatively place it in a `w-full flex justify-end` wrapper at the bottom of the flex column.
 
