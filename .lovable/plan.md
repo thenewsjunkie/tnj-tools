@@ -1,53 +1,34 @@
 
 
-## Replace Stopwatch with Music Module
+## Restyle Music Player to Match Custom Design
 
-### Overview
-Remove the Stopwatch from the Admin page and replace it with a Music module. This includes a new database table, storage bucket, upload/manage interface, and an embeddable player page at `/music-embed/:id` for use in OBS or elsewhere.
+### Reference Analysis
+The image shows a horizontal card-style player with:
+- **Light background** with subtle rounded border/shadow (skeuomorphic feel)
+- **Left**: Square album art / logo
+- **Top row**: Art | Title + Artist text | Large circular play/pause button | Small volume control
+- **Bottom row**: Current time | Red progress bar with red circle thumb | Duration
+- No skip forward/back visible — compact single-track feel
 
-### Database Changes
+### Changes
 
-**New table: `show_songs`**
-- `id` uuid PK
-- `title` text NOT NULL
-- `artist` text
-- `audio_url` text NOT NULL
-- `cover_url` text (album art / custom image)
-- `duration` double precision
-- `display_order` integer DEFAULT 0
-- `created_at`, `updated_at` timestamps
+**`src/components/music/MusicPlayer.tsx`** — Full restyle:
 
-**New storage bucket: `show_songs`** (public)
+1. **Layout**: Switch from vertical centered stack to a horizontal card (~max-w-lg). Two rows inside:
+   - **Top row**: Square cover art (left), title/artist (middle), play/pause circle button (right), small volume icon+slider (far right)
+   - **Bottom row**: elapsed time, red progress slider, total time
 
-RLS: public read, authenticated insert/update/delete.
+2. **Styling**:
+   - White/light gray background with rounded-xl, subtle shadow, border
+   - Play/pause button: large circular with gray metallic gradient look (CSS `bg-gradient-to-b from-gray-200 to-gray-400` with ring/shadow)
+   - Progress slider: red track (`bg-red-600`), red thumb — override Slider styles via className or custom CSS
+   - Volume slider: small, to the right of play button
+   - Skip buttons: hide when single song, show subtle when playlist
 
-### New Files
+3. **Cover art**: 80x80px square rounded-lg on the left. Falls back to a music note icon.
 
-1. **`src/components/music/MusicManager.tsx`** — Admin component (replaces Stopwatch in the grid). Upload MP3s with optional title/artist/cover image. List existing songs with delete. Each song shows a "copy embed URL" button.
+4. **Slider theming**: Use Tailwind classes on the Slider component or wrap with a styled div to make the track red and thumb a red circle, matching the reference.
 
-2. **`src/components/music/MusicPlayer.tsx`** — Embeddable player component. Plays a single song or a playlist. Minimal, stylish UI. Will be refined later when you share the custom player image.
-
-3. **`src/pages/MusicEmbed.tsx`** — Route `/music-embed/:id` (or `/music-embed` for all songs). Renders `MusicPlayer` in a clean page suitable for OBS browser source or iframe embedding.
-
-4. **`src/hooks/useShowSongs.ts`** — React Query hook for CRUD on `show_songs` table.
-
-### Admin Page Change
-
-**`src/pages/Admin.tsx`** — Replace Stopwatch import/usage with MusicManager:
-```tsx
-// Remove: import Stopwatch
-// Add: import MusicManager
-<CollapsibleModule id="music" title="Music" defaultOpen={false}>
-  <MusicManager />
-</CollapsibleModule>
-```
-
-### Route Addition
-
-Add `/music-embed/:id?` route in the routing config for the embeddable player.
-
-### Embed Flow
-- Admin uploads MP3 → stored in `show_songs` bucket → row in `show_songs` table
-- Admin copies embed URL (e.g., `/music-embed/abc123`)
-- Embed page loads the song and renders the player
+### Files Modified
+- `src/components/music/MusicPlayer.tsx` — Complete restyle of the JSX and classes
 
