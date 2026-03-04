@@ -1,21 +1,21 @@
 
 
-## Add Embed Code Snippets to Music Manager
+## Fix Music Embed Appearance
 
-Currently the Music Manager only copies raw URLs. This will add copyable `<iframe>` embed code for each song and for the full playlist.
+The issue is that `MusicEmbed.tsx` uses `bg-background` which resolves to the dark theme background (since your app defaults to dark theme), and `min-h-screen` which forces a full viewport height — both problematic when embedded in an iframe.
+
+The screenshot shows the player sitting on a large black rectangle because:
+1. `bg-background` = dark theme = black/near-black
+2. `min-h-screen` = fills the entire iframe height even though the player is small
 
 ### Changes
 
-**File**: `src/components/music/MusicManager.tsx`
+**File**: `src/pages/MusicEmbed.tsx`
 
-1. **Per-song embed**: Change the existing link button's `onClick` to copy an `<iframe>` embed code instead of just the URL. The iframe will point to `/music-embed/{id}` with reasonable defaults (width 100%, height 200px, no border, border-radius).
+- Replace `min-h-screen` with `min-h-0` so the embed only takes up as much space as the player needs
+- Replace `bg-background` with `bg-white` (or `bg-transparent`) so it blends with the host page instead of forcing a dark background
+- This matches how other embeds in the project (polls, GIFs) handle their styling
 
-2. **Playlist embed**: Change the bottom "Copy Playlist Embed URL" button to copy a full `<iframe>` embed code pointing to `/music-embed` instead of just the URL.
-
-3. **Add a `Code` icon** (from Lucide) alongside or replacing the `Link` icon to indicate it's embed code, not just a URL. Update button titles/toasts to say "embed code" instead of "embed URL".
-
-The embed code format will be:
-```html
-<iframe src="https://tnjtools.com/music-embed/SONG_ID" width="100%" height="200" style="border:0;border-radius:8px;" allowfullscreen></iframe>
-```
+### Files
+- `src/pages/MusicEmbed.tsx` — Update container classes
 
