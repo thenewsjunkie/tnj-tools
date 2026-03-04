@@ -69,11 +69,6 @@ const DiscordChatEmbed = ({ zoom = 100 }: DiscordChatEmbedProps) => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
 
-  const formatTime = (ts: string) => {
-    const d = new Date(ts);
-    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  };
-
   return (
     <div className="w-full h-full min-h-[400px] bg-black overflow-hidden">
       <div
@@ -99,11 +94,10 @@ const DiscordChatEmbed = ({ zoom = 100 }: DiscordChatEmbedProps) => {
                   {msg.author_name.charAt(0).toUpperCase()}
                 </div>
               )}
-              <div className="min-w-0 flex-1">
-                <span className="text-sm font-semibold text-indigo-300">{msg.author_name}</span>
-                <span className="text-[10px] text-gray-500 ml-2">{formatTime(msg.created_at)}</span>
-                <p className="text-sm text-gray-200 break-words">{msg.content}</p>
-              </div>
+              <p className="min-w-0 flex-1 text-sm break-words">
+                <span className="font-bold text-indigo-400">{msg.author_name}: </span>
+                <span className="text-gray-200">{msg.content}</span>
+              </p>
             </div>
           ))}
           <div ref={bottomRef} />
