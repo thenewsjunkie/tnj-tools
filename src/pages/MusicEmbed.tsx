@@ -8,7 +8,7 @@ const MusicEmbed = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="flex items-center justify-center bg-white">
         <p className="text-muted-foreground">Loading...</p>
       </div>
     );
@@ -19,7 +19,7 @@ const MusicEmbed = () => {
   const initialIndex = 0;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="flex items-center justify-center bg-white p-4">
       <MusicPlayer songs={filtered} initialIndex={initialIndex} />
     </div>
   );
