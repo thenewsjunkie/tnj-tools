@@ -1248,6 +1248,42 @@ export type Database = {
         }
         Relationships: []
       }
+      show_songs: {
+        Row: {
+          artist: string | null
+          audio_url: string
+          cover_url: string | null
+          created_at: string
+          display_order: number | null
+          duration: number | null
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          artist?: string | null
+          audio_url: string
+          cover_url?: string | null
+          created_at?: string
+          display_order?: number | null
+          duration?: number | null
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          artist?: string | null
+          audio_url?: string
+          cover_url?: string | null
+          created_at?: string
+          display_order?: number | null
+          duration?: number | null
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sound_effects: {
         Row: {
           audio_url: string
