@@ -58,7 +58,7 @@ const MusicManager = () => {
   };
 
   const copyEmbedCode = (id: string) => {
-    const code = `<iframe src="https://tnjtools.com/music-embed/${id}" width="100%" height="200" style="border:0;border-radius:8px;" allowfullscreen></iframe>`;
+    const code = `<iframe src="https://tnjtools.com/music-embed/${id}" width="100%" height="400" style="border:0;border-radius:8px;" allowfullscreen></iframe>`;
     navigator.clipboard.writeText(code);
     toast.success("Embed code copied");
   };
@@ -176,7 +176,7 @@ const MusicManager = () => {
           size="sm"
           className="w-full"
           onClick={() => {
-            const code = `<iframe src="https://tnjtools.com/music-embed" width="100%" height="200" style="border:0;border-radius:8px;" allowfullscreen></iframe>`;
+            const code = `<iframe src="https://tnjtools.com/music-embed" width="100%" height="400" style="border:0;border-radius:8px;" allowfullscreen></iframe>`;
             navigator.clipboard.writeText(code);
             toast.success("Playlist embed code copied");
           }}
