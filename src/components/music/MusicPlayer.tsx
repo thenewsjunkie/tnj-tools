@@ -102,7 +102,7 @@ const MusicPlayer = ({ songs, initialIndex = 0 }: MusicPlayerProps) => {
   }
 
   return (
-    <div className="rounded-2xl shadow-lg border border-[hsl(0,0%,88%)] bg-[hsl(0,0%,96%)] p-5 max-w-xs w-full flex flex-col items-center gap-3">
+    <div className="rounded-2xl shadow-lg border border-[hsl(0,0%,88%)] bg-[hsl(0,0%,96%)] p-5 max-w-xs w-full flex flex-col items-center gap-3 relative">
       {/* Logo */}
       {logoError ? (
         <div className="w-16 h-16 rounded-xl bg-[hsl(0,0%,88%)] flex items-center justify-center">
@@ -162,16 +162,6 @@ const MusicPlayer = ({ songs, initialIndex = 0 }: MusicPlayerProps) => {
         )}
       </div>
 
-      {/* Download */}
-      <a
-        href={currentSong.audio_url}
-        download={`${currentSong.title}.mp3`}
-        className="p-1.5 text-[hsl(0,0%,50%)] hover:text-[hsl(0,84%,50%)] transition-colors"
-        title="Download song"
-      >
-        <Download className="h-4 w-4" />
-      </a>
-
       {/* Volume */}
       <div className="flex items-center gap-2 w-28">
         <Volume2 className="h-3.5 w-3.5 text-[hsl(0,0%,50%)] flex-shrink-0" />
@@ -182,6 +172,16 @@ const MusicPlayer = ({ songs, initialIndex = 0 }: MusicPlayerProps) => {
           onValueChange={(v) => setVolume(v[0] / 100)}
         />
       </div>
+
+      {/* Download */}
+      <a
+        href={currentSong.audio_url}
+        download={`${currentSong.title}.mp3`}
+        className="absolute bottom-4 right-4 p-1.5 text-[hsl(0,0%,50%)] hover:text-[hsl(0,84%,50%)] transition-colors"
+        title="Download song"
+      >
+        <Download className="h-4 w-4" />
+      </a>
 
       <audio
         ref={audioRef}
