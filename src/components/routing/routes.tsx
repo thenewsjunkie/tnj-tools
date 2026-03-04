@@ -49,6 +49,7 @@ const HallOfFramePage = lazy(() => import("@/pages/HallOfFrame"));
 const Output = lazy(() => import("@/pages/Output"));
 const OBSOverlay = lazy(() => import("@/pages/OBSOverlay"));
 const TelePrompter = lazy(() => import("@/pages/TelePrompter"));
+const MusicEmbed = lazy(() => import("@/pages/MusicEmbed"));
 
 export const router = createBrowserRouter([
   {
@@ -258,6 +259,10 @@ export const router = createBrowserRouter([
       {
         path: "teleprompter",
         element: <TelePrompter />,
+      },
+      {
+        path: "music-embed/:id?",
+        element: <MusicEmbed />,
       },
     ]
   }

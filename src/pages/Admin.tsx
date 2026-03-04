@@ -5,7 +5,7 @@ import AdminHeader from "@/components/admin/AdminHeader";
 import CollapsibleModule from "@/components/admin/CollapsibleModule";
 
 import Alerts from "@/components/Alerts";
-import Stopwatch from "@/components/Stopwatch";
+import MusicManager from "@/components/music/MusicManager";
 import TNJLinks from "@/components/TNJLinks";
 import { AskAI } from "@/components/ai-chat/AskAI";
 import VoiceInterface from "@/components/VoiceInterface";
@@ -140,8 +140,8 @@ const Admin = () => {
         
         {/* Row: Stopwatch + TNJ Links */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <CollapsibleModule id="stopwatch" title="Stopwatch" defaultOpen={false}>
-            <Stopwatch />
+          <CollapsibleModule id="music" title="Music" defaultOpen={false}>
+            <MusicManager />
           </CollapsibleModule>
           
           <CollapsibleModule id="tnj-links" title="TNJ Links" defaultOpen={false}>
