@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { ShowSong } from "@/hooks/useShowSongs";
-import { Play, Pause, SkipForward, SkipBack, Volume2 } from "lucide-react";
+import { Play, Pause, SkipForward, SkipBack, Volume2, Download, Music } from "lucide-react";
 import * as SliderPrimitive from "@radix-ui/react-slider";
 import { cn } from "@/lib/utils";
 
@@ -46,6 +46,7 @@ const MusicPlayer = ({ songs, initialIndex = 0 }: MusicPlayerProps) => {
   const [volume, setVolume] = useState(0.8);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [logoError, setLogoError] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const currentSong = songs[currentIndex];
@@ -103,11 +104,18 @@ const MusicPlayer = ({ songs, initialIndex = 0 }: MusicPlayerProps) => {
   return (
     <div className="rounded-2xl shadow-lg border border-[hsl(0,0%,88%)] bg-[hsl(0,0%,96%)] p-5 max-w-xs w-full flex flex-col items-center gap-3">
       {/* Logo */}
-      <img
-        src="/images/newsjunkie-logo.png"
-        alt="NewsJunkie"
-        className="w-16 h-16 rounded-xl object-contain"
-      />
+      {logoError ? (
+        <div className="w-16 h-16 rounded-xl bg-[hsl(0,0%,88%)] flex items-center justify-center">
+          <Music className="w-8 h-8 text-[hsl(0,84%,50%)]" />
+        </div>
+      ) : (
+        <img
+          src="/images/newsjunkie-logo.png"
+          alt="NewsJunkie"
+          className="w-16 h-16 rounded-xl object-contain"
+          onError={() => setLogoError(true)}
+        />
+      )}
 
       {/* Song info */}
       <div className="text-center min-w-0 w-full">
@@ -153,6 +161,16 @@ const MusicPlayer = ({ songs, initialIndex = 0 }: MusicPlayerProps) => {
           </button>
         )}
       </div>
+
+      {/* Download */}
+      <a
+        href={currentSong.audio_url}
+        download={`${currentSong.title}.mp3`}
+        className="p-1.5 text-[hsl(0,0%,50%)] hover:text-[hsl(0,84%,50%)] transition-colors"
+        title="Download song"
+      >
+        <Download className="h-4 w-4" />
+      </a>
 
       {/* Volume */}
       <div className="flex items-center gap-2 w-28">
