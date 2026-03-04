@@ -1,34 +1,26 @@
 
 
-## Restyle Music Player to Match Custom Design
-
-### Reference Analysis
-The image shows a horizontal card-style player with:
-- **Light background** with subtle rounded border/shadow (skeuomorphic feel)
-- **Left**: Square album art / logo
-- **Top row**: Art | Title + Artist text | Large circular play/pause button | Small volume control
-- **Bottom row**: Current time | Red progress bar with red circle thumb | Duration
-- No skip forward/back visible — compact single-track feel
+## Restyle Music Player with Logo
 
 ### Changes
 
-**`src/components/music/MusicPlayer.tsx`** — Full restyle:
+**Copy logo to project**
+- Copy `user-uploads://NewsJunkie_AppIcon.ai` → `public/images/newsjunkie-logo.ai` (note: .ai files may not render in browsers — will also need to handle fallback, but let's try it as an image source first since many .ai files contain embedded previews)
 
-1. **Layout**: Switch from vertical centered stack to a horizontal card (~max-w-lg). Two rows inside:
-   - **Top row**: Square cover art (left), title/artist (middle), play/pause circle button (right), small volume icon+slider (far right)
-   - **Bottom row**: elapsed time, red progress slider, total time
+**`src/components/music/MusicPlayer.tsx`** — Redesign layout to a more conventional player arrangement:
 
-2. **Styling**:
-   - White/light gray background with rounded-xl, subtle shadow, border
-   - Play/pause button: large circular with gray metallic gradient look (CSS `bg-gradient-to-b from-gray-200 to-gray-400` with ring/shadow)
-   - Progress slider: red track (`bg-red-600`), red thumb — override Slider styles via className or custom CSS
-   - Volume slider: small, to the right of play button
-   - Skip buttons: hide when single song, show subtle when playlist
+New layout (vertical, centered, clean):
+1. **Logo** at top center — the NewsJunkie app icon, fixed size (~64x64), always shown regardless of song cover art
+2. **Song info** below logo — title (bold) and artist (lighter) centered
+3. **Progress bar** — red slider with time stamps on either side
+4. **Controls row** — skip back, play/pause (large circle button), skip forward, centered
+5. **Volume** — small row below controls with volume icon + slider
 
-3. **Cover art**: 80x80px square rounded-lg on the left. Falls back to a music note icon.
+This is a more standard/intuitive player flow: branding → what's playing → where in the track → transport controls → volume.
 
-4. **Slider theming**: Use Tailwind classes on the Slider component or wrap with a styled div to make the track red and thumb a red circle, matching the reference.
+Cover art from individual songs will not be shown (logo replaces it). If cover art per-song is desired later it can be added back.
 
-### Files Modified
-- `src/components/music/MusicPlayer.tsx` — Complete restyle of the JSX and classes
+### Files
+- Copy: `user-uploads://NewsJunkie_AppIcon.ai` → `public/images/newsjunkie-logo.png` (rename to .png for browser compat — .ai won't render)
+- Modify: `src/components/music/MusicPlayer.tsx`
 
