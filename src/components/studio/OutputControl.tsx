@@ -175,6 +175,12 @@ const OutputControl = () => {
     save({ ...config, vdoNinjaFeeds: newFeeds });
   };
 
+  const updateVdoCrop = (index: number, field: "cropTop" | "cropBottom" | "cropLeft" | "cropRight", value: number) => {
+    if (!config) return;
+    const newFeeds = vdoNinjaFeeds.map((f, i) => (i === index ? { ...f, [field]: value } : f));
+    save({ ...config, vdoNinjaFeeds: newFeeds });
+  };
+
   const anyRotateEnabled = config?.leftRotate || config?.rightRotate;
 
   return (
@@ -463,6 +469,23 @@ const OutputControl = () => {
                           className="flex-1"
                         />
                         <span className="text-[10px] text-white w-12 text-right">{feed.width ?? 1280}px</span>
+                      </div>
+                      {/* Crop controls */}
+                      <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+                        {(["cropTop", "cropBottom", "cropLeft", "cropRight"] as const).map((field) => (
+                          <div key={field} className="flex items-center gap-1.5">
+                            <span className="text-[10px] text-gray-500 w-10 capitalize">{field.replace("crop", "")}</span>
+                            <Slider
+                              min={0}
+                              max={50}
+                              step={1}
+                              value={[feed[field] ?? 0]}
+                              onValueChange={([v]) => updateVdoCrop(i, field, v)}
+                              className="flex-1"
+                            />
+                            <span className="text-[10px] text-white w-8 text-right">{feed[field] ?? 0}%</span>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   ))}

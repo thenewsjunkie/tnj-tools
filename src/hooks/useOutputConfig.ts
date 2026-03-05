@@ -25,6 +25,10 @@ export interface VdoNinjaFeed {
   url: string;
   placement: VideoPlacement;
   width?: number; // pixels, default 1280
+  cropTop?: number;    // 0–50 percentage
+  cropBottom?: number; // 0–50 percentage
+  cropLeft?: number;   // 0–50 percentage
+  cropRight?: number;  // 0–50 percentage
 }
 
 export type OverlayPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right";

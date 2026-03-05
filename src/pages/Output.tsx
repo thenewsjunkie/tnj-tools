@@ -38,12 +38,17 @@ const YouTubeEmbed = ({ url }: { url: string }) => {
   );
 };
 
-const VdoNinjaEmbed = ({ url }: { url: string }) => {
+const VdoNinjaEmbed = ({ url, cropTop = 0, cropBottom = 0, cropLeft = 0, cropRight = 0 }: { url: string; cropTop?: number; cropBottom?: number; cropLeft?: number; cropRight?: number }) => {
   const embedUrl = getVdoNinjaEmbedUrl(url);
   if (!embedUrl) return null;
 
+  const hasCrop = cropTop > 0 || cropBottom > 0 || cropLeft > 0 || cropRight > 0;
+
   return (
-    <div className="w-full h-full">
+    <div
+      className="w-full h-full"
+      style={hasCrop ? { clipPath: `inset(${cropTop}% ${cropRight}% ${cropBottom}% ${cropLeft}%)` } : undefined}
+    >
       <iframe
         src={embedUrl}
         className="w-full h-full"
@@ -189,7 +194,7 @@ const Output = () => {
   } : {};
 
   // Merge all feeds into a unified list with a type tag for rendering
-  type TaggedFeed = { url: string; placement: string; width?: number; type: "youtube" | "vdo" };
+  type TaggedFeed = { url: string; placement: string; width?: number; type: "youtube" | "vdo"; cropTop?: number; cropBottom?: number; cropLeft?: number; cropRight?: number };
   const allFeeds: TaggedFeed[] = [
     ...videoFeeds.map((f) => ({ ...f, type: "youtube" as const })),
     ...vdoNinjaFeeds.map((f) => ({ ...f, type: "vdo" as const })),
@@ -211,7 +216,7 @@ const Output = () => {
   const chatOrphan = !chatInLeft && !chatInRight && !chatIsFullScreen;
 
   const FeedEmbed = ({ feed }: { feed: TaggedFeed }) =>
-    feed.type === "vdo" ? <VdoNinjaEmbed url={feed.url} /> : <YouTubeEmbed url={feed.url} />;
+    feed.type === "vdo" ? <VdoNinjaEmbed url={feed.url} cropTop={feed.cropTop} cropBottom={feed.cropBottom} cropLeft={feed.cropLeft} cropRight={feed.cropRight} /> : <YouTubeEmbed url={feed.url} />;
 
   // Full-screen mode: render only that module
   if (fullScreenModule) {
