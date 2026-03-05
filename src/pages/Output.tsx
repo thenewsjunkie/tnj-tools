@@ -62,17 +62,17 @@ const VdoNinjaEmbed = ({ url, cropTop = 0, cropBottom = 0, cropLeft = 0, cropRig
   const visibleH = 1 - (cropTop + cropBottom) / 100;
 
   return (
-    <div className="w-full h-full overflow-hidden">
+    <div className="w-full h-full overflow-hidden relative">
       <iframe
         src={embedUrl}
-        className="block"
+        className="absolute top-0 left-0"
         allow="autoplay; camera; microphone; fullscreen; picture-in-picture"
         allowFullScreen
         style={{
           border: 0,
           width: `${100 / visibleW}%`,
           height: `${100 / visibleH}%`,
-          transform: `translate(-${(cropLeft / 100) / (1 / visibleW) * 100}%, -${(cropTop / 100) / (1 / visibleH) * 100}%)`,
+          transform: `translate(-${cropLeft / (100 * visibleW) * 100}%, -${cropTop / (100 * visibleH) * 100}%)`,
         }}
       />
     </div>
