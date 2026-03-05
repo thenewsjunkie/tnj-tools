@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Monitor, ExternalLink, Plus, Trash2, Video, Maximize, Clock } from "lucide-react";
+import { Monitor, ExternalLink, Plus, Trash2, Video, Maximize, Clock, Pencil, Check, X } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 
 import { Link } from "react-router-dom";
@@ -34,6 +34,8 @@ const OutputControl = () => {
   const [newVideoPlacement, setNewVideoPlacement] = useState<VideoPlacement>("center");
   const [newVdoUrl, setNewVdoUrl] = useState("");
   const [newVdoPlacement, setNewVdoPlacement] = useState<VideoPlacement>("center");
+  const [editingVdoUrl, setEditingVdoUrl] = useState<number | null>(null);
+  const [tempVdoUrl, setTempVdoUrl] = useState("");
 
   const leftColumn = config?.leftColumn ?? [];
   const rightColumn = config?.rightColumn ?? [];
@@ -179,6 +181,29 @@ const OutputControl = () => {
     if (!config) return;
     const newFeeds = vdoNinjaFeeds.map((f, i) => (i === index ? { ...f, [field]: value } : f));
     save({ ...config, vdoNinjaFeeds: newFeeds });
+  };
+
+  const startEditingVdoUrl = (index: number) => {
+    setEditingVdoUrl(index);
+    setTempVdoUrl(vdoNinjaFeeds[index].url);
+  };
+
+  const saveVdoUrl = (index: number) => {
+    if (!config || !tempVdoUrl.trim()) return;
+    const embedUrl = getVdoNinjaEmbedUrl(tempVdoUrl.trim());
+    if (!embedUrl) {
+      toast.error("Invalid VDO.Ninja URL");
+      return;
+    }
+    const newFeeds = vdoNinjaFeeds.map((f, i) => (i === index ? { ...f, url: tempVdoUrl.trim() } : f));
+    save({ ...config, vdoNinjaFeeds: newFeeds });
+    setEditingVdoUrl(null);
+    toast.success("VDO.Ninja URL updated");
+  };
+
+  const cancelEditingVdoUrl = () => {
+    setEditingVdoUrl(null);
+    setTempVdoUrl("");
   };
 
   const anyRotateEnabled = config?.leftRotate || config?.rightRotate;
@@ -435,7 +460,37 @@ const OutputControl = () => {
                   {vdoNinjaFeeds.map((feed, i) => (
                     <div key={i} className="bg-black/20 rounded px-3 py-2 space-y-1.5">
                       <div className="flex items-center gap-2">
-                        <span className="text-white text-xs truncate flex-1">{feed.url}</span>
+                        {editingVdoUrl === i ? (
+                          <>
+                            <Input
+                              value={tempVdoUrl}
+                              onChange={(e) => setTempVdoUrl(e.target.value)}
+                              className="bg-black/30 border-purple-500/20 text-white text-xs flex-1 h-7"
+                              autoFocus
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") saveVdoUrl(i);
+                                if (e.key === "Escape") cancelEditingVdoUrl();
+                              }}
+                            />
+                            <button onClick={() => saveVdoUrl(i)} className="text-green-400 hover:text-green-300">
+                              <Check className="h-3.5 w-3.5" />
+                            </button>
+                            <button onClick={cancelEditingVdoUrl} className="text-red-400 hover:text-red-300">
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-white text-xs truncate flex-1">{feed.url}</span>
+                            <button
+                              onClick={() => startEditingVdoUrl(i)}
+                              className="text-gray-500 hover:text-purple-300 transition-colors"
+                              title="Edit URL"
+                            >
+                              <Pencil className="h-3 w-3" />
+                            </button>
+                          </>
+                        )}
                         <div className="flex gap-1">
                           {PLACEMENT_OPTIONS.map((opt) => (
                             <button
