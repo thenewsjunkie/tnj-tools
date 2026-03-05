@@ -1,15 +1,10 @@
 
 
-## Tighten Discord Chat Message Spacing
+## Increase Discord Chat Text Size
 
-The screenshot shows large gaps between Discord messages on `/output`. The current code uses `space-y-1` on the container and `py-1` on each message row — but when scaled up via the zoom feature (e.g., 200-300%), these small gaps become visually large.
+The avatar is `w-6 h-6` (24px). The text is `text-sm` (14px). To match the avatar height visually, bump the text to `text-base` (16px) and increase line-height.
 
-### Changes
+### Change in `src/components/studio/DiscordChatEmbed.tsx`
 
-**`src/components/studio/DiscordChatEmbed.tsx`**:
-- Change container from `space-y-1` to `space-y-0` to remove inter-message gaps
-- Change message row padding from `py-1` to `py-0.5` for tighter vertical spacing
-- Reduce container padding from `p-3` to `p-2`
-
-This keeps messages readable but eliminates the excessive whitespace visible in the screenshot.
+- Line 97: Change `text-sm` to `text-base leading-6` so the text line-height matches the 24px avatar height
 
