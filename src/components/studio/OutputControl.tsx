@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Monitor, ExternalLink, Plus, Trash2, Video, Maximize, Clock, Pencil, Check, X, Lock, Unlock } from "lucide-react";
+import { Monitor, ExternalLink, Plus, Trash2, Video, Maximize, Clock, Pencil, Check, X, Lock, Unlock, BookmarkPlus, Library } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 
 import { Link } from "react-router-dom";
@@ -15,10 +15,19 @@ import {
   VideoPlacement,
   VideoFeed,
   VdoNinjaFeed,
+  VdoNinjaLibraryEntry,
   OverlayPosition,
   getYouTubeEmbedUrl,
   getVdoNinjaEmbedUrl,
 } from "@/hooks/useOutputConfig";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 
 const PLACEMENT_OPTIONS: { value: VideoPlacement; label: string }[] = [
@@ -36,11 +45,14 @@ const OutputControl = () => {
   const [newVdoPlacement, setNewVdoPlacement] = useState<VideoPlacement>("center");
   const [editingVdoUrl, setEditingVdoUrl] = useState<number | null>(null);
   const [tempVdoUrl, setTempVdoUrl] = useState("");
+  const [savingLibraryName, setSavingLibraryName] = useState("");
+  const [showSaveLibrary, setShowSaveLibrary] = useState(false);
 
   const leftColumn = config?.leftColumn ?? [];
   const rightColumn = config?.rightColumn ?? [];
   const videoFeeds = config?.videoFeeds ?? [];
   const vdoNinjaFeeds = config?.vdoNinjaFeeds ?? [];
+  const vdoLibrary = config?.vdoNinjaLibrary ?? [];
   const fullScreenModule = config?.fullScreen ?? null;
 
   const isInLeft = (id: StudioModule) => leftColumn.includes(id);
@@ -216,6 +228,34 @@ const OutputControl = () => {
     if (!config) return;
     const newFeeds = vdoNinjaFeeds.map((f, i) => (i === index ? { ...f, locked } : f));
     save({ ...config, vdoNinjaFeeds: newFeeds });
+  };
+
+  // Library management
+  const addToLibrary = () => {
+    if (!config || !savingLibraryName.trim() || !newVdoUrl.trim()) return;
+    const embedUrl = getVdoNinjaEmbedUrl(newVdoUrl.trim());
+    if (!embedUrl) {
+      toast.error("Invalid VDO.Ninja URL");
+      return;
+    }
+    const entry: VdoNinjaLibraryEntry = { name: savingLibraryName.trim(), url: newVdoUrl.trim() };
+    save({ ...config, vdoNinjaLibrary: [...vdoLibrary, entry] });
+    setSavingLibraryName("");
+    setShowSaveLibrary(false);
+    toast.success("Saved to library");
+  };
+
+  const removeFromLibrary = (index: number) => {
+    if (!config) return;
+    save({ ...config, vdoNinjaLibrary: vdoLibrary.filter((_, i) => i !== index) });
+    toast.success("Removed from library");
+  };
+
+  const addFromLibrary = (entry: VdoNinjaLibraryEntry) => {
+    if (!config) return;
+    const newFeeds: VdoNinjaFeed[] = [...vdoNinjaFeeds, { url: entry.url, placement: newVdoPlacement }];
+    save({ ...config, vdoNinjaFeeds: newFeeds });
+    toast.success(`Added "${entry.name}"`);
   };
 
   const anyRotateEnabled = config?.leftRotate || config?.rightRotate;
@@ -603,7 +643,65 @@ const OutputControl = () => {
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
+                {/* Library dropdown */}
+                <DropdownMenu modal={false}>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm" variant="outline" className="border-purple-500/30 text-purple-300 hover:bg-purple-500/10">
+                      <Library className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel className="text-xs">Saved Feeds</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {vdoLibrary.length === 0 && (
+                      <DropdownMenuItem disabled className="text-xs text-gray-500">No saved feeds</DropdownMenuItem>
+                    )}
+                    {vdoLibrary.map((entry, i) => (
+                      <DropdownMenuItem key={i} className="flex items-center justify-between gap-2 text-xs">
+                        <span className="truncate flex-1 cursor-pointer" onClick={() => addFromLibrary(entry)}>
+                          {entry.name}
+                        </span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); removeFromLibrary(i); }}
+                          className="text-red-400/50 hover:text-red-400 shrink-0"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </DropdownMenuItem>
+                    ))}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      disabled={!newVdoUrl.trim()}
+                      onClick={() => { setShowSaveLibrary(true); }}
+                      className="text-xs"
+                    >
+                      <BookmarkPlus className="h-3 w-3 mr-1.5" /> Save current URL to library
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
+              {/* Save to library inline form */}
+              {showSaveLibrary && (
+                <div className="flex gap-2 mt-2">
+                  <Input
+                    placeholder="Feed name"
+                    value={savingLibraryName}
+                    onChange={(e) => setSavingLibraryName(e.target.value)}
+                    className="bg-black/30 border-purple-500/20 text-white placeholder:text-gray-500 flex-1 text-sm h-8"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") addToLibrary();
+                      if (e.key === "Escape") { setShowSaveLibrary(false); setSavingLibraryName(""); }
+                    }}
+                  />
+                  <Button size="sm" onClick={addToLibrary} className="bg-purple-600 hover:bg-purple-700 text-white h-8">
+                    Save
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => { setShowSaveLibrary(false); setSavingLibraryName(""); }} className="h-8 text-gray-400">
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Overlays */}

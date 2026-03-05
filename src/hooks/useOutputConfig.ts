@@ -39,11 +39,17 @@ export interface OverlayConfig {
   clock?: { enabled: boolean; position: OverlayPosition };
 }
 
+export interface VdoNinjaLibraryEntry {
+  name: string;
+  url: string;
+}
+
 export interface OutputConfig {
   leftColumn: StudioModule[];
   rightColumn: StudioModule[];
   videoFeeds?: VideoFeed[];
   vdoNinjaFeeds?: VdoNinjaFeed[];
+  vdoNinjaLibrary?: VdoNinjaLibraryEntry[];
   leftRotate?: boolean;
   rightRotate?: boolean;
   rotateInterval?: number;
