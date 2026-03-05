@@ -94,7 +94,7 @@ const DiscordChatEmbed = ({ zoom = 100 }: DiscordChatEmbedProps) => {
                   {msg.author_name.charAt(0).toUpperCase()}
                 </div>
               )}
-              <p className="min-w-0 flex-1 text-sm break-words">
+              <p className="min-w-0 flex-1 text-base leading-6 break-words">
                 <span className="font-bold text-indigo-400">{msg.author_name}: </span>
                 <span className="text-gray-200">{msg.content}</span>
               </p>
