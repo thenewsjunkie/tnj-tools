@@ -1,34 +1,26 @@
 
 
-## Add Vertical & Horizontal Crop to VDO.Ninja Feeds
+## Lock VDO.Ninja URL with Emergency Edit
 
-Currently each VDO.Ninja feed has a Size (width) slider. This plan adds two crop sliders — vertical and horizontal — that use CSS `object-fit: none` with `object-position` and `inset` clipping to crop the iframe content from each edge.
+The user wants the VDO.Ninja feed URL to be locked (non-editable) by default, with an emergency override to edit it when needed. Currently the URL is displayed as plain text but can be freely removed/re-added.
 
-Since iframes can't be cropped via `object-fit`, the approach is to use CSS `clip-path: inset()` on the iframe container, which clips content from the top/bottom (vertical crop) and left/right (horizontal crop) symmetrically.
-
-### Data Model
-
-**File: `src/hooks/useOutputConfig.ts`**
-- Add `cropTop`, `cropBottom`, `cropLeft`, `cropRight` (all `number`, 0–50, representing percentage) to the `VdoNinjaFeed` interface.
-
-### Admin Controls
+### Changes
 
 **File: `src/components/studio/OutputControl.tsx`**
-- For each VDO.Ninja feed card, add two new slider rows below the existing "Size" slider:
-  - **Crop V** — a dual-thumb or two separate sliders for top/bottom crop (0–50% each)
-  - **Crop H** — two separate sliders for left/right crop (0–50% each)
-- Add `updateVdoCrop` helper that updates the specific feed's crop values and saves config.
-- To keep it simple: 4 small sliders labeled "Top", "Bottom", "Left", "Right" each 0–50%.
 
-### Output Rendering
+- Add a per-feed `editingVdoUrl` state (tracking which feed index is being edited, or `null`)
+- Replace the plain text URL display (line 438) with:
+  - **Default (locked)**: Show the URL as truncated text with a small pencil/edit icon button
+  - **Editing**: Show an `Input` field pre-filled with the current URL, plus a Save and Cancel button
+- When saved, update the feed URL in the config via a new `updateVdoUrl` helper
+- Keep add/remove functionality unchanged — this only locks the URL from accidental changes after a feed is added
 
-**File: `src/pages/Output.tsx`**
-- Pass crop values to `VdoNinjaEmbed` component.
-- Update `VdoNinjaEmbed` to accept optional `cropTop`, `cropBottom`, `cropLeft`, `cropRight` props.
-- Apply `clip-path: inset(${top}% ${right}% ${bottom}% ${left}%)` on the iframe's parent div to crop the feed.
+### Behavior
+- URL shows as read-only text by default (current behavior, but now intentionally locked)
+- Small edit icon appears on hover or always visible
+- Clicking edit reveals an inline input to change the URL
+- Save validates the new URL and persists it; Cancel reverts
 
-### Files Modified
-- `src/hooks/useOutputConfig.ts` — Add crop fields to `VdoNinjaFeed`
-- `src/components/studio/OutputControl.tsx` — Add crop sliders per VDO.Ninja feed + helper functions
-- `src/pages/Output.tsx` — Pass crop values through and apply `clip-path: inset()` on VDO.Ninja containers
+### Files
+- `src/components/studio/OutputControl.tsx` — Add editing state + inline edit UI for VDO.Ninja feed URLs
 
