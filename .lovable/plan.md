@@ -1,10 +1,13 @@
 
 
-## Increase Discord Chat Text Size
+## Double Discord Chat Sizes
 
-The avatar is `w-6 h-6` (24px). The text is `text-sm` (14px). To match the avatar height visually, bump the text to `text-base` (16px) and increase line-height.
+All visual elements in `src/components/studio/DiscordChatEmbed.tsx` will be doubled:
 
-### Change in `src/components/studio/DiscordChatEmbed.tsx`
-
-- Line 97: Change `text-sm` to `text-base leading-6` so the text line-height matches the 24px avatar height
+- Avatar: `w-6 h-6` → `w-12 h-12`, fallback text `text-[10px]` → `text-[20px]`
+- Message text: `text-base leading-6` → `text-2xl leading-12`
+- Row padding: `py-0.5 px-1` → `py-1 px-2`
+- Container padding: `p-2` → `p-4`
+- Avatar gap: `gap-2` → `gap-4`
+- Avatar top margin: `mt-0.5` → `mt-1`
 
