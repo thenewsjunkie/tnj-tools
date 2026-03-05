@@ -1,13 +1,16 @@
 
 
-## Double Discord Chat Sizes
+## Reduce Discord Chat Vertical Spacing
 
-All visual elements in `src/components/studio/DiscordChatEmbed.tsx` will be doubled:
+The screenshot shows excessive gaps between messages. The issue is the combination of `leading-12` (48px line-height) on single-line text plus `py-1` row padding — the line-height adds blank space above and below each text line.
 
-- Avatar: `w-6 h-6` → `w-12 h-12`, fallback text `text-[10px]` → `text-[20px]`
-- Message text: `text-base leading-6` → `text-2xl leading-12`
-- Row padding: `py-0.5 px-1` → `py-1 px-2`
-- Container padding: `p-2` → `p-4`
-- Avatar gap: `gap-2` → `gap-4`
-- Avatar top margin: `mt-0.5` → `mt-1`
+### Changes in `src/components/studio/DiscordChatEmbed.tsx`
+
+- Change text from `text-2xl leading-12` to `text-2xl leading-tight` — this keeps the large font but removes the excess vertical padding around text
+- Change row alignment from `items-start` to `items-center` so text centers against the avatar without needing `mt-1` on avatars
+- Remove `mt-1` from both avatar elements
+- Remove `py-1` from message rows (set to `py-0`)
+- Reduce container padding from `p-4` to `p-2`
+
+This will pack messages tightly while keeping the doubled element sizes.
 
