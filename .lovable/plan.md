@@ -1,21 +1,34 @@
 
 
-## Fix Music Embed Appearance
+## Add Vertical & Horizontal Crop to VDO.Ninja Feeds
 
-The issue is that `MusicEmbed.tsx` uses `bg-background` which resolves to the dark theme background (since your app defaults to dark theme), and `min-h-screen` which forces a full viewport height — both problematic when embedded in an iframe.
+Currently each VDO.Ninja feed has a Size (width) slider. This plan adds two crop sliders — vertical and horizontal — that use CSS `object-fit: none` with `object-position` and `inset` clipping to crop the iframe content from each edge.
 
-The screenshot shows the player sitting on a large black rectangle because:
-1. `bg-background` = dark theme = black/near-black
-2. `min-h-screen` = fills the entire iframe height even though the player is small
+Since iframes can't be cropped via `object-fit`, the approach is to use CSS `clip-path: inset()` on the iframe container, which clips content from the top/bottom (vertical crop) and left/right (horizontal crop) symmetrically.
 
-### Changes
+### Data Model
 
-**File**: `src/pages/MusicEmbed.tsx`
+**File: `src/hooks/useOutputConfig.ts`**
+- Add `cropTop`, `cropBottom`, `cropLeft`, `cropRight` (all `number`, 0–50, representing percentage) to the `VdoNinjaFeed` interface.
 
-- Replace `min-h-screen` with `min-h-0` so the embed only takes up as much space as the player needs
-- Replace `bg-background` with `bg-white` (or `bg-transparent`) so it blends with the host page instead of forcing a dark background
-- This matches how other embeds in the project (polls, GIFs) handle their styling
+### Admin Controls
 
-### Files
-- `src/pages/MusicEmbed.tsx` — Update container classes
+**File: `src/components/studio/OutputControl.tsx`**
+- For each VDO.Ninja feed card, add two new slider rows below the existing "Size" slider:
+  - **Crop V** — a dual-thumb or two separate sliders for top/bottom crop (0–50% each)
+  - **Crop H** — two separate sliders for left/right crop (0–50% each)
+- Add `updateVdoCrop` helper that updates the specific feed's crop values and saves config.
+- To keep it simple: 4 small sliders labeled "Top", "Bottom", "Left", "Right" each 0–50%.
+
+### Output Rendering
+
+**File: `src/pages/Output.tsx`**
+- Pass crop values to `VdoNinjaEmbed` component.
+- Update `VdoNinjaEmbed` to accept optional `cropTop`, `cropBottom`, `cropLeft`, `cropRight` props.
+- Apply `clip-path: inset(${top}% ${right}% ${bottom}% ${left}%)` on the iframe's parent div to crop the feed.
+
+### Files Modified
+- `src/hooks/useOutputConfig.ts` — Add crop fields to `VdoNinjaFeed`
+- `src/components/studio/OutputControl.tsx` — Add crop sliders per VDO.Ninja feed + helper functions
+- `src/pages/Output.tsx` — Pass crop values through and apply `clip-path: inset()` on VDO.Ninja containers
 
