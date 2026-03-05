@@ -80,21 +80,21 @@ const DiscordChatEmbed = ({ zoom = 100 }: DiscordChatEmbedProps) => {
           height: `${100 / scale}%`,
         }}
       >
-        <div className="p-2 space-y-0">
+        <div className="p-4 space-y-0">
           {messages.map((msg) => (
-            <div key={msg.id} className="w-full flex items-start gap-2 py-0.5 hover:bg-white/5 rounded px-1">
+            <div key={msg.id} className="w-full flex items-start gap-4 py-1 hover:bg-white/5 rounded px-2">
               {msg.author_avatar ? (
                 <img
                   src={msg.author_avatar}
                   alt=""
-                  className="w-6 h-6 rounded-full shrink-0 mt-0.5"
+                  className="w-12 h-12 rounded-full shrink-0 mt-1"
                 />
               ) : (
-                <div className="w-6 h-6 rounded-full shrink-0 mt-0.5 bg-indigo-600 flex items-center justify-center text-[10px] text-white font-bold">
+                <div className="w-12 h-12 rounded-full shrink-0 mt-1 bg-indigo-600 flex items-center justify-center text-[20px] text-white font-bold">
                   {msg.author_name.charAt(0).toUpperCase()}
                 </div>
               )}
-              <p className="min-w-0 flex-1 text-base leading-6 break-words">
+              <p className="min-w-0 flex-1 text-2xl leading-12 break-words">
                 <span className="font-bold text-indigo-400">{msg.author_name}: </span>
                 <span className="text-gray-200">{msg.content}</span>
               </p>
