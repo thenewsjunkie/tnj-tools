@@ -193,7 +193,7 @@ const Output = () => {
   const left = config?.leftColumn ?? [];
   const right = config?.rightColumn ?? [];
   const videoFeeds = config?.videoFeeds ?? [];
-  const vdoNinjaFeeds = config?.vdoNinjaFeeds ?? [];
+  const vdoNinjaFeeds = (config?.vdoNinjaFeeds ?? []).filter(f => f.enabled !== false);
   const rotation = config?.rotation ?? 0;
   const chatZoom = config?.chatZoom;
   const chatSource = config?.chatSource ?? "restream";
