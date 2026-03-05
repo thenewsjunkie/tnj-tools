@@ -1,26 +1,32 @@
 
 
-## Lock VDO.Ninja URL with Emergency Edit
+## Fix VDO.Ninja Crop to Actually Hide Portions
 
-The user wants the VDO.Ninja feed URL to be locked (non-editable) by default, with an emergency override to edit it when needed. Currently the URL is displayed as plain text but can be freely removed/re-added.
+The current `clip-path: inset()` approach clips the content but leaves empty space where the cropped area was — the remaining content doesn't expand to fill the container. The fix is to use `overflow: hidden` on a wrapper and scale/reposition the iframe so the visible portion fills the available space.
 
-### Changes
+### Approach
 
-**File: `src/components/studio/OutputControl.tsx`**
+**File: `src/pages/Output.tsx`** — Replace `clip-path` with an overflow-based crop technique:
 
-- Add a per-feed `editingVdoUrl` state (tracking which feed index is being edited, or `null`)
-- Replace the plain text URL display (line 438) with:
-  - **Default (locked)**: Show the URL as truncated text with a small pencil/edit icon button
-  - **Editing**: Show an `Input` field pre-filled with the current URL, plus a Save and Cancel button
-- When saved, update the feed URL in the config via a new `updateVdoUrl` helper
-- Keep add/remove functionality unchanged — this only locks the URL from accidental changes after a feed is added
+- Wrap the iframe in two nested divs:
+  - **Outer div**: `overflow: hidden`, sized to 100% of the container (the visible area)
+  - **Inner div / iframe**: Scaled up and repositioned so the cropped-away edges fall outside the overflow boundary
 
-### Behavior
-- URL shows as read-only text by default (current behavior, but now intentionally locked)
-- Small edit icon appears on hover or always visible
-- Clicking edit reveals an inline input to change the URL
-- Save validates the new URL and persists it; Cancel reverts
+The math:
+- Visible width fraction: `1 - (cropLeft + cropRight) / 100`
+- Visible height fraction: `1 - (cropTop + cropBottom) / 100`
+- Scale: `1 / visibleFraction` on each axis
+- Transform origin: offset to shift the visible portion into view
 
-### Files
-- `src/components/studio/OutputControl.tsx` — Add editing state + inline edit UI for VDO.Ninja feed URLs
+Concrete CSS approach using `transform: scale()` and negative margins/translate:
+```
+width: 100% / (1 - cropL - cropR)
+height: 100% / (1 - cropT - cropB)
+transform: translate(-cropL%, -cropT%)
+```
+
+This makes the iframe larger than the container, positions the desired region inside the visible area, and the outer `overflow: hidden` hides the rest.
+
+### Files Modified
+- `src/pages/Output.tsx` — Update `VdoNinjaEmbed` component to use overflow + scale instead of clip-path
 
