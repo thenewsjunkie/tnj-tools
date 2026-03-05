@@ -44,17 +44,36 @@ const VdoNinjaEmbed = ({ url, cropTop = 0, cropBottom = 0, cropLeft = 0, cropRig
 
   const hasCrop = cropTop > 0 || cropBottom > 0 || cropLeft > 0 || cropRight > 0;
 
+  if (!hasCrop) {
+    return (
+      <div className="w-full h-full">
+        <iframe
+          src={embedUrl}
+          className="w-full h-full"
+          allow="autoplay; camera; microphone; fullscreen; picture-in-picture"
+          allowFullScreen
+          style={{ border: 0 }}
+        />
+      </div>
+    );
+  }
+
+  const visibleW = 1 - (cropLeft + cropRight) / 100;
+  const visibleH = 1 - (cropTop + cropBottom) / 100;
+
   return (
-    <div
-      className="w-full h-full"
-      style={hasCrop ? { clipPath: `inset(${cropTop}% ${cropRight}% ${cropBottom}% ${cropLeft}%)` } : undefined}
-    >
+    <div className="w-full h-full overflow-hidden">
       <iframe
         src={embedUrl}
-        className="w-full h-full"
+        className="block"
         allow="autoplay; camera; microphone; fullscreen; picture-in-picture"
         allowFullScreen
-        style={{ border: 0 }}
+        style={{
+          border: 0,
+          width: `${100 / visibleW}%`,
+          height: `${100 / visibleH}%`,
+          transform: `translate(-${(cropLeft / 100) / (1 / visibleW) * 100}%, -${(cropTop / 100) / (1 / visibleH) * 100}%)`,
+        }}
       />
     </div>
   );
