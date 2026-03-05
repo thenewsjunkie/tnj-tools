@@ -29,6 +29,8 @@ export interface VdoNinjaFeed {
   cropBottom?: number; // 0–50 percentage
   cropLeft?: number;   // 0–50 percentage
   cropRight?: number;  // 0–50 percentage
+  enabled?: boolean;   // default true
+  locked?: boolean;    // default false
 }
 
 export type OverlayPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right";

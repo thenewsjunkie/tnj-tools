@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Monitor, ExternalLink, Plus, Trash2, Video, Maximize, Clock, Pencil, Check, X } from "lucide-react";
+import { Monitor, ExternalLink, Plus, Trash2, Video, Maximize, Clock, Pencil, Check, X, Lock, Unlock } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 
 import { Link } from "react-router-dom";
@@ -204,6 +204,18 @@ const OutputControl = () => {
   const cancelEditingVdoUrl = () => {
     setEditingVdoUrl(null);
     setTempVdoUrl("");
+  };
+
+  const updateVdoEnabled = (index: number, enabled: boolean) => {
+    if (!config) return;
+    const newFeeds = vdoNinjaFeeds.map((f, i) => (i === index ? { ...f, enabled } : f));
+    save({ ...config, vdoNinjaFeeds: newFeeds });
+  };
+
+  const updateVdoLocked = (index: number, locked: boolean) => {
+    if (!config) return;
+    const newFeeds = vdoNinjaFeeds.map((f, i) => (i === index ? { ...f, locked } : f));
+    save({ ...config, vdoNinjaFeeds: newFeeds });
   };
 
   const anyRotateEnabled = config?.leftRotate || config?.rightRotate;
@@ -457,11 +469,21 @@ const OutputControl = () => {
 
               {vdoNinjaFeeds.length > 0 && (
                 <div className="space-y-2 mb-3">
-                  {vdoNinjaFeeds.map((feed, i) => (
-                    <div key={i} className="bg-black/20 rounded px-3 py-2 space-y-1.5">
+                  {vdoNinjaFeeds.map((feed, i) => {
+                    const isLocked = !!feed.locked;
+                    const isEnabled = feed.enabled !== false;
+                    const lockedClass = isLocked ? "opacity-40 pointer-events-none" : "";
+                    return (
+                    <div key={i} className={`bg-black/20 rounded px-3 py-2 space-y-1.5 ${!isEnabled ? "opacity-50" : ""}`}>
+                      {/* Header row: switch, URL, lock, placements, delete */}
                       <div className="flex items-center gap-2">
+                        <Switch
+                          checked={isEnabled}
+                          onCheckedChange={(checked) => updateVdoEnabled(i, checked)}
+                          className="scale-75 shrink-0"
+                        />
                         {editingVdoUrl === i ? (
-                          <>
+                          <div className={`flex items-center gap-2 flex-1 ${lockedClass}`}>
                             <Input
                               value={tempVdoUrl}
                               onChange={(e) => setTempVdoUrl(e.target.value)}
@@ -478,20 +500,27 @@ const OutputControl = () => {
                             <button onClick={cancelEditingVdoUrl} className="text-red-400 hover:text-red-300">
                               <X className="h-3.5 w-3.5" />
                             </button>
-                          </>
+                          </div>
                         ) : (
                           <>
                             <span className="text-white text-xs truncate flex-1">{feed.url}</span>
                             <button
                               onClick={() => startEditingVdoUrl(i)}
-                              className="text-gray-500 hover:text-purple-300 transition-colors"
+                              className={`text-gray-500 hover:text-purple-300 transition-colors ${lockedClass}`}
                               title="Edit URL"
                             >
                               <Pencil className="h-3 w-3" />
                             </button>
                           </>
                         )}
-                        <div className="flex gap-1">
+                        <button
+                          onClick={() => updateVdoLocked(i, !isLocked)}
+                          className={`transition-colors shrink-0 ${isLocked ? "text-yellow-400 hover:text-yellow-300" : "text-gray-500 hover:text-gray-300"}`}
+                          title={isLocked ? "Unlock settings" : "Lock settings"}
+                        >
+                          {isLocked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
+                        </button>
+                        <div className={`flex gap-1 ${lockedClass}`}>
                           {PLACEMENT_OPTIONS.map((opt) => (
                             <button
                               key={opt.value}
@@ -508,12 +537,12 @@ const OutputControl = () => {
                         </div>
                         <button
                           onClick={() => removeVdoFeed(i)}
-                          className="text-purple-400/50 hover:text-purple-400 transition-colors"
+                          className={`text-purple-400/50 hover:text-purple-400 transition-colors ${lockedClass}`}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className={`flex items-center gap-2 ${lockedClass}`}>
                         <span className="text-[10px] text-gray-500 w-8">Size</span>
                         <Slider
                           min={320}
@@ -526,7 +555,7 @@ const OutputControl = () => {
                         <span className="text-[10px] text-white w-12 text-right">{feed.width ?? 1280}px</span>
                       </div>
                       {/* Crop controls */}
-                      <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+                      <div className={`grid grid-cols-2 gap-x-3 gap-y-1 ${lockedClass}`}>
                         {(["cropTop", "cropBottom", "cropLeft", "cropRight"] as const).map((field) => (
                           <div key={field} className="flex items-center gap-1.5">
                             <span className="text-[10px] text-gray-500 w-10 capitalize">{field.replace("crop", "")}</span>
@@ -543,7 +572,8 @@ const OutputControl = () => {
                         ))}
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
