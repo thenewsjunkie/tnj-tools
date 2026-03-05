@@ -1,30 +1,15 @@
 
 
-## Add Lock & On/Off Switch for VDO.Ninja Feeds
+## Tighten Discord Chat Message Spacing
 
-Two features for each VDO.Ninja feed card:
+The screenshot shows large gaps between Discord messages on `/output`. The current code uses `space-y-1` on the container and `py-1` on each message row — but when scaled up via the zoom feature (e.g., 200-300%), these small gaps become visually large.
 
-### 1. On/Off Switch
-- Add an `enabled` boolean to `VdoNinjaFeed` interface (default `true`)
-- Add a small Switch toggle in the feed card header, before the URL
-- When off, the feed is skipped in `Output.tsx` rendering (filtered out)
-- All settings remain preserved — just toggled invisible
+### Changes
 
-### 2. Lock Settings
-- Add a `locked` boolean to `VdoNinjaFeed` interface (default `false`)
-- Add a Lock/Unlock icon button in the feed card header
-- When locked: disable placement buttons, size slider, crop sliders, remove button, and URL edit button (visually dim them with `opacity-40 pointer-events-none`)
-- The on/off switch remains usable even when locked
+**`src/components/studio/DiscordChatEmbed.tsx`**:
+- Change container from `space-y-1` to `space-y-0` to remove inter-message gaps
+- Change message row padding from `py-1` to `py-0.5` for tighter vertical spacing
+- Reduce container padding from `p-3` to `p-2`
 
-### Files Modified
-
-**`src/hooks/useOutputConfig.ts`** — Add `enabled?: boolean` and `locked?: boolean` to `VdoNinjaFeed` interface
-
-**`src/components/studio/OutputControl.tsx`**:
-- Import `Lock`, `Unlock` icons
-- Add lock toggle helper (`updateVdoLocked`) and enable toggle helper (`updateVdoEnabled`)
-- In each feed card header: add Switch for on/off + Lock/Unlock button
-- Wrap placement, size, crop, remove, and edit controls with a disabled state when `locked`
-
-**`src/pages/Output.tsx`** — Filter `vdoNinjaFeeds` to only include feeds where `enabled !== false`
+This keeps messages readable but eliminates the excessive whitespace visible in the screenshot.
 
