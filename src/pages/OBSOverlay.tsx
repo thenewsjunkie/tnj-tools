@@ -51,16 +51,43 @@ const OBSOverlay = () => {
     }
   }, [enabledModules.length, currentIndex]);
 
-  // Auto-cycle
+  // Auto-cycle (paused during override)
   useEffect(() => {
-    if (mode === "manual" || enabledModules.length <= 1) return;
+    if (mode === "manual" || enabledModules.length <= 1 || isOverriding) return;
 
     const timer = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % enabledModules.length);
     }, interval);
 
     return () => clearInterval(timer);
-  }, [mode, enabledModules.length, interval]);
+  }, [mode, enabledModules.length, interval, isOverriding]);
+
+  // Listen for leaderboard updates and temporarily pin to it for 60s
+  useEffect(() => {
+    const leaderboardIdx = enabledModules.indexOf("leaderboard");
+    if (leaderboardIdx === -1) return;
+
+    const channel = supabase
+      .channel("obs-leaderboard-trigger")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "secret_shows_gifters" },
+        () => {
+          setCurrentIndex(leaderboardIdx);
+          setIsOverriding(true);
+          clearTimeout(overrideTimerRef.current);
+          overrideTimerRef.current = setTimeout(() => {
+            setIsOverriding(false);
+          }, 60000);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+      clearTimeout(overrideTimerRef.current);
+    };
+  }, [enabledModules]);
 
   // When pinned, jump to that module
   useEffect(() => {
