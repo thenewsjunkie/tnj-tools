@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useOBSOverlayConfig } from "@/hooks/useOBSOverlayConfig";
 import { useOutputConfig, StudioModule } from "@/hooks/useOutputConfig";
 import SecretShowsLeaderboard from "@/pages/SecretShowsLeaderboard";
@@ -8,6 +8,7 @@ import DiscordChatEmbed from "@/components/studio/DiscordChatEmbed";
 import AdsDisplay from "@/components/studio/AdsDisplay";
 import ArtModeDisplay from "@/components/studio/ArtModeDisplay";
 import TelePrompterPage from "@/pages/TelePrompter";
+import { supabase } from "@/integrations/supabase/client";
 
 
 const OBSLeaderboard = () => <SecretShowsLeaderboard limit={10} showGiftCTA />;
