@@ -1,0 +1,1 @@
+ALTER TABLE public.secret_shows_gifters REPLICA IDENTITY FULL;

@@ -1,20 +1,16 @@
 
 
-## Fix: Set Replica Identity Full for Correct Confetti Scaling
+## Reduce Discord Chat Vertical Spacing
 
-### Problem
-The `secret_shows_gifters` table has default replica identity (primary key only). This means Supabase Realtime's `payload.old` only contains `id` — not `total_gifts`. So on UPDATE events, `oldRow.total_gifts` is `undefined`, and the delta becomes `newRow.total_gifts - 0 = newRow.total_gifts` (the entire total, not the increment).
+The screenshot shows excessive gaps between messages. The issue is the combination of `leading-12` (48px line-height) on single-line text plus `py-1` row padding — the line-height adds blank space above and below each text line.
 
-The realtime subscription itself works fine — no OBS refresh needed. The confetti just fires the wrong number of times.
+### Changes in `src/components/studio/DiscordChatEmbed.tsx`
 
-### Fix
-One database migration:
+- Change text from `text-2xl leading-12` to `text-2xl leading-tight` — this keeps the large font but removes the excess vertical padding around text
+- Change row alignment from `items-start` to `items-center` so text centers against the avatar without needing `mt-1` on avatars
+- Remove `mt-1` from both avatar elements
+- Remove `py-1` from message rows (set to `py-0`)
+- Reduce container padding from `p-4` to `p-2`
 
-```sql
-ALTER TABLE public.secret_shows_gifters REPLICA IDENTITY FULL;
-```
-
-This makes Postgres include all old column values in the WAL, so `payload.old.total_gifts` is populated correctly. The delta calculation in `SecretShowsLeaderboard.tsx` will then work as intended.
-
-No code changes needed — the existing logic is correct once it receives the full old row.
+This will pack messages tightly while keeping the doubled element sizes.
 
