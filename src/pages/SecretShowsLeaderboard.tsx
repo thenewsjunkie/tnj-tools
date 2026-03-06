@@ -67,17 +67,22 @@ const SecretShowsLeaderboard = ({ limit = 20, showGiftCTA = false }: { limit?: n
     gifters.forEach((gifter, i) => {
       const prevEntry = prevMap.get(gifter.id);
       if (!prevEntry) {
-        // Brand new gifter
+        // Brand new gifter — fire confetti scaled by their total
         newNew.add(gifter.id);
-        fireConfetti(i, gifters.length);
+        const bursts = Math.min(gifter.total_gifts || 1, 50);
+        for (let b = 0; b < bursts; b++) {
+          setTimeout(() => fireConfetti(i, gifters.length), b * 100);
+        }
       } else {
         if (gifter.total_gifts !== prevEntry.gifter.total_gifts) {
-          // Score updated
+          // Score updated — fire confetti scaled by delta
           newUpdated.add(gifter.id);
-          fireConfetti(i, gifters.length);
+          const delta = Math.min(Math.abs(gifter.total_gifts - prevEntry.gifter.total_gifts), 50);
+          for (let b = 0; b < delta; b++) {
+            setTimeout(() => fireConfetti(i, gifters.length), b * 100);
+          }
         }
         if (i !== prevEntry.index) {
-          // Rank changed
           newRankChanged.add(gifter.id);
         }
       }

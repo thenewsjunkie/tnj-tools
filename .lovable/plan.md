@@ -1,53 +1,16 @@
 
 
-## Auto-Switch to Leaderboard on Gift Update + Scale Confetti by Gift Count
+## Reduce Discord Chat Vertical Spacing
 
-### 1. OBS Overlay: Auto-switch to leaderboard on gift updates
+The screenshot shows excessive gaps between messages. The issue is the combination of `leading-12` (48px line-height) on single-line text plus `py-1` row padding — the line-height adds blank space above and below each text line.
 
-In `src/pages/OBSOverlay.tsx`:
-- Subscribe to realtime changes on `secret_shows_gifters` table
-- When an update is detected, force `currentIndex` to the leaderboard module index
-- Set a 60-second timeout, after which resume normal cycling by clearing the override
-- Use a `useRef` to track the override timer so re-triggers reset it
+### Changes in `src/components/studio/DiscordChatEmbed.tsx`
 
-### 2. Scale confetti by gift count
+- Change text from `text-2xl leading-12` to `text-2xl leading-tight` — this keeps the large font but removes the excess vertical padding around text
+- Change row alignment from `items-start` to `items-center` so text centers against the avatar without needing `mt-1` on avatars
+- Remove `mt-1` from both avatar elements
+- Remove `py-1` from message rows (set to `py-0`)
+- Reduce container padding from `p-4` to `p-2`
 
-In `src/pages/SecretShowsLeaderboard.tsx`, the `fireConfetti` function currently fires a fixed amount of confetti. Change it to accept and use the gift count difference:
-- When a gifter's `total_gifts` changes, calculate the delta (`newTotal - oldTotal`)
-- Loop the confetti burst `delta` times (capped at a reasonable max like 50 to avoid browser freeze), firing each burst with a small stagger (e.g. 100ms apart)
-- For new gifters, use their `total_gifts` as the multiplier
-
-### Technical details
-
-**OBSOverlay.tsx** — new effect:
-```typescript
-// Listen for leaderboard updates and temporarily pin to it
-useEffect(() => {
-  const leaderboardIdx = enabledModules.indexOf("leaderboard");
-  if (leaderboardIdx === -1 || mode === "manual") return;
-
-  const channel = supabase
-    .channel("obs-leaderboard-trigger")
-    .on("postgres_changes", 
-      { event: "*", schema: "public", table: "secret_shows_gifters" },
-      () => {
-        setCurrentIndex(leaderboardIdx);
-        // Clear any existing timer, set 60s override
-        clearTimeout(overrideTimerRef.current);
-        overrideTimerRef.current = setTimeout(() => {
-          // Resume cycling from next module
-          setCurrentIndex((leaderboardIdx + 1) % enabledModules.length);
-        }, 60000);
-      }
-    ).subscribe();
-
-  return () => { supabase.removeChannel(channel); };
-}, [enabledModules, mode]);
-```
-The auto-cycle effect needs to be paused during the 60s override — track this with a `isOverriding` state that the cycle interval checks.
-
-**SecretShowsLeaderboard.tsx** — in the `useEffect` that detects changes:
-- Calculate `delta = gifter.total_gifts - prevEntry.gifter.total_gifts`
-- Call `fireConfetti` in a loop `delta` times with staggered timeouts
-- Cap at 50 bursts to prevent performance issues
+This will pack messages tightly while keeping the doubled element sizes.
 
