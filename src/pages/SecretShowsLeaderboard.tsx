@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import { useSecretShowsGifters, SecretShowsGifter } from "@/hooks/useSecretShowsGifters";
+import { supabase } from "@/integrations/supabase/client";
 import { Gift } from "lucide-react";
 import secretShowsLogo from "@/assets/secret-shows-logo.png";
 import confetti from "canvas-confetti";
@@ -14,17 +15,16 @@ const SecretShowsLeaderboard = ({ limit = 20, showGiftCTA = false }: { limit?: n
   const { data: gifters = [], isLoading } = useSecretShowsGifters(limit);
   const currentMonth = new Date().toISOString().slice(0, 7);
 
-  // Track previous state to detect changes
-  const prevGiftersRef = useRef<SecretShowsGifter[]>([]);
   const [updatedIds, setUpdatedIds] = useState<Set<string>>(new Set());
   const [newIds, setNewIds] = useState<Set<string>>(new Set());
   const [rankChangedIds, setRankChangedIds] = useState<Set<string>>(new Set());
-  const isFirstRender = useRef(true);
 
-  const fireConfetti = useCallback((index: number, total: number) => {
-    // Fire from the position of the updated row
-    const y = Math.min(0.15 + (index / total) * 0.7, 0.85);
-    
+  // Track previous gifters for rank-change CSS animations only
+  const prevGiftersRef = useRef<SecretShowsGifter[]>([]);
+  const initialLoadDone = useRef(false);
+
+  const fireConfetti = useCallback((yFraction: number) => {
+    const y = Math.min(Math.max(yFraction, 0.1), 0.9);
     confetti({
       particleCount: 80,
       spread: 100,
@@ -35,8 +35,6 @@ const SecretShowsLeaderboard = ({ limit = 20, showGiftCTA = false }: { limit?: n
       ticks: 120,
       scalar: 1.2,
     });
-
-    // Second burst slightly delayed
     setTimeout(() => {
       confetti({
         particleCount: 40,
@@ -50,59 +48,75 @@ const SecretShowsLeaderboard = ({ limit = 20, showGiftCTA = false }: { limit?: n
     }, 200);
   }, []);
 
+  // Direct Supabase realtime subscription for confetti (not dependent on React Query)
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      prevGiftersRef.current = gifters;
+    const channel = supabase
+      .channel("leaderboard-confetti-trigger")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "secret_shows_gifters" },
+        (payload) => {
+          let burstCount = 0;
+
+          if (payload.eventType === "INSERT") {
+            const newRow = payload.new as any;
+            burstCount = Math.min(newRow.total_gifts || 1, 50);
+            setNewIds(new Set([newRow.id]));
+          } else if (payload.eventType === "UPDATE") {
+            const newRow = payload.new as any;
+            const oldRow = payload.old as any;
+            const delta = (newRow.total_gifts || 0) - (oldRow.total_gifts || 0);
+            if (delta > 0) {
+              burstCount = Math.min(delta, 50);
+              setUpdatedIds(new Set([newRow.id]));
+            }
+          }
+
+          if (burstCount > 0) {
+            for (let b = 0; b < burstCount; b++) {
+              setTimeout(() => fireConfetti(0.4), b * 100);
+            }
+            // Clear animation classes after they play
+            setTimeout(() => {
+              setUpdatedIds(new Set());
+              setNewIds(new Set());
+            }, 2000);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [fireConfetti]);
+
+  // Track rank changes for CSS animations (no confetti)
+  useEffect(() => {
+    if (!initialLoadDone.current) {
+      if (gifters.length > 0) {
+        initialLoadDone.current = true;
+        prevGiftersRef.current = gifters;
+      }
       return;
     }
 
     const prev = prevGiftersRef.current;
-    const prevMap = new Map(prev.map((g, i) => [g.id, { gifter: g, index: i }]));
-
-    const newUpdated = new Set<string>();
-    const newNew = new Set<string>();
+    const prevMap = new Map(prev.map((g, i) => [g.id, i]));
     const newRankChanged = new Set<string>();
 
     gifters.forEach((gifter, i) => {
-      const prevEntry = prevMap.get(gifter.id);
-      if (!prevEntry) {
-        // Brand new gifter — fire confetti scaled by their total
-        newNew.add(gifter.id);
-        const bursts = Math.min(gifter.total_gifts || 1, 50);
-        for (let b = 0; b < bursts; b++) {
-          setTimeout(() => fireConfetti(i, gifters.length), b * 100);
-        }
-      } else {
-        if (gifter.total_gifts !== prevEntry.gifter.total_gifts) {
-          // Score updated — fire confetti scaled by delta
-          newUpdated.add(gifter.id);
-          const delta = Math.min(Math.abs(gifter.total_gifts - prevEntry.gifter.total_gifts), 50);
-          for (let b = 0; b < delta; b++) {
-            setTimeout(() => fireConfetti(i, gifters.length), b * 100);
-          }
-        }
-        if (i !== prevEntry.index) {
-          newRankChanged.add(gifter.id);
-        }
+      const prevIndex = prevMap.get(gifter.id);
+      if (prevIndex !== undefined && prevIndex !== i) {
+        newRankChanged.add(gifter.id);
       }
     });
 
-    if (newUpdated.size > 0) setUpdatedIds(newUpdated);
-    if (newNew.size > 0) setNewIds(newNew);
-    if (newRankChanged.size > 0) setRankChangedIds(newRankChanged);
+    if (newRankChanged.size > 0) {
+      setRankChangedIds(newRankChanged);
+      setTimeout(() => setRankChangedIds(new Set()), 2000);
+    }
 
     prevGiftersRef.current = gifters;
-
-    // Clear animations after they play
-    const timer = setTimeout(() => {
-      setUpdatedIds(new Set());
-      setNewIds(new Set());
-      setRankChangedIds(new Set());
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [gifters, fireConfetti]);
+  }, [gifters]);
 
   return (
     <div className="secret-shows-leaderboard h-screen flex flex-col bg-transparent px-2 sm:px-4 py-4 sm:py-8 overflow-hidden">
