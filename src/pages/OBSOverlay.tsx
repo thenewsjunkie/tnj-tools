@@ -26,9 +26,10 @@ const OBSOverlay = () => {
   const { data: config, isLoading } = useOBSOverlayConfig();
   const { data: outputConfig } = useOutputConfig();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isOverriding, setIsOverriding] = useState(false);
+  const overrideTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const chatZoom = outputConfig?.chatZoom;
   const chatSource = outputConfig?.chatSource ?? "restream";
-  
 
   const enabledModules = config?.enabledModules ?? [];
   const mode = config?.mode ?? "auto";
